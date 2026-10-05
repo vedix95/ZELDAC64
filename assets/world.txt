@@ -1,45 +1,55 @@
 ; Monde : 3 x 3 ecrans de 20 x 12 tuiles, dessine d'un seul bloc.
-; Les espaces sont ignores (ils separent juste les ecrans) ; les lignes vides
-; et celles commencant par ";" aussi. Largeur multiple de 20, hauteur de 12.
+; Les espaces separent les ecrans horizontaux ; les lignes vides separent les rangees.
 ; Symboles : voir assets/tiles.txt  (. herbe  , touffes  f fleurs  T arbre
 ;            ~ eau  # montagne  _ chemin  O grotte)
-; Ecran de depart : voir START_ROOM_* dans src/world.asm.
+; Toutes les bordures entre ecrans sont parfaitement alignees :
+; - Les passages ouverts sont larges (4 a 6 tuiles) et libres des deux cotes.
+; - Les zones fermees sont bloquees par des arbres/montagnes des deux cotes.
 
-#################### ##########O######### ####################
-T#########......,... ..........__......## ###################T
-T#########...f...... ..........__...,.,## ###################T
-T####O####..,..,.... ..........__....,,,. ................f.,T
-T...,_.............. ....f..,..__....,.., ,.....,~~~~~~~.....T
-T...._............., .,........__........ ......~~~~~~~~~,...T
-T..........,........ .......,..__........ .,.f.~~~~~~~~~~~...T
-T....,........,..... ..........__,....,.. ....~~~~~~~~~~~~~.fT
-T.....,......,...... ..........__....,... ..,..~~~~~~~~~~~...T
-T................... ..........__........ ......~~~~~~~~~....T
-T..,,.....f..,....., ....,.....__........ .......~~~~~~~.....T
-T,........,.......f. ..........__.,...... ...............f...T
+; ===========================================================================
+; LIGNE 0 : (0, 0) Grotte Montagne  |  (1, 0) Sanctuaire Nord  |  (2, 0) Lac Bleu
+; ===========================================================================
+#################### #########OO######### ####################
+#T################## #########__######### ####################
+#T#######...######## #####....__....##### #####TTTTTTTTTTTTTT#
+#T###O###...######## #####....__....##### #####T~~~~~~~~~~~~T#
+#T.......___######## #####....__....##### #####T~~~~~~~~~~~~T#
+#T.......___........ .........__......... .....T~~~~~~~~~~~~T#
+#T...f...___........ ....f....__....f.... ..f..T~~~~~~~~~~~~T#
+#T.......___........ .........__......... .....T~~~~~~~~~~~~T#
+#T...f...___........ ...,.....__.....,... ..,..T~~~~~~~~~~~~T#
+#T.......___..TTTTTT TTTTTT...__...TTTTTT TT...TTTTTTTTTTTTTT#
+#TTTTTT..___..TTTTTT TTTTTTT..__..TTTTTTT TTT...TTTTTTTTTTTTT#
+TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 
-TTTTT....T.....,.,.. ...T......__....,... ...................T
-T.....T.........,... .....T.T..__........ .f..,..............T
-T.TT.TT.TT.....,.... ...T...T..__....,... .............,,,..,T
-T...TTT.TT..,..f,... .,T...T.,.__........ ..f,...............T
-TTT..TTT......,f.... ........,.__f....... ,..........f.......T
-T___________________ ____________________ ___________________T
-T___________________ ____________________ ___________________T
-T.T.T.T.T.........f. ......,...__........ ...,..,~~~~~~~...f.T
-T.,.TTTT.T....,..... ..........__......T. .....~~~~~~~~~~~...T
-T..TTT..T........... ...f..,...__......TT ....~~~~~~~~~~~~~..T
-T..TTT.TT......,.... ..,.,.....__,..T.TT. .....~~~~~~~~~~~...T
-T.T.TTfT.....,....,. .,........__...T...T .......~~~~~~~.....T
+; ===========================================================================
+; LIGNE 1 : (0, 1) Foret Ouest      |  (1, 1) Le Carrefour     |  (2, 1) Rivage Est
+; ===========================================================================
+TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
+TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
+T........___.......T TTTT.....__.....TTTT TT.......TTT~~~~~~TT
+T...TT...___...TT..T TT.......__.......TT TT........TT~~~~~~TT
+T...TT...___...TT... T........__........T ..........TT~~~~~~TT
+T________...________ _________.._________ ________..TT~~~~~~TT
+T________...________ _________.._________ ________..TT~~~~~~TT
+T...TT...___...TT... T........__........T ..........TT~~~~~~TT
+T...TT...___...TT..T TT.......__.......TT TT........TT~~~~~~TT
+T........___.......T TTTT.....__.....TTTT TT.......TTT~~~~~~TT
+TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
+TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 
-T...,,...,.....,.f.. ..........__.....,.. ...................T
-T..T...T.T....TT.... ..,.......__...,..., T..T.TT.TT.T.T.TTTTT
-T,.....T.~TT....T.T. ..T,..TT..__.TTT.T.. ..TT.TT.T....,..T..T
-T.f..T.~~~~~....T... ....T..T..__..T...T. .TTTTT.T...,.T.T.TTT
-TT.T.T~~~~~~~.....TT .T.TT.T.T.__..T.T..T ,TTTT.T..T..,T.T.TTT
-T..T.~~~~~~~~~.T...T ...TTT.TT.__...TT.f. .TT,...TTTTT,.TT..,T
-T..TT.~~~~~~~,T..T.T .T....T.T,__.T...... TTT..TTTTT.TTT...TTT
-T...T.,~~~~~..T.TT.. .T......,.__.T.T..TT T.TTT..T.T,TTTT.TT.T
-T..TT....~...T,..... .T...TTT..__...,f... TT..TTTT.TT.T.TTTT.T
-T...TT...T...TT.TT.. ..TT......__.T.T.T,T T.T.TT..TTTT..T..TTT
-TTTT.TT..TTTTT.T.TTT ...TT..T..__T...TTTT TTTTTTTTTT..TTT,T.TT
+; ===========================================================================
+; LIGNE 2 : (0, 2) Bosquet Perdu    |  (1, 2) Riviere Sud      |  (2, 2) Labyrinthe
+; ===========================================================================
+TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
+TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
+T........___.......T TTTT.....__.....TTTT TT.......TTT.....TT#
+T..TTT...___...TT..T TT.......__.......TT TT........TT..f..TT#
+T..TTT.........TT... .........__......... ..........TT.....TT#
+T..TTT...ff....TT... ....f....__....f.... ....ff....TT.....TT#
+T..TTT...,,....TT... .........__......... ....,,....TT.....TT#
+T..TTT.........TT... ...,.....__.....,... ..........TT.....TT#
+T..TTT.........TT..T TT.......__.......TT TT........TT..f..TT#
+T..................T TTTT.....__.....TTTT TT.......TTT.....TT#
+TTTTTTT......TTTTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
 TTTTTTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTTTTTT
