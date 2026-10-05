@@ -1,7 +1,8 @@
 ; ---------------------------------------------------------------------------
 ; items.asm : Gestion complète des armes secondaires en cours de jeu (Bouton B)
-;   - Boomerang   : Projectile rotatif qui part droit puis revient vers Link
-;   - Bombe       : Posée au sol, mèche qui brûle puis explosion puissante
+;   - Boomerang   : Forme en V affûtée, rotation 4 angles, suit le joueur en vol
+;                   et le poursuit en tête chercheuse au retour !
+;   - Bombe       : Posée au sol, mèche puis DÉFLAGRATION 3x3 géante (5 sprites)
 ;   - Arc         : Flèche rapide orientée selon la direction de tir
 ;   - Bougie      : Flamme vacillante projetée devant Link qui brûle au sol
 ; ---------------------------------------------------------------------------
@@ -20,20 +21,35 @@ item_state:     !byte 0                 ; phase (0 = aller/pose, 1 = retour/expl
 item_timer:     !byte 0                 ; compte à rebours de vie/phase
 item_anim:      !byte 0                 ; compteur de pas d'animation
 
-; Couleurs d'explosion scintillante
-exp_colors:     !byte COL_WHITE, COL_YELLOW, COL_LIGHT_RED, COL_ORANGE
+; Table des 4 angles de rotation du boomerang
+boom_ptrs:
+        !byte < (sprite_link_proj_boom_0 / 64)
+        !byte < (sprite_link_proj_boom_1 / 64)
+        !byte < (sprite_link_proj_boom_2 / 64)
+        !byte < (sprite_link_proj_boom_3 / 64)
+
+; Couleurs scintillantes de l'explosion 3x3
+exp_colors:
+        !byte COL_WHITE, COL_YELLOW, COL_LIGHT_RED, COL_ORANGE
+
+bmb_msb_w:      !byte 0
+bmb_msb_e:      !byte 0
 
 ; ---------------------------------------------------------------------------
-; items_init : réinitialise l'état des projectiles
+; items_init : réinitialise l'état des projectiles et masque les sprites 2..6
 ; ---------------------------------------------------------------------------
 items_init:
         lda #ITEM_NONE
         sta item_active
         sta item_state
         sta item_timer
+        ; Masque tous les sprites de projectiles (bits 2..6)
         lda VIC_SPRITE_EN
-        and #%11111011                  ; désactive Sprite 2
+        and #%10000011                  ; préserve Link (0) et Épée (1)
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MSB
+        and #%10000011
+        sta VIC_SPRITE_MSB
         rts
 
 ; ---------------------------------------------------------------------------
@@ -58,7 +74,7 @@ items_use_b:
 +       jmp spawn_candle
 
 ; ---------------------------------------------------------------------------
-; 1. BOOMERANG : part devant Link et revient vers lui
+; 1. BOOMERANG : part devant Link, suit Link en vol et revient vers lui
 ; ---------------------------------------------------------------------------
 spawn_boomerang:
         lda #ITEM_BOOMERANG
@@ -67,12 +83,12 @@ spawn_boomerang:
         sta item_dir
         lda #0
         sta item_state                  ; phase 0 = aller
-        lda #26                         ; ~78 pixels de portée aller
+        lda #28                         ; ~84 pixels de portée aller
         sta item_timer
 
         jsr set_spawn_coords
 
-        ; Bruitage de lancement
+        ; Bruitage rotatif
         lda #15
         sta SID_VOLUME
         lda #$00
@@ -88,10 +104,9 @@ spawn_boomerang:
         rts
 
 ; ---------------------------------------------------------------------------
-; 2. BOMBE : posée devant Link, mèche puis explosion
+; 2. BOMBE : posée devant Link, mèche puis DÉFLAGRATION 3x3 (5 sprites)
 ; ---------------------------------------------------------------------------
 spawn_bomb:
-        ; Vérifie les munitions
         lda hud_bombs
         bne +
         rts
@@ -114,7 +129,6 @@ spawn_bomb:
 ; 3. ARC & FLÈCHE : tir rapide dans la direction de Link
 ; ---------------------------------------------------------------------------
 spawn_bow:
-        ; Vérifie les rubis (chaque flèche coûte 1 rubis comme sur NES)
         lda hud_rupees
         bne +
         rts
@@ -156,7 +170,7 @@ spawn_candle:
         lda player_dir
         sta item_dir
         lda #0
-        sta item_state                  ; phase 0 = avance
+        sta item_state
         lda #14                         ; avance de 14 pixels
         sta item_timer
 
@@ -248,13 +262,15 @@ items_update:
 +       jmp update_candle
 
 ; ---------------------------------------------------------------------------
-; Mise à jour Boomerang
+; Mise à jour Boomerang (suit le joueur en vol aller et tête chercheuse au retour)
 ; ---------------------------------------------------------------------------
 update_boomerang:
         lda item_state
-        bne .boom_return
+        beq +
+        jmp .boom_return
++
 
-        ; --- PHASE 0 : ALLER (3 pixels / frame) ---
+        ; --- PHASE 0 : ALLER (3 pixels / frame) + SUIVI DU JOUEUR ---
         lda item_dir
         cmp #DIR_UP
         beq .bm_up
@@ -263,7 +279,7 @@ update_boomerang:
         cmp #DIR_LEFT
         beq .bm_lf
 
-        ; Droite
+        ; --- Vol vers la DROITE ---
         clc
         lda item_x
         adc #3
@@ -271,8 +287,12 @@ update_boomerang:
         lda item_x+1
         adc #0
         sta item_x+1
+        ; Suit le joueur sur l'axe Y (vertical)
+        jsr follow_player_y
         jmp .bm_check
+
 .bm_lf:
+        ; --- Vol vers la GAUCHE ---
         sec
         lda item_x
         sbc #3
@@ -280,18 +300,28 @@ update_boomerang:
         lda item_x+1
         sbc #0
         sta item_x+1
+        ; Suit le joueur sur l'axe Y (vertical)
+        jsr follow_player_y
         jmp .bm_check
+
 .bm_up:
+        ; --- Vol vers le HAUT ---
         sec
         lda item_y
         sbc #3
         sta item_y
+        ; Suit le joueur sur l'axe X (horizontal)
+        jsr follow_player_x
         jmp .bm_check
+
 .bm_dn:
+        ; --- Vol vers le BAS ---
         clc
         lda item_y
         adc #3
         sta item_y
+        ; Suit le joueur sur l'axe X (horizontal)
+        jsr follow_player_x
 
 .bm_check:
         ; Collision tuile solide
@@ -313,24 +343,51 @@ update_boomerang:
 .bm_done:
         rts
 
-.boom_return:
-        ; --- PHASE 1 : RETOUR VERS LINK (Homing 3 px / frame) ---
-        ; Rapprochement horizontal
+; Ajuste la position du boomerang vers le joueur sur l'axe Y (1 px / frame)
+follow_player_y:
+        lda item_y
+        cmp player_y
+        bcc +
+        beq .fpy_end
+        dec item_y
+        rts
++       inc item_y
+.fpy_end:
+        rts
+
+; Ajuste la position du boomerang vers le joueur sur l'axe X (1 px / frame)
+follow_player_x:
+        lda item_x+1
+        cmp player_x+1
+        bcc .fpx_r
+        bne .fpx_l
+        lda item_x
+        cmp player_x
+        bcc .fpx_r
+        beq .fpx_end
+.fpx_l:
         sec
         lda item_x
-        sbc player_x
-        sta ZP_TMP
+        sbc #1
+        sta item_x
         lda item_x+1
-        sbc player_x+1
-        bne .bm_ret_x_far
-        ; Si à moins de 4 pixels, ne bouge plus sur X
-        lda ZP_TMP
-        cmp #4
-        bcc .bm_ret_y
-        cmp #252
-        bcs .bm_ret_y
+        sbc #0
+        sta item_x+1
+        rts
+.fpx_r:
+        clc
+        lda item_x
+        adc #1
+        sta item_x
+        lda item_x+1
+        adc #0
+        sta item_x+1
+.fpx_end:
+        rts
 
-.bm_ret_x_far:
+.boom_return:
+        ; --- PHASE 1 : RETOUR VERS LINK (Homing rapide 4 px / frame) ---
+        ; Rapprochement horizontal
         lda item_x+1
         cmp player_x+1
         bcc .bm_ret_right
@@ -338,10 +395,11 @@ update_boomerang:
         lda item_x
         cmp player_x
         bcc .bm_ret_right
+        beq .bm_ret_y
 .bm_ret_left:
         sec
         lda item_x
-        sbc #3
+        sbc #4
         sta item_x
         lda item_x+1
         sbc #0
@@ -350,7 +408,7 @@ update_boomerang:
 .bm_ret_right:
         clc
         lda item_x
-        adc #3
+        adc #4
         sta item_x
         lda item_x+1
         adc #0
@@ -363,34 +421,46 @@ update_boomerang:
         bcc .bm_ret_down
         beq .bm_check_caught
         sec
-        sbc #3
+        sbc #4
         sta item_y
         jmp .bm_check_caught
 .bm_ret_down:
         clc
-        adc #3
+        adc #4
         sta item_y
 
 .bm_check_caught:
-        ; Link attrape le boomerang s'il est proche (< 10 px)
+        ; Link attrape le boomerang s'il est proche (< 12 px)
+        ; Calcul de (item_x - player_x) sur 16 bits
         sec
         lda item_x
         sbc player_x
-        bpl +
-        eor #$ff
-        clc
-        adc #1
-+       cmp #10
+        sta ZP_TMP
+        lda item_x+1
+        sbc player_x+1
+        cmp #0
+        bne +
+        ; Différence >= 0 : ZP_TMP doit être < 12
+        lda ZP_TMP
+        cmp #12
         bcs .bm_ret_done
+        jmp .check_y
++       cmp #$ff
+        bne .bm_ret_done
+        ; Différence < 0 : ZP_TMP doit être >= 256-12 ($f4)
+        lda ZP_TMP
+        cmp #$f4
+        bcc .bm_ret_done
 
+.check_y:
+        ; Distance Y (axe 8 bits)
         sec
         lda item_y
         sbc player_y
-        bpl +
+        bcs +
         eor #$ff
-        clc
         adc #1
-+       cmp #10
++       cmp #12
         bcs .bm_ret_done
 
         ; Attrapé !
@@ -403,7 +473,7 @@ update_boomerang:
         rts
 
 ; ---------------------------------------------------------------------------
-; Mise à jour Bombe
+; Mise à jour Bombe (mèche puis déflagration 3x3)
 ; ---------------------------------------------------------------------------
 update_bomb:
         lda item_state
@@ -413,13 +483,13 @@ update_bomb:
         dec item_timer
         bne .bmb_done
 
-        ; Détonation !
+        ; Détonation ! Passe en phase 1
         lda #1
         sta item_state
-        lda #20                         ; durée de l'explosion
+        lda #24                         ; durée de la déflagration 3x3
         sta item_timer
 
-        ; Déclenche le son d'explosion
+        ; Déclenche le son d'explosion puissante
         lda #15
         sta SID_VOLUME
         lda #$00
@@ -430,17 +500,21 @@ update_bomb:
         sta SID_V1_AD
         lda #$09
         sta SID_V1_SR
-        lda #%10000001                  ; Bruit blanc puissant
+        lda #%10000001                  ; Bruit blanc
         sta SID_V1_CTRL
 .bmb_done:
         rts
 
 .bomb_explode:
-        ; --- PHASE 1 : SOUFFLE D'EXPLOSION ---
+        ; --- PHASE 1 : SOUFFLE D'EXPLOSION 3x3 ---
         dec item_timer
         bne .exp_done
         lda #ITEM_NONE
         sta item_active
+        ; Éteint les sprites 2..6 de l'explosion
+        lda VIC_SPRITE_EN
+        and #%10000011
+        sta VIC_SPRITE_EN
 .exp_done:
         rts
 
@@ -448,7 +522,6 @@ update_bomb:
 ; Mise à jour Arc & Flèche
 ; ---------------------------------------------------------------------------
 update_bow:
-        ; Avance rapide : 4 pixels / frame
         lda item_dir
         cmp #DIR_UP
         beq .arr_up
@@ -584,20 +657,29 @@ update_candle:
         rts
 
 ; ---------------------------------------------------------------------------
-; items_draw : configure et affiche le Sprite 2 pour l'arme active
+; items_draw : configure et affiche les sprites pour l'arme active
 ; ---------------------------------------------------------------------------
 items_draw:
         lda item_active
         bne .draw_item
 
-        ; Aucun objet : désactive Sprite 2
+        ; Aucun objet : désactive Sprites 2..6
         lda VIC_SPRITE_EN
-        and #%11111011                  ; efface bit 2
+        and #%10000011                  ; préserve Link (0) et Épée (1)
         sta VIC_SPRITE_EN
         rts
 
 .draw_item:
-        ; 1. Coordonnées Sprite 2
+        ; Cas spécial : Bombe en déflagration 3x3 -> utilise 5 sprites simultanés
+        lda item_active
+        cmp #ITEM_BOMB
+        bne .single_item_draw
+        lda item_state
+        beq .single_item_draw
+        jmp .draw_bomb_3x3
+
+.single_item_draw:
+        ; Pour les autres armes ou la bombe posée : utilise Sprite 2 seul
         lda item_x
         sta VIC_SPRITE_X2
         lda item_y
@@ -614,58 +696,47 @@ items_draw:
         ora ZP_TMP
         sta VIC_SPRITE_MSB
 
-        ; 2. Choix du sprite et de la couleur selon le type d'objet
+        ; Éteint les sprites 3..6 au cas où
+        lda VIC_SPRITE_EN
+        and #%10000111
+        sta VIC_SPRITE_EN
+
         lda item_active
         cmp #ITEM_BOOMERANG
-        bne .drw_bomb
+        bne .drw_bomb_single
 
-        ; --- BOOMERANG ---
+        ; --- BOOMERANG EN ROTATION (4 angles) ---
         lda item_anim
-        and #4
-        beq +
-        lda #< (sprite_link_proj_boom_1 / 64)
-        jmp ++
-+       lda #< (sprite_link_proj_boom_0 / 64)
-++      sta SPRITE_PTR2
+        lsr
+        and #3                          ; rotation fluide tous les 2 frames
+        tax
+        lda boom_ptrs,x
+        sta SPRITE_PTR2
         lda #COL_LIGHT_BLUE
         sta VIC_SPRITE_COL2
-        jmp .enable_spr
+        jmp .enable_spr2
 
-.drw_bomb:
+.drw_bomb_single:
         cmp #ITEM_BOMB
         bne .drw_bow
 
-        ; --- BOMBE ---
-        lda item_state
-        bne .drw_explosion
-        ; Bombe posée
+        ; Bombe posée (mèche)
         lda #< (sprite_link_item_bomb / 64)
         sta SPRITE_PTR2
         lda #COL_BLUE
         sta VIC_SPRITE_COL2
-        jmp .enable_spr
-.drw_explosion:
-        ; Explosion clignotante
-        lda #< (sprite_link_proj_explosion / 64)
-        sta SPRITE_PTR2
-        lda item_anim
-        and #%00000011
-        tax
-        lda exp_colors,x
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr
+        jmp .enable_spr2
 
 .drw_bow:
         cmp #ITEM_BOW
         bne .drw_candle
 
-        ; --- ARC & FLÈCHE ---
+        ; --- ARC & FLÈCHE DIRECTIONNELLE ---
         lda item_dir
         cmp #DIR_LEFT
         beq .drw_arrow_lf
         cmp #DIR_RIGHT
         beq .drw_arrow_rt
-        ; Flèche verticale Haut / Bas
         lda #< (sprite_link_proj_arrow_v / 64)
         jmp +
 .drw_arrow_lf:
@@ -676,10 +747,10 @@ items_draw:
 +       sta SPRITE_PTR2
         lda #COL_WHITE
         sta VIC_SPRITE_COL2
-        jmp .enable_spr
+        jmp .enable_spr2
 
 .drw_candle:
-        ; --- BOUGIE / FLAMME ---
+        ; --- BOUGIE / FLAMME VACILLANTE ---
         lda item_anim
         and #4
         beq +
@@ -690,12 +761,121 @@ items_draw:
         lda #COL_LIGHT_RED
         sta VIC_SPRITE_COL2
 
-.enable_spr:
-        ; Active Sprite 2 en multicolore
+.enable_spr2:
         lda VIC_SPRITE_EN
-        ora #%00000100
+        ora #%00000100                  ; active Sprite 2
         sta VIC_SPRITE_EN
         lda VIC_SPRITE_MC
-        ora #%00000100
+        ora #%00000100                  ; multicolore
+        sta VIC_SPRITE_MC
+        rts
+
+; ---------------------------------------------------------------------------
+; .draw_bomb_3x3 : Déflagration 3x3 géante avec 5 sprites (Centre, N, S, O, E)
+;   Sprite 2 : Centre (item_x, item_y)
+;   Sprite 3 : Nord   (item_x, item_y - 14)
+;   Sprite 4 : Sud    (item_x, item_y + 14)
+;   Sprite 5 : Ouest  (item_x - 14, item_y)
+;   Sprite 6 : Est    (item_x + 14, item_y)
+; ---------------------------------------------------------------------------
+.draw_bomb_3x3:
+        ; Pointeur de nuage d'explosion pour les 5 sprites
+        lda #< (sprite_link_proj_explosion / 64)
+        sta SPRITE_PTR2
+        sta SPRITE_PTR3
+        sta SPRITE_PTR4
+        sta SPRITE_PTR5
+        sta SPRITE_PTR6
+
+        ; Couleurs scintillantes décalées pour un effet de blast tourbillonnant
+        lda item_anim
+        and #3
+        tax
+        lda exp_colors,x
+        sta VIC_SPRITE_COL2
+        inx
+        txa
+        and #3
+        tax
+        lda exp_colors,x
+        sta VIC_SPRITE_COL3
+        sta VIC_SPRITE_COL5
+        inx
+        txa
+        and #3
+        tax
+        lda exp_colors,x
+        sta VIC_SPRITE_COL4
+        sta VIC_SPRITE_COL6
+
+        ; Coordonnées Y
+        lda item_y
+        sta VIC_SPRITE_Y2               ; Centre
+        sta VIC_SPRITE_Y5               ; Ouest
+        sta VIC_SPRITE_Y6               ; Est
+        sec
+        sbc #14
+        sta VIC_SPRITE_Y3               ; Nord
+        lda item_y
+        clc
+        adc #14
+        sta VIC_SPRITE_Y4               ; Sud
+
+        ; Coordonnées X de base (Centre, Nord, Sud)
+        lda item_x
+        sta VIC_SPRITE_X2
+        sta VIC_SPRITE_X3
+        sta VIC_SPRITE_X4
+
+        ; Coordonnée X Ouest (item_x - 14) sur 16 bits
+        sec
+        lda item_x
+        sbc #14
+        sta VIC_SPRITE_X5
+        lda item_x+1
+        sbc #0
+        sta bmb_msb_w
+
+        ; Coordonnée X Est (item_x + 14) sur 16 bits
+        clc
+        lda item_x
+        adc #14
+        sta VIC_SPRITE_X6
+        lda item_x+1
+        adc #0
+        sta bmb_msb_e
+
+        ; MSB pour Sprites 2..6
+        lda VIC_SPRITE_MSB
+        and #%10000011                  ; efface bits 2..6
+        sta ZP_TMP
+
+        lda item_x+1
+        beq +
+        lda ZP_TMP
+        ora #%00011100                  ; bits 2, 3, 4 (Centre, Nord, Sud)
+        sta ZP_TMP
++
+        lda bmb_msb_w
+        beq +
+        lda ZP_TMP
+        ora #%00100000                  ; bit 5 (Ouest)
+        sta ZP_TMP
++
+        lda bmb_msb_e
+        beq +
+        lda ZP_TMP
+        ora #%01000000                  ; bit 6 (Est)
+        sta ZP_TMP
++
+        lda ZP_TMP
+        sta VIC_SPRITE_MSB
+
+        ; Active les sprites 2, 3, 4, 5, 6 en multicolore
+        lda VIC_SPRITE_EN
+        ora #%01111100
+        sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MC
+        ora #%01111100
         sta VIC_SPRITE_MC
         rts
