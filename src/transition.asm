@@ -19,9 +19,7 @@ col_row_hi:
         !byte $d8, $d8, $d8, $d8, $d8, $d8, $d8, $d9, $d9, $d9, $d9, $d9
         !byte $d9, $da, $da, $da, $da, $da, $da, $da, $db, $db, $db, $db
 
-; Table tr * 20 (décalage de ligne de tuiles dans la salle de 20x12)
-tile_row_offset:
-        !byte 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220
+
 
 ; ---------------------------------------------------------------------------
 ; Transition vers la DROITE (Est) : l'écran défile vers la gauche

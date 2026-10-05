@@ -158,6 +158,9 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world):
         f.write("\n; table ry * WORLD_ROOMS_X\nworld_row_offset:\n        !byte ")
         f.write(", ".join(str(ry * rooms_x) for ry in range(rooms_y)) + "\n")
 
+        f.write("\n; table ty * MAP_W\ntile_row_offset:\n        !byte ")
+        f.write(", ".join(str(ty * MAP_W) for ty in range(MAP_H)) + "\n")
+
         f.write("\n; tables des pointeurs de chaque salle (ordre Y puis X)\nroom_tbl_lo:\n        !byte ")
         f.write(", ".join(f"<room_{i:02d}" for i in range(len(rooms))) + "\n")
         f.write("room_tbl_hi:\n        !byte ")

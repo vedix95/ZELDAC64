@@ -46,6 +46,10 @@ tile_flags:
 world_row_offset:
         !byte 0, 3, 6
 
+; table ty * MAP_W
+tile_row_offset:
+        !byte 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220
+
 ; tables des pointeurs de chaque salle (ordre Y puis X)
 room_tbl_lo:
         !byte <room_00, <room_01, <room_02, <room_03, <room_04, <room_05, <room_06, <room_07, <room_08

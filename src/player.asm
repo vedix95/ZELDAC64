@@ -1,5 +1,6 @@
 ; ---------------------------------------------------------------------------
-; player.asm : position, déplacements, marche animée et attaque à l'épée
+; player.asm : position, déplacements, collisions de tuiles, marche animée
+;              et attaque à l'épée
 ; Link est en sprite 0 (multicolore, 8x16 centré).
 ; L'épée est en sprite 1 (multicolore, 12x21 pleine taille, lame blanche).
 ; Coordonnées en pixels sprite. X sur 16 bits car l'écran fait plus de 255.
@@ -7,6 +8,10 @@
 ; Le dessin de Link (16x16) est décalé de (4,2) dans le sprite 24x21 :
 ;   X min = 24-4 = 20,  X max = 343-19 = 324
 ;   Y min = 50-2 = 48,  Y max = 249-17 = 232
+;
+; Boîte de collision des pieds de Link (au sol) :
+;   X : player_x + 6 .. player_x + 17 (12 px de large)
+;   Y : player_y + 11 .. player_y + 16 (6 px de haut)
 ; ---------------------------------------------------------------------------
 PLAYER_SPEED    = 2
 PLAYER_X_MIN    = 20
@@ -38,6 +43,17 @@ player_walk_tick: !byte 0               ; compteur de temporisation des pas
 
 ; Attaque à l'épée
 player_attacking: !byte 0               ; décompte d'attaque (>0 = en cours)
+
+; Variables de collision et déplacement temporaire
+target_x:         !word 0
+target_y:         !byte 0
+col_x:            !word 0
+col_y:            !byte 0
+col_x1:           !word 0
+col_x2:           !word 0
+col_y1:           !byte 0
+col_y2:           !byte 0
+col_row_offset:   !byte 0
 
 ; Coordonnées temporaires de dessin
 link_draw_x:      !word 0
@@ -104,58 +120,249 @@ player_update:
 .handle_movement:
         ldx #0                          ; X = indicateur de mouvement (1 = marche)
 
+        ; ===================================================================
+        ; 1. DÉPLACEMENT VERS LA GAUCHE
+        ; ===================================================================
         lda joy
         and #JOY_LEFT
         beq .no_left
+        lda #DIR_LEFT
+        sta player_dir
+
         sec
         lda player_x
         sbc #PLAYER_SPEED
-        sta player_x
+        sta target_x
         lda player_x+1
         sbc #0
+        sta target_x+1
+
+        ; Vérifie si le bord gauche de l'écran est atteint
+        lda target_x+1
+        bne .left_not_border
+        lda target_x
+        cmp #PLAYER_X_MIN
+        bcs .left_not_border
+        lda current_room_x
+        beq .clamp_left
+        jsr transition_left
+        jmp .no_left
+.clamp_left:
+        lda #PLAYER_X_MIN
+        sta player_x
+        jmp .no_left
+
+.left_not_border:
+        ; Collision tuiles sur le bord gauche des pieds : target_x + 6
+        clc
+        lda target_x
+        adc #6
+        sta col_x
+        lda target_x+1
+        adc #0
+        sta col_x+1
+
+        lda player_y
+        clc
+        adc #11
+        sta col_y1
+        lda player_y
+        clc
+        adc #16
+        sta col_y2
+
+        jsr check_v_edge
+        bcs .no_left                    ; Bloqué par un obstacle !
+
+        lda target_x
+        sta player_x
+        lda target_x+1
         sta player_x+1
-        lda #DIR_LEFT
-        sta player_dir
         ldx #1
 .no_left:
+
+        ; ===================================================================
+        ; 2. DÉPLACEMENT VERS LA DROITE
+        ; ===================================================================
         lda joy
         and #JOY_RIGHT
         beq .no_right
+        lda #DIR_RIGHT
+        sta player_dir
+
         clc
         lda player_x
         adc #PLAYER_SPEED
-        sta player_x
+        sta target_x
         lda player_x+1
         adc #0
+        sta target_x+1
+
+        ; Vérifie si le bord droit de l'écran est atteint
+        lda target_x+1
+        beq .right_not_border
+        lda target_x
+        cmp #<(PLAYER_X_MAX + 1)
+        bcc .right_not_border
+        lda current_room_x
+        cmp #(WORLD_ROOMS_X - 1)
+        bcs .clamp_right
+        jsr transition_right
+        jmp .no_right
+.clamp_right:
+        lda #<PLAYER_X_MAX
+        sta player_x
+        lda #>PLAYER_X_MAX
         sta player_x+1
-        lda #DIR_RIGHT
-        sta player_dir
+        jmp .no_right
+
+.right_not_border:
+        ; Collision tuiles sur le bord droit des pieds : target_x + 17
+        clc
+        lda target_x
+        adc #17
+        sta col_x
+        lda target_x+1
+        adc #0
+        sta col_x+1
+
+        lda player_y
+        clc
+        adc #11
+        sta col_y1
+        lda player_y
+        clc
+        adc #16
+        sta col_y2
+
+        jsr check_v_edge
+        bcs .no_right                   ; Bloqué par un obstacle !
+
+        lda target_x
+        sta player_x
+        lda target_x+1
+        sta player_x+1
         ldx #1
 .no_right:
+
+        ; ===================================================================
+        ; 3. DÉPLACEMENT VERS LE HAUT
+        ; ===================================================================
         lda joy
         and #JOY_UP
         beq .no_up
+        lda #DIR_UP
+        sta player_dir
+
         sec
         lda player_y
         sbc #PLAYER_SPEED
+        sta target_y
+
+        ; Vérifie si le bord haut de l'écran est atteint
+        cmp #PLAYER_Y_MIN
+        bcs .up_not_border
+        lda current_room_y
+        beq .clamp_up
+        jsr transition_up
+        jmp .no_up
+.clamp_up:
+        lda #PLAYER_Y_MIN
         sta player_y
-        lda #DIR_UP
-        sta player_dir
+        jmp .no_up
+
+.up_not_border:
+        ; Collision tuiles sur le bord haut des pieds : target_y + 11
+        clc
+        lda target_y
+        adc #11
+        sta col_y
+
+        clc
+        lda player_x
+        adc #6
+        sta col_x1
+        lda player_x+1
+        adc #0
+        sta col_x1+1
+
+        clc
+        lda player_x
+        adc #17
+        sta col_x2
+        lda player_x+1
+        adc #0
+        sta col_x2+1
+
+        jsr check_h_edge
+        bcs .no_up                      ; Bloqué par un obstacle !
+
+        lda target_y
+        sta player_y
         ldx #1
 .no_up:
+
+        ; ===================================================================
+        ; 4. DÉPLACEMENT VERS LE BAS
+        ; ===================================================================
         lda joy
         and #JOY_DOWN
         beq .no_down
+        lda #DIR_DOWN
+        sta player_dir
+
         clc
         lda player_y
         adc #PLAYER_SPEED
+        sta target_y
+
+        ; Vérifie si le bord bas de l'écran est atteint
+        cmp #(PLAYER_Y_MAX + 1)
+        bcc .down_not_border
+        lda current_room_y
+        cmp #(WORLD_ROOMS_Y - 1)
+        bcs .clamp_down
+        jsr transition_down
+        jmp .no_down
+.clamp_down:
+        lda #PLAYER_Y_MAX
         sta player_y
-        lda #DIR_DOWN
-        sta player_dir
+        jmp .no_down
+
+.down_not_border:
+        ; Collision tuiles sur le bord bas des pieds : target_y + 16
+        clc
+        lda target_y
+        adc #16
+        sta col_y
+
+        clc
+        lda player_x
+        adc #6
+        sta col_x1
+        lda player_x+1
+        adc #0
+        sta col_x1+1
+
+        clc
+        lda player_x
+        adc #17
+        sta col_x2
+        lda player_x+1
+        adc #0
+        sta col_x2+1
+
+        jsr check_h_edge
+        bcs .no_down                    ; Bloqué par un obstacle !
+
+        lda target_y
+        sta player_y
         ldx #1
 .no_down:
 
-        ; --- Animation des pas ---
+        ; ===================================================================
+        ; ANIMATION DES PAS
+        ; ===================================================================
         cpx #1
         bne .idle
         inc player_walk_tick
@@ -173,63 +380,114 @@ player_update:
         sta player_walk_tick
         sta player_walk_anim            ; retour posture neutre à l'arrêt
 .anim_done:
+        rts
 
-        ; --- Bornes en X (16 bits) et transition d'écran ---
-        lda player_x+1
-        bne .x_high
-        lda player_x                    ; X < 256 : vérification bord gauche
-        cmp #PLAYER_X_MIN
-        bcs .x_done                     ; player_x >= PLAYER_X_MIN -> dans l'écran
-        lda current_room_x
-        beq .clamp_x_min                ; bord du monde gauche atteint
-        jsr transition_left
-        jmp .x_done
-.clamp_x_min:
-        lda #PLAYER_X_MIN
-        sta player_x
-        jmp .x_done
+; ---------------------------------------------------------------------------
+; check_v_edge : teste 2 points sur une colonne verticale (col_x, col_y1) et (col_x, col_y2)
+; Sortie : Carry = 1 si bloqué, Carry = 0 si libre
+; ---------------------------------------------------------------------------
+check_v_edge:
+        lda col_y1
+        sta col_y
+        jsr check_point_solid
+        bcs .v_blocked
+        lda col_y2
+        sta col_y
+        jsr check_point_solid
+        bcs .v_blocked
+        clc
+        rts
+.v_blocked:
+        sec
+        rts
 
-.x_high:                                ; X >= 256 : vérification bord droit
-        lda player_x
-        cmp #<(PLAYER_X_MAX + 1)
-        bcc .x_done                     ; player_x <= PLAYER_X_MAX -> dans l'écran
-        lda current_room_x
-        cmp #(WORLD_ROOMS_X - 1)
-        bcs .clamp_x_max                ; bord du monde droit atteint
-        jsr transition_right
-        jmp .x_done
-.clamp_x_max:
-        lda #<PLAYER_X_MAX
-        sta player_x
-        lda #>PLAYER_X_MAX
-        sta player_x+1
-.x_done:
+; ---------------------------------------------------------------------------
+; check_h_edge : teste 2 points sur une ligne horizontale (col_x1, col_y) et (col_x2, col_y)
+; Sortie : Carry = 1 si bloqué, Carry = 0 si libre
+; ---------------------------------------------------------------------------
+check_h_edge:
+        lda col_x1
+        sta col_x
+        lda col_x1+1
+        sta col_x+1
+        jsr check_point_solid
+        bcs .h_blocked
+        lda col_x2
+        sta col_x
+        lda col_x2+1
+        sta col_x+1
+        jsr check_point_solid
+        bcs .h_blocked
+        clc
+        rts
+.h_blocked:
+        sec
+        rts
 
-        ; --- Bornes en Y et transition d'écran ---
-        lda player_y
-        cmp #PLAYER_Y_MIN
-        bcs .check_y_max
-        lda current_room_y
-        beq .clamp_y_min                ; bord du monde haut atteint
-        jsr transition_up
-        jmp .y_done
-.clamp_y_min:
-        lda #PLAYER_Y_MIN
-        sta player_y
-        jmp .y_done
+; ---------------------------------------------------------------------------
+; check_point_solid : teste si le point (col_x:col_x+1, col_y) touche une tuile solide
+; Entrée : col_x (16 bits), col_y (8 bits)
+; Sortie : Carry = 1 si solide, Carry = 0 si libre
+; ---------------------------------------------------------------------------
+check_point_solid:
+        ; 1. Coordonnée Y : map_y = col_y - 50
+        lda col_y
+        cmp #50
+        bcc .free                       ; au-dessus de la carte
+        sec
+        sbc #50
+        cmp #192
+        bcs .free                       ; en-dessous de la carte
+        lsr
+        lsr
+        lsr
+        lsr                             ; tile_y = 0..11
+        tax
+        lda tile_row_offset,x           ; tile_y * 20
+        sta col_row_offset
 
-.check_y_max:
-        cmp #(PLAYER_Y_MAX + 1)
-        bcc .y_done
-        lda current_room_y
-        cmp #(WORLD_ROOMS_Y - 1)
-        bcs .clamp_y_max                ; bord du monde bas atteint
-        jsr transition_down
-        jmp .y_done
-.clamp_y_max:
-        lda #PLAYER_Y_MAX
-        sta player_y
-.y_done:
+        ; 2. Coordonnée X : map_x = col_x - 24
+        sec
+        lda col_x
+        sbc #24
+        sta ZP_TMP
+        lda col_x+1
+        sbc #0
+        bne .check_x_high
+
+        ; X < 256 : tile_x = ZP_TMP >> 4 (0..15)
+        lda ZP_TMP
+        lsr
+        lsr
+        lsr
+        lsr
+        jmp .test_tile
+
+.check_x_high:
+        ; X >= 256 : tile_x = 16 + (ZP_TMP >> 4)
+        lda ZP_TMP
+        cmp #64                         ; 256 + 64 = 320 max
+        bcs .free                       ; au-delà de la carte à droite
+        lsr
+        lsr
+        lsr
+        lsr
+        ora #16
+
+.test_tile:
+        clc
+        adc col_row_offset
+        tay
+        lda (ZP_MAP),y                  ; ID de tuile dans la salle active
+        tax
+        lda tile_flags,x
+        and #TILE_SOLID
+        beq .free
+        sec                             ; Solide !
+        rts
+
+.free:
+        clc                             ; Libre !
         rts
 
 ; Bruitage d'attaque à l'épée via le synthétiseur SID (bruit blanc + déclin percussif)
