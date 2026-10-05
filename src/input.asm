@@ -1,11 +1,12 @@
 ; ---------------------------------------------------------------------------
 ; input.asm : lecture du joystick (port 2), des 3 boutons de la manette
-;             et du clavier (touche Espace / touches de secours)
+;             et du clavier (touche Espace / touche 'D' / anti-ghosting)
 ;
-; Manette 3 boutons (standard C64GS / Amiga / Megadrive / VICE) :
+; Manette 3 boutons (standard C64 / Amiga / VICE Xbox pad) :
 ;   - Bouton A (1) : Épée (CIA1 Port A bit 4 = 0)
-;   - Bouton B (2) : Arme secondaire (SID POTX < $80, Port 1 Fire, ou touche 'B')
-;   - Bouton C (3) : Menu / Inventaire (SID POTY < $80, barre ESPACE, ou 'M'/'I')
+;   - Bouton B (2) : Arme secondaire (Touche 'B' -> Ligne 3, Col 4)
+;   - Bouton C (3) : Menu / Inventaire (Touche ESPACE -> Ligne 7, Col 4)
+;   - Clavier 'D'  : Écran de debug matériel & mémoire (Ligne 2, Col 2)
 ; ---------------------------------------------------------------------------
 joy:                !byte 0                 ; état courant (masques JOY_*)
 joy_prev:           !byte 0                 ; état à l'image précédente
@@ -27,6 +28,12 @@ key_d:              !byte 0                 ; 1 si touche 'D' (Debug) enfoncée
 key_d_prev:         !byte 0
 key_d_pressed:      !byte 0                 ; 1 au front montant
 
+; Variables de lecture matricielle anti-ghosting
+col_idle:           !byte 0                 ; état des colonnes au repos (Port A = $FF)
+col_row3:           !byte 0                 ; état des colonnes avec Ligne 3 active ('B')
+col_row7:           !byte 0                 ; état des colonnes avec Ligne 7 active (Espace)
+col_row2:           !byte 0                 ; état des colonnes avec Ligne 2 active ('D')
+
 ; Alias pour rétro-compatibilité
 key_space_pressed   = btn_c_pressed
 
@@ -46,11 +53,12 @@ read_input:
         ; -------------------------------------------------------------------
         ; 1. LECTURE DU JOYSTICK PORT 2 & BOUTON A (FIRE 1)
         ; -------------------------------------------------------------------
-        ; Sélectionne le Port 2 pour les potentiomètres SID (Bit 7 = 1, Bit 6 = 0)
-        ; et prépare les bits 0..4 en entrée pull-up
-        lda #%10011111                  ; $9F
+        ; Port A ($DC00) : toutes les lignes de sortie à 1 ($FF).
+        ; Les directions et Fire tirent les broches à 0 (GND).
+        lda #$ff
         sta CIA1_PORT_A
 
+        ; Lecture de l'état du Joystick 2 (0 = contact fermé)
         lda CIA1_PORT_A
         eor #$ff
         and #%00001111                  ; Bits 0..3 : Directions Up, Down, Left, Right
@@ -86,44 +94,47 @@ read_input:
 +
 
         ; -------------------------------------------------------------------
-        ; 2. LECTURE DU BOUTON B (OBJET SECONDAIRE)
-        ; Sources combinées :
-        ;   a) SID POT X ($D419) < $80 (standard 2e bouton C64GS / Megadrive)
-        ;   b) CIA1 Port B ($DC01) bit 4 = 0 (si l'émulateur assigne Bouton 2 à Port 1)
-        ;   c) Touche clavier 'B' ou 'X'
+        ; 2. SCAN MATRICIEL SÉCURISÉ & ANTI-GHOSTING
+        ; -------------------------------------------------------------------
+        ; Référence au repos : Port A = $FF (aucune ligne activée par le CPU).
+        ; Si Joystick 2 Droite est pressé (PA3 = 0) ET que la touche 'B' est
+        ; enfoncée (relie PA3 et Colonne 4), la Colonne 4 est court-circuitée
+        ; à la masse en permanence (bit 4 de Port B = 0).
+        lda CIA1_PORT_B
+        sta col_idle
+
+        sei
+        ; Test Ligne 3 ($F7) : Touche 'B' (Arme secondaire)
+        lda #%11110111
+        sta CIA1_PORT_A
+        lda CIA1_PORT_B
+        sta col_row3
+
+        ; Test Ligne 7 ($7F) : Touche ESPACE (Menu / Inventaire)
+        lda #%01111111
+        sta CIA1_PORT_A
+        lda CIA1_PORT_B
+        sta col_row7
+
+        ; Test Ligne 2 ($FB) : Touche 'D' (Debug matériel & mémoire)
+        lda #%11111011
+        sta CIA1_PORT_A
+        lda CIA1_PORT_B
+        sta col_row2
+
+        ; Restaure immédiatement Port A à $FF (prêt pour le prochain tour)
+        lda #$ff
+        sta CIA1_PORT_A
+        cli
+
+        ; -------------------------------------------------------------------
+        ; 3. TRAITEMENT BOUTON B (ARME SECONDAIRE / TOUCHE 'B')
         ; -------------------------------------------------------------------
         lda #0
         sta btn_b
 
-        ; Test a : SID POT X (Pin 9 du Port 2)
-        lda SID_POTX
-        bmi .check_b_port1              ; si >= $80, bouton relâché
-        lda #1
-        sta btn_b
-        jmp .done_btn_b
-
-.check_b_port1:
-        ; Test b : Port 1 Fire ($DC01 bit 4)
-        lda CIA1_PORT_B
-        and #%00010000                  ; bit 4 = 0 si feu port 1 pressé
-        bne .check_b_key
-        lda #1
-        sta btn_b
-        jmp .done_btn_b
-
-.check_b_key:
-        ; Test c : Touche 'B' (Ligne 3, Colonne 4)
-        sei
-        lda #%11110111                  ; Ligne 3 ($F7)
-        sta CIA1_PORT_A
-        lda CIA1_PORT_B
-        sta ZP_TMP
-        lda #%10011111                  ; Restaure Port A
-        sta CIA1_PORT_A
-        cli
-
-        lda ZP_TMP
-        and #%00010000                  ; bit 4 = 0 si 'B' enfoncé
+        lda col_row3
+        and #%00010000                  ; Bit 4 = 0 si 'B' enfoncé
         bne .done_btn_b
         lda #1
         sta btn_b
@@ -135,53 +146,22 @@ read_input:
         sta btn_b_pressed
 
         ; -------------------------------------------------------------------
-        ; 3. LECTURE DU BOUTON C (INVENTAIRE / MENU)
-        ; Sources combinées :
-        ;   a) SID POT Y ($D41A) < $80 (standard 3e bouton C64GS / Amiga)
-        ;   b) Touche ESPACE (Ligne 7, Colonne 4)
-        ;   c) Buffer KERNAL (touches Space, 'M', 'I', Entrée)
+        ; 4. TRAITEMENT BOUTON C (INVENTAIRE / MENU / TOUCHE ESPACE)
         ; -------------------------------------------------------------------
         lda #0
         sta btn_c
 
-        ; Test a : SID POT Y (Pin 5 du Port 2)
-        lda SID_POTY
-        bmi .check_c_space              ; si >= $80, bouton relâché
-        lda #1
-        sta btn_c
-        jmp .done_btn_c
+        ; Anti-ghosting différentiel :
+        ; Si la Colonne 4 était DÉJÀ à 0 au repos (col_idle bit 4 = 0), c'est un
+        ; retour de masse causé par Droite + Touche 'B' -> on rejette !
+        lda col_idle
+        and #%00010000                  ; Bit 4 doit être 1 au repos
+        beq .done_btn_c                 ; Si 0 -> ghosting, rejet immédiat !
 
-.check_c_space:
-        ; Test b : Touche ESPACE (Ligne 7, Colonne 4)
-        sei
-        lda #$7f                        ; Ligne 7 ($7F)
-        sta CIA1_PORT_A
-        lda CIA1_PORT_B
-        sta ZP_TMP
-        lda #%10011111                  ; Restaure Port A
-        sta CIA1_PORT_A
-        cli
-
-        lda ZP_TMP
-        and #%00010000                  ; bit 4 = 0 si Espace enfoncé
-        bne .check_c_getin
-        lda #1
-        sta btn_c
-        jmp .done_btn_c
-
-.check_c_getin:
-        ; Test c : Buffer KERNAL (Espace = 32, 'M' = 77, 'I' = 73, Return = 13)
-        jsr GETIN
-        beq .done_btn_c
-        cmp #32
-        beq .got_c_key
-        cmp #77
-        beq .got_c_key
-        cmp #73
-        beq .got_c_key
-        cmp #13
+        ; Vérifie si la Colonne 4 passe à 0 quand la Ligne 7 est activée
+        lda col_row7
+        and #%00010000                  ; Bit 4 = 0 si Espace enfoncé
         bne .done_btn_c
-.got_c_key:
         lda #1
         sta btn_c
 
@@ -192,35 +172,31 @@ read_input:
         sta btn_c_pressed
 
         ; -------------------------------------------------------------------
-        ; 4. LECTURE DE LA TOUCHE 'D' (DEBUG HARDWARE & MEMOIRE)
+        ; 5. TRAITEMENT TOUCHE 'D' (DEBUG MATÉRIEL & MÉMOIRE)
         ; -------------------------------------------------------------------
         lda #0
         sta key_d
 
-        ; Matrice clavier : Ligne 2 ($FB), Colonne 2 (bit 2 de Port B = 0 si 'D')
-        sei
-        lda #$fb                        ; Ligne 2 ($FB)
-        sta CIA1_PORT_A
-        lda CIA1_PORT_B
-        sta ZP_TMP
-        lda #$ff                        ; Restaure Port A
-        sta CIA1_PORT_A
-        cli
-
-        lda ZP_TMP
-        and #%00000100                  ; bit 2 = 0 si 'D' enfoncé
-        bne .check_d_done
+        lda col_row2
+        and #%00000100                  ; Bit 2 = 0 si 'D' enfoncé
+        bne .done_key_d
         lda #1
         sta key_d
 
-.check_d_done:
+.done_key_d:
         lda key_d_prev
         eor #$ff
         and key_d
         sta key_d_pressed
 
+        ; -------------------------------------------------------------------
+        ; Vider le tampon clavier KERNAL ($C6 = 0) pour empêcher l'accumulation
+        ; de frappes fantômes générées par SCNKEY lors des mouvements de joystick.
+        ; -------------------------------------------------------------------
+        lda #0
+        sta $c6
+
         ; Restaure Port A à $FF
         lda #$ff
         sta CIA1_PORT_A
         rts
-

@@ -10,11 +10,14 @@
 
 dbg_anim_tick:          !byte 0
 dbg_val:                !word 0
+prev_game_state:        !byte 0
 
 ; ---------------------------------------------------------------------------
 ; open_debug : active l'écran de debug
 ; ---------------------------------------------------------------------------
 open_debug:
+        lda game_state
+        sta prev_game_state
         lda #STATE_DEBUG
         sta game_state
 
@@ -105,6 +108,17 @@ debug_update:
 ; close_debug : ferme le debug et restaure l'affichage du jeu
 ; ---------------------------------------------------------------------------
 close_debug:
+        ; Couper le son
+        lda #%00010000
+        sta SID_V1_CTRL
+
+        lda prev_game_state
+        cmp #STATE_INVENTORY
+        bne .restore_play
+        jsr open_inventory
+        rts
+
+.restore_play:
         lda #STATE_PLAYING
         sta game_state
 
@@ -113,10 +127,6 @@ close_debug:
         sta VIC_BACKGROUND
         lda #COL_BLACK
         sta VIC_BORDER
-
-        ; Couper le son
-        lda #%00010000
-        sta SID_V1_CTRL
 
         ; Restaure la salle, le HUD et les sprites
         jsr load_room

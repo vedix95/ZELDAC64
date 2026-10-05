@@ -40,20 +40,23 @@ main_loop:
         jsr wait_frame
         jsr read_input
 
-        ; Dispatch selon l'état de jeu
+        ; Si déjà en mode debug
         lda game_state
-        cmp #STATE_INVENTORY
-        beq .in_inventory
         cmp #STATE_DEBUG
         beq .in_debug
 
-        ; --- ÉTAT DE JEU NORMAL ---
-        ; Touche D : ouvre l'écran de debug matériel & mémoire
+        ; Touche D : ouvre l'écran de debug depuis n'importe où
         lda key_d_pressed
         beq +
         jsr open_debug
         jmp main_loop
 +
+        ; Dispatch selon l'état de jeu
+        lda game_state
+        cmp #STATE_INVENTORY
+        beq .in_inventory
+
+        ; --- ÉTAT DE JEU NORMAL ---
         ; Bouton C / Touche Espace : ouvre l'inventaire
         lda btn_c_pressed
         beq .play_frame
