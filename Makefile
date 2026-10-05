@@ -17,7 +17,7 @@ PYTHON  ?= python3
 SRC_DIR := src
 BLD_DIR := build
 MAIN    := $(SRC_DIR)/main.asm
-GEN     := $(SRC_DIR)/sprites.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/map_data.asm
+GEN     := $(SRC_DIR)/sprites.asm $(SRC_DIR)/sprites_enemies.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/map_data.asm
 SRCS    := $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN))
 
 PRG     := $(BLD_DIR)/$(NAME).prg
@@ -33,6 +33,10 @@ all: $(PRG)
 $(SRC_DIR)/sprites.asm: assets/link.txt tools/sprgen.py
 	$(PYTHON) tools/sprgen.py assets/link.txt -o $@
 
+# sprites_enemies.asm est généré depuis assets/enemies.txt
+$(SRC_DIR)/sprites_enemies.asm: assets/enemies.txt tools/sprgen.py
+	$(PYTHON) tools/sprgen.py assets/enemies.txt -o $@
+
 # charset.asm et map_data.asm sont générés ensemble (cible groupée : make >= 4.3)
 $(SRC_DIR)/charset.asm $(SRC_DIR)/map_data.asm &: assets/tiles.txt assets/world.txt tools/tilegen.py
 	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/world.txt \
@@ -45,13 +49,14 @@ $(PRG): $(SRCS) | $(BLD_DIR)
 $(BLD_DIR):
 	mkdir -p $@
 
-# Aperçus PNG : build/link_preview.png et build/world_preview.png
+# Aperçus PNG : build/link_preview.png, enemies_preview.png et world_preview.png
 preview: | $(BLD_DIR)
 	$(PYTHON) tools/sprgen.py assets/link.txt -o $(SRC_DIR)/sprites.asm --preview $(BLD_DIR)/link_preview.png
+	$(PYTHON) tools/sprgen.py assets/enemies.txt -o $(SRC_DIR)/sprites_enemies.asm --preview $(BLD_DIR)/enemies_preview.png
 	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/world.txt \
 		--charset $(SRC_DIR)/charset.asm --map-out $(SRC_DIR)/map_data.asm \
 		--preview $(BLD_DIR)/world_preview.png
-	@echo "Aperçus : $(BLD_DIR)/link_preview.png $(BLD_DIR)/world_preview.png"
+	@echo "Aperçus : $(BLD_DIR)/link_preview.png $(BLD_DIR)/enemies_preview.png $(BLD_DIR)/world_preview.png"
 
 run: $(PRG)
 	$(VICE) -autostart $(PRG)

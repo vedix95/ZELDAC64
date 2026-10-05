@@ -630,8 +630,10 @@ player_draw:
         ora ZP_TMP
         sta VIC_SPRITE_MSB
 
-        ; Active les deux sprites
-        lda #%00000011
+        ; Active les deux sprites (préserve armes et ennemis sur bits 2..7)
+        lda VIC_SPRITE_EN
+        and #%11111100
+        ora #%00000011
         sta VIC_SPRITE_EN
         rts
 
@@ -654,8 +656,20 @@ player_draw:
         ora ZP_TMP
         sta VIC_SPRITE_MSB
 
-        ; Masque le sprite 1 (épée rangée)
-        lda #%00000001
+        ; Masque le sprite 1 (épée rangée) et gère le clignotement d'invincibilité
+        lda VIC_SPRITE_EN
+        and #%11111100                  ; efface sprites 0 et 1
+        sta ZP_TMP
+        lda player_hurt_timer
+        beq .link_visible
+        and #2                          ; clignote toutes les 2 frames
+        bne .link_hidden
+.link_visible:
+        lda ZP_TMP
+        ora #%00000001                  ; active sprite 0
+        sta ZP_TMP
+.link_hidden:
+        lda ZP_TMP
         sta VIC_SPRITE_EN
 
         ; Pointeur Sprite 0 : base + (player_dir << 1) + player_walk_anim

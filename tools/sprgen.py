@@ -32,6 +32,13 @@ PREVIEW_SWORD = {
     3: (0x6F, 0x4F, 0x25),      # poignée marron ($09)
 }
 
+PREVIEW_ENEMY = {
+    0: (0x35, 0x28, 0x79),      # fond bleu C64
+    1: (0xB8, 0x69, 0x62),      # rose/or/peau = rouge clair ($0a)
+    2: (0x9F, 0x47, 0x3E),      # rouge vif ennemi ($02)
+    3: (0x6F, 0x4F, 0x25),      # marron ($09)
+}
+
 
 def parse(path):
     frames = {}                 # nom -> {'rows': [...], 'pad': (px, py), 'mirror': name}
@@ -120,12 +127,17 @@ def write_png(path, pixels):
         f.write(chunk(b"IEND", b""))
 
 
-def preview(path, order, grids, scale=12):
+def preview(path, order, grids, scale=12, prefix=""):
     gap = 2
     width = len(order) * (SPR_W + gap) + gap
     cells = [[PREVIEW_LINK[0]] * width for _ in range(SPR_H + 2 * gap)]
     for i, name in enumerate(order):
-        palette = PREVIEW_SWORD if "sword" in name else PREVIEW_LINK
+        if "sword" in name:
+            palette = PREVIEW_SWORD
+        elif prefix == "enemies":
+            palette = PREVIEW_ENEMY
+        else:
+            palette = PREVIEW_LINK
         for y in range(SPR_H):
             for x in range(SPR_W):
                 cells[y + gap][gap + i * (SPR_W + gap) + x] = palette[grids[name][y][x]]
@@ -157,7 +169,7 @@ def main():
                 f.write(f"        !byte %{b0:08b}, %{b1:08b}, %{b2:08b}\n")
             f.write("        !byte 0                         ; remplissage a 64 octets\n")
     if a.preview:
-        preview(a.preview, order, grids)
+        preview(a.preview, order, grids, prefix=prefix)
 
 
 if __name__ == "__main__":

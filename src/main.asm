@@ -34,6 +34,7 @@ game_init:
         jsr hud_init
         jsr player_init
         jsr items_init
+        jsr enemies_init
 
 main_loop:
         jsr wait_frame
@@ -54,8 +55,10 @@ main_loop:
 .play_frame:
         jsr player_update
         jsr items_update
+        jsr enemies_update
         jsr player_draw
         jsr items_draw
+        jsr enemies_draw
         jmp main_loop
 
 .in_inventory:
@@ -93,3 +96,14 @@ wait_frame:
 !source "src/items.asm"
 !source "src/inventory.asm"
 !source "src/map_data.asm"
+
+; Sprites des ennemis alignés à 64 octets dans Bank 0 (RAM $3000..$3FFF)
+!align 63, 0
+!source "src/sprites_enemies.asm"
+
+!if * > $4000 {
+        !error "Les sprites ennemis debordent de la banque VIC 0 ($3FFF)"
+}
+
+; Logique et IA des ennemis (code CPU en RAM libre)
+!source "src/enemies.asm"

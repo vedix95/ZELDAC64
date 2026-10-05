@@ -168,6 +168,7 @@ transition_right:
         jsr load_room
         jsr hud_render
         jsr player_draw
+        jsr enemies_room_init
         rts
 
 ; ---------------------------------------------------------------------------
@@ -319,6 +320,7 @@ transition_left:
         jsr load_room
         jsr hud_render
         jsr player_draw
+        jsr enemies_room_init
         rts
 
 ; ---------------------------------------------------------------------------
@@ -452,6 +454,7 @@ transition_down:
         jsr load_room
         jsr hud_render
         jsr player_draw
+        jsr enemies_room_init
         rts
 
 ; ---------------------------------------------------------------------------
@@ -589,4 +592,5 @@ transition_up:
         jsr load_room
         jsr hud_render
         jsr player_draw
+        jsr enemies_room_init
         rts
