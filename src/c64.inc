@@ -22,12 +22,36 @@ VIC_SPRITE_MC1  = $d025         ; multicolore 1 (commun aux sprites)
 VIC_SPRITE_MC2  = $d026         ; multicolore 2 (commun aux sprites)
 VIC_SPRITE_X1   = $d002
 VIC_SPRITE_Y1   = $d003
+VIC_SPRITE_X2   = $d004
+VIC_SPRITE_Y2   = $d005
+VIC_SPRITE_X3   = $d006
+VIC_SPRITE_Y3   = $d007
+VIC_SPRITE_X4   = $d008
+VIC_SPRITE_Y4   = $d009
+VIC_SPRITE_X5   = $d00a
+VIC_SPRITE_Y5   = $d00b
+VIC_SPRITE_X6   = $d00c
+VIC_SPRITE_Y6   = $d00d
+VIC_SPRITE_X7   = $d00e
+VIC_SPRITE_Y7   = $d00f
 VIC_SPRITE_COL0 = $d027         ; couleur propre du sprite 0
 VIC_SPRITE_COL1 = $d028         ; couleur propre du sprite 1
+VIC_SPRITE_COL2 = $d029
+VIC_SPRITE_COL3 = $d02a
+VIC_SPRITE_COL4 = $d02b
+VIC_SPRITE_COL5 = $d02c
+VIC_SPRITE_COL6 = $d02d
+VIC_SPRITE_COL7 = $d02e
 
 ; --- Pointeurs de sprites (bloc de 64 octets = adresse >> 6) ---
 SPRITE_PTR0     = $07f8
 SPRITE_PTR1     = $07f9
+SPRITE_PTR2     = $07fa
+SPRITE_PTR3     = $07fb
+SPRITE_PTR4     = $07fc
+SPRITE_PTR5     = $07fd
+SPRITE_PTR6     = $07fe
+SPRITE_PTR7     = $07ff
 
 ; --- SID ---
 SID_BASE        = $d400
@@ -108,6 +132,13 @@ COL_GREY        = 12
 COL_LGREEN      = 13
 COL_LBLUE       = 14
 COL_LGREY       = 15
+
+; Alias plus explicites
+COL_LIGHT_RED   = COL_LRED
+COL_LIGHT_GREEN = COL_LGREEN
+COL_LIGHT_BLUE  = COL_LBLUE
+COL_LIGHT_GREY  = COL_LGREY
+COL_DARK_GREY   = COL_DGREY
 
 ; --- Codes PETSCII ---
 PET_CLEAR       = 147
