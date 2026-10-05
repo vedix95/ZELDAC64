@@ -94,15 +94,7 @@ player_update:
         bcs .x_done                     ; player_x >= PLAYER_X_MIN -> dans l'écran
         lda current_room_x
         beq .clamp_x_min                ; bord du monde gauche atteint
-        dec current_room_x
-        lda #<PLAYER_X_MAX
-        sec
-        sbc #4
-        sta player_x
-        lda #>PLAYER_X_MAX
-        sbc #0
-        sta player_x+1
-        jsr load_room
+        jsr transition_left
         jmp .x_done
 .clamp_x_min:
         lda #PLAYER_X_MIN
@@ -116,12 +108,7 @@ player_update:
         lda current_room_x
         cmp #(WORLD_ROOMS_X - 1)
         bcs .clamp_x_max                ; bord du monde droit atteint
-        inc current_room_x
-        lda #(PLAYER_X_MIN + 4)
-        sta player_x
-        lda #0
-        sta player_x+1
-        jsr load_room
+        jsr transition_right
         jmp .x_done
 .clamp_x_max:
         lda #<PLAYER_X_MAX
@@ -136,10 +123,7 @@ player_update:
         bcs .check_y_max
         lda current_room_y
         beq .clamp_y_min                ; bord du monde haut atteint
-        dec current_room_y
-        lda #(PLAYER_Y_MAX - 4)
-        sta player_y
-        jsr load_room
+        jsr transition_up
         jmp .y_done
 .clamp_y_min:
         lda #PLAYER_Y_MIN
@@ -152,10 +136,7 @@ player_update:
         lda current_room_y
         cmp #(WORLD_ROOMS_Y - 1)
         bcs .clamp_y_max                ; bord du monde bas atteint
-        inc current_room_y
-        lda #(PLAYER_Y_MIN + 4)
-        sta player_y
-        jsr load_room
+        jsr transition_down
         jmp .y_done
 .clamp_y_max:
         lda #PLAYER_Y_MAX

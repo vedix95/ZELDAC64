@@ -62,8 +62,12 @@ ZP_TCOL         = $04
 ZP_TMP          = $05
 ZP_BASE         = $06
 ZP_MAP          = $07           ; pointeur 16 bits vers la salle active ($07-$08)
-ZP_SCR          = $fb           ; pointeur 16 bits
-ZP_COL          = $fd           ; pointeur 16 bits
+ZP_TGT          = $09           ; pointeur 16 bits vers la salle cible ($09-$0a)
+ZP_STEP         = $0b           ; compteur d'étapes de transition
+ZP_SRC          = $0c           ; pointeur source 16 bits ($0c-$0d)
+ZP_DST          = $0e           ; pointeur destination 16 bits ($0e-$0f)
+ZP_SCR          = $fb           ; pointeur 16 bits écran ($fb-$fc)
+ZP_COL          = $fd           ; pointeur 16 bits couleur ($fd-$fe)
 
 ; --- KERNAL ---
 CHROUT          = $ffd2
