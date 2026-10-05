@@ -3,8 +3,10 @@
 
 Usage : sprgen.py assets/link.txt -o src/sprites.asm [--preview apercu.png]
 
-Sortie : un bloc de 64 octets par image, etiquete sprite_<prefixe>_<nom>.
-Les blocs sont consecutifs : le premier doit etre aligne sur 64 octets.
+Sortie : un bloc de 64 octets par image, étiqueté sprite_<prefixe>_<nom>.
+Les blocs sont consécutifs : le premier doit être aligné sur 64 octets.
+Supporte les images 8x16 (Link, avec padding 2,2) et 12x21 (taille complète du sprite),
+ainsi que [nom pad X Y] et [nom mirror autre].
 """
 import argparse
 import os
@@ -12,20 +14,27 @@ import struct
 import sys
 import zlib
 
-ART_W, ART_H = 8, 16          # taille du dessin (pixels multicolores)
-SPR_W, SPR_H = 12, 21         # taille d'un sprite multicolore
-PAD_X, PAD_Y = 2, 2           # position du dessin dans le sprite
+SPR_W, SPR_H = 12, 21         # taille d'un sprite multicolore (12 cols x 21 lignes)
 CODES = {".": 0, "s": 1, "g": 2, "b": 3}   # 00 transp., 01 MC1, 10 propre, 11 MC2
 
-# Apercu uniquement (palette C64 "pepto") : doit refleter src/player.asm
-PREVIEW = {0: (0x35, 0x28, 0x79),          # fond bleu C64
-           1: (0xB8, 0x69, 0x62),          # peau  = rouge clair ($0a)
-           2: (0x58, 0x8D, 0x43),          # vert  = vert ($05)
-           3: (0x6F, 0x4F, 0x25)}          # marron = marron ($09)
+# Palette C64 "pepto" pour aperçu PNG
+PREVIEW_LINK = {
+    0: (0x35, 0x28, 0x79),      # fond bleu C64
+    1: (0xB8, 0x69, 0x62),      # peau / or = rouge clair ($0a)
+    2: (0x58, 0x8D, 0x43),      # vert = vert Link ($05)
+    3: (0x6F, 0x4F, 0x25),      # marron ($09)
+}
+
+PREVIEW_SWORD = {
+    0: (0x35, 0x28, 0x79),      # fond bleu C64
+    1: (0xB8, 0x69, 0x62),      # garde dorée ($0a)
+    2: (0xEE, 0xEE, 0xEE),      # lame blanche brillante ($01)
+    3: (0x6F, 0x4F, 0x25),      # poignée marron ($09)
+}
 
 
 def parse(path):
-    frames = {}                 # nom -> rows | ("mirror", autre)
+    frames = {}                 # nom -> {'rows': [...], 'pad': (px, py), 'mirror': name}
     order = []
     current = None
     with open(path, encoding="utf-8") as f:
@@ -37,31 +46,54 @@ def parse(path):
                 head, _, rest = line.partition("]")
                 current = head[1:].strip()
                 order.append(current)
-                rest = rest.split()
-                frames[current] = ("mirror", rest[1]) if rest[:1] == ["mirror"] else []
+                tokens = rest.split()
+                if tokens[:1] == ["mirror"]:
+                    frames[current] = {"mirror": tokens[1], "rows": []}
+                elif tokens[:1] == ["pad"] and len(tokens) == 3:
+                    frames[current] = {"pad": (int(tokens[1]), int(tokens[2])), "rows": []}
+                else:
+                    frames[current] = {"rows": []}
                 continue
-            if current is None or isinstance(frames[current], tuple):
+            if current is None or "mirror" in frames[current]:
                 sys.exit(f"{path}:{n}: ligne hors image : {line!r}")
-            if len(line) != ART_W or any(c not in CODES for c in line):
-                sys.exit(f"{path}:{n}: ligne invalide (attendu {ART_W} car. parmi "
-                         f"{''.join(CODES)}) : {line!r}")
-            frames[current].append(line)
+            if any(c not in CODES for c in line):
+                sys.exit(f"{path}:{n}: caractere invalide dans {line!r}")
+            frames[current]["rows"].append(line)
+
     for name in order:
-        v = frames[name]
-        if isinstance(v, tuple):
-            if v[1] not in frames or isinstance(frames[v[1]], tuple):
-                sys.exit(f"[{name}] : mirror vers une image inconnue ({v[1]})")
-            frames[name] = [r[::-1] for r in frames[v[1]]]
-        elif len(v) != ART_H:
-            sys.exit(f"[{name}] : {len(v)} lignes, {ART_H} attendues")
+        entry = frames[name]
+        if "mirror" in entry:
+            tgt = entry["mirror"]
+            if tgt not in frames or "mirror" in frames[tgt]:
+                sys.exit(f"[{name}] : mirror vers image inconnue ({tgt})")
+            ref = frames[tgt]
+            entry["rows"] = [r[::-1] for r in ref["rows"]]
+            entry["pad"] = ref.get("pad")
+        rows = entry["rows"]
+        h = len(rows)
+        w = len(rows[0]) if h > 0 else 0
+        if any(len(r) != w for r in rows):
+            sys.exit(f"[{name}] : les lignes ont des largeurs differentes")
+        if w > SPR_W or h > SPR_H:
+            sys.exit(f"[{name}] : dimension {w}x{h} depasse le sprite 12x21")
+        if "pad" not in entry or entry["pad"] is None:
+            if w == 8 and h == 16:
+                entry["pad"] = (2, 2)
+            elif w == SPR_W and h == SPR_H:
+                entry["pad"] = (0, 0)
+            else:
+                entry["pad"] = ((SPR_W - w) // 2, (SPR_H - h) // 2)
     return order, frames
 
 
-def to_grid(rows):
+def to_grid(entry):
+    rows = entry["rows"]
+    px, py = entry["pad"]
     grid = [[0] * SPR_W for _ in range(SPR_H)]
     for y, row in enumerate(rows):
         for x, c in enumerate(row):
-            grid[y + PAD_Y][x + PAD_X] = CODES[c]
+            if 0 <= y + py < SPR_H and 0 <= x + px < SPR_W:
+                grid[y + py][x + px] = CODES[c]
     return grid
 
 
@@ -88,14 +120,15 @@ def write_png(path, pixels):
         f.write(chunk(b"IEND", b""))
 
 
-def preview(path, order, grids, scale=14):
+def preview(path, order, grids, scale=12):
     gap = 2
     width = len(order) * (SPR_W + gap) + gap
-    cells = [[PREVIEW[0]] * width for _ in range(SPR_H + 2 * gap)]
+    cells = [[PREVIEW_LINK[0]] * width for _ in range(SPR_H + 2 * gap)]
     for i, name in enumerate(order):
+        palette = PREVIEW_SWORD if "sword" in name else PREVIEW_LINK
         for y in range(SPR_H):
             for x in range(SPR_W):
-                cells[y + gap][gap + i * (SPR_W + gap) + x] = PREVIEW[grids[name][y][x]]
+                cells[y + gap][gap + i * (SPR_W + gap) + x] = palette[grids[name][y][x]]
     pix = []
     for row in cells:
         wide = [px for px in row for _ in range(2 * scale)]   # pixel MC = 2x1
