@@ -1,5 +1,7 @@
 ; ---------------------------------------------------------------------------
-; player.asm : position et affichage de Link (sprite 0, multicolore)
+; player.asm : position, déplacements, attaque à l'épée et affichage de Link
+; Link est en sprite 0 (multicolore).
+; L'épée est en sprite 1 (multicolore, lame blanche, garde or/marron).
 ; Coordonnées en pixels sprite. X sur 16 bits car l'écran fait plus de 255.
 ; Zone visible (cadre 320x200) : X 24..343, Y 50..249.
 ; Le dessin de Link (16x16) est décalé de (4,2) dans le sprite 24x21 :
@@ -12,33 +14,72 @@ PLAYER_X_MAX    = 324
 PLAYER_Y_MIN    = 48
 PLAYER_Y_MAX    = 224                   ; la carte fait 192 px : 50+192-1-17
 
-; Directions : l'ordre doit suivre celui des images dans assets/link.txt
+ATTACK_FRAMES   = 10                    ; durée du coup d'épée en images (0.2s)
+
+; Directions : l'ordre suit celui des images dans assets/link.txt
 DIR_DOWN        = 0
 DIR_UP          = 1
 DIR_LEFT        = 2
 DIR_RIGHT       = 3
 
-PLAYER_COLOR    = COL_GREEN             ; couleur propre : tunique
-PLAYER_SKIN     = COL_LRED              ; multicolore 1  : peau
-PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture...
+PLAYER_COLOR    = COL_GREEN             ; tunique de Link
+PLAYER_SKIN     = COL_LRED              ; multicolore 1  : peau / garde or
+PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture, manche
+SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame brillante
 
-player_x:       !word 180               ; carrefour au centre : tuile 10 (24 + 10*16 - 4)
-player_y:       !byte 128               ; tuile 5 (50 + 5*16 - 2)
-player_dir:     !byte DIR_DOWN
+player_x:         !word 180             ; départ au centre
+player_y:         !byte 128
+player_dir:       !byte DIR_DOWN
+player_attacking: !byte 0               ; compteur d'images d'attaque (>0 = attaque en cours)
+
+sword_x:          !word 0
+sword_y:          !byte 0
+
+; Décalages de l'épée selon la direction (bas, haut, gauche, droite)
+sword_off_x_lo:   !byte 0, 0, <(-12), 12
+sword_off_x_hi:   !byte 0, 0, >(-12), 0
+sword_off_y:      !byte 12, <(-12), 0, 0
 
 player_init:
         lda #PLAYER_COLOR
         sta VIC_SPRITE_COL0
+        lda #SWORD_COLOR
+        sta VIC_SPRITE_COL1
         lda #PLAYER_SKIN
         sta VIC_SPRITE_MC1
         lda #PLAYER_BROWN
         sta VIC_SPRITE_MC2
-        lda #%00000001
-        sta VIC_SPRITE_MC               ; sprite 0 en multicolore
-        sta VIC_SPRITE_EN               ; et visible
+        lda #%00000011                  ; sprites 0 et 1 en multicolore
+        sta VIC_SPRITE_MC
+        lda #%00000001                  ; seul le sprite 0 est actif au départ
+        sta VIC_SPRITE_EN
+        lda #0
+        sta player_attacking
         rts
 
 player_update:
+        ; --- Gestion de l'attaque en cours ---
+        lda player_attacking
+        beq .check_attack_start
+        dec player_attacking
+        bne .attacking_active
+        ; Fin de l'attaque : couper la porte sonore SID
+        lda #%10000000
+        sta SID_V1_CTRL
+.attacking_active:
+        rts                             ; Link reste immobile pendant le coup d'épée
+
+.check_attack_start:
+        ; Déclenchement de l'attaque sur appui bouton Feu (front montant)
+        lda joy_pressed
+        and #JOY_FIRE
+        beq .handle_movement
+        lda #ATTACK_FRAMES
+        sta player_attacking
+        jsr sound_sword
+        rts                             ; pas de déplacement sur l'image d'impact
+
+.handle_movement:
         lda joy
         and #JOY_LEFT
         beq .no_left
@@ -144,29 +185,99 @@ player_update:
 .y_done:
         rts
 
-; Recopie la position dans les registres VIC-II.
+; Bruitage d'attaque à l'épée via le synthétiseur SID (bruit blanc + déclin rapide)
+sound_sword:
+        lda #15
+        sta SID_VOLUME                  ; volume maximum
+        lda #$00
+        sta SID_V1_FREQ_LO
+        lda #$40
+        sta SID_V1_FREQ_HI              ; fréquence de souffle
+        lda #$09                        ; Attaque 2 ms, Déclin ~168 ms
+        sta SID_V1_AD
+        lda #$00                        ; Soutien 0, Relâchement 6 ms
+        sta SID_V1_SR
+        lda #%10000001                  ; Forme d'onde : Bruit (Noise) + Gate ON
+        sta SID_V1_CTRL
+        rts
+
+; Recopie la position et les pointeurs dans les registres VIC-II.
 player_draw:
+        ; Position de base de Link (Sprite 0)
         lda player_x
         sta VIC_SPRITE_X0
-        lda VIC_SPRITE_MSB
-        and #%11111110
-        ora player_x+1                  ; bit 8 de X (0 ou 1)
-        sta VIC_SPRITE_MSB
         lda player_y
         sta VIC_SPRITE_Y0
 
-        clc                             ; images consécutives : base + direction
+        ; Si Link n'attaque pas : affichage normal
+        lda player_attacking
+        beq .draw_normal
+
+        ; --- Affichage en cours d'attaque ---
+        ; Pointeur Sprite 0 : base + 4 + player_dir (postures de fente)
+        clc
         lda #(sprite_link_down >> 6)
+        adc #4
         adc player_dir
         sta SPRITE_PTR0
 
-        lda joy                         ; feu = tunique blanche (test d'entrée)
-        and #JOY_FIRE
-        beq .normal
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL0
+        ; Pointeur Sprite 1 : base + 8 + player_dir (lames de l'épée)
+        clc
+        lda #(sprite_link_down >> 6)
+        adc #8
+        adc player_dir
+        sta SPRITE_PTR1
+
+        ; Calcul de la position de l'épée (Sprite 1)
+        ldx player_dir
+        clc
+        lda player_x
+        adc sword_off_x_lo,x
+        sta sword_x
+        lda player_x+1
+        adc sword_off_x_hi,x
+        sta sword_x+1
+
+        clc
+        lda player_y
+        adc sword_off_y,x
+        sta sword_y
+
+        lda sword_x
+        sta VIC_SPRITE_X1
+        lda sword_y
+        sta VIC_SPRITE_Y1
+
+        ; MSB pour Sprites 0 et 1
+        lda VIC_SPRITE_MSB
+        and #%11111100                  ; efface bits 0 et 1
+        ora player_x+1                  ; bit 0 = sprite 0
+        ldy sword_x+1
+        tya
+        and #1
+        beq +
+        ora #%00000010                  ; bit 1 = sprite 1
++       sta VIC_SPRITE_MSB
+
+        ; Active les deux sprites (Link + Epée)
+        lda #%00000011
+        sta VIC_SPRITE_EN
         rts
-.normal:
-        lda #PLAYER_COLOR
-        sta VIC_SPRITE_COL0
+
+.draw_normal:
+        ; Seul le sprite 0 est actif (épée masquée)
+        lda #%00000001
+        sta VIC_SPRITE_EN
+
+        ; MSB pour Sprite 0
+        lda VIC_SPRITE_MSB
+        and #%11111100
+        ora player_x+1
+        sta VIC_SPRITE_MSB
+
+        ; Pointeur Sprite 0 : base + player_dir (images consécutives 0..3)
+        clc
+        lda #(sprite_link_down >> 6)
+        adc player_dir
+        sta SPRITE_PTR0
         rts

@@ -20,13 +20,24 @@ VIC_BG_MC1      = $d022         ; texte multicolore : couleur 1 (paire 01)
 VIC_BG_MC2      = $d023         ; texte multicolore : couleur 2 (paire 10)
 VIC_SPRITE_MC1  = $d025         ; multicolore 1 (commun aux sprites)
 VIC_SPRITE_MC2  = $d026         ; multicolore 2 (commun aux sprites)
+VIC_SPRITE_X1   = $d002
+VIC_SPRITE_Y1   = $d003
 VIC_SPRITE_COL0 = $d027         ; couleur propre du sprite 0
+VIC_SPRITE_COL1 = $d028         ; couleur propre du sprite 1
 
 ; --- Pointeurs de sprites (bloc de 64 octets = adresse >> 6) ---
 SPRITE_PTR0     = $07f8
+SPRITE_PTR1     = $07f9
 
 ; --- SID ---
 SID_BASE        = $d400
+SID_V1_FREQ_LO  = $d400
+SID_V1_FREQ_HI  = $d401
+SID_V1_PW_LO    = $d402
+SID_V1_PW_HI    = $d403
+SID_V1_CTRL     = $d404
+SID_V1_AD       = $d405
+SID_V1_SR       = $d406
 SID_VOLUME      = $d418
 
 ; --- CIA ---
