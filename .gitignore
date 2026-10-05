@@ -3,3 +3,5 @@ build/
 *.d64
 *.vs
 *.rep
+__pycache__/
+*.pyc

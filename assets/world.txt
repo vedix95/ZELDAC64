@@ -1,24 +1,18 @@
-; Monde : 3 x 3 ecrans de 20 x 12 tuiles, dessine d'un seul bloc.
-; Les espaces separent les ecrans horizontaux ; les lignes vides separent les rangees.
-; Symboles : voir assets/tiles.txt  (. herbe  , touffes  f fleurs  T arbre
-;            ~ eau  # montagne  _ chemin  O grotte)
-; Toutes les bordures entre ecrans sont parfaitement alignees :
-; - Les passages ouverts sont larges (4 a 6 tuiles) et libres des deux cotes.
-; - Les zones fermees sont bloquees par des arbres/montagnes des deux cotes.
+; Monde : 3 x 3 ecrans de 20 x 10 tuiles (10 tuiles = 20 lignes de texte).
+; Les 4 premieres lignes de l'ecran (0..3) sont reservees au HUD Zelda.
+; Symboles : (. herbe  , touffes  f fleurs  T arbre  ~ eau  # montagne  _ chemin  O grotte)
 
 ; ===========================================================================
 ; LIGNE 0 : (0, 0) Grotte Montagne  |  (1, 0) Sanctuaire Nord  |  (2, 0) Lac Bleu
 ; ===========================================================================
 #################### #########OO######### ####################
-#T################## #########__######### ####################
 #T#######...######## #####....__....##### #####TTTTTTTTTTTTTT#
 #T###O###...######## #####....__....##### #####T~~~~~~~~~~~~T#
 #T.......___######## #####....__....##### #####T~~~~~~~~~~~~T#
 #T.......___........ .........__......... .....T~~~~~~~~~~~~T#
 #T...f...___........ ....f....__....f.... ..f..T~~~~~~~~~~~~T#
 #T.......___........ .........__......... .....T~~~~~~~~~~~~T#
-#T...f...___........ ...,.....__.....,... ..,..T~~~~~~~~~~~~T#
-#T.......___..TTTTTT TTTTTT...__...TTTTTT TT...TTTTTTTTTTTTTT#
+#T...f...___..TTTTTT TTTTTT...__...TTTTTT TT...TTTTTTTTTTTTTT#
 #TTTTTT..___..TTTTTT TTTTTTT..__..TTTTTTT TTT...TTTTTTTTTTTTT#
 TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 
@@ -27,14 +21,12 @@ TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 ; ===========================================================================
 TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
-T........___.......T TTTT.....__.....TTTT TT.......TTT~~~~~~TT
 T...TT...___...TT..T TT.......__.......TT TT........TT~~~~~~TT
 T...TT...___...TT... T........__........T ..........TT~~~~~~TT
 T________...________ _________.._________ ________..TT~~~~~~TT
 T________...________ _________.._________ ________..TT~~~~~~TT
 T...TT...___...TT... T........__........T ..........TT~~~~~~TT
 T...TT...___...TT..T TT.......__.......TT TT........TT~~~~~~TT
-T........___.......T TTTT.....__.....TTTT TT.......TTT~~~~~~TT
 TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
 TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 
@@ -43,13 +35,11 @@ TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 ; ===========================================================================
 TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
-T........___.......T TTTT.....__.....TTTT TT.......TTT.....TT#
-T..TTT...___...TT..T TT.......__.......TT TT........TT..f..TT#
+T..TTT...___...TT..T TTTT.....__.....TTTT TT.......TTT.....TT#
 T..TTT.........TT... .........__......... ..........TT.....TT#
 T..TTT...ff....TT... ....f....__....f.... ....ff....TT.....TT#
 T..TTT...,,....TT... .........__......... ....,,....TT.....TT#
 T..TTT.........TT... ...,.....__.....,... ..........TT.....TT#
 T..TTT.........TT..T TT.......__.......TT TT........TT..f..TT#
-T..................T TTTT.....__.....TTTT TT.......TTT.....TT#
 TTTTTTT......TTTTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
 TTTTTTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTTTTTT

@@ -66,17 +66,18 @@ load_room:
         jsr draw_map
         rts
 
-; Dessine la salle pointée par ZP_MAP (240 tuiles = 20x12).
-; ZP_SCR / ZP_COL pointent sur la ligne de texte courante (écran / couleur) ;
-; ZP_IDX est l'index dans la salle (0..239, tient sur un octet).
+; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).
+; ZP_SCR / ZP_COL pointent sur la ligne 4 de texte (écran / couleur) :
+; SCREEN_RAM + 160 ($04A0) et COLOR_RAM + 160 ($D8A0).
+; Les lignes 0..3 restent réservées au HUD Zelda.
 draw_map:
-        lda #<SCREEN_RAM
+        lda #<(SCREEN_RAM + 160)
         sta ZP_SCR
-        lda #>SCREEN_RAM
+        lda #>(SCREEN_RAM + 160)
         sta ZP_SCR+1
-        lda #<COLOR_RAM
+        lda #<(COLOR_RAM + 160)
         sta ZP_COL
-        lda #>COLOR_RAM
+        lda #>(COLOR_RAM + 160)
         sta ZP_COL+1
         lda #0
         sta ZP_IDX

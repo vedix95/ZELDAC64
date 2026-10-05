@@ -16,8 +16,8 @@
 PLAYER_SPEED    = 2
 PLAYER_X_MIN    = 20
 PLAYER_X_MAX    = 324
-PLAYER_Y_MIN    = 48
-PLAYER_Y_MAX    = 224                   ; la carte fait 192 px : 50+192-1-17
+PLAYER_Y_MIN    = 80                    ; au-dessous du bandeau HUD (lignes 0..3 = 32 px)
+PLAYER_Y_MAX    = 224                   ; 82 + 160 - 18 = 224
 
 WALK_TICK_MAX   = 6                     ; cadence d'alternance des pas (~8 Hz)
 ATTACK_FRAMES   = 12                    ; durée totale du coup d'épée (0.24s)
@@ -34,7 +34,7 @@ PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture, po
 SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame blanche brillante
 
 player_x:         !word 180             ; position courante de Link
-player_y:         !byte 128
+player_y:         !byte 154
 player_dir:       !byte DIR_DOWN
 
 ; Animation de marche
@@ -430,18 +430,18 @@ check_h_edge:
 ; Sortie : Carry = 1 si solide, Carry = 0 si libre
 ; ---------------------------------------------------------------------------
 check_point_solid:
-        ; 1. Coordonnée Y : map_y = col_y - 50
+        ; 1. Coordonnée Y : map_y = col_y - 82 (début ligne 4 de texte = 50 + 32)
         lda col_y
-        cmp #50
-        bcc .free                       ; au-dessus de la carte
+        cmp #82
+        bcc .free                       ; au-dessus de la carte (dans le bandeau HUD)
         sec
-        sbc #50
-        cmp #192
+        sbc #82
+        cmp #160                        ; hauteur de jeu = 160 px (10 tuiles)
         bcs .free                       ; en-dessous de la carte
         lsr
         lsr
         lsr
-        lsr                             ; tile_y = 0..11
+        lsr                             ; tile_y = 0..9
         tax
         lda tile_row_offset,x           ; tile_y * 20
         sta col_row_offset

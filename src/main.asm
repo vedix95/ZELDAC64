@@ -31,13 +31,32 @@ game_init:
         jsr init_video
         jsr clear_screen
         jsr load_room
+        jsr hud_init
         jsr player_init
 
 main_loop:
         jsr wait_frame
         jsr read_input
+
+        ; Dispatch selon l'état de jeu
+        lda game_state
+        cmp #STATE_INVENTORY
+        beq .in_inventory
+
+        ; --- ÉTAT DE JEU NORMAL ---
+        ; Touche Espace : ouvre l'inventaire
+        lda key_space_pressed
+        beq .play_frame
+        jsr open_inventory
+        jmp main_loop
+
+.play_frame:
         jsr player_update
         jsr player_draw
+        jmp main_loop
+
+.in_inventory:
+        jsr inventory_update
         jmp main_loop
 
 ; Synchronisation sur la ligne raster 255 (1 passage par image, 50/60 Hz).
@@ -53,17 +72,20 @@ wait_frame:
         rts
 
 !source "src/input.asm"
+!source "src/hud.asm"
 !source "src/player.asm"
 !source "src/tilemap.asm"
 !source "src/transition.asm"
 
-; Les cartes sont lues par le CPU, qui voit la RAM en $1000-$1FFF sans problème.
-!source "src/map_data.asm"
-
 ; Le jeu de caractères est à une adresse fixe : le code et les données
-; ci-dessus doivent tenir avant (la zone entre les deux est remplie de 0).
+; ci-dessus doivent tenir avant ($1000-$1FFF).
 !if * > CHARSET_ADDR {
         !error "Le code deborde sur le jeu de caracteres ($2000)"
 }
 * = CHARSET_ADDR
 !source "src/charset.asm"
+
+; Données de carte et sous-menus dans la RAM libre au-delà du jeu de caractères
+* = $2800
+!source "src/inventory.asm"
+!source "src/map_data.asm"

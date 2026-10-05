@@ -47,7 +47,8 @@ transition_right:
         jsr wait_frame
 
         ; Décalage horizontal de chaque ligne de texte : 2 colonnes vers la gauche
-        ldx #0
+        ; Concerne uniquement les lignes de jeu 4..23 (le HUD en 0..3 reste fixe)
+        ldx #4
 .tr_row:
         stx ZP_ROW                      ; sauvegarde numéro de ligne de texte
 
@@ -97,10 +98,12 @@ transition_right:
         bne .tr_shift_col
 
         ; Insère la nouvelle tuile en colonnes 38 et 39
-        ; tr = row / 2, sub_y = row & 1
+        ; tr = (row - 4) / 2, sub_y = row & 1
         lda ZP_ROW
+        sec
+        sbc #4
         lsr
-        tax                             ; X = tr (0..11)
+        tax                             ; X = tr (0..9)
         lda tile_row_offset,x
         clc
         adc ZP_STEP                     ; + colonne entrante (0..19)
@@ -163,6 +166,7 @@ transition_right:
         lda #0
         sta player_x+1
         jsr load_room
+        jsr hud_render
         jsr player_draw
         rts
 
@@ -192,7 +196,8 @@ transition_left:
         jsr wait_frame
 
         ; Décalage horizontal : 2 colonnes vers la droite
-        ldx #0
+        ; Concerne uniquement les lignes de jeu 4..23 (le HUD en 0..3 reste fixe)
+        ldx #4
 .tl_row:
         stx ZP_ROW
 
@@ -244,7 +249,10 @@ transition_left:
         sbc ZP_STEP
         sta ZP_TCOL                     ; colonne de tuile entrante
 
+        ; tr = (row - 4) / 2, sub_y = row & 1
         lda ZP_ROW
+        sec
+        sbc #4
         lsr
         tax
         lda tile_row_offset,x
@@ -309,6 +317,7 @@ transition_left:
         lda #>(PLAYER_X_MAX - 4)
         sta player_x+1
         jsr load_room
+        jsr hud_render
         jsr player_draw
         rts
 
@@ -336,44 +345,35 @@ transition_down:
         jsr wait_frame
         jsr wait_frame
 
-        ; Décale 22 rangées vers le haut (880 octets décalés de 80)
-        ; Copie dans l'ordre croissant pour éviter tout écrasement mémoire
+        ; Décale 18 rangées de jeu vers le haut (720 octets décalés de 80)
+        ; Les lignes 0..3 (HUD) restent totalement intactes.
         ldx #0
 .td_shift_0:
-        lda SCREEN_RAM+80,x
-        sta SCREEN_RAM,x
-        lda COLOR_RAM+80,x
-        sta COLOR_RAM,x
+        lda SCREEN_RAM+240,x
+        sta SCREEN_RAM+160,x
+        lda COLOR_RAM+240,x
+        sta COLOR_RAM+160,x
         inx
         bne .td_shift_0
 
         ldx #0
 .td_shift_1:
-        lda SCREEN_RAM+80+$100,x
-        sta SCREEN_RAM+$100,x
-        lda COLOR_RAM+80+$100,x
-        sta COLOR_RAM+$100,x
+        lda SCREEN_RAM+240+$100,x
+        sta SCREEN_RAM+160+$100,x
+        lda COLOR_RAM+240+$100,x
+        sta COLOR_RAM+160+$100,x
         inx
         bne .td_shift_1
 
         ldx #0
 .td_shift_2:
-        lda SCREEN_RAM+80+$200,x
-        sta SCREEN_RAM+$200,x
-        lda COLOR_RAM+80+$200,x
-        sta COLOR_RAM+$200,x
+        lda SCREEN_RAM+240+$200,x
+        sta SCREEN_RAM+160+$200,x
+        lda COLOR_RAM+240+$200,x
+        sta COLOR_RAM+160+$200,x
         inx
+        cpx #208
         bne .td_shift_2
-
-        ldx #0
-.td_shift_3:
-        lda SCREEN_RAM+80+$300,x
-        sta SCREEN_RAM+$300,x
-        lda COLOR_RAM+80+$300,x
-        sta COLOR_RAM+$300,x
-        inx
-        cpx #112
-        bne .td_shift_3
 
         ; Insère la nouvelle rangée de tuiles (tr = ZP_STEP) sur les lignes 22 et 23
         ldx ZP_STEP
@@ -400,7 +400,7 @@ transition_down:
         asl
         tay                             ; colonne écran (0, 2, 4...)
 
-        ; Ligne 22 ($0770 / $db70)
+        ; Ligne 22 ($0770 / $db70 = 880)
         lda ZP_BASE
         sta SCREEN_RAM+880,y
         lda ZP_ROW
@@ -440,7 +440,7 @@ transition_down:
 
         inc ZP_STEP
         lda ZP_STEP
-        cmp #12
+        cmp #10
         beq .td_step_done
         jmp .td_step
 .td_step_done:
@@ -450,6 +450,7 @@ transition_down:
         lda #(PLAYER_Y_MIN + 4)
         sta player_y
         jsr load_room
+        jsr hud_render
         jsr player_draw
         rts
 
@@ -477,50 +478,39 @@ transition_up:
         jsr wait_frame
         jsr wait_frame
 
-        ; Décale 22 rangées vers le bas (880 octets, copie du bas vers le haut)
-        ; Copie dans l'ordre strictement décroissant par blocs pour éviter tout écrasement
-        ldx #112
-.tu_shift_3:
-        dex
-        lda SCREEN_RAM+$300,x
-        sta SCREEN_RAM+80+$300,x
-        lda COLOR_RAM+$300,x
-        sta COLOR_RAM+80+$300,x
-        cpx #0
-        bne .tu_shift_3
-
-        ldx #0
+        ; Décale 18 rangées de jeu vers le bas (720 octets, copie du bas vers le haut)
+        ldx #208
 .tu_shift_2:
         dex
-        lda SCREEN_RAM+$200,x
-        sta SCREEN_RAM+80+$200,x
-        lda COLOR_RAM+$200,x
-        sta COLOR_RAM+80+$200,x
+        lda SCREEN_RAM+160+$200,x
+        sta SCREEN_RAM+240+$200,x
+        lda COLOR_RAM+160+$200,x
+        sta COLOR_RAM+240+$200,x
         cpx #0
         bne .tu_shift_2
 
         ldx #0
 .tu_shift_1:
         dex
-        lda SCREEN_RAM+$100,x
-        sta SCREEN_RAM+80+$100,x
-        lda COLOR_RAM+$100,x
-        sta COLOR_RAM+80+$100,x
+        lda SCREEN_RAM+160+$100,x
+        sta SCREEN_RAM+240+$100,x
+        lda COLOR_RAM+160+$100,x
+        sta COLOR_RAM+240+$100,x
         cpx #0
         bne .tu_shift_1
 
         ldx #0
 .tu_shift_0:
         dex
-        lda SCREEN_RAM,x
-        sta SCREEN_RAM+80,x
-        lda COLOR_RAM,x
-        sta COLOR_RAM+80,x
+        lda SCREEN_RAM+160,x
+        sta SCREEN_RAM+240,x
+        lda COLOR_RAM+160,x
+        sta COLOR_RAM+240,x
         cpx #0
         bne .tu_shift_0
 
-        ; Insère la nouvelle rangée de tuiles (tr = 11 - ZP_STEP) sur les lignes 0 et 1
-        lda #11
+        ; Insère la nouvelle rangée de tuiles (tr = 9 - ZP_STEP) sur les lignes 4 et 5
+        lda #9
         sec
         sbc ZP_STEP
         tax
@@ -547,31 +537,31 @@ transition_up:
         asl
         tay
 
-        ; Ligne 0 ($0400 / $d800)
+        ; Ligne 4 ($04a0 / $d8a0 = 160)
         lda ZP_BASE
-        sta SCREEN_RAM,y
+        sta SCREEN_RAM+160,y
         lda ZP_ROW
-        sta COLOR_RAM,y
+        sta COLOR_RAM+160,y
         iny
         lda ZP_BASE
         ora #1
-        sta SCREEN_RAM,y
+        sta SCREEN_RAM+160,y
         lda ZP_ROW
-        sta COLOR_RAM,y
+        sta COLOR_RAM+160,y
 
         dey
-        ; Ligne 1 ($0428 / $d828 = 40)
+        ; Ligne 5 ($04c8 / $d8c8 = 200)
         lda ZP_BASE
         ora #2
-        sta SCREEN_RAM+40,y
+        sta SCREEN_RAM+200,y
         lda ZP_ROW
-        sta COLOR_RAM+40,y
+        sta COLOR_RAM+200,y
         iny
         lda ZP_BASE
         ora #3
-        sta SCREEN_RAM+40,y
+        sta SCREEN_RAM+200,y
         lda ZP_ROW
-        sta COLOR_RAM+40,y
+        sta COLOR_RAM+200,y
 
         ldx ZP_TCOL
         inx
@@ -587,7 +577,7 @@ transition_up:
 
         inc ZP_STEP
         lda ZP_STEP
-        cmp #12
+        cmp #10
         beq .tu_step_done
         jmp .tu_step
 .tu_step_done:
@@ -597,5 +587,6 @@ transition_up:
         lda #(PLAYER_Y_MAX - 4)
         sta player_y
         jsr load_room
+        jsr hud_render
         jsr player_draw
         rts

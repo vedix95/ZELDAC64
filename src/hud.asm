@@ -1,0 +1,314 @@
+; ---------------------------------------------------------------------------
+; hud.asm : affichage du HUD Zelda en haut de l'écran (lignes 0..3)
+; Comprend :
+;   - Minimap 3x3 avec indicateur de salle active
+;   - Compteurs d'inventaire : Rubis, Clefs, Bombes
+;   - Boîtes d'armes équipées : [B] Objet secondaire, [A] Épée
+;   - Barre de vie (-LIFE-) avec cœurs rouges
+;   - Ligne de séparation
+; ---------------------------------------------------------------------------
+
+HUD_ROW_MAP     = 0
+HUD_ROW_B_A     = 0
+HUD_ROW_LIFE    = 0
+
+HUD_HEART_FULL  = 96                    ; code caractère coeur plein ♥
+HUD_HEART_EMPTY = 97                    ; code caractère coeur vide ♡
+HUD_CHAR_RUPEE  = 98                    ; code caractère rubis ◆
+HUD_CHAR_KEY    = 99                    ; code caractère clef
+HUD_CHAR_BOMB   = 100                   ; code caractère bombe
+HUD_MAP_EMPTY   = 104                   ; salle non visitée
+HUD_MAP_ACTIVE  = 105                   ; salle active (plein)
+HUD_MAP_VISITED = 106                   ; salle visitée (cadre)
+
+hud_rupees:       !byte 15              ; rubis initiaux
+hud_keys:         !byte 1               ; clefs initiales
+hud_bombs:        !byte 4               ; bombes initiales
+hud_max_hearts:   !byte 3               ; 3 cœurs max
+hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
+hud_selected_b:   !byte 0               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
+
+; Salles visitées (9 octets, 1 par salle, 1 = visitée)
+visited_rooms:    !byte 0, 0, 0,  0, 1, 0,  0, 0, 0    ; départ en (1,1) = salle 4
+
+; Coordonnées écran pour chaque cellule de la minimap 3x3
+hud_map_offsets:
+        !byte 41, 43, 45                ; ry = 0 (ligne 1, cols 1, 3, 5)
+        !byte 81, 83, 85                ; ry = 1 (ligne 2, cols 1, 3, 5)
+        !byte 121, 123, 125             ; ry = 2 (ligne 3, cols 1, 3, 5)
+
+; Noms des objets slot B (4 caractères chacun)
+b_item_names:
+        !text "BOOM"
+        !text "BOMB"
+        !text "BOW "
+        !text "CAND"
+
+; ---------------------------------------------------------------------------
+; hud_init : initialise le cadre complet du HUD
+; ---------------------------------------------------------------------------
+hud_init:
+        ; Efface les 4 premières lignes en noir/blanc
+        ldx #0
+.clear_hud:
+        lda #32                         ; espace
+        sta SCREEN_RAM,x
+        lda #COL_WHITE
+        sta COLOR_RAM,x
+        inx
+        cpx #160                        ; 4 lignes x 40 colonnes = 160 octets
+        bne .clear_hud
+
+        ; Ligne 0 : Titres
+        ; "[MAP]"
+        lda #'['
+        sta SCREEN_RAM+1
+        lda #'M'
+        sta SCREEN_RAM+2
+        lda #'A'
+        sta SCREEN_RAM+3
+        lda #'P'
+        sta SCREEN_RAM+4
+        lda #']'
+        sta SCREEN_RAM+5
+
+        ; "RUPEES"
+        lda #'R'
+        sta SCREEN_RAM+9
+        lda #'U'
+        sta SCREEN_RAM+10
+        lda #'P'
+        sta SCREEN_RAM+11
+        lda #'E'
+        sta SCREEN_RAM+12
+        lda #'E'
+        sta SCREEN_RAM+13
+        lda #'S'
+        sta SCREEN_RAM+14
+
+        ; Boîte [B]
+        lda #'['
+        sta SCREEN_RAM+21
+        lda #'B'
+        sta SCREEN_RAM+22
+        lda #']'
+        sta SCREEN_RAM+23
+
+        ; Boîte [A]
+        lda #'['
+        sta SCREEN_RAM+27
+        lda #'A'
+        sta SCREEN_RAM+28
+        lda #']'
+        sta SCREEN_RAM+29
+
+        ; "-LIFE-"
+        lda #'-'
+        sta SCREEN_RAM+34
+        lda #'L'
+        sta SCREEN_RAM+35
+        lda #'I'
+        sta SCREEN_RAM+36
+        lda #'F'
+        sta SCREEN_RAM+37
+        lda #'E'
+        sta SCREEN_RAM+38
+        lda #'-'
+        sta SCREEN_RAM+39
+        lda #COL_YELLOW
+        sta COLOR_RAM+34
+        sta COLOR_RAM+35
+        sta COLOR_RAM+36
+        sta COLOR_RAM+37
+        sta COLOR_RAM+38
+        sta COLOR_RAM+39
+
+        ; Ligne 1 : Labels
+        lda #'K'
+        sta SCREEN_RAM+40+9
+        lda #'E'
+        sta SCREEN_RAM+40+10
+        lda #'Y'
+        sta SCREEN_RAM+40+11
+        lda #'S'
+        sta SCREEN_RAM+40+12
+
+        ; Ligne 2 : Labels
+        lda #'B'
+        sta SCREEN_RAM+80+9
+        lda #'O'
+        sta SCREEN_RAM+80+10
+        lda #'M'
+        sta SCREEN_RAM+80+11
+        lda #'B'
+        sta SCREEN_RAM+80+12
+        lda #'S'
+        sta SCREEN_RAM+80+13
+
+        ; Épée fixe dans le slot A : "SWOR"
+        lda #'S'
+        sta SCREEN_RAM+40+27
+        lda #'W'
+        sta SCREEN_RAM+40+28
+        lda #'O'
+        sta SCREEN_RAM+40+29
+        lda #'R'
+        sta SCREEN_RAM+40+30
+        lda #COL_CYAN
+        sta COLOR_RAM+40+27
+        sta COLOR_RAM+40+28
+        sta COLOR_RAM+40+29
+        sta COLOR_RAM+40+30
+
+        ; Ligne 3 : Ligne de séparation (colonnes 6 à 39)
+        ldx #6
+.sep_line:
+        lda #'-'
+        sta SCREEN_RAM+120,x
+        lda #COL_BLACK
+        sta COLOR_RAM+120,x
+        inx
+        cpx #40
+        bne .sep_line
+
+        jsr hud_render
+        rts
+
+; ---------------------------------------------------------------------------
+; hud_render : met à jour les données dynamiques du HUD
+; ---------------------------------------------------------------------------
+hud_render:
+        ; 1. Mise à jour de la Minimap 3x3
+        ; Marque la salle active comme visitée
+        ldx current_room_y
+        lda world_row_offset,x
+        clc
+        adc current_room_x
+        tax
+        lda #1
+        sta visited_rooms,x
+
+        ; Dessin des 9 salles de la minimap
+        ldx #0                          ; salle 0..8
+.map_loop:
+        cpx current_room_idx
+        bne .not_current
+        lda #HUD_MAP_ACTIVE             ; Salle active : point jaune
+        ldy #COL_YELLOW
+        jmp .put_map_char
+.not_current:
+        lda visited_rooms,x
+        beq .unvis
+        lda #HUD_MAP_VISITED            ; Salle explorée : cadre blanc
+        ldy #COL_WHITE
+        jmp .put_map_char
+.unvis:
+        lda #HUD_MAP_EMPTY              ; Non explorée : point noir
+        ldy #COL_BLACK
+
+.put_map_char:
+        sta ZP_TMP
+        sty ZP_BASE
+        ldy hud_map_offsets,x
+        lda ZP_TMP
+        sta SCREEN_RAM,y
+        lda ZP_BASE
+        sta COLOR_RAM,y
+        inx
+        cpx #9
+        bne .map_loop
+
+        ; 2. Compteurs avec icônes Zelda en colonne 16
+        ; Rubis : icône losange ◆ + compteur 2 chiffres
+        lda #HUD_CHAR_RUPEE
+        sta SCREEN_RAM+16
+        lda hud_rupees
+        jsr print_2digits
+        sta SCREEN_RAM+17
+        stx SCREEN_RAM+18
+        lda #COL_YELLOW
+        sta COLOR_RAM+16
+        sta COLOR_RAM+17
+        sta COLOR_RAM+18
+
+        ; Clefs : icône clef + compteur
+        lda #HUD_CHAR_KEY
+        sta SCREEN_RAM+40+16
+        lda hud_keys
+        jsr print_2digits
+        sta SCREEN_RAM+40+17
+        stx SCREEN_RAM+40+18
+        lda #COL_WHITE
+        sta COLOR_RAM+40+16
+        sta COLOR_RAM+40+17
+        sta COLOR_RAM+40+18
+
+        ; Bombes : icône bombe + compteur
+        lda #HUD_CHAR_BOMB
+        sta SCREEN_RAM+80+16
+        lda hud_bombs
+        jsr print_2digits
+        sta SCREEN_RAM+80+17
+        stx SCREEN_RAM+80+18
+        lda #COL_CYAN
+        sta COLOR_RAM+80+16
+        lda #COL_WHITE
+        sta COLOR_RAM+80+17
+        sta COLOR_RAM+80+18
+
+        ; 3. Slot B (Objet secondaire équipé) : ligne 1, colonne 21..24
+        lda hud_selected_b
+        asl
+        asl                             ; index * 4
+        tax
+        ldy #0
+.put_b_name:
+        lda b_item_names,x
+        sta SCREEN_RAM+40+21,y
+        lda #COL_YELLOW
+        sta COLOR_RAM+40+21,y
+        inx
+        iny
+        cpy #4
+        bne .put_b_name
+
+        ; 4. Barre de vie (Cœurs) : ligne 1, colonne 34..38
+        ldx #0
+.heart_loop:
+        cpx hud_cur_hearts
+        bcs .empty_heart
+        lda #HUD_HEART_FULL
+        jmp .draw_heart
+.empty_heart:
+        lda #HUD_HEART_EMPTY
+.draw_heart:
+        sta SCREEN_RAM+40+35,x
+        lda #COL_RED                    ; cœurs rouge vif
+        sta COLOR_RAM+40+35,x
+        inx
+        cpx hud_max_hearts
+        bne .heart_loop
+        rts
+
+; Convertit A (0..99) en 2 caractères ASCII (dizaines dans A, unités dans X)
+print_2digits:
+        ldx #0
+.div10:
+        cmp #10
+        bcc .done10
+        sec
+        sbc #10
+        inx
+        jmp .div10
+.done10:
+        tay                             ; Y = unités (0..9)
+        txa
+        clc
+        adc #'0'                        ; A = dizaines ASCII
+        pha
+        tya
+        clc
+        adc #'0'
+        tax                             ; X = unités ASCII
+        pla
+        rts
