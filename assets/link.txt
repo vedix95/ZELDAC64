@@ -1,0 +1,67 @@
+# Link vu de dessus, 4 directions.
+# Sprite multicolore C64 : chaque caractere = 1 pixel "gros" (2 pixels ecran de large).
+# Cadre de 8 colonnes x 16 lignes (= 16x16 pixels ecran, donc carre).
+#
+#   .  transparent
+#   s  peau       (multicolore 1, $d025)
+#   g  vert       (couleur propre du sprite, $d027)
+#   b  marron     (multicolore 2, $d026) : cheveux, yeux, ceinture, bottes
+#
+# "[nom] mirror autre" = symetrique horizontal d'une autre image.
+# Les couleurs reelles sont fixees dans src/player.asm.
+
+[down]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+bbssssbb
+bsbssbsb
+.ssssss.
+..ssss..
+.gggggg.
+gggggggg
+sggggggs
+.bbbbbb.
+.gggggg.
+.gggggg.
+.bb..bb.
+.bb..bb.
+
+[up]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+.bbbbbb.
+..bbbb..
+.gggggg.
+gggggggg
+sggggggs
+.bbbbbb.
+.gggggg.
+.gggggg.
+.bb..bb.
+.bb..bb.
+
+[left]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+.ssssbb.
+.sbssbb.
+.ssssb..
+..sss...
+..gggg..
+..gggg..
+.sgggg..
+..bbbb..
+..gggg..
+..gggg..
+..bb.bb.
+..bb.bb.
+
+[right] mirror left

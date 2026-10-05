@@ -29,11 +29,19 @@ Dans le moniteur VICE (`Alt+H`), les labels sont utilisables :
 src/main.asm     point d'entrée : stub BASIC, init, boucle principale
 src/input.asm    lecture du joystick (port 2)
 src/player.asm   position, déplacement, bornes et affichage de Link
-src/sprites.asm  données des sprites (alignées sur 64 octets)
+src/sprites.asm  GÉNÉRÉ depuis assets/link.txt (ne pas éditer à la main)
 src/c64.inc      constantes VIC-II / SID / CIA / KERNAL / couleurs / joystick
+assets/link.txt  sprites de Link en ASCII art (4 directions, multicolore)
+tools/sprgen.py  convertit l'ASCII art en données sprite + aperçu PNG
 scripts/         outils (check-env.sh)
 build/           sortie (ignorée par git)
 ```
+
+## Sprites
+
+Éditer `assets/link.txt` (`.` transparent, `s` peau, `g` vert, `b` marron),
+puis `make preview` génère `build/link_preview.png` pour voir le résultat.
+`make` régénère `src/sprites.asm` automatiquement quand l'asset change.
 
 ## Contrôles
 

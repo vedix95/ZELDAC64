@@ -12,6 +12,7 @@ NAME    := zelda
 ACME    ?= acme
 VICE    ?= x64sc
 C1541   ?= c1541
+PYTHON  ?= python3
 
 SRC_DIR := src
 BLD_DIR := build
@@ -23,9 +24,13 @@ D64     := $(BLD_DIR)/$(NAME).d64
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
-.PHONY: all run debug d64 clean check
+.PHONY: all run debug d64 clean check preview
 
 all: $(PRG)
+
+# sprites.asm est généré depuis l'ASCII art (assets/link.txt)
+$(SRC_DIR)/sprites.asm: assets/link.txt tools/sprgen.py
+	$(PYTHON) tools/sprgen.py assets/link.txt -o $@
 
 $(PRG): $(SRCS) | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ --vicelabels $(LABELS) -r $(REPORT) $(MAIN)
@@ -33,6 +38,11 @@ $(PRG): $(SRCS) | $(BLD_DIR)
 
 $(BLD_DIR):
 	mkdir -p $@
+
+# Aperçu PNG des sprites : build/link_preview.png
+preview: | $(BLD_DIR)
+	$(PYTHON) tools/sprgen.py assets/link.txt -o $(SRC_DIR)/sprites.asm --preview $(BLD_DIR)/link_preview.png
+	@echo "Aperçu : $(BLD_DIR)/link_preview.png"
 
 run: $(PRG)
 	$(VICE) -autostart $(PRG)

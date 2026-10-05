@@ -1,25 +1,41 @@
 ; ---------------------------------------------------------------------------
-; player.asm : position et affichage de Link (sprite 0)
+; player.asm : position et affichage de Link (sprite 0, multicolore)
 ; Coordonnées en pixels sprite. X sur 16 bits car l'écran fait plus de 255.
 ; Zone visible (cadre 320x200) : X 24..343, Y 50..249.
-; Le sprite fait 24x21, donc X max = 343-23 = 320 et Y max = 249-20 = 229.
+; Le dessin de Link (16x16) est décalé de (4,2) dans le sprite 24x21 :
+;   X min = 24-4 = 20,  X max = 343-19 = 324
+;   Y min = 50-2 = 48,  Y max = 249-17 = 232
 ; ---------------------------------------------------------------------------
 PLAYER_SPEED    = 2
-PLAYER_X_MIN    = 24
-PLAYER_X_MAX    = 320
-PLAYER_Y_MIN    = 50
-PLAYER_Y_MAX    = 229
+PLAYER_X_MIN    = 20
+PLAYER_X_MAX    = 324
+PLAYER_Y_MIN    = 48
+PLAYER_Y_MAX    = 232
+
+; Directions : l'ordre doit suivre celui des images dans assets/link.txt
+DIR_DOWN        = 0
+DIR_UP          = 1
+DIR_LEFT        = 2
+DIR_RIGHT       = 3
+
+PLAYER_COLOR    = COL_GREEN             ; couleur propre : tunique
+PLAYER_SKIN     = COL_LRED              ; multicolore 1  : peau
+PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture...
 
 player_x:       !word 172
 player_y:       !byte 140
+player_dir:     !byte DIR_DOWN
 
 player_init:
-        lda #(sprite_link >> 6)         ; pointeur = adresse / 64
-        sta SPRITE_PTR0
-        lda #COL_LGREEN
+        lda #PLAYER_COLOR
         sta VIC_SPRITE_COL0
-        lda #%00000001                  ; active le sprite 0
-        sta VIC_SPRITE_EN
+        lda #PLAYER_SKIN
+        sta VIC_SPRITE_MC1
+        lda #PLAYER_BROWN
+        sta VIC_SPRITE_MC2
+        lda #%00000001
+        sta VIC_SPRITE_MC               ; sprite 0 en multicolore
+        sta VIC_SPRITE_EN               ; et visible
         rts
 
 player_update:
@@ -33,6 +49,8 @@ player_update:
         lda player_x+1
         sbc #0
         sta player_x+1
+        lda #DIR_LEFT
+        sta player_dir
 .no_left:
         lda joy
         and #JOY_RIGHT
@@ -44,6 +62,8 @@ player_update:
         lda player_x+1
         adc #0
         sta player_x+1
+        lda #DIR_RIGHT
+        sta player_dir
 .no_right:
         lda joy
         and #JOY_UP
@@ -52,6 +72,8 @@ player_update:
         lda player_y
         sbc #PLAYER_SPEED
         sta player_y
+        lda #DIR_UP
+        sta player_dir
 .no_up:
         lda joy
         and #JOY_DOWN
@@ -60,6 +82,8 @@ player_update:
         lda player_y
         adc #PLAYER_SPEED
         sta player_y
+        lda #DIR_DOWN
+        sta player_dir
 .no_down:
 
         ; --- bornes en X (16 bits) ---
@@ -106,13 +130,18 @@ player_draw:
         lda player_y
         sta VIC_SPRITE_Y0
 
-        lda joy                         ; feu = sprite blanc (test d'entrée)
+        clc                             ; images consécutives : base + direction
+        lda #(sprite_link_down >> 6)
+        adc player_dir
+        sta SPRITE_PTR0
+
+        lda joy                         ; feu = tunique blanche (test d'entrée)
         and #JOY_FIRE
         beq .normal
         lda #COL_WHITE
         sta VIC_SPRITE_COL0
         rts
 .normal:
-        lda #COL_LGREEN
+        lda #PLAYER_COLOR
         sta VIC_SPRITE_COL0
         rts
