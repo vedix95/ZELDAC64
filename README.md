@@ -33,11 +33,11 @@ src/tilemap.asm   init vidéo multicolore, effacement écran, dessin de la carte
 src/c64.inc       constantes VIC-II / SID / CIA / KERNAL / couleurs / joystick
 src/sprites.asm   GÉNÉRÉ depuis assets/link.txt
 src/charset.asm   GÉNÉRÉ depuis assets/tiles.txt (jeu de caractères)
-src/map_data.asm  GÉNÉRÉ depuis assets/tiles.txt + assets/map.txt
+src/map_data.asm  GÉNÉRÉ depuis assets/tiles.txt + assets/world.txt (9 salles)
 assets/link.txt   sprites de Link en ASCII art (4 directions, multicolore)
 assets/tiles.txt  tuiles 16x16 en ASCII art + palette globale
-assets/map.txt    carte 20x12 tuiles, un symbole par tuile
-tools/            sprgen.py (sprites), tilegen.py (tuiles et carte)
+assets/world.txt  monde 3x3 écrans (60x36 tuiles), dessiné d'un seul bloc
+tools/            sprgen.py (sprites), tilegen.py (tuiles, monde et preview)
 scripts/          outils (check-env.sh)
 build/            sortie (ignorée par git)
 ```
@@ -50,13 +50,14 @@ les régénère quand les assets changent.
 Éditer `assets/link.txt` (`.` transparent, `s` peau, `g` vert, `b` marron),
 puis `make preview` génère `build/link_preview.png` pour voir le résultat.
 
-## Tuiles et carte
+## Monde et multi-écrans
 
-Chaque tuile fait 16x16 pixels (2x2 caractères, mode texte multicolore). Une
-tuile a 4 couleurs : fond, MC1, MC2 (communs à toutes les tuiles, réglés en
-tête de `assets/tiles.txt`) et une couleur propre (parmi les 8 premières du
-C64). Le drapeau `solid` marque les tuiles qui bloqueront Link (collisions pas
-encore codées). Maximum 64 tuiles.
+Le monde fait **3x3 écrans** (9 salles de 20x12 tuiles = 60x36 tuiles au total),
+dessiné en ASCII dans [assets/world.txt](file:///home/vedix/Documents/C64/zelda/assets/world.txt).
+
+- **Exploration fluide à la Zelda** : quand Link traverse le bord d'un écran (gauche, droite, haut, bas), l'écran bascule immédiatement sur la salle voisine et Link apparaît de l'autre côté.
+- **Carrefour central** : Link commence au centre du monde (salle 1,1) au croisement des routes, avec 8 salles à explorer autour (montagnes et grottes au nord, lac à l'est, étangs et forêts au sud et à l'ouest).
+- **Aperçu du monde entier** : `make preview` génère [build/world_preview.png](file:///home/vedix/Documents/C64/zelda/build/world_preview.png) qui montre la carte complète de 1920x1152 pixels.
 
 Pour ajouter une tuile : l'ajouter dans `assets/tiles.txt` avec un symbole,
 puis l'utiliser dans `assets/map.txt`. `make preview` produit

@@ -61,6 +61,7 @@ ZP_ROW          = $03
 ZP_TCOL         = $04
 ZP_TMP          = $05
 ZP_BASE         = $06
+ZP_MAP          = $07           ; pointeur 16 bits vers la salle active ($07-$08)
 ZP_SCR          = $fb           ; pointeur 16 bits
 ZP_COL          = $fd           ; pointeur 16 bits
 

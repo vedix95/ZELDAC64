@@ -22,8 +22,8 @@ PLAYER_COLOR    = COL_GREEN             ; couleur propre : tunique
 PLAYER_SKIN     = COL_LRED              ; multicolore 1  : peau
 PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture...
 
-player_x:       !word 180               ; tuile 10 (24 + 10*16 - 4)
-player_y:       !byte 176               ; tuile 8  (50 + 8*16 - 2)
+player_x:       !word 180               ; carrefour au centre : tuile 10 (24 + 10*16 - 4)
+player_y:       !byte 128               ; tuile 5 (50 + 5*16 - 2)
 player_dir:     !byte DIR_DOWN
 
 player_init:
@@ -86,34 +86,78 @@ player_update:
         sta player_dir
 .no_down:
 
-        ; --- bornes en X (16 bits) ---
+        ; --- Bornes en X (16 bits) et transition d'écran ---
         lda player_x+1
         bne .x_high
-        lda player_x                    ; X < 256 : seulement la borne basse
+        lda player_x                    ; X < 256 : vérification bord gauche
         cmp #PLAYER_X_MIN
-        bcs .x_done
+        bcs .x_done                     ; player_x >= PLAYER_X_MIN -> dans l'écran
+        lda current_room_x
+        beq .clamp_x_min                ; bord du monde gauche atteint
+        dec current_room_x
+        lda #<PLAYER_X_MAX
+        sec
+        sbc #4
+        sta player_x
+        lda #>PLAYER_X_MAX
+        sbc #0
+        sta player_x+1
+        jsr load_room
+        jmp .x_done
+.clamp_x_min:
         lda #PLAYER_X_MIN
         sta player_x
         jmp .x_done
-.x_high:                                ; X >= 256 : seulement la borne haute
+
+.x_high:                                ; X >= 256 : vérification bord droit
         lda player_x
         cmp #<(PLAYER_X_MAX + 1)
-        bcc .x_done
+        bcc .x_done                     ; player_x <= PLAYER_X_MAX -> dans l'écran
+        lda current_room_x
+        cmp #(WORLD_ROOMS_X - 1)
+        bcs .clamp_x_max                ; bord du monde droit atteint
+        inc current_room_x
+        lda #(PLAYER_X_MIN + 4)
+        sta player_x
+        lda #0
+        sta player_x+1
+        jsr load_room
+        jmp .x_done
+.clamp_x_max:
         lda #<PLAYER_X_MAX
         sta player_x
         lda #>PLAYER_X_MAX
         sta player_x+1
 .x_done:
 
-        ; --- bornes en Y ---
+        ; --- Bornes en Y et transition d'écran ---
         lda player_y
         cmp #PLAYER_Y_MIN
-        bcs .y_not_low
+        bcs .check_y_max
+        lda current_room_y
+        beq .clamp_y_min                ; bord du monde haut atteint
+        dec current_room_y
+        lda #(PLAYER_Y_MAX - 4)
+        sta player_y
+        jsr load_room
+        jmp .y_done
+.clamp_y_min:
         lda #PLAYER_Y_MIN
         sta player_y
-.y_not_low:
+        jmp .y_done
+
+.check_y_max:
         cmp #(PLAYER_Y_MAX + 1)
         bcc .y_done
+        lda current_room_y
+        cmp #(WORLD_ROOMS_Y - 1)
+        bcs .clamp_y_max                ; bord du monde bas atteint
+        inc current_room_y
+        lda #(PLAYER_Y_MIN + 4)
+        sta player_y
+        jsr load_room
+        jmp .y_done
+.clamp_y_max:
         lda #PLAYER_Y_MAX
         sta player_y
 .y_done:

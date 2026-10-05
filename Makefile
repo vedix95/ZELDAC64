@@ -34,8 +34,8 @@ $(SRC_DIR)/sprites.asm: assets/link.txt tools/sprgen.py
 	$(PYTHON) tools/sprgen.py assets/link.txt -o $@
 
 # charset.asm et map_data.asm sont générés ensemble (cible groupée : make >= 4.3)
-$(SRC_DIR)/charset.asm $(SRC_DIR)/map_data.asm &: assets/tiles.txt assets/map.txt tools/tilegen.py
-	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/map.txt \
+$(SRC_DIR)/charset.asm $(SRC_DIR)/map_data.asm &: assets/tiles.txt assets/world.txt tools/tilegen.py
+	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/world.txt \
 		--charset $(SRC_DIR)/charset.asm --map-out $(SRC_DIR)/map_data.asm
 
 $(PRG): $(SRCS) | $(BLD_DIR)
@@ -45,13 +45,13 @@ $(PRG): $(SRCS) | $(BLD_DIR)
 $(BLD_DIR):
 	mkdir -p $@
 
-# Aperçus PNG : build/link_preview.png et build/map_preview.png
+# Aperçus PNG : build/link_preview.png et build/world_preview.png
 preview: | $(BLD_DIR)
 	$(PYTHON) tools/sprgen.py assets/link.txt -o $(SRC_DIR)/sprites.asm --preview $(BLD_DIR)/link_preview.png
-	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/map.txt \
+	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/world.txt \
 		--charset $(SRC_DIR)/charset.asm --map-out $(SRC_DIR)/map_data.asm \
-		--preview $(BLD_DIR)/map_preview.png
-	@echo "Aperçus : $(BLD_DIR)/link_preview.png $(BLD_DIR)/map_preview.png"
+		--preview $(BLD_DIR)/world_preview.png
+	@echo "Aperçus : $(BLD_DIR)/link_preview.png $(BLD_DIR)/world_preview.png"
 
 run: $(PRG)
 	$(VICE) -autostart $(PRG)

@@ -22,7 +22,7 @@ start:
 }
         jsr init_video
         jsr clear_screen
-        jsr draw_map
+        jsr load_room
         jsr player_init
 
 main_loop:
@@ -47,10 +47,14 @@ wait_frame:
 !source "src/input.asm"
 !source "src/player.asm"
 !source "src/tilemap.asm"
-!source "src/map_data.asm"      ; tables de tuiles + carte (généré)
 
-!align 63, 0                    ; les sprites doivent commencer sur 64 octets
+; Les sprites doivent impérativement être en-dessous de $1000 (ou au-delà de $2000)
+; car pour le VIC-II (banque 0), la zone $1000-$1FFF voit la ROM des caractères (chargen).
+!align 63, 0
 !source "src/sprites.asm"
+
+; Les cartes sont lues par le CPU, qui voit la RAM en $1000-$1FFF sans problème.
+!source "src/map_data.asm"
 
 ; Le jeu de caractères est à une adresse fixe : le code et les données
 ; ci-dessus doivent tenir avant (la zone entre les deux est remplie de 0).

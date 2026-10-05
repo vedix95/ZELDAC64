@@ -6,6 +6,13 @@
 ; reste vide (caractère 0 = fond uni).
 ; ---------------------------------------------------------------------------
 
+START_ROOM_X    = 1
+START_ROOM_Y    = 1
+
+current_room_x:   !byte START_ROOM_X
+current_room_y:   !byte START_ROOM_Y
+current_room_idx: !byte 0
+
 init_video:
         lda #1
         sta CURSOR_FLAG                 ; pas de curseur clignotant
@@ -44,9 +51,24 @@ clear_screen:
         bne .loop
         rts
 
-; Dessine la carte entière (appelé une fois, écran éteint ou non).
+; Charge et dessine la salle désignée par current_room_x / current_room_y
+load_room:
+        ldx current_room_y
+        lda world_row_offset,x
+        clc
+        adc current_room_x
+        sta current_room_idx
+        tax
+        lda room_tbl_lo,x
+        sta ZP_MAP
+        lda room_tbl_hi,x
+        sta ZP_MAP+1
+        jsr draw_map
+        rts
+
+; Dessine la salle pointée par ZP_MAP (240 tuiles = 20x12).
 ; ZP_SCR / ZP_COL pointent sur la ligne de texte courante (écran / couleur) ;
-; ZP_IDX est l'index dans map_data (0..239, tient sur un octet).
+; ZP_IDX est l'index dans la salle (0..239, tient sur un octet).
 draw_map:
         lda #<SCREEN_RAM
         sta ZP_SCR
@@ -64,8 +86,8 @@ draw_map:
         lda #0
         sta ZP_TCOL
 .col:
-        ldx ZP_IDX
-        lda map_data,x                  ; numéro de tuile
+        ldy ZP_IDX
+        lda (ZP_MAP),y                  ; numéro de tuile dans la salle courante
         tax
         lda tile_color,x
         sta ZP_TMP                      ; couleur (bit 3 = multicolore)

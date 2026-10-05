@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Genere le jeu de caracteres multicolore et la carte a partir de l'ASCII art.
+"""Genere le jeu de caracteres multicolore et le monde (multi-ecrans) a partir de l'ASCII art.
 
-Usage : tilegen.py assets/tiles.txt assets/map.txt --charset src/charset.asm \
+Usage : tilegen.py assets/tiles.txt assets/world.txt --charset src/charset.asm \
             --map src/map_data.asm [--preview apercu.png]
 """
 import argparse
@@ -72,23 +72,42 @@ def parse_tiles(path):
     return cfg, tiles
 
 
-def parse_map(path, tiles):
+def parse_world(path, tiles):
     index = {t["symbol"]: i for i, t in enumerate(tiles)}
-    rows = []
+    raw_lines = []
     with open(path, encoding="utf-8") as f:
         for n, raw in enumerate(f, 1):
             line = raw.strip()
             if not line or line.startswith(";"):
                 continue
-            if len(line) != MAP_W:
-                die(f"{path}:{n}: {len(line)} colonnes, {MAP_W} attendues")
+            line = "".join(line.split())
             for c in line:
                 if c not in index:
                     die(f"{path}:{n}: symbole inconnu {c!r}")
-            rows.append([index[c] for c in line])
-    if len(rows) != MAP_H:
-        die(f"{path}: {len(rows)} lignes, {MAP_H} attendues")
-    return rows
+            raw_lines.append([index[c] for c in line])
+    if not raw_lines:
+        die(f"{path}: fichier vide")
+    w = len(raw_lines[0])
+    h = len(raw_lines)
+    if w % MAP_W != 0:
+        die(f"{path}: largeur {w} non multiple de {MAP_W}")
+    if h % MAP_H != 0:
+        die(f"{path}: hauteur {h} non multiple de {MAP_H}")
+    for i, r in enumerate(raw_lines):
+        if len(r) != w:
+            die(f"{path}: ligne {i+1} de longueur {len(r)}, attendu {w}")
+
+    rooms_x = w // MAP_W
+    rooms_y = h // MAP_H
+    rooms = []
+    for ry in range(rooms_y):
+        for rx in range(rooms_x):
+            room = []
+            for y in range(MAP_H):
+                row = raw_lines[ry * MAP_H + y][rx * MAP_W:(rx + 1) * MAP_W]
+                room.append(row)
+            rooms.append(room)
+    return rooms, rooms_x, rooms_y, raw_lines
 
 
 def char_bytes(rows, col0, row0):
@@ -118,12 +137,15 @@ def write_charset(path, tiles, src):
                 f.write(f"        !byte {b}   ; {i}:{t['name']} {label}\n")
 
 
-def write_map(path, cfg, tiles, grid, src_tiles, src_map):
+def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world):
     with open(path, "w", encoding="utf-8") as f:
-        f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_map} - ne pas editer.\n")
+        f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_world} - ne pas editer.\n")
         f.write(f"MAP_W           = {MAP_W}\nMAP_H           = {MAP_H}\n")
         f.write(f"MAP_BG_COLOR    = {cfg['bg']}\nMAP_MC1_COLOR   = {cfg['mc1']}\n")
-        f.write(f"MAP_MC2_COLOR   = {cfg['mc2']}\n\nTILE_SOLID      = %00000001\n\n")
+        f.write(f"MAP_MC2_COLOR   = {cfg['mc2']}\n\n")
+        f.write(f"WORLD_ROOMS_X   = {rooms_x}\nWORLD_ROOMS_Y   = {rooms_y}\n")
+        f.write(f"WORLD_ROOMS_CNT = {len(rooms)}\n\n")
+        f.write("TILE_SOLID      = %00000001\n\n")
         for i, t in enumerate(tiles):
             f.write(f"TILE_{ident(t['name'])} = {i}\n")
         f.write("\n; couleur de chaque tuile (+8 = caractere multicolore)\ntile_color:\n")
@@ -132,12 +154,24 @@ def write_map(path, cfg, tiles, grid, src_tiles, src_map):
         f.write("\n; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n")
         for t in tiles:
             f.write(f"        !byte {'TILE_SOLID' if t['solid'] else '0'}   ; {t['name']}\n")
-        f.write("\n; carte : 1 octet par tuile, ligne par ligne\nmap_data:\n")
-        for row in grid:
-            f.write("        !byte " + ", ".join(str(v) for v in row) + "\n")
+
+        f.write("\n; table ry * WORLD_ROOMS_X\nworld_row_offset:\n        !byte ")
+        f.write(", ".join(str(ry * rooms_x) for ry in range(rooms_y)) + "\n")
+
+        f.write("\n; tables des pointeurs de chaque salle (ordre Y puis X)\nroom_tbl_lo:\n        !byte ")
+        f.write(", ".join(f"<room_{i:02d}" for i in range(len(rooms))) + "\n")
+        f.write("room_tbl_hi:\n        !byte ")
+        f.write(", ".join(f">room_{i:02d}" for i in range(len(rooms))) + "\n")
+
+        for i, room in enumerate(rooms):
+            rx = i % rooms_x
+            ry = i // rooms_x
+            f.write(f"\n; Salle ({rx}, {ry}) - {MAP_W}x{MAP_H} tuiles = {MAP_W * MAP_H} octets\nroom_{i:02d}:\n")
+            for row in room:
+                f.write("        !byte " + ", ".join(str(v) for v in row) + "\n")
 
 
-def preview(path, cfg, tiles, grid, scale=3):
+def preview(path, cfg, tiles, grid, scale=2):
     pal = [PALETTE[cfg["bg"]], PALETTE[cfg["mc1"]], PALETTE[cfg["mc2"]]]
     pix = []
     for row in grid:
@@ -155,18 +189,18 @@ def preview(path, cfg, tiles, grid, scale=3):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("tiles")
-    ap.add_argument("map")
+    ap.add_argument("world")
     ap.add_argument("--charset", required=True)
     ap.add_argument("--map-out", required=True, dest="map_out")
     ap.add_argument("--preview")
     a = ap.parse_args()
     cfg, tiles = parse_tiles(a.tiles)
-    grid = parse_map(a.map, tiles)
+    rooms, rx, ry, grid = parse_world(a.world, tiles)
     write_charset(a.charset, tiles, a.tiles)
-    write_map(a.map_out, cfg, tiles, grid, a.tiles, a.map)
+    write_map(a.map_out, cfg, tiles, rooms, rx, ry, a.tiles, a.world)
     if a.preview:
         preview(a.preview, cfg, tiles, grid)
-    print(f"{len(tiles)} tuiles, carte {MAP_W}x{MAP_H}")
+    print(f"{len(tiles)} tuiles, monde {rx}x{ry} ecrans ({len(rooms)} salles)")
 
 
 if __name__ == "__main__":
