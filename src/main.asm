@@ -20,21 +20,9 @@ start:
 !if start != 2061 {
         !error "L'adresse de start doit etre 2061 (SYS 2061)"
 }
-        lda #COL_BLACK
-        sta VIC_BORDER
-        sta VIC_BACKGROUND
-
-        lda #PET_CLEAR
-        jsr CHROUT
-        ldx #0
-.print:
-        lda message,x
-        beq .print_done
-        jsr CHROUT
-        inx
-        bne .print
-.print_done:
-
+        jsr init_video
+        jsr clear_screen
+        jsr draw_map
         jsr player_init
 
 main_loop:
@@ -56,11 +44,18 @@ wait_frame:
         beq .leave_line
         rts
 
-message:
-        !text "JOYSTICK PORT 2 : DEPLACE LINK", PET_RETURN, 0
-
 !source "src/input.asm"
 !source "src/player.asm"
+!source "src/tilemap.asm"
+!source "src/map_data.asm"      ; tables de tuiles + carte (généré)
 
 !align 63, 0                    ; les sprites doivent commencer sur 64 octets
 !source "src/sprites.asm"
+
+; Le jeu de caractères est à une adresse fixe : le code et les données
+; ci-dessus doivent tenir avant (la zone entre les deux est remplie de 0).
+!if * > CHARSET_ADDR {
+        !error "Le code deborde sur le jeu de caracteres ($2000)"
+}
+* = CHARSET_ADDR
+!source "src/charset.asm"

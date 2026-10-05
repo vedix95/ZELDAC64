@@ -1,0 +1,16 @@
+; Carte 20 x 12 tuiles. Un symbole par tuile (voir assets/tiles.txt) :
+;   . herbe   , herbe avec touffes   f fleurs   T arbre   ~ eau
+;   # mur/montagne   _ sable (chemin)   O entree de grotte
+; Les lignes commencant par ";" sont des commentaires.
+##########O#########
+TT.,......_...,...TT
+T.,f......_....~~~.T
+T.,......._...~~~~~T
+T..f......_...~~~~~T
+T.TT......_....~~~~T
+T.TT.f...._...~~~..T
+T.,......._.....,..T
+T..f......_..f.....T
+T.........__......TT
+TT........__......TT
+TTTT......__....TTTT

@@ -1,0 +1,164 @@
+; Tuiles 16x16 pixels (8 colonnes x 16 lignes de "gros" pixels multicolores).
+; Chaque tuile = 4 caracteres du jeu de caracteres C64 (2x2).
+;
+; Palette globale (communes a toutes les tuiles) :
+;   .  fond          = bg   (registre $d021)
+;   1  couleur 1     = mc1  ($d022)
+;   2  couleur 2     = mc2  ($d023)
+;   c  couleur propre de la tuile (une seule par tuile, parmi les 8 premieres
+;      couleurs C64 : black white red cyan purple green blue yellow)
+;
+; Couleurs disponibles : black white red cyan purple green blue yellow orange
+;                        brown lred dgrey grey lgreen lblue lgrey
+;
+; Definition d'une tuile :   [nom] symbole couleur_propre [solid]
+; "solid" = bloque le joueur (utilise plus tard pour les collisions).
+; 64 tuiles maximum. La tuile 0 doit etre un fond uni (sert a vider l'ecran).
+
+bg: lgreen
+mc1: orange
+mc2: white
+
+[grass] . green
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+
+[tufts] , green
+........
+........
+..c.....
+.c.c....
+........
+........
+......c.
+.....c.c
+........
+........
+.c......
+c.c.....
+........
+....c...
+...c.c..
+........
+
+[flowers] f red
+........
+........
+..c.....
+.c2c....
+..c.....
+........
+........
+........
+......c.
+.....c2c
+......c.
+........
+.c......
+c2c.....
+.c......
+........
+
+[tree] T green solid
+..cccc..
+.cccccc.
+cc.ccccc
+cccc.ccc
+cccccccc
+cccccccc
+ccc.cccc
+.cccccc.
+..cccc..
+...11...
+...11...
+...11...
+...11...
+..1111..
+........
+........
+
+[water] ~ blue solid
+cccccccc
+c22ccccc
+cccccccc
+cccccccc
+ccccc22c
+cccccccc
+cccccccc
+cccccccc
+cccccccc
+cc22cccc
+cccccccc
+cccccccc
+cccccccc
+cccc22cc
+cccccccc
+cccccccc
+
+[wall] # black solid
+cccccccc
+c111c111
+c111c111
+c111c111
+cccccccc
+11c111c1
+11c111c1
+11c111c1
+cccccccc
+c111c111
+c111c111
+c111c111
+cccccccc
+11c111c1
+11c111c1
+11c111c1
+
+[sand] _ yellow
+cccccccc
+cccccccc
+cc1ccccc
+cccccccc
+cccccccc
+ccccc1cc
+cccccccc
+cccccccc
+cccccccc
+c1cccccc
+cccccccc
+cccccccc
+cccccc1c
+cccccccc
+ccc1cccc
+cccccccc
+
+[cave] O black
+11111111
+11111111
+11cccc11
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1
+1cccccc1

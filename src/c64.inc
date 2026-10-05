@@ -16,6 +16,8 @@ VIC_IRQ_ENABLE  = $d01a
 VIC_SPRITE_MC   = $d01c         ; 1 bit par sprite : mode multicolore
 VIC_BORDER      = $d020
 VIC_BACKGROUND  = $d021
+VIC_BG_MC1      = $d022         ; texte multicolore : couleur 1 (paire 01)
+VIC_BG_MC2      = $d023         ; texte multicolore : couleur 2 (paire 10)
 VIC_SPRITE_MC1  = $d025         ; multicolore 1 (commun aux sprites)
 VIC_SPRITE_MC2  = $d026         ; multicolore 2 (commun aux sprites)
 VIC_SPRITE_COL0 = $d027         ; couleur propre du sprite 0
@@ -44,6 +46,23 @@ JOY_FIRE        = %00010000
 SCREEN_RAM      = $0400
 COLOR_RAM       = $d800
 CPU_PORT        = $01
+
+; Jeu de caractères perso : $2000-$27FF. Dans la banque VIC 0, $1000-$1FFF
+; est vu comme la ROM de caractères, donc on prend le bloc suivant.
+CHARSET_ADDR    = $2000
+; Registre $d018 : bits 4-7 = écran/$0400, bits 1-3 = charset/$0800
+MEMSETUP_VALUE  = ((SCREEN_RAM >> 6) & $f0) | ((CHARSET_ADDR >> 10) & $0e)
+
+CURSOR_FLAG     = $cc           ; non nul = curseur KERNAL désactivé
+
+; --- Zéro page (cases libres, non utilisées par le KERNAL en dehors de BASIC) ---
+ZP_IDX          = $02
+ZP_ROW          = $03
+ZP_TCOL         = $04
+ZP_TMP          = $05
+ZP_BASE         = $06
+ZP_SCR          = $fb           ; pointeur 16 bits
+ZP_COL          = $fd           ; pointeur 16 bits
 
 ; --- KERNAL ---
 CHROUT          = $ffd2

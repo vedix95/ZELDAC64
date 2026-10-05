@@ -10,7 +10,7 @@ PLAYER_SPEED    = 2
 PLAYER_X_MIN    = 20
 PLAYER_X_MAX    = 324
 PLAYER_Y_MIN    = 48
-PLAYER_Y_MAX    = 232
+PLAYER_Y_MAX    = 224                   ; la carte fait 192 px : 50+192-1-17
 
 ; Directions : l'ordre doit suivre celui des images dans assets/link.txt
 DIR_DOWN        = 0
@@ -22,8 +22,8 @@ PLAYER_COLOR    = COL_GREEN             ; couleur propre : tunique
 PLAYER_SKIN     = COL_LRED              ; multicolore 1  : peau
 PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture...
 
-player_x:       !word 172
-player_y:       !byte 140
+player_x:       !word 180               ; tuile 10 (24 + 10*16 - 4)
+player_y:       !byte 176               ; tuile 8  (50 + 8*16 - 2)
 player_dir:     !byte DIR_DOWN
 
 player_init:
