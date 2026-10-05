@@ -1,0 +1,5 @@
+build/
+*.prg
+*.d64
+*.vs
+*.rep
