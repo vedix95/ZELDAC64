@@ -44,8 +44,16 @@ main_loop:
         lda game_state
         cmp #STATE_INVENTORY
         beq .in_inventory
+        cmp #STATE_DEBUG
+        beq .in_debug
 
         ; --- ÉTAT DE JEU NORMAL ---
+        ; Touche D : ouvre l'écran de debug matériel & mémoire
+        lda key_d_pressed
+        beq +
+        jsr open_debug
+        jmp main_loop
++
         ; Bouton C / Touche Espace : ouvre l'inventaire
         lda btn_c_pressed
         beq .play_frame
@@ -63,6 +71,10 @@ main_loop:
 
 .in_inventory:
         jsr inventory_update
+        jmp main_loop
+
+.in_debug:
+        jsr debug_update
         jmp main_loop
 
 ; Synchronisation sur la ligne raster 255 (1 passage par image, 50/60 Hz).
@@ -107,3 +119,6 @@ wait_frame:
 
 ; Logique et IA des ennemis (code CPU en RAM libre)
 !source "src/enemies.asm"
+
+; Écran de diagnostic matériel et cartographie mémoire (Touche 'D')
+!source "src/debug.asm"

@@ -23,6 +23,10 @@ btn_c:              !byte 0                 ; 1 si Bouton C (Inventaire / Menu) 
 btn_c_prev:         !byte 0
 btn_c_pressed:      !byte 0                 ; 1 au front montant
 
+key_d:              !byte 0                 ; 1 si touche 'D' (Debug) enfoncée
+key_d_prev:         !byte 0
+key_d_pressed:      !byte 0                 ; 1 au front montant
+
 ; Alias pour rétro-compatibilité
 key_space_pressed   = btn_c_pressed
 
@@ -36,6 +40,8 @@ read_input:
         sta btn_b_prev
         lda btn_c
         sta btn_c_prev
+        lda key_d
+        sta key_d_prev
 
         ; -------------------------------------------------------------------
         ; 1. LECTURE DU JOYSTICK PORT 2 & BOUTON A (FIRE 1)
@@ -184,6 +190,34 @@ read_input:
         eor #$ff
         and btn_c
         sta btn_c_pressed
+
+        ; -------------------------------------------------------------------
+        ; 4. LECTURE DE LA TOUCHE 'D' (DEBUG HARDWARE & MEMOIRE)
+        ; -------------------------------------------------------------------
+        lda #0
+        sta key_d
+
+        ; Matrice clavier : Ligne 2 ($FB), Colonne 2 (bit 2 de Port B = 0 si 'D')
+        sei
+        lda #$fb                        ; Ligne 2 ($FB)
+        sta CIA1_PORT_A
+        lda CIA1_PORT_B
+        sta ZP_TMP
+        lda #$ff                        ; Restaure Port A
+        sta CIA1_PORT_A
+        cli
+
+        lda ZP_TMP
+        and #%00000100                  ; bit 2 = 0 si 'D' enfoncé
+        bne .check_d_done
+        lda #1
+        sta key_d
+
+.check_d_done:
+        lda key_d_prev
+        eor #$ff
+        and key_d
+        sta key_d_pressed
 
         ; Restaure Port A à $FF
         lda #$ff

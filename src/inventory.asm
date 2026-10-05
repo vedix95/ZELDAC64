@@ -7,6 +7,7 @@
 
 STATE_PLAYING   = 0
 STATE_INVENTORY = 1
+STATE_DEBUG     = 2
 
 game_state:         !byte STATE_PLAYING
 inv_frame_timer:    !byte 0
