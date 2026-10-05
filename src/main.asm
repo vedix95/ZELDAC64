@@ -33,6 +33,7 @@ game_init:
         jsr load_room
         jsr hud_init
         jsr player_init
+        jsr items_init
 
 main_loop:
         jsr wait_frame
@@ -52,7 +53,9 @@ main_loop:
 
 .play_frame:
         jsr player_update
+        jsr items_update
         jsr player_draw
+        jsr items_draw
         jmp main_loop
 
 .in_inventory:
@@ -85,7 +88,8 @@ wait_frame:
 * = CHARSET_ADDR
 !source "src/charset.asm"
 
-; Données de carte et sous-menus dans la RAM libre au-delà du jeu de caractères
+; Données de carte, sous-menus et logique des objets dans la RAM libre au-delà du jeu de caractères
 * = $2800
+!source "src/items.asm"
 !source "src/inventory.asm"
 !source "src/map_data.asm"

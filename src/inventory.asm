@@ -40,6 +40,9 @@ open_inventory:
         lda #STATE_INVENTORY
         sta game_state
 
+        ; Réinitialise tout projectile en cours
+        jsr items_init
+
         ; Bip sonore d'ouverture de menu (style Zelda)
         lda #15
         sta SID_VOLUME
@@ -185,6 +188,7 @@ close_inventory:
         ; Recharge la salle et redessine le HUD
         jsr load_room
         jsr hud_init
+        jsr items_init
         jsr player_draw
         rts
 
