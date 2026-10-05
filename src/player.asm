@@ -108,13 +108,19 @@ player_update:
         rts                             ; Link reste immobile pendant le coup
 
 .check_attack_start:
-        ; Déclenchement sur appui bouton Feu (front montant)
-        lda joy_pressed
-        and #JOY_FIRE
-        beq .handle_movement
+        ; Déclenchement sur appui Bouton A (Épée)
+        lda btn_a_pressed
+        beq .check_item_b
         lda #ATTACK_FRAMES
         sta player_attacking
         jsr sound_sword
+        rts
+
+.check_item_b:
+        ; Déclenchement sur appui Bouton B (Arme secondaire équipée)
+        lda btn_b_pressed
+        beq .handle_movement
+        jsr player_use_item_b
         rts
 
 .handle_movement:
@@ -503,6 +509,98 @@ sound_sword:
         lda #$00                        ; Soutien 0, Relâchement 6 ms
         sta SID_V1_SR
         lda #%10000001                  ; Forme d'onde : Bruit (Noise) + Gate ON
+        sta SID_V1_CTRL
+        rts
+
+; ---------------------------------------------------------------------------
+; player_use_item_b : déclenché par le Bouton B (arme secondaire équipée)
+; ---------------------------------------------------------------------------
+player_use_item_b:
+        lda hud_selected_b
+        cmp #0
+        bne +
+        jmp use_boomerang
++       cmp #1
+        bne +
+        jmp use_bomb
++       cmp #2
+        bne +
+        jmp use_bow
++       jmp use_candle
+
+; 0: Boomerang -> Sifflement rotatif
+use_boomerang:
+        lda #15
+        sta SID_VOLUME
+        lda #$00
+        sta SID_V1_FREQ_LO
+        lda #$28
+        sta SID_V1_FREQ_HI
+        lda #$24
+        sta SID_V1_AD
+        lda #$20
+        sta SID_V1_SR
+        lda #%00010001                  ; Triangle + Gate ON
+        sta SID_V1_CTRL
+        rts
+
+; 1: Bombe -> Pose une bombe si disponible et bruit d'explosion
+use_bomb:
+        lda hud_bombs
+        beq .no_bomb
+        dec hud_bombs
+        jsr hud_render                  ; Met à jour le compteur du HUD
+        ; Bruitage d'explosion puissante
+        lda #15
+        sta SID_VOLUME
+        lda #$00
+        sta SID_V1_FREQ_LO
+        lda #$0e
+        sta SID_V1_FREQ_HI
+        lda #$00
+        sta SID_V1_AD
+        lda #$09
+        sta SID_V1_SR
+        lda #%10000001                  ; Bruit blanc
+        sta SID_V1_CTRL
+.no_bomb:
+        rts
+
+; 2: Arc & Flèche -> Tire une flèche si des rubis sont disponibles
+use_bow:
+        lda hud_rupees
+        beq .no_arrow
+        dec hud_rupees
+        jsr hud_render                  ; Met à jour le compteur du HUD
+        ; Bruitage de flèche qui siffle dans l'air
+        lda #15
+        sta SID_VOLUME
+        lda #$80
+        sta SID_V1_FREQ_LO
+        lda #$48
+        sta SID_V1_FREQ_HI
+        lda #$02
+        sta SID_V1_AD
+        lda #$00
+        sta SID_V1_SR
+        lda #%10000001                  ; Souffle rapide
+        sta SID_V1_CTRL
+.no_arrow:
+        rts
+
+; 3: Bougie -> Allume une flamme crépitante
+use_candle:
+        lda #15
+        sta SID_VOLUME
+        lda #$40
+        sta SID_V1_FREQ_LO
+        lda #$1c
+        sta SID_V1_FREQ_HI
+        lda #$28
+        sta SID_V1_AD
+        lda #$00
+        sta SID_V1_SR
+        lda #%10000001                  ; Crépitement
         sta SID_V1_CTRL
         rts
 

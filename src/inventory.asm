@@ -91,14 +91,37 @@ close_inventory:
 ; inventory_update : gestion de la navigation dans le menu
 ; ---------------------------------------------------------------------------
 inventory_update:
-        ; Touche Espace : fermer l'inventaire
-        lda key_space_pressed
+        ; 1. Bouton C (Menu / Espace) : fermer l'inventaire
+        lda btn_c_pressed
+        beq .check_btn_b
+        jsr close_inventory
+        rts
+
+.check_btn_b:
+        ; 2. Bouton B : cycle direct vers l'arme suivante
+        lda btn_b_pressed
+        beq .check_btn_a
+        lda hud_selected_b
+        cmp #3
+        beq .wrap_b_min
+        inc hud_selected_b
+        jmp .b_changed
+.wrap_b_min:
+        lda #0
+        sta hud_selected_b
+.b_changed:
+        jsr sound_select_item
+        rts
+
+.check_btn_a:
+        ; 3. Bouton A (Feu) : valide et ferme le menu
+        lda btn_a_pressed
         beq .check_joy
         jsr close_inventory
         rts
 
 .check_joy:
-        ; Joystick Gauche / Haut : arme précédente
+        ; 4. Joystick Gauche / Haut : arme précédente
         lda joy
         and #(JOY_LEFT | JOY_UP)
         beq .no_prev
@@ -119,10 +142,10 @@ inventory_update:
         ; Joystick Droite / Bas : arme suivante
         lda joy
         and #(JOY_RIGHT | JOY_DOWN)
-        beq .check_fire
+        beq .inv_done
         lda joy_prev
         and #(JOY_RIGHT | JOY_DOWN)
-        bne .check_fire
+        bne .inv_done
         lda hud_selected_b
         cmp #3
         beq .wrap_min
@@ -133,6 +156,12 @@ inventory_update:
         sta hud_selected_b
 
 .item_changed:
+        jsr sound_select_item
+
+.inv_done:
+        rts
+
+sound_select_item:
         ; Bruitage de sélection
         lda #$00
         sta SID_V1_FREQ_LO
@@ -144,14 +173,6 @@ inventory_update:
         sta SID_V1_CTRL
         jsr inv_update_cursor
         jsr hud_render
-
-.check_fire:
-        ; Bouton Feu : valide et ferme le menu
-        lda joy_pressed
-        and #JOY_FIRE
-        beq .inv_done
-        jsr close_inventory
-.inv_done:
         rts
 
 ; ---------------------------------------------------------------------------
@@ -394,4 +415,4 @@ txt_eq_title:   !text "CURRENT EQUIPMENT: "
 txt_sword:      !text "SWORD  : WOODEN SWORD"
 txt_shield:     !text "SHIELD : SMALL SHIELD"
 txt_triforce:   !text "TRIFORCE : [ * * * - - - - - ]"
-txt_help:       !text "[JOY] CHOOSE    [SPACE / FIRE] CLOSE"
+txt_help:       !text "[JOY/B] CHOOSE     [A/C/SPACE] CLOSE"

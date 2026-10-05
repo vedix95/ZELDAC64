@@ -38,6 +38,8 @@ SID_V1_PW_HI    = $d403
 SID_V1_CTRL     = $d404
 SID_V1_AD       = $d405
 SID_V1_SR       = $d406
+SID_POTX        = $d419         ; Potentiomètre X (Bouton 2 de la manette)
+SID_POTY        = $d41a         ; Potentiomètre Y (Bouton 3 de la manette)
 SID_VOLUME      = $d418
 
 ; --- CIA ---
@@ -52,6 +54,11 @@ JOY_DOWN        = %00000010
 JOY_LEFT        = %00000100
 JOY_RIGHT       = %00001000
 JOY_FIRE        = %00010000
+
+; --- Boutons de la manette à 3 boutons ---
+BTN_A           = %00000001     ; Bouton 1 : Épée (Slot A)
+BTN_B           = %00000010     ; Bouton 2 : Objet secondaire (Slot B)
+BTN_C           = %00000100     ; Bouton 3 : Menu / Inventaire
 
 ; --- Mémoire ---
 SCREEN_RAM      = $0400
