@@ -86,18 +86,18 @@ hud_init:
         lda #'S'
         sta SCREEN_RAM+14
 
-        ; Boîte [B]
+        ; Boîte [A] (Arme secondaire)
         lda #'['
         sta SCREEN_RAM+21
-        lda #'B'
+        lda #'A'
         sta SCREEN_RAM+22
         lda #']'
         sta SCREEN_RAM+23
 
-        ; Boîte [A]
+        ; Boîte [X] (Épée)
         lda #'['
         sta SCREEN_RAM+27
-        lda #'A'
+        lda #'X'
         sta SCREEN_RAM+28
         lda #']'
         sta SCREEN_RAM+29

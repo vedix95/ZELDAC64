@@ -57,8 +57,8 @@ main_loop:
         beq .in_inventory
 
         ; --- ÉTAT DE JEU NORMAL ---
-        ; Bouton C / Touche Espace : ouvre l'inventaire
-        lda btn_c_pressed
+        ; Bouton B : ouvre l'inventaire
+        lda btn_b_pressed
         beq .play_frame
         jsr open_inventory
         jmp main_loop

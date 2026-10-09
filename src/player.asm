@@ -108,17 +108,17 @@ player_update:
         rts                             ; Link reste immobile pendant le coup
 
 .check_attack_start:
-        ; Déclenchement sur appui Bouton A (Épée)
-        lda btn_a_pressed
-        beq .check_item_b
+        ; Déclenchement sur appui Bouton X (Épée)
+        lda btn_x_pressed
+        beq .check_item_a
         lda #ATTACK_FRAMES
         sta player_attacking
         jsr sound_sword
         rts
 
-.check_item_b:
-        ; Déclenchement sur appui Bouton B (Arme secondaire équipée)
-        lda btn_b_pressed
+.check_item_a:
+        ; Déclenchement sur appui Bouton A (Arme secondaire équipée)
+        lda btn_a_pressed
         beq .handle_movement
         jsr player_use_item_b
         rts

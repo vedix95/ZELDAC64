@@ -91,12 +91,14 @@ debug_update:
         cpx #36
         bne .fl_loop
 
-        ; Touche 'D', Bouton A (Fire) ou Touche Espace : quitte le debug
+        ; Touche 'D', Bouton X (Épée), Bouton B ou Bouton A : quitte le debug
         lda key_d_pressed
         bne .do_close
-        lda btn_a_pressed
+        lda btn_x_pressed
         bne .do_close
-        lda btn_c_pressed
+        lda btn_b_pressed
+        bne .do_close
+        lda btn_a_pressed
         bne .do_close
         rts
 
@@ -650,7 +652,7 @@ txt_dyn_status:
 txt_dyn_enemies:
         !text " E0: .... HP=.       E1: .... HP=.    "
 txt_dyn_raster:
-        !text " RASTER: #... ($D012)        ITEM B: ...."
+        !text " RASTER: #... ($D012)        ITEM A: ...."
 
 txt_dir_letters:
         !text "DULR"

@@ -207,33 +207,33 @@ inventory_update:
         lda flash_colors,x
         sta VIC_SPRITE_COL5
 
-        ; 2. Bouton C (Menu / Start / Espace) : fermer l'inventaire
-        lda btn_c_pressed
-        beq .check_btn_b
+        ; 2. Bouton B : fermer l'inventaire (toggle)
+        lda btn_b_pressed
+        beq .check_btn_x
         jsr close_inventory
         rts
 
-.check_btn_b:
-        ; 3. Bouton B : cycle direct vers l'arme suivante
-        lda btn_b_pressed
+.check_btn_x:
+        ; 3. Bouton X : valide et ferme le menu
+        lda btn_x_pressed
         beq .check_btn_a
-        lda hud_selected_b
-        cmp #3
-        beq .wrap_b_min
-        inc hud_selected_b
-        jmp .b_changed
-.wrap_b_min:
-        lda #0
-        sta hud_selected_b
-.b_changed:
-        jsr sound_select_item
+        jsr close_inventory
         rts
 
 .check_btn_a:
-        ; 4. Bouton A (Feu) : valide et ferme le menu
+        ; 4. Bouton A : cycle direct vers l'arme suivante
         lda btn_a_pressed
         beq .check_joy
-        jsr close_inventory
+        lda hud_selected_b
+        cmp #3
+        beq .wrap_a_min
+        inc hud_selected_b
+        jmp .a_changed
+.wrap_a_min:
+        lda #0
+        sta hud_selected_b
+.a_changed:
+        jsr sound_select_item
         rts
 
 .check_joy:
@@ -538,9 +538,9 @@ draw_inv_frame:
 txt_inventory:      !text "INVENTORY"
 txt_box_top:        !text "+-----+"
 txt_box_long:       !text "+---------------------+"
-txt_use_b1:         !text "USE B BUTTON"
+txt_use_b1:         !text "USE A BUTTON"
 txt_use_b2:         !text "FOR THIS"
 txt_item_names:     !text "BOOM  BOMB  BOW   CAND"
 txt_triforce_nes:   !text "TRIFORCE"
 txt_eq_row1:        !text "SWORD : WOODEN     SHIELD : SMALL   "
-txt_help_nes:       !text "[JOY/B] CHOOSE    [START/A] CLOSE "
+txt_help_nes:       !text "[JOY/A] CHOOSE    [B/X] CLOSE     "

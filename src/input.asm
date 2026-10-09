@@ -1,28 +1,28 @@
 ; ---------------------------------------------------------------------------
 ; input.asm : lecture du joystick (port 2), des 3 boutons de la manette
-;             et du clavier (touche Espace / touche 'D' / anti-ghosting)
+;             et du clavier (touche Espace / touche 'X' / touche 'D')
 ;
-; Manette 3 boutons (standard C64 / Amiga / VICE Xbox pad) :
-;   - Bouton A (1) : Épée (CIA1 Port A bit 4 = 0)
-;   - Bouton B (2) : Arme secondaire (Touche 'B' -> Ligne 3, Col 4)
-;   - Bouton C (3) : Menu / Inventaire (Touche ESPACE -> Ligne 7, Col 4)
-;   - Clavier 'D'  : Écran de debug matériel & mémoire (Ligne 2, Col 2)
+; Configuration :
+;   - Bouton X (Manette X ou Y / Touche ESPACE / touche 'X') : Épée
+;   - Bouton A (Manette A / Feu joystick CIA1 Port A bit 4) : Arme secondaire
+;   - Bouton B (Manette B / Touche 'B' -> Ligne 3, Col 4)  : Menu / Inventaire
+;   - Clavier 'D'                                          : Écran de debug
 ; ---------------------------------------------------------------------------
 joy:                !byte 0                 ; état courant (masques JOY_*)
 joy_prev:           !byte 0                 ; état à l'image précédente
 joy_pressed:        !byte 0                 ; front montant
 
-btn_a:              !byte 0                 ; 1 si Bouton A (Épée) enfoncé
+btn_a:              !byte 0                 ; 1 si Bouton A (Arme secondaire) enfoncé
 btn_a_prev:         !byte 0
 btn_a_pressed:      !byte 0                 ; 1 au front montant
 
-btn_b:              !byte 0                 ; 1 si Bouton B (Objet secondaire) enfoncé
+btn_b:              !byte 0                 ; 1 si Bouton B (Inventaire / Menu) enfoncé
 btn_b_prev:         !byte 0
 btn_b_pressed:      !byte 0                 ; 1 au front montant
 
-btn_c:              !byte 0                 ; 1 si Bouton C (Inventaire / Menu) enfoncé
-btn_c_prev:         !byte 0
-btn_c_pressed:      !byte 0                 ; 1 au front montant
+btn_x:              !byte 0                 ; 1 si Bouton X (Épée) enfoncé
+btn_x_prev:         !byte 0
+btn_x_pressed:      !byte 0                 ; 1 au front montant
 
 key_d:              !byte 0                 ; 1 si touche 'D' (Debug) enfoncée
 key_d_prev:         !byte 0
@@ -32,10 +32,13 @@ key_d_pressed:      !byte 0                 ; 1 au front montant
 col_idle:           !byte 0                 ; état des colonnes au repos (Port A = $FF)
 col_row3:           !byte 0                 ; état des colonnes avec Ligne 3 active ('B')
 col_row7:           !byte 0                 ; état des colonnes avec Ligne 7 active (Espace)
-col_row2:           !byte 0                 ; état des colonnes avec Ligne 2 active ('D')
+col_row2:           !byte 0                 ; état des colonnes avec Ligne 2 active ('D' et 'X')
 
-; Alias pour rétro-compatibilité
-key_space_pressed   = btn_c_pressed
+; Alias de compatibilité
+btn_c               = btn_x
+btn_c_prev          = btn_x_prev
+btn_c_pressed       = btn_x_pressed
+key_space_pressed   = btn_x_pressed
 
 read_input:
         ; Sauvegarde les états précédents pour calculer les fronts montants
@@ -45,13 +48,13 @@ read_input:
         sta btn_a_prev
         lda btn_b
         sta btn_b_prev
-        lda btn_c
-        sta btn_c_prev
+        lda btn_x
+        sta btn_x_prev
         lda key_d
         sta key_d_prev
 
         ; -------------------------------------------------------------------
-        ; 1. LECTURE DU JOYSTICK PORT 2 & BOUTON A (FIRE 1)
+        ; 1. LECTURE DU JOYSTICK PORT 2 & BOUTON A (FIRE 1 = ARME SECONDAIRE)
         ; -------------------------------------------------------------------
         ; Port A ($DC00) : toutes les lignes de sortie à 1 ($FF).
         ; Les directions et Fire tirent les broches à 0 (GND).
@@ -69,7 +72,7 @@ read_input:
         and joy
         sta joy_pressed                 ; front montant directions
 
-        ; Bouton A (Fire 1) : Bit 4 de CIA1 Port A ($DC00)
+        ; Bouton A (Fire 1 / Arme secondaire) : Bit 4 de CIA1 Port A ($DC00)
         lda CIA1_PORT_A
         eor #$ff
         and #%00010000
@@ -104,19 +107,19 @@ read_input:
         sta col_idle
 
         sei
-        ; Test Ligne 3 ($F7) : Touche 'B' (Arme secondaire)
+        ; Test Ligne 3 ($F7) : Touche 'B' (Inventaire / Menu)
         lda #%11110111
         sta CIA1_PORT_A
         lda CIA1_PORT_B
         sta col_row3
 
-        ; Test Ligne 7 ($7F) : Touche ESPACE (Menu / Inventaire)
+        ; Test Ligne 7 ($7F) : Touche ESPACE (Manette X / Touche Espace)
         lda #%01111111
         sta CIA1_PORT_A
         lda CIA1_PORT_B
         sta col_row7
 
-        ; Test Ligne 2 ($FB) : Touche 'D' (Debug matériel & mémoire)
+        ; Test Ligne 2 ($FB) : Touche 'D' (Debug, Col 2) et Touche 'X' (Épée, Col 7)
         lda #%11111011
         sta CIA1_PORT_A
         lda CIA1_PORT_B
@@ -128,7 +131,7 @@ read_input:
         cli
 
         ; -------------------------------------------------------------------
-        ; 3. TRAITEMENT BOUTON B (ARME SECONDAIRE / TOUCHE 'B')
+        ; 3. TRAITEMENT BOUTON B (INVENTAIRE / MENU / TOUCHE 'B')
         ; -------------------------------------------------------------------
         lda #0
         sta btn_b
@@ -146,30 +149,37 @@ read_input:
         sta btn_b_pressed
 
         ; -------------------------------------------------------------------
-        ; 4. TRAITEMENT BOUTON C (INVENTAIRE / MENU / TOUCHE ESPACE)
+        ; 4. TRAITEMENT BOUTON X (ÉPÉE / MANETTE X / ESPACE / TOUCHE 'X')
         ; -------------------------------------------------------------------
         lda #0
-        sta btn_c
+        sta btn_x
 
+        ; Test a : Touche 'X' du clavier (Ligne 2, Colonne 7 -> bit 7 de col_row2)
+        lda col_row2
+        bpl .got_btn_x                  ; Bit 7 = 0 si 'X' enfoncé (bpl car bit 7 = signe)
+
+        ; Test b : Manette X (Bouton 3) / Touche ESPACE (Ligne 7, Colonne 4)
         ; Anti-ghosting différentiel :
         ; Si la Colonne 4 était DÉJÀ à 0 au repos (col_idle bit 4 = 0), c'est un
         ; retour de masse causé par Droite + Touche 'B' -> on rejette !
         lda col_idle
         and #%00010000                  ; Bit 4 doit être 1 au repos
-        beq .done_btn_c                 ; Si 0 -> ghosting, rejet immédiat !
+        beq .done_btn_x                 ; Si 0 -> ghosting, rejet immédiat !
 
         ; Vérifie si la Colonne 4 passe à 0 quand la Ligne 7 est activée
         lda col_row7
         and #%00010000                  ; Bit 4 = 0 si Espace enfoncé
-        bne .done_btn_c
-        lda #1
-        sta btn_c
+        bne .done_btn_x
 
-.done_btn_c:
-        lda btn_c_prev
+.got_btn_x:
+        lda #1
+        sta btn_x
+
+.done_btn_x:
+        lda btn_x_prev
         eor #$ff
-        and btn_c
-        sta btn_c_pressed
+        and btn_x
+        sta btn_x_pressed
 
         ; -------------------------------------------------------------------
         ; 5. TRAITEMENT TOUCHE 'D' (DEBUG MATÉRIEL & MÉMOIRE)
