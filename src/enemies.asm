@@ -89,24 +89,24 @@ moblin_ptrs:
 ;   Ennemi 1 : type, spawn_tile_x, spawn_tile_y
 ; ---------------------------------------------------------------------------
 world_enemies:
-        ; Salle 0 : (0, 0) Grotte Montagne - 2 Octoroks
-        !byte TYPE_OCTO,   5, 4,   TYPE_OCTO,   14, 5
-        ; Salle 1 : (1, 0) Sanctuaire Nord - 1 Moblin, 1 Octorok
-        !byte TYPE_MOBLIN, 6, 4,   TYPE_OCTO,   13, 5
-        ; Salle 2 : (2, 0) Lac Bleu - 2 Octoroks
-        !byte TYPE_OCTO,   4, 3,   TYPE_OCTO,    6, 7
-        ; Salle 3 : (0, 1) Forêt Ouest - 2 Moblins
-        !byte TYPE_MOBLIN, 7, 3,   TYPE_MOBLIN, 12, 6
-        ; Salle 4 : (1, 1) Le Carrefour - 1 Moblin, 1 Octorok
-        !byte TYPE_MOBLIN, 6, 4,   TYPE_OCTO,   13, 5
-        ; Salle 5 : (2, 1) Rivage Est - 2 Octoroks
-        !byte TYPE_OCTO,   5, 3,   TYPE_OCTO,   11, 6
-        ; Salle 6 : (0, 2) Bosquet Perdu - 1 Octorok, 1 Moblin
-        !byte TYPE_OCTO,   8, 4,   TYPE_MOBLIN, 13, 6
-        ; Salle 7 : (1, 2) Départ Zelda 1 - Sanctuaire sans ennemis
-        !byte TYPE_NONE,   0, 0,   TYPE_NONE,    0, 0
-        ; Salle 8 : (2, 2) Labyrinthe - 2 Moblins
-        !byte TYPE_MOBLIN, 7, 3,   TYPE_MOBLIN, 12, 6
+        ; Salle 0 : (0, 0) Grotte Montagne
+        !byte TYPE_OCTO ,   5,  4,   TYPE_OCTO ,   14,  5
+        ; Salle 1 : (1, 0) Sanctuaire Nord
+        !byte TYPE_MOBLIN,   6,  4,   TYPE_OCTO ,   13,  5
+        ; Salle 2 : (2, 0) Lac Bleu
+        !byte TYPE_OCTO ,   4,  3,   TYPE_OCTO ,    6,  7
+        ; Salle 3 : (0, 1) Forêt Ouest
+        !byte TYPE_MOBLIN,   7,  3,   TYPE_MOBLIN,   12,  6
+        ; Salle 4 : (1, 1) Le Carrefour
+        !byte TYPE_MOBLIN,   6,  4,   TYPE_OCTO ,   13,  5
+        ; Salle 5 : (2, 1) Rivage Est
+        !byte TYPE_OCTO ,   5,  3,   TYPE_OCTO ,   11,  6
+        ; Salle 6 : (0, 2) Bosquet Perdu
+        !byte TYPE_OCTO ,   8,  4,   TYPE_MOBLIN,   13,  6
+        ; Salle 7 : (1, 2) Départ - Zelda 1
+        !byte TYPE_NONE ,   0,  0,   TYPE_NONE ,    0,  0
+        ; Salle 8 : (2, 2) Labyrinthe
+        !byte TYPE_MOBLIN,   7,  3,   TYPE_MOBLIN,   12,  6
 
 ; ---------------------------------------------------------------------------
 ; get_rand : nombre pseudo-aléatoire 8 bits dans A

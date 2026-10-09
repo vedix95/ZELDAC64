@@ -25,7 +25,7 @@ D64     := $(BLD_DIR)/$(NAME).d64
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
-.PHONY: all run debug d64 clean check preview
+.PHONY: all run debug d64 clean check preview editor
 
 all: $(PRG)
 
@@ -72,3 +72,6 @@ clean:
 
 check:
 	@./scripts/check-env.sh
+
+editor:
+	$(PYTHON) tools/editor.py
