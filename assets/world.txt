@@ -31,15 +31,15 @@ TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
 TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
 
 ; ===========================================================================
-; LIGNE 2 : (0, 2) Bosquet Perdu    |  (1, 2) Riviere Sud      |  (2, 2) Labyrinthe
+; LIGNE 2 : (0, 2) Bosquet Perdu    |  (1, 2) Départ - Zelda 1 |  (2, 2) Labyrinthe
 ; ===========================================================================
-TTTTTTT..___..TTTTTT TTTTTTTT.__.TTTTTTTT TTTT...TTTTTTTTTTTT#
-TTTTTT...___...TTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
-T..TTT...___...TT..T TTTT.....__.....TTTT TT.......TTT.....TT#
-T..TTT.........TT... .........__......... ..........TT.....TT#
-T..TTT...ff....TT... ....f....__....f.... ....ff....TT.....TT#
-T..TTT...,,....TT... .........__......... ....,,....TT.....TT#
-T..TTT.........TT... ...,.....__.....,... ..........TT.....TT#
-T..TTT.........TT..T TT.......__.......TT TT........TT..f..TT#
-TTTTTTT......TTTTTTT TTTTTTT..__..TTTTTTT TTT.....TTTTTTTTTTT#
+TTTTTTT..___..TTTTTT ####O###...__...#### TTTT...TTTTTTTTTTTT#
+TTTTTT...___...TTTTT ###......____...#### TTT.....TTTTTTTTTTT#
+T..TTT...___...TT..T ##......_____...#### TT.......TTT.....TT#
+T..TTT.........TT... #......._____....### ..........TT.....TT#
+T..TTT...ff....TT... ____________________ ....ff....TT.....TT#
+T..TTT...,,....TT... ____________________ ....,,....TT.....TT#
+T..TTT.........TT... ##......_____.....## ..........TT.....TT#
+T..TTT.........TT..T ###....._____....### TT........TT..f..TT#
+TTTTTTT......TTTTTTT TTTTTTTTTTTTTTTTTTTT TTT.....TTTTTTTTTTT#
 TTTTTTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTTTTTT TTTTTTTTTTTTTTTTTTTT

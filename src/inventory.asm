@@ -8,6 +8,7 @@
 STATE_PLAYING   = 0
 STATE_INVENTORY = 1
 STATE_DEBUG     = 2
+STATE_CAVE      = 3
 
 game_state:         !byte STATE_PLAYING
 inv_frame_timer:    !byte 0
@@ -522,6 +523,18 @@ draw_inv_frame:
         cpx #36
         bne .put_eq1
 
+        ; Si pas encore d'épée, affiche "NONE  " à la place de "WOODEN"
+        lda player_has_sword
+        bne +
+        ldx #0
+.put_none:
+        lda txt_sword_none,x
+        sta SCREEN_RAM+840+2+8,x
+        inx
+        cpx #6
+        bne .put_none
++
+
         ; Ligne 23 : Aide manette
         ldx #0
 .put_help:
@@ -543,4 +556,5 @@ txt_use_b2:         !text "FOR THIS"
 txt_item_names:     !text "BOOM  BOMB  BOW   CAND"
 txt_triforce_nes:   !text "TRIFORCE"
 txt_eq_row1:        !text "SWORD : WOODEN     SHIELD : SMALL   "
+txt_sword_none:     !text "NONE  "
 txt_help_nes:       !text "[JOY/A] CHOOSE    [B/X] CLOSE     "

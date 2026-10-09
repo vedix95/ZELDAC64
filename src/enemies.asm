@@ -97,14 +97,14 @@ world_enemies:
         !byte TYPE_OCTO,   4, 3,   TYPE_OCTO,    6, 7
         ; Salle 3 : (0, 1) Forêt Ouest - 2 Moblins
         !byte TYPE_MOBLIN, 7, 3,   TYPE_MOBLIN, 12, 6
-        ; Salle 4 : (1, 1) Le Carrefour (Départ) - 1 Octorok tranquille
-        !byte TYPE_OCTO,  14, 3,   TYPE_NONE,    0, 0
+        ; Salle 4 : (1, 1) Le Carrefour - 1 Moblin, 1 Octorok
+        !byte TYPE_MOBLIN, 6, 4,   TYPE_OCTO,   13, 5
         ; Salle 5 : (2, 1) Rivage Est - 2 Octoroks
         !byte TYPE_OCTO,   5, 3,   TYPE_OCTO,   11, 6
         ; Salle 6 : (0, 2) Bosquet Perdu - 1 Octorok, 1 Moblin
         !byte TYPE_OCTO,   8, 4,   TYPE_MOBLIN, 13, 6
-        ; Salle 7 : (1, 2) Rivière Sud - 2 Moblins
-        !byte TYPE_MOBLIN, 6, 4,   TYPE_MOBLIN, 13, 5
+        ; Salle 7 : (1, 2) Départ Zelda 1 - Sanctuaire sans ennemis
+        !byte TYPE_NONE,   0, 0,   TYPE_NONE,    0, 0
         ; Salle 8 : (2, 2) Labyrinthe - 2 Moblins
         !byte TYPE_MOBLIN, 7, 3,   TYPE_MOBLIN, 12, 6
 

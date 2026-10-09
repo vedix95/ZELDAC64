@@ -34,8 +34,9 @@ PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture, po
 SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame blanche brillante
 
 player_x:         !word 180             ; position courante de Link
-player_y:         !byte 154
-player_dir:       !byte DIR_DOWN
+player_y:         !byte 150             ; centré dans la clairière (Zelda 1 NES)
+player_dir:       !byte DIR_UP          ; Link regarde vers le haut (grotte)
+player_has_sword: !byte 0               ; 0 = sans épée, 1 = épée obtenue dans la grotte
 
 ; Animation de marche
 player_walk_anim: !byte 0               ; image courante (0 ou 1)
@@ -110,6 +111,9 @@ player_update:
 .check_attack_start:
         ; Déclenchement sur appui Bouton X (Épée)
         lda btn_x_pressed
+        beq .check_item_a
+        ; Link ne peut attaquer que s'il a récupéré l'épée dans la grotte !
+        lda player_has_sword
         beq .check_item_a
         lda #ATTACK_FRAMES
         sta player_attacking
@@ -386,7 +390,23 @@ player_update:
         sta player_walk_tick
         sta player_walk_anim            ; retour posture neutre à l'arrêt
 .anim_done:
-        rts
+        ; Test si Link marche sur une entrée de grotte (TILE_CAVE)
+        lda player_y
+        clc
+        adc #12                         ; niveau des pieds de Link
+        sta col_y
+        lda player_x
+        clc
+        adc #12                         ; centre horizontal de Link
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
+        jsr get_tile_at_point
+        cmp #TILE_CAVE
+        bne +
+        jsr cave_enter
++       rts
 
 ; ---------------------------------------------------------------------------
 ; check_v_edge : teste 2 points sur une colonne verticale (col_x, col_y1) et (col_x, col_y2)
@@ -431,19 +451,19 @@ check_h_edge:
         rts
 
 ; ---------------------------------------------------------------------------
-; check_point_solid : teste si le point (col_x:col_x+1, col_y) touche une tuile solide
-; Entrée : col_x (16 bits), col_y (8 bits)
-; Sortie : Carry = 1 si solide, Carry = 0 si libre
 ; ---------------------------------------------------------------------------
-check_point_solid:
+; get_tile_at_point : renvoie l'ID de la tuile au point (col_x:col_x+1, col_y)
+; Sortie : A = ID de tuile ($ff si hors écran)
+; ---------------------------------------------------------------------------
+get_tile_at_point:
         ; 1. Coordonnée Y : map_y = col_y - 82 (début ligne 4 de texte = 50 + 32)
         lda col_y
         cmp #82
-        bcc .free                       ; au-dessus de la carte (dans le bandeau HUD)
+        bcc .tile_off_screen
         sec
         sbc #82
         cmp #160                        ; hauteur de jeu = 160 px (10 tuiles)
-        bcs .free                       ; en-dessous de la carte
+        bcs .tile_off_screen
         lsr
         lsr
         lsr
@@ -459,7 +479,7 @@ check_point_solid:
         sta ZP_TMP
         lda col_x+1
         sbc #0
-        bne .check_x_high
+        bne .tile_x_high
 
         ; X < 256 : tile_x = ZP_TMP >> 4 (0..15)
         lda ZP_TMP
@@ -467,24 +487,39 @@ check_point_solid:
         lsr
         lsr
         lsr
-        jmp .test_tile
+        jmp .tile_fetch
 
-.check_x_high:
+.tile_x_high:
         ; X >= 256 : tile_x = 16 + (ZP_TMP >> 4)
         lda ZP_TMP
         cmp #64                         ; 256 + 64 = 320 max
-        bcs .free                       ; au-delà de la carte à droite
+        bcs .tile_off_screen
         lsr
         lsr
         lsr
         lsr
         ora #16
 
-.test_tile:
+.tile_fetch:
         clc
         adc col_row_offset
         tay
         lda (ZP_MAP),y                  ; ID de tuile dans la salle active
+        rts
+
+.tile_off_screen:
+        lda #$ff
+        rts
+
+; ---------------------------------------------------------------------------
+; check_point_solid : teste si le point (col_x:col_x+1, col_y) touche une tuile solide
+; Entrée : col_x (16 bits), col_y (8 bits)
+; Sortie : Carry = 1 si solide, Carry = 0 si libre
+; ---------------------------------------------------------------------------
+check_point_solid:
+        jsr get_tile_at_point
+        cmp #$ff
+        beq .free
         tax
         lda tile_flags,x
         and #TILE_SOLID

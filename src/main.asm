@@ -55,6 +55,8 @@ main_loop:
         lda game_state
         cmp #STATE_INVENTORY
         beq .in_inventory
+        cmp #STATE_CAVE
+        beq .in_cave
 
         ; --- ÉTAT DE JEU NORMAL ---
         ; Bouton B : ouvre l'inventaire
@@ -74,6 +76,11 @@ main_loop:
 
 .in_inventory:
         jsr inventory_update
+        jmp main_loop
+
+.in_cave:
+        jsr cave_update
+        jsr cave_draw
         jmp main_loop
 
 .in_debug:
@@ -125,3 +132,7 @@ wait_frame:
 
 ; Écran de diagnostic matériel et cartographie mémoire (Touche 'D')
 !source "src/debug.asm"
+
+; Grotte secrète de l'Épée ("C'est dangereux d'y aller tout seul")
+!source "src/cave.asm"
+

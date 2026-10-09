@@ -7,7 +7,7 @@
 ; ---------------------------------------------------------------------------
 
 START_ROOM_X    = 1
-START_ROOM_Y    = 1
+START_ROOM_Y    = 2
 
 current_room_x:   !byte START_ROOM_X
 current_room_y:   !byte START_ROOM_Y

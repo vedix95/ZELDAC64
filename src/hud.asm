@@ -29,7 +29,7 @@ hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
 hud_selected_b:   !byte 0               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
 
 ; Salles visitées (9 octets, 1 par salle, 1 = visitée)
-visited_rooms:    !byte 0, 0, 0,  0, 1, 0,  0, 0, 0    ; départ en (1,1) = salle 4
+visited_rooms:    !byte 0, 0, 0,  0, 0, 0,  0, 1, 0    ; départ en (1,2) = salle 7
 
 ; Coordonnées écran pour chaque cellule de la minimap 3x3
 hud_map_offsets:
@@ -145,20 +145,8 @@ hud_init:
         lda #'S'
         sta SCREEN_RAM+80+13
 
-        ; Épée fixe dans le slot A : "SWOR"
-        lda #'S'
-        sta SCREEN_RAM+40+27
-        lda #'W'
-        sta SCREEN_RAM+40+28
-        lda #'O'
-        sta SCREEN_RAM+40+29
-        lda #'R'
-        sta SCREEN_RAM+40+30
-        lda #COL_CYAN
-        sta COLOR_RAM+40+27
-        sta COLOR_RAM+40+28
-        sta COLOR_RAM+40+29
-        sta COLOR_RAM+40+30
+        ; Épée dans le slot X : dynamique selon player_has_sword
+        jsr hud_update_sword
 
         ; Ligne 3 : Ligne de séparation (colonnes 6 à 39)
         ldx #6
@@ -312,3 +300,32 @@ print_2digits:
         tax                             ; X = unités ASCII
         pla
         rts
+
+; ---------------------------------------------------------------------------
+; hud_update_sword : affiche "SWOR" si Link a l'épée, ou blanc sinon
+; ---------------------------------------------------------------------------
+hud_update_sword:
+        lda player_has_sword
+        bne .show_sword
+        lda #32                         ; espace
+        sta SCREEN_RAM+40+27
+        sta SCREEN_RAM+40+28
+        sta SCREEN_RAM+40+29
+        sta SCREEN_RAM+40+30
+        rts
+.show_sword:
+        lda #'S'
+        sta SCREEN_RAM+40+27
+        lda #'W'
+        sta SCREEN_RAM+40+28
+        lda #'O'
+        sta SCREEN_RAM+40+29
+        lda #'R'
+        sta SCREEN_RAM+40+30
+        lda #COL_CYAN
+        sta COLOR_RAM+40+27
+        sta COLOR_RAM+40+28
+        sta COLOR_RAM+40+29
+        sta COLOR_RAM+40+30
+        rts
+

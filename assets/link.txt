@@ -597,3 +597,46 @@ gggggggssb..
 ............
 ............
 ............
+
+# ===========================================================================
+# VIEIL HOMME DE LA GROTTE (Old Man - Zelda 1 NES officiel)
+# g = robe rouge, s = peau / barbe, b = ceinture / contours
+# ===========================================================================
+[old_man]
+..ssss..
+.ssssss.
+.sbsbsb.
+.ssssss.
+.ssssss.
+..ssss..
+.gggggg.
+gggggggg
+gggggggg
+gggggggg
+.gbbbbg.
+.gggggg.
+.gggggg.
+.gggggg.
+.bb..bb.
+........
+
+# ===========================================================================
+# LINK OBTENTION D'OBJET ("Item Get" - bras levés célébration officielle)
+# ===========================================================================
+[item_get]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+bbssssbb
+bsbssbsb
+.ssssss.
+s.ssss.s
+sggggggs
+sggggggs
+.gggggg.
+.bbbbbb.
+.gggggg.
+.gggggg.
+.bb..bb.
+.bb..bb.

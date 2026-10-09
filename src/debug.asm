@@ -203,8 +203,14 @@ close_debug:
 
         lda prev_game_state
         cmp #STATE_INVENTORY
-        bne .restore_play
+        bne +
         jsr open_inventory
+        rts
++       cmp #STATE_CAVE
+        bne .restore_play
+        lda #STATE_CAVE
+        sta game_state
+        jsr cave_draw_screen
         rts
 
 .restore_play:

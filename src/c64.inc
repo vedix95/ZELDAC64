@@ -14,6 +14,8 @@ VIC_MEMSETUP    = $d018
 VIC_IRQ_FLAG    = $d019
 VIC_IRQ_ENABLE  = $d01a
 VIC_SPRITE_MC   = $d01c         ; 1 bit par sprite : mode multicolore
+VIC_SPRITE_EXP_X = $d01d        ; expansion horizontale des sprites
+VIC_SPRITE_EXP_Y = $d017        ; expansion verticale des sprites
 VIC_BORDER      = $d020
 VIC_BACKGROUND  = $d021
 VIC_BG_MC1      = $d022         ; texte multicolore : couleur 1 (paire 01)
@@ -62,9 +64,11 @@ SID_V1_PW_HI    = $d403
 SID_V1_CTRL     = $d404
 SID_V1_AD       = $d405
 SID_V1_SR       = $d406
+SID_V2_CTRL     = $d40b
 SID_POTX        = $d419         ; Potentiomètre X (Bouton 2 de la manette)
 SID_POTY        = $d41a         ; Potentiomètre Y (Bouton 3 de la manette)
 SID_VOLUME      = $d418
+SID_VOL         = $d418
 
 ; --- CIA ---
 CIA1_PORT_A     = $dc00         ; joystick 2
