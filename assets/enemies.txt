@@ -1,20 +1,23 @@
 # ===========================================================================
-# ENNEMIS CLASSIQUES DE ZELDA (Octorok & Moblin)
-# Sprite multicolore C64 : 12 cols x 21 lignes (ou 8x16 pad auto 2,2).
+# ENNEMIS OFFICIELS DE THE LEGEND OF ZELDA (NES 1986)
+# Adaptés pour Commodore 64 VIC-II en mode multicolore (12 cols x 21 lignes).
+# Octorok et Moblin utilisent le cadre centré 8x16 (pad automatique 2,2).
+# Les projectiles utilisent la pleine taille (pad 0 0).
 #
 # Palettes partagées (registres $d025 / $d026) :
 #   .  transparent
-#   s  multicolore 1 ($d025 = PLAYER_SKIN = COL_LRED) : yeux, peau, museau
-#   g  couleur propre du sprite (VIC_SPRITE_COL : COL_RED pour Octorok/Moblin)
-#   b  multicolore 2 ($d026 = PLAYER_BROWN = COL_BROWN) : contours, ombres, lances
+#   s  multicolore 1 ($d025 = PLAYER_SKIN = COL_LRED) : yeux, museau, oreilles, fangs
+#   g  couleur propre du sprite (VIC_SPRITE_COL : COL_RED pour Octorok / Moblin)
+#   b  multicolore 2 ($d026 = PLAYER_BROWN = COL_BROWN) : contours, pupilles, bottes, hampe lance
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# 1. OCTOROK (Pieuvre rouge cracheuse de rochers)
+# 1. OCTOROK ROUGE (Pieuvre cracheuse de pierres - Zelda 1 NES officiel)
 # ---------------------------------------------------------------------------
+# Marche face : 2 frames (tête à 2 lobes, yeux tan/pupilles marron, trompe cracheuse)
 [octo_down_0]
-..gggg..
-.gggggg.
+.gg..gg.
+gggggggg
 gggggggg
 gssggssg
 gsbggsbg
@@ -31,8 +34,8 @@ bgg..ggb
 ..b..b..
 
 [octo_down_1]
-..gggg..
-.gggggg.
+.gg..gg.
+gggggggg
 gggggggg
 gssggssg
 gsbggsbg
@@ -48,9 +51,10 @@ gggggggg
 .bggggb.
 ..b..b..
 
+# Marche dos : 2 frames (arrière du dôme à deux lobes, tentacules en marche)
 [octo_up_0]
-..gggg..
-.gggggg.
+.gg..gg.
+gggggggg
 gggggggg
 gggggggg
 gggggggg
@@ -67,8 +71,8 @@ bgg..ggb
 ..b..b..
 
 [octo_up_1]
-..gggg..
-.gggggg.
+.gg..gg.
+gggggggg
 gggggggg
 gggggggg
 gggggggg
@@ -84,8 +88,9 @@ gggggggg
 .bggggb.
 ..b..b..
 
+# Profil gauche : 2 frames (trompe allongée vers l'avant, oeil latéral)
 [octo_left_0]
-..gggg..
+.gg..g..
 .gggggg.
 gggggggg
 gssggggg
@@ -103,7 +108,7 @@ bgg..ggb
 ..b..b..
 
 [octo_left_1]
-..gggg..
+.gg..g..
 .gggggg.
 gggggggg
 gssggggg
@@ -120,10 +125,11 @@ gggggggg
 .bggggb.
 ..b..b..
 
+# Profil droit : miroirs officiels
 [octo_right_0] mirror octo_left_0
 [octo_right_1] mirror octo_left_1
 
-# Projectile d'Octorok (rocher volant)
+# Rocher volant craché par l'Octorok (boulder 8x8 circulaire texturé)
 [octo_rock] pad 0 0
 ............
 ............
@@ -131,14 +137,14 @@ gggggggg
 ............
 ............
 ............
-............
-....bbbb....
-...bssssb...
-..bssssssb..
-..bssssssb..
-...bssssb...
-....bbbb....
-............
+.....bb.....
+....bggb....
+...bgssgb...
+...bgbsgb...
+...bgssgb...
+...bgbbgb...
+....bggb....
+.....bb.....
 ............
 ............
 ............
@@ -148,8 +154,9 @@ gggggggg
 ............
 
 # ---------------------------------------------------------------------------
-# 2. MOBLIN (Gobelin-bouledogue rouge avec lance)
+# 2. MOBLIN ROUGE (Guerrier bouledogue avec lance - Zelda 1 NES officiel)
 # ---------------------------------------------------------------------------
+# Marche face : 2 frames (oreilles pointues, bajoues, lance tenue à droite)
 [moblin_down_0]
 s.gggg..
 s.gssg.s
@@ -186,6 +193,7 @@ gggggg.b
 .....bb.
 ........
 
+# Marche dos : 2 frames (oreilles visibles de dos, dos de tunique, lance)
 [moblin_up_0]
 s.gggg..
 s.gggg.s
@@ -222,6 +230,7 @@ gggggg.b
 .....bb.
 ........
 
+# Profil gauche : 2 frames (groin/museau avancé, lance et pas alternés)
 [moblin_left_0]
 ...gggg.
 ..gssss.
@@ -258,10 +267,11 @@ sbbgggb.
 ....bb..
 ........
 
+# Profil droit : miroirs officiels
 [moblin_right_0] mirror moblin_left_0
 [moblin_right_1] mirror moblin_left_1
 
-# Lance de Moblin (horizontale)
+# Lance de Moblin projetée (horizontale)
 [moblin_spear_h] pad 0 0
 ............
 ............
@@ -285,7 +295,7 @@ bbbbbbbbbbss
 ............
 ............
 
-# Lance de Moblin (verticale)
+# Lance de Moblin projetée (verticale)
 [moblin_spear_v] pad 0 0
 .....ss.....
 .....ss.....
