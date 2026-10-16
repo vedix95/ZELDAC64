@@ -108,8 +108,6 @@ Music and sound effects are processed in `src/intro_music_data.asm` and executed
 | `tools/sprgen.py` | Converts ASCII art sprites into 64-byte C64 sprite binary data | `assets/link.txt`, `enemies.txt`, `extra.txt` | `src/sprites*.asm` |
 | `tools/tilegen.py` | Assembles charsets, tilesets, and overworld/underworld rooms | `assets/tiles.txt`, `world.txt`, `underworld.txt` | `src/charset.asm`, `src/tiles_data.asm`, `src/map_*.asm` |
 | `tools/editor.py` | Interactive Python HTTP server with canvas GUI to paint rooms and edit enemies | `assets/world.txt`, `underworld.txt` | Direct asset updates + instant ACME recompile |
-| `tools/convert_nes_world.py` | Extracts authentic NES overworld room layouts into C64 tile format | `assets/nes/*.txt` | `assets/world.txt` |
-| `tools/extract_nes_sprites.py` | Extracts 2bpp NES pattern tables into C64 multicolor sprite format | `zelda.nes` | `assets/*.txt` |
 | `tools/midi_to_sid.py` | Transcribes MIDI tracks into 6510 frequency and duration tables | `assets/*.mid` | `src/intro_music_data.asm` |
 | `ACME` | Cross-assembler for 6502/6510 producing CBM binaries | `src/*.asm` | `build/*.prg`, `build/*.dat` |
 | `c1541` | VICE disk utility building bootable 1541 D64 disk image | `build/*.prg`, `build/*.dat` | `build/zelda.d64` |

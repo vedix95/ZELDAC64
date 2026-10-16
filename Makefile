@@ -29,7 +29,7 @@ D64     := $(BLD_DIR)/$(NAME).d64
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
-.PHONY: all run run-game debug d64 clean distclean check preview editor enemies sprites-extract
+.PHONY: all run run-game debug d64 clean distclean check preview editor
 
 all: $(D64)
 
@@ -116,12 +116,4 @@ check:
 
 editor:
 	$(PYTHON) tools/editor.py
-
-# Extrait et positionne automatiquement tous les ennemis authentiques depuis zelda.nes
-enemies: zelda.nes
-	$(PYTHON) tools/extract_overworld_enemies.py
-
-# Extrait les sprites officiels NES de Link, ennemis et PNJs depuis zelda.nes
-sprites-extract: zelda.nes
-	$(PYTHON) tools/extract_nes_sprites.py
 

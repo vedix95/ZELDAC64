@@ -1,6 +1,6 @@
 ; ===========================================================================
 ; cave.asm : Moteur complet des 23 Grottes et Marchands de l'Overworld
-; Fidèle à 100% à The Legend of Zelda (NES 1986)
+; Fidèle au jeu original The Legend of Zelda (1986)
 ;
 ; Comprend :
 ;   - Table de mappage des 128 salles overworld vers les 23 grottes officielles

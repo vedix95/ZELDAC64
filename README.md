@@ -5,7 +5,7 @@
 [![Assembler: ACME](https://img.shields.io/badge/Assembler-ACME%206510-orange.svg)](https://sourceforge.net/projects/acme-crossass/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Une récréation fidèle et authentique du chef-d'œuvre **The Legend of Zelda** (NES, 1986) pour l'ordinateur 8-bits **Commodore 64**, entièrement programmée en assembleur 6510 pour l'assembleur [ACME](https://sourceforge.net/projects/acme-crossass/) et testée avec l'émulateur [VICE](https://vice-emu.sourceforge.io/).
+Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend of Zelda** (1986) pour l'ordinateur 8-bits **Commodore 64**, entièrement programmée en assembleur 6510 pour l'assembleur [ACME](https://sourceforge.net/projects/acme-crossass/) et testée avec l'émulateur [VICE](https://vice-emu.sourceforge.io/).
 
 ---
 
@@ -24,7 +24,7 @@ Une récréation fidèle et authentique du chef-d'œuvre **The Legend of Zelda**
 ## Points forts & Fonctionnalités
 
 - **Monde Overworld complet (128 salles — 16×8 écrans)** :
-  - Fidélité complète à la disposition originale du jeu NES de 1986.
+  - Fidélité complète à la disposition originale du jeu classique de 1986.
   - Transitions fluides d'écran à écran lors du franchissement des bordures.
 - **Donjons Underworld (Level 1)** :
   - Salles souterraines avec portes, verrous et architecture dédiée.
@@ -151,7 +151,6 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 │   ├── tiles.txt               # Définition des tuiles 16x16 et palettes multicolores
 │   ├── world.txt               # Carte Overworld complète (16x8 écrans, 128 salles)
 │   ├── underworld.txt          # Carte des donjons Underworld (Level 1)
-│   ├── nes/                    # Données matricielles extraites de la cartouche NES
 │   └── *.mid                   # Fichiers MIDI sources transcrits pour le SID
 ├── docs/                       # Documentation et médias
 │   └── images/                 # Captures d'écran et aperçus pour GitHub
@@ -186,9 +185,6 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 │   ├── editor.py               # Éditeur visuel interactif web de niveaux et d'ennemis
 │   ├── sprgen.py               # Générateur de sprites C64 depuis l'ASCII art
 │   ├── tilegen.py              # Compilateur de tuiles et cartes du monde
-│   ├── convert_nes_world.py    # Convertisseur de carte NES vers format C64
-│   ├── extract_nes_sprites.py  # Extracteur de sprites depuis ROM NES
-│   ├── extract_overworld_enemies.py # Extracteur d'ennemis depuis ROM NES
 │   ├── midi_to_sid.py          # Convertisseur MIDI vers code assembleur SID
 │   └── generate_*.py           # Générateurs spécialisés de données et tables
 ├── Makefile                    # Système de compilation et d'automatisation

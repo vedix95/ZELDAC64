@@ -11,9 +11,11 @@ build/
 *.dat
 *.crt
 
-# ROMs sous copyright (Ne jamais commiter de ROMs commerciales)
+# Données sources et ROMs protégées (non publiées sur GitHub)
 *.nes
 zelda.nes
+assets/nes/
+tools/*nes*
 
 # Logs et scripts temporaires d'émulateur VICE
 *.mon

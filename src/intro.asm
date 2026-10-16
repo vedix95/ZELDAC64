@@ -1,5 +1,5 @@
  ; ===========================================================================
-; intro.asm : Introduction légendaire de The Legend of Zelda (1986 NES)
+; intro.asm : Introduction légendaire de The Legend of Zelda (1986)
 ;
 ; Comprend :
 ;   1. Écran Titre & Cascade animée (Waterfall Title Screen)

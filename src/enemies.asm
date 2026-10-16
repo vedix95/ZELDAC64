@@ -18,7 +18,7 @@ MAX_ENEMIES             = 8
 
 MAX_ENEMIES             = 8
 
-; --- Identifiants officiels des ennemis de The Legend of Zelda 1 (NES 1986) ---
+; --- Identifiants officiels des ennemis de The Legend of Zelda (1986) ---
 TYPE_NONE               = 0
 
 ; Overworld
@@ -153,7 +153,7 @@ rand_seed:              !byte $a5
 
 
 ; ---------------------------------------------------------------------------
-; Tables statistiques des 45 types d'ennemis Zelda 1 NES
+; Tables statistiques des 45 types d'ennemis Zelda (1986)
 ; ---------------------------------------------------------------------------
 en_base_hp:
         !byte 0, 1, 2, 2, 3, 1, 1, 2, 4, 2, 3, 9, 2, 4, 6, 1, 1, 2, 1, 1, 2, 3, 5, 4, 8, 5, 10, 2, 9, 10, 6, 4, 255, 255, 2, 4, 6, 8, 8, 8, 8, 2, 4, 10, 16
@@ -413,7 +413,7 @@ get_enemy_sprite_and_color:
 ; ---------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------
 ; Table de spawn des ennemis pour les 128 salles de l'Overworld (indices 0..127)
-; Extrait authentiquement depuis The Legend of Zelda (NES 1986)
+; Extrait fidèlement depuis The Legend of Zelda (1986)
 ; Format par salle (8 slots x 3 octets = 24 octets par salle) :
 ;   Slot 0..7 : type, spawn_tile_x, spawn_tile_y
 ; ---------------------------------------------------------------------------

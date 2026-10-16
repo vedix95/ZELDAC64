@@ -1,5 +1,5 @@
 ; ===========================================================================
-; intro_music_data.asm : Partition officielle de The Legend of Zelda (NES)
+; intro_music_data.asm : Partition officielle de The Legend of Zelda (1986)
 ; Transcrite et extraite directement du MIDI officiel de Koji Kondo
 ; Longueur totale : 475 pas événementiels (Partie 1: 237, Partie 2: 238)
 ; ===========================================================================

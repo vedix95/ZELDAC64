@@ -1,5 +1,5 @@
 ; ---------------------------------------------------------------------------
-; transition.asm : défilement d'écran par poussée (push-scroll à la NES Zelda)
+; transition.asm : défilement d'écran par poussée (push-scroll classique Zelda)
 ; Lors du passage d'une salle à l'autre :
 ;   - Le jeu effectue une transition fluide tuile par tuile (16 pixels par étape)
 ;   - La salle courante est poussée hors de l'écran pendant que la nouvelle salle entre

@@ -34,7 +34,7 @@ PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture, po
 SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame blanche brillante
 
 player_x:         !word 180             ; position courante de Link
-player_y:         !byte 150             ; centré dans la clairière (Zelda 1 NES)
+player_y:         !byte 150             ; centré dans la clairière (Zelda 1)
 player_dir:       !byte DIR_UP          ; Link regarde vers le haut (grotte)
 player_has_sword:      !byte 0          ; 0 = sans épée, 1 = bois, 2 = blanche, 3 = magique
 player_has_shield:     !byte 1          ; 1 = petit bouclier, 2 = grand bouclier magique
