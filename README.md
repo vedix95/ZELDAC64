@@ -1,6 +1,6 @@
 # The Legend of Zelda — Port C64
 
-[![Build Zelda C64](https://github.com/vedix95/ZELDA64/actions/workflows/ci.yml/badge.svg)](https://github.com/vedix95/ZELDA64/actions)
+[![Build Zelda C64](https://github.com/vedix95/ZELDAC64/actions/workflows/ci.yml/badge.svg)](https://github.com/vedix95/ZELDAC64/actions)
 [![Platform: Commodore 64](https://img.shields.io/badge/Platform-Commodore%2064-blue.svg)](https://en.wikipedia.org/wiki/Commodore_64)
 [![Assembler: ACME](https://img.shields.io/badge/Assembler-ACME%206510-orange.svg)](https://sourceforge.net/projects/acme-crossass/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
