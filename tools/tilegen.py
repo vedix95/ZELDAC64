@@ -34,29 +34,29 @@ TILE_CHAR_BASES = [
 # Couleurs d'arriere-plan et multicolores par zone regionale (C64) :
 # 0: Cimetiere, 1: Montagne de la Mort, 2: Plaines, 3: Cote
 ZONE_BG = [
-    COLORS["dgrey"],   # Zone 0: Cimetiere (11)
-    COLORS["brown"],   # Zone 1: Montagne (9)
-    COLORS["lgreen"],  # Zone 2: Plaines (13)
-    COLORS["lgreen"],  # Zone 3: Cote (13)
+    COLORS["dgrey"],   # Zone 0: Cimetiere (11 - terre sombre du cimetiere)
+    COLORS["brown"],   # Zone 1: Montagne (9 - roche volcanique)
+    COLORS["lgreen"],  # Zone 2: Plaines (13 - prairie verdoyante de la plaine)
+    COLORS["lgreen"],  # Zone 3: Cote (13 - continuite naturelle vers les cotes et lacs)
 ]
 ZONE_MC1 = [
-    COLORS["black"],   # Zone 0: Cimetiere (0)
-    COLORS["orange"],  # Zone 1: Montagne (8)
-    COLORS["orange"],  # Zone 2: Plaines (8)
-    COLORS["orange"],  # Zone 3: Cote (8)
+    COLORS["black"],   # Zone 0: Cimetiere (0 - ombres et gravures tombales)
+    COLORS["orange"],  # Zone 1: Montagne (8 - teinte rocheuse)
+    COLORS["orange"],  # Zone 2: Plaines (8 - ecorce des arbres et failles)
+    COLORS["orange"],  # Zone 3: Cote (8 - ecorce et failles rocheuses)
 ]
 ZONE_MC2 = [
-    COLORS["white"],   # Zone 0: Cimetiere (1)
-    COLORS["white"],   # Zone 1: Montagne (1)
-    COLORS["white"],   # Zone 2: Plaines (1)
-    COLORS["white"],   # Zone 3: Cote (1)
+    COLORS["white"],   # Zone 0: Cimetiere (1 - pierre blanche des tombes)
+    COLORS["white"],   # Zone 1: Montagne (1 - reflets rocheux)
+    COLORS["white"],   # Zone 2: Plaines (1 - ecume de l'eau, coeur fleurs)
+    COLORS["white"],   # Zone 3: Cote (1 - ecume et embruns marins)
 ]
 
 # Couleurs de tuiles propres (Color RAM, 0-7) par zone :
 # Tuiles : 0:grass, 1:tufts, 2:flowers, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave
 ZONE_TILE_COLORS = [
     # Zone 0: Cimetiere (fond dgrey, MC1 black, MC2 white)
-    [COLORS["black"], COLORS["white"], COLORS["white"], COLORS["cyan"],
+    [COLORS["black"], COLORS["white"], COLORS["white"], COLORS["black"],
      COLORS["blue"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"]],
 
     # Zone 1: Montagne de la Mort (fond brown, MC1 orange, MC2 white)
@@ -67,7 +67,7 @@ ZONE_TILE_COLORS = [
     [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
      COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
 
-    # Zone 3: Cote (fond lgreen, MC1 orange, MC2 white)
+    # Zone 3: Cote (fond orange, MC1 brown, MC2 white)
     [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
      COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
 ]
@@ -78,7 +78,7 @@ DEFAULT_ROOM_ZONES = [
     0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3,
     0, 0, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
-    3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+    0, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
     3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
     3, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3,
 ]
@@ -97,8 +97,8 @@ def get_room_zones(total_rooms=128):
                     for x in range(16):
                         idx = y * 16 + x
                         outer = t1[idx] & 3
-                        if x in [0, 1] and y in [2, 3, 4]:
-                            z = 0  # 6 salles authentiques du cimetiere
+                        if (x in [0, 1] and y in [2, 3, 4]) or (x == 0 and y == 5):
+                            z = 0  # 7 salles authentiques du cimetiere et son passage
                         elif y in [0, 1]:
                             z = 1  # 32 salles de la Montagne de la Mort
                         elif outer == 2:

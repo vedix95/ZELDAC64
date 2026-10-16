@@ -27,7 +27,7 @@ tile_char_base:
 
 ; Couleurs de chaque zone regionale (+8 pour mode multicolore)
 zone0_tile_color:
-        !byte 8, 9, 9, 11, 14, 8, 8, 8, 9, 0, 0, 0, 0, 0, 0, 0
+        !byte 8, 9, 9, 8, 14, 8, 8, 8, 9, 0, 0, 0, 0, 0, 0, 0
 zone1_tile_color:
         !byte 10, 15, 15, 10, 14, 10, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
 zone2_tile_color:

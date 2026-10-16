@@ -1,11 +1,12 @@
 ; ===========================================================================
 ; Tuiles 16x16 pixels pour le monde (8 colonnes x 16 lignes en multicolore C64)
 ; Chaque tuile = 4 caracteres VIC-II (2x2).
+; Motifs extraits fidelement de la version originale de 1986.
 ;
 ; Palette globale :
 ;   .  fond      = bg   ($d021) -> lgreen (vert clair de la plaine)
 ;   1  couleur 1 = mc1  ($d022) -> orange (teinte rocheuse / ecorce des arbres)
-;   2  couleur 2 = mc2  ($d023) -> white  (ecume de l'eau, reflets, coeur des fleurs)
+;   2  couleur 2 = mc2  ($d023) -> white  (pierres tombales, ecume de l'eau, reflets)
 ;   c  couleur propre (Color RAM, 0-7)
 ; ===========================================================================
 
@@ -41,9 +42,9 @@ mc2: white
 .....c.c
 ........
 ........
-........
 ....c...
 ...c.c..
+........
 ........
 .c......
 c.c.....
@@ -69,79 +70,78 @@ c.c.....
 
 [tree] T green solid
 ........
-..1.ccc.
-cc11ccc.
-cc11ccc.
-cc11cccc
-cc111ccc
-cc11cccc
-cc11cccc
-.cccccc1
-cccccc11
-cccccccc
-ccccccc1
-ccc1cc11
-ccc1ccc1
-ccc1.cc1
-ccc1ccc1
+..c11...
+.ccc111.
+.c1cc11.
+ccccc11.
+ccc1c111
+ccccc11.
+c1ccc111
+cccc1111
+cc1cc111
+cccc111.
+c1ccc11.
+ccc1111.
+.c111c..
+..111111
+.111111.
 
 [water] ~ blue solid
 cccccccc
 cccccccc
-22222222
 c2ccc2cc
-222c222c
-22cc22cc
-22222222
 cccccccc
 cccccccc
 cccccccc
-22222222
-222c222c
-222c222c
-222c222c
-22222222
+2ccc2ccc
+cccccccc
+cccccccc
+cc2ccc2c
+cccccccc
+cccccccc
+cccccccc
+c2ccc2cc
+cccccccc
 cccccccc
 
 [wall] # black solid
-11111111
-11111111
-1cccc111
-1ccccc11
-11ccccc1
-11111111
-11111111
-11111111
-11111111
-11111111
-11cccc11
-11ccccc1
-11111111
-11111111
-11111111
-11111111
+c121c12c
+cc12cc11
+cc12cc11
+2c12cc11
+2c1ccc11
+cc1cccc1
+cc1cc221
+cc1cc2c1
+c11cc2c1
+c11cc2c1
+211112c1
+212112c1
+12cc12c1
+12c112c1
+2ccc1111
+12c22121
 
 [sand] _ yellow
-cccccccc
+ccccccc1
+cccccc1c
 c1cccccc
-cccccccc
-cccc2ccc
-cccccccc
+ccc1cccc
+cccc1ccc
+1ccccc1c
 cccccccc
 cc1ccccc
+ccccc1cc
+ccc1cccc
+c1cccccc
+ccccccc1
+ccccc1cc
+1cc1cccc
 cccccccc
-cccccccc
-cccccc1c
-cccccccc
-c2cccccc
-cccccccc
-cccc1ccc
-cccccccc
-cccccccc
+c1cc1ccc
 
 [cave] O black
 11111111
-11111111
 11cccc11
 1cccccc1
 1cccccc1
@@ -154,23 +154,24 @@ cccccccc
 1cccccc1
 1cccccc1
 1cccccc1
-11111111
+1cccccc1
+1cccccc1
 11111111
 
 [grave] G white solid
-........
 ...22...
-...22...
-.222222.
-...22...
-..cccc..
-.cccccc.
-.ccccc1.
-.ccccc1.
-.ccccc1.
-.ccccc1.
-.ccccc1.
-.ccccc1.
-.ccccc1.
+..222...
+..2221..
+.22112..
+.221121.
+.211111.
+.211111.
+.211111.
+12211211
+12211211
+12221211
+12222211
 11111111
-........
+22222222
+22222222
+11111111
