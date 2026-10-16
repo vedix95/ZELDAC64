@@ -7,13 +7,23 @@
 
 Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend of Zelda** (1986) pour l'ordinateur 8-bits **Commodore 64**, entièrement programmée en assembleur 6510 pour l'assembleur [ACME](https://sourceforge.net/projects/acme-crossass/) et testée avec l'émulateur [VICE](https://vice-emu.sourceforge.io/).
 
+> *Ce projet est la création d'un passionné d'informatique rétro réalisée à l'aide de son IA préférée issue de chez Google.*
+
 ---
 
 ## Captures d'écran
 
-| Salle de départ & Grotte de l'Épée | Exploration Overworld (128 salles) | Multiplexeur de Sprites (8 ennemis) |
+### En jeu (Overworld, Donjons & Cimetière)
+
+| Salle de départ & Grotte de l'Épée | Dans le Cimetière avec ennemis | Exploration Overworld (128 salles) |
 | :---: | :---: | :---: |
-| ![Salle de départ](docs/images/shot_start.png) | ![Overworld](docs/images/shot_overworld.png) | ![Multiplexeur 8 ennemis](docs/images/shot_enemies.png) |
+| ![Salle de départ](docs/images/shot_start.png) | ![Cimetière avec ennemis](docs/images/shot_graveyard.png) | ![Overworld](docs/images/shot_overworld.png) |
+
+### Cinématique d'Introduction Authentique (Chute d'eau, Parchemin & Bestiaire)
+
+| Écran Titre & Cascade Animée | Déroulement de la Légende d'Hyrule | Présentation de tous les Trésors | Défilé des Monstres (Ghini) |
+| :---: | :---: | :---: | :---: |
+| ![Cascade Animée](docs/images/shot_intro.png) | ![Parchemin Légende](docs/images/shot_intro_story.png) | ![Trésors d'Hyrule](docs/images/shot_intro_treasures.png) | ![Défilé des Monstres](docs/images/shot_intro_monsters.png) |
 
 | Carte complète de l'Overworld (16×8 écrans — 128 salles) |
 | :---: |
@@ -198,4 +208,4 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 
 *The Legend of Zelda*, ainsi que les personnages, logos, musiques et graphismes associés sont des marques déposées et propriétés exclusives de **Nintendo Co., Ltd.**
 
-Ce projet est un travail d'hommage bénévole, non-commercial et éducatif réalisé par des passionnés d'informatique rétro pour explorer les capacités matérielles du Commodore 64. Il n'est en aucune manière affilié à, autorisé ou approuvé par Nintendo.
+Ce projet est un travail d'hommage bénévole, non-commercial et éducatif : la création d'un passionné d'informatique rétro réalisée à l'aide de son IA préférée issue de chez Google afin d'explorer et de célébrer les capacités matérielles du Commodore 64. Il n'est en aucune manière affilié à, autorisé ou approuvé par Nintendo.

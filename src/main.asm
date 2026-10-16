@@ -1,5 +1,6 @@
 ; ---------------------------------------------------------------------------
 ; main.asm : point d'entrée
+; Création d'un passionné à l'aide de son IA préférée issue de chez Google
 ; Assembleur : ACME   -   Cible : C64 (6510)
 ; ---------------------------------------------------------------------------
 !cpu 6510

@@ -1,5 +1,6 @@
 ; ============================================================================
 ; intro_main.asm : Programme autonome d'introduction pour Commodore 64
+; Création d'un passionné à l'aide de son IA préférée issue de chez Google
 ; Génère build/intro.prg (écrit sur disquette build/zelda.d64 en tant que "INTRO")
 ; ============================================================================
 !cpu 6510

@@ -2,6 +2,8 @@
 
 This document provides a comprehensive technical overview of the Zelda C64 implementation, designed for the Commodore 64 (MOS 6510 CPU at ~0.985 MHz PAL / ~1.023 MHz NTSC, VIC-II graphics, SID 6581/8580 sound generator).
 
+> *Création d'un passionné d'informatique rétro réalisée à l'aide de son IA préférée issue de chez Google.*
+
 ---
 
 ## 1. System Architecture
