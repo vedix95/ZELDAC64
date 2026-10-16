@@ -12,6 +12,7 @@ START_ROOM_Y    = 7
 current_room_x:     !byte START_ROOM_X
 current_room_y:     !byte START_ROOM_Y
 current_room_idx:   !byte 0
+current_zone:       !byte 0
 
 current_world_type: !byte WORLD_OVERWORLD
 saved_ow_room_x:    !byte START_ROOM_X
@@ -74,6 +75,46 @@ load_room:
         lda room_tbl_hi,x
         sta ZP_SRC+1
         jsr decompress_room_main
+
+        ; Application des couleurs de la zone active
+        lda current_world_type
+        bne .lr_dungeon
+
+        ; Overworld : lecture de la zone (0..3) pour la salle
+        ldx current_room_idx
+        lda room_zone_palette,x
+        sta current_zone
+        tax
+        lda zone_bg_color,x
+        sta VIC_BACKGROUND
+        lda zone_mc1_color,x
+        sta VIC_BG_MC1
+        lda zone_mc2_color,x
+        sta VIC_BG_MC2
+
+        ; Copie des 16 couleurs de tuiles actives
+        lda zone_color_lo,x
+        sta ZP_SRC
+        lda zone_color_hi,x
+        sta ZP_SRC+1
+        ldy #15
+.cpy_ow_col:
+        lda (ZP_SRC),y
+        sta active_tile_color,y
+        dey
+        bpl .cpy_ow_col
+        jmp .lr_draw
+
+.lr_dungeon:
+        jsr apply_map_colors
+        ldy #15
+.cpy_uw_col:
+        lda zone_dungeon_tile_color,y
+        sta active_tile_color,y
+        dey
+        bpl .cpy_uw_col
+
+.lr_draw:
         lda #<room_buf
         sta ZP_MAP
         lda #>room_buf
@@ -105,11 +146,9 @@ draw_map:
         ldy ZP_IDX
         lda (ZP_MAP),y                  ; numéro de tuile dans la salle courante
         tax
-        lda tile_color,x
+        lda active_tile_color,x
         sta ZP_TMP                      ; couleur (bit 3 = multicolore)
-        txa
-        asl
-        asl
+        lda tile_char_base,x
         sta ZP_BASE                     ; premier caractère de la tuile
         lda ZP_TCOL
         asl

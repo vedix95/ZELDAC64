@@ -19,28 +19,44 @@ TILE_WATER = 4
 TILE_WALL = 5
 TILE_SAND = 6
 TILE_CAVE = 7
+TILE_GRAVE = 8
 
-; couleur de chaque tuile (+8 = caractere multicolore)
-tile_color:
-        !byte 13   ; grass
-        !byte 13   ; tufts
-        !byte 10   ; flowers
-        !byte 13   ; tree
-        !byte 14   ; water
-        !byte 8   ; wall
-        !byte 15   ; sand
-        !byte 8   ; cave
+; Caractere de base de chaque tuile (2x2 = 4 caracteres)
+tile_char_base:
+        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 0, 0, 0, 0, 0, 0, 0
+
+; Couleurs de chaque zone regionale (+8 pour mode multicolore)
+zone0_tile_color:
+        !byte 8, 9, 9, 11, 14, 8, 8, 8, 9, 0, 0, 0, 0, 0, 0, 0
+zone1_tile_color:
+        !byte 10, 15, 15, 10, 14, 10, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+zone2_tile_color:
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+zone3_tile_color:
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+zone_dungeon_tile_color:
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+
+zone_color_lo:
+        !byte <zone0_tile_color, <zone1_tile_color, <zone2_tile_color, <zone3_tile_color
+zone_color_hi:
+        !byte >zone0_tile_color, >zone1_tile_color, >zone2_tile_color, >zone3_tile_color
+
+zone_bg_color:
+        !byte 11, 9, 13, 13
+zone_mc1_color:
+        !byte 0, 8, 8, 8
+zone_mc2_color:
+        !byte 1, 1, 1, 1
+
+; Tampon de couleur des tuiles de la salle active
+active_tile_color:
+        !fill 16, 0
+tile_color = active_tile_color
 
 ; drapeaux de chaque tuile (bit 0 = solide)
 tile_flags:
-        !byte 0   ; grass
-        !byte 0   ; tufts
-        !byte 0   ; flowers
-        !byte TILE_SOLID   ; tree
-        !byte TILE_SOLID   ; water
-        !byte TILE_SOLID   ; wall
-        !byte 0   ; sand
-        !byte 0   ; cave
+        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, 0, 0, 0, 0
 
 ; table ty * MAP_W
 tile_row_offset:
@@ -54,7 +70,7 @@ target_room_buf: !fill 200, 0            ; Tampon de la salle cible (transition)
 
 ; ---------------------------------------------------------------------------
 ; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf
-; Format : bit 7..3 = (run - 1) [0..30 -> 1..31 tuiles], bit 2..0 = tile (0..7)
+; Format : bit 7..4 = (run - 1) [0..14 -> 1..15 tuiles], bit 3..0 = tile (0..15)
 ; Fin de salle : $FF
 ; ---------------------------------------------------------------------------
 decompress_room_main:
@@ -69,11 +85,12 @@ decompress_room_main:
         lsr
         lsr
         lsr
+        lsr
         clc
         adc #1
         sta ZP_TMP
         pla
-        and #7
+        and #$0f
 .drm_put:
         sta room_buf,x
         inx
@@ -99,11 +116,12 @@ decompress_room_target:
         lsr
         lsr
         lsr
+        lsr
         clc
         adc #1
         sta ZP_TMP
         pla
-        and #7
+        and #$0f
 .drt_put:
         sta target_room_buf,x
         inx

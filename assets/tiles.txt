@@ -156,3 +156,21 @@ cccccccc
 1cccccc1
 11111111
 11111111
+
+[grave] G white solid
+........
+...22...
+...22...
+.222222.
+...22...
+..cccc..
+.cccccc.
+.ccccc1.
+.ccccc1.
+.ccccc1.
+.ccccc1.
+.ccccc1.
+.ccccc1.
+.ccccc1.
+11111111
+........

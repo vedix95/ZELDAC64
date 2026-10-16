@@ -146,6 +146,7 @@ map_mc2_col         = $a005
 map_row_offset      = $a006
 room_tbl_lo         = $a016
 room_tbl_hi         = $a096
+room_zone_palette   = $a116
 MAP_DATA_MAX_PAGES  = 48        ; 48 pages x 256 octets = 12 Ko ($A000..$CFFF)
 
 WORLD_OVERWORLD     = 0

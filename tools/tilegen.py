@@ -5,6 +5,7 @@ Usage : tilegen.py assets/tiles.txt assets/world.txt --charset src/charset.asm \
             --map src/map_data.asm [--preview apercu.png]
 """
 import argparse
+import os
 import re
 import sys
 
@@ -22,6 +23,93 @@ PALETTE = [(0x00, 0x00, 0x00), (0xFF, 0xFF, 0xFF), (0x68, 0x37, 0x2B), (0x70, 0x
            (0x6F, 0x3D, 0x86), (0x58, 0x8D, 0x43), (0x35, 0x28, 0x79), (0xB8, 0xC7, 0x6F),
            (0x6F, 0x4F, 0x25), (0x43, 0x39, 0x00), (0x9A, 0x67, 0x59), (0x44, 0x44, 0x44),
            (0x6C, 0x6C, 0x6C), (0x9A, 0xD2, 0x84), (0x6C, 0x5E, 0xB5), (0x95, 0x95, 0x95)]
+
+# Bases de caracteres pour chaque tuile (2x2 = 4 caracteres)
+# Tuiles 0..7 dans 0..31, Tuiles 8..23 dans 168..231
+TILE_CHAR_BASES = [
+    0, 4, 8, 12, 16, 20, 24, 28,
+    168, 172, 176, 180, 184, 188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228
+]
+
+# Couleurs d'arriere-plan et multicolores par zone regionale (C64) :
+# 0: Cimetiere, 1: Montagne de la Mort, 2: Plaines, 3: Cote
+ZONE_BG = [
+    COLORS["dgrey"],   # Zone 0: Cimetiere (11)
+    COLORS["brown"],   # Zone 1: Montagne (9)
+    COLORS["lgreen"],  # Zone 2: Plaines (13)
+    COLORS["lgreen"],  # Zone 3: Cote (13)
+]
+ZONE_MC1 = [
+    COLORS["black"],   # Zone 0: Cimetiere (0)
+    COLORS["orange"],  # Zone 1: Montagne (8)
+    COLORS["orange"],  # Zone 2: Plaines (8)
+    COLORS["orange"],  # Zone 3: Cote (8)
+]
+ZONE_MC2 = [
+    COLORS["white"],   # Zone 0: Cimetiere (1)
+    COLORS["white"],   # Zone 1: Montagne (1)
+    COLORS["white"],   # Zone 2: Plaines (1)
+    COLORS["white"],   # Zone 3: Cote (1)
+]
+
+# Couleurs de tuiles propres (Color RAM, 0-7) par zone :
+# Tuiles : 0:grass, 1:tufts, 2:flowers, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave
+ZONE_TILE_COLORS = [
+    # Zone 0: Cimetiere (fond dgrey, MC1 black, MC2 white)
+    [COLORS["black"], COLORS["white"], COLORS["white"], COLORS["cyan"],
+     COLORS["blue"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"]],
+
+    # Zone 1: Montagne de la Mort (fond brown, MC1 orange, MC2 white)
+    [COLORS["red"], COLORS["yellow"], COLORS["yellow"], COLORS["red"],
+     COLORS["blue"], COLORS["red"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
+
+    # Zone 2: Plaines (fond lgreen, MC1 orange, MC2 white)
+    [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
+     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
+
+    # Zone 3: Cote (fond lgreen, MC1 orange, MC2 white)
+    [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
+     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
+]
+
+DEFAULT_ROOM_ZONES = [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3,
+    0, 0, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+    3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+    3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+    3, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3,
+]
+
+
+def get_room_zones(total_rooms=128):
+    rom_path = "zelda.nes"
+    if os.path.exists(rom_path):
+        try:
+            with open(rom_path, "rb") as f:
+                rom = f.read()
+            if len(rom) >= 0x18410 + 128:
+                t1 = rom[0x18410:0x18410+128]
+                zones = []
+                for y in range(8):
+                    for x in range(16):
+                        idx = y * 16 + x
+                        outer = t1[idx] & 3
+                        if x in [0, 1] and y in [2, 3, 4]:
+                            z = 0  # 6 salles authentiques du cimetiere
+                        elif y in [0, 1]:
+                            z = 1  # 32 salles de la Montagne de la Mort
+                        elif outer == 2:
+                            z = 2  # Plaines et forets du centre
+                        else:
+                            z = 3  # Cotes, lacs et rivieres
+                        zones.append(z)
+                return zones
+        except Exception:
+            pass
+    return list(DEFAULT_ROOM_ZONES[:total_rooms])
 
 
 def die(msg):
@@ -276,11 +364,12 @@ def write_charset(path, tiles, src):
     # Dictionnaire complet de 256 caracteres (8 octets chacun)
     chars = {i: [0] * 8 for i in range(256)}
 
-    # Caracteres 0..31 : tuiles de la carte
+    # Caracteres des tuiles de la carte
     for i, t in enumerate(tiles):
+        base = TILE_CHAR_BASES[i]
         for q, (label, c0, r0) in enumerate((("HG", 0, 0), ("HD", 4, 0),
                                              ("BG", 0, 8), ("BD", 4, 8))):
-            chars[i * 4 + q] = char_bytes(t["rows"], c0, r0)
+            chars[base + q] = char_bytes(t["rows"], c0, r0)
 
     # Caracteres ASCII et icones HUD
     for k, rows in FONT_8X8.items():
@@ -289,7 +378,7 @@ def write_charset(path, tiles, src):
 
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"; GENERE par tools/tilegen.py depuis {src} - ne pas editer a la main.\n")
-        f.write("; Jeu de caracteres : tuiles (0..31), police ASCII (32..95), icones HUD (96..106).\n")
+        f.write("; Jeu de caracteres : tuiles (0..31, 168..), police ASCII (32..95), icones HUD (96..106).\n")
         f.write("charset:\n")
         for i in range(256):
             b = ", ".join(f"%{v:08b}" for v in chars[i])
@@ -307,8 +396,8 @@ def compress_room_rle(room):
         t = flat[j]
         rem = run
         while rem > 0:
-            c = min(rem, 31)
-            byte = ((c - 1) << 3) | (t & 7)
+            c = min(rem, 15)
+            byte = ((c - 1) << 4) | (t & 0x0F)
             rle.append(byte)
             rem -= c
         j += run
@@ -327,12 +416,44 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("TILE_SOLID      = %00000001\n\n")
         for i, t in enumerate(tiles):
             f.write(f"TILE_{ident(t['name'])} = {i}\n")
-        f.write("\n; couleur de chaque tuile (+8 = caractere multicolore)\ntile_color:\n")
-        for t in tiles:
-            f.write(f"        !byte {t['color'] + 8}   ; {t['name']}\n")
-        f.write("\n; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n")
-        for t in tiles:
-            f.write(f"        !byte {'TILE_SOLID' if t['solid'] else '0'}   ; {t['name']}\n")
+
+        f.write("\n; Caractere de base de chaque tuile (2x2 = 4 caracteres)\ntile_char_base:\n        !byte ")
+        bases = [TILE_CHAR_BASES[i] if i < len(tiles) else 0 for i in range(16)]
+        f.write(", ".join(str(v) for v in bases) + "\n")
+
+        f.write("\n; Couleurs de chaque zone regionale (+8 pour mode multicolore)\n")
+        for z in range(4):
+            cols = []
+            for i in range(16):
+                if i < len(tiles):
+                    cols.append(ZONE_TILE_COLORS[z][i] + 8)
+                else:
+                    cols.append(0)
+            f.write(f"zone{z}_tile_color:\n        !byte " + ", ".join(str(c) for c in cols) + "\n")
+
+        # Couleurs de donjon
+        dungeon_cols = []
+        for i in range(16):
+            if i < len(tiles):
+                dungeon_cols.append(tiles[i]["color"] + 8)
+            else:
+                dungeon_cols.append(0)
+        f.write("zone_dungeon_tile_color:\n        !byte " + ", ".join(str(c) for c in dungeon_cols) + "\n\n")
+
+        f.write("zone_color_lo:\n        !byte <zone0_tile_color, <zone1_tile_color, <zone2_tile_color, <zone3_tile_color\n")
+        f.write("zone_color_hi:\n        !byte >zone0_tile_color, >zone1_tile_color, >zone2_tile_color, >zone3_tile_color\n\n")
+
+        f.write("zone_bg_color:\n        !byte " + ", ".join(str(c) for c in ZONE_BG) + "\n")
+        f.write("zone_mc1_color:\n        !byte " + ", ".join(str(c) for c in ZONE_MC1) + "\n")
+        f.write("zone_mc2_color:\n        !byte " + ", ".join(str(c) for c in ZONE_MC2) + "\n\n")
+
+        f.write("; Tampon de couleur des tuiles de la salle active\nactive_tile_color:\n        !fill 16, 0\ntile_color = active_tile_color\n\n")
+
+        f.write("; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n        !byte ")
+        flags = [("TILE_SOLID" if t["solid"] else "0") for t in tiles]
+        while len(flags) < 16:
+            flags.append("0")
+        f.write(", ".join(flags) + "\n")
 
         f.write("\n; table ty * MAP_W\ntile_row_offset:\n        !byte ")
         f.write(", ".join(str(ty * MAP_W) for ty in range(MAP_H)) + "\n")
@@ -342,16 +463,17 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
 
         f.write("\nroom_buf:        !fill 200, 0            ; Tampon de la salle active decompressee\n")
         f.write("target_room_buf: !fill 200, 0            ; Tampon de la salle cible (transition)\n\n")
+
         f.write("; ---------------------------------------------------------------------------\n")
         f.write("; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf\n")
-        f.write("; Format : bit 7..3 = (run - 1) [0..30 -> 1..31 tuiles], bit 2..0 = tile (0..7)\n")
+        f.write("; Format : bit 7..4 = (run - 1) [0..14 -> 1..15 tuiles], bit 3..0 = tile (0..15)\n")
         f.write("; Fin de salle : $FF\n")
         f.write("; ---------------------------------------------------------------------------\n")
         f.write("decompress_room_main:\n")
         f.write("        ldy #0\n        ldx #0\n.drm_loop:\n")
         f.write("        lda (ZP_SRC),y\n        cmp #$ff\n        beq .drm_done\n        iny\n")
-        f.write("        pha\n        lsr\n        lsr\n        lsr\n        clc\n        adc #1\n        sta ZP_TMP\n")
-        f.write("        pla\n        and #7\n.drm_put:\n")
+        f.write("        pha\n        lsr\n        lsr\n        lsr\n        lsr\n        clc\n        adc #1\n        sta ZP_TMP\n")
+        f.write("        pla\n        and #$0f\n.drm_put:\n")
         f.write("        sta room_buf,x\n        inx\n        dec ZP_TMP\n        bne .drm_put\n")
         f.write("        cpx #200\n        bcc .drm_loop\n.drm_done:\n        rts\n\n")
         f.write("; ---------------------------------------------------------------------------\n")
@@ -360,13 +482,14 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("decompress_room_target:\n")
         f.write("        ldy #0\n        ldx #0\n.drt_loop:\n")
         f.write("        lda (ZP_SRC),y\n        cmp #$ff\n        beq .drt_done\n        iny\n")
-        f.write("        pha\n        lsr\n        lsr\n        lsr\n        clc\n        adc #1\n        sta ZP_TMP\n")
-        f.write("        pla\n        and #7\n.drt_put:\n")
+        f.write("        pha\n        lsr\n        lsr\n        lsr\n        lsr\n        clc\n        adc #1\n        sta ZP_TMP\n")
+        f.write("        pla\n        and #$0f\n.drt_put:\n")
         f.write("        sta target_room_buf,x\n        inx\n        dec ZP_TMP\n        bne .drt_put\n")
         f.write("        cpx #200\n        bcc .drt_loop\n.drt_done:\n        rts\n\n")
 
 
 def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, overlay_mode=False):
+    room_zones = get_room_zones(len(rooms))
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_world}\n")
         f.write("!cpu 6510\n* = $a000\n\n")
@@ -400,6 +523,12 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
         else:
             f.write("\n\n")
 
+        # Table des zones par salle ($A116..$A195 - 128 octets)
+        f.write("; Table des zones régionales par salle (128 octets : $A116..$A195)\nroom_zone_palette:\n        !byte ")
+        while len(room_zones) < 128:
+            room_zones.append(0)
+        f.write(", ".join(str(z) for z in room_zones[:128]) + "\n\n")
+
         for i, room in enumerate(rooms):
             rx = i % rooms_x
             ry = i // rooms_x
@@ -410,15 +539,23 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
                 f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
 
 
-def preview(path, cfg, tiles, grid, scale=2):
-    pal = [PALETTE[cfg["bg"]], PALETTE[cfg["mc1"]], PALETTE[cfg["mc2"]]]
+def preview(path, cfg, tiles, grid, rooms_x=16, rooms_y=8, scale=2):
+    room_zones = get_room_zones(rooms_x * rooms_y)
     pix = []
-    for row in grid:
+    for y_tile, row in enumerate(grid):
+        ry = y_tile // MAP_H
         for ar in range(ART_H):
             line = []
-            for t in row:
+            for x_tile, t in enumerate(row):
+                rx = x_tile // MAP_W
+                room_idx = ry * rooms_x + rx
+                zone = room_zones[room_idx] if room_idx < len(room_zones) else 2
+                bg_col = ZONE_BG[zone]
+                mc1_col = ZONE_MC1[zone]
+                mc2_col = ZONE_MC2[zone]
+                tile_col = ZONE_TILE_COLORS[zone][t] if t < len(ZONE_TILE_COLORS[zone]) else tiles[t]["color"]
+                cols = [PALETTE[bg_col], PALETTE[mc1_col], PALETTE[mc2_col], PALETTE[tile_col]]
                 tile = tiles[t]
-                cols = pal + [PALETTE[tile["color"]]]
                 for ch in tile["rows"][ar]:
                     line.extend([cols[PIX[ch]]] * (2 * scale))
             pix.extend([line] * scale)
@@ -458,6 +595,9 @@ def write_underworld_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, s
         else:
             f.write("\n\n")
 
+        # Table des zones par salle ($A116..$A195 - 128 octets à 0 pour donjons)
+        f.write("; Table des palettes régionales (128 octets à 0 pour les donjons : $A116..$A195)\nroom_zone_palette:\n        !fill 128, 0\n\n")
+
         for i, room in enumerate(rooms):
             rx = i % rooms_x
             ry = i // rooms_x
@@ -495,7 +635,7 @@ def main():
         print(f"Underworld : {u_rx}x{u_ry} ecrans ({len(u_rooms)} salles souterraines)")
 
     if a.preview:
-        preview(a.preview, cfg, tiles, grid)
+        preview(a.preview, cfg, tiles, grid, rooms_x=rx, rooms_y=ry)
     print(f"{len(tiles)} tuiles, monde {rx}x{ry} ecrans ({len(rooms)} salles)")
 
 

@@ -115,11 +115,9 @@ transition_right:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda tile_color,x
+        lda active_tile_color,x
         sta ZP_TMP                      ; couleur
-        txa
-        asl
-        asl                             ; tuile * 4
+        lda tile_char_base,x
         sta ZP_BASE
         lda ZP_ROW
         and #1
@@ -272,11 +270,9 @@ transition_left:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda tile_color,x
+        lda active_tile_color,x
         sta ZP_TMP
-        txa
-        asl
-        asl
+        lda tile_char_base,x
         sta ZP_BASE
         lda ZP_ROW
         and #1
@@ -406,11 +402,9 @@ transition_down:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda tile_color,x
+        lda active_tile_color,x
         sta ZP_ROW                      ; couleur temporaire
-        txa
-        asl
-        asl
+        lda tile_char_base,x
         sta ZP_BASE                     ; caractère de base
 
         lda ZP_TCOL
@@ -549,11 +543,9 @@ transition_up:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda tile_color,x
+        lda active_tile_color,x
         sta ZP_ROW
-        txa
-        asl
-        asl
+        lda tile_char_base,x
         sta ZP_BASE
 
         lda ZP_TCOL
