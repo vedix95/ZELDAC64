@@ -1,5 +1,5 @@
 ; ===========================================================================
-; CARTE OVERWORLD DU MONDE ZELDA NES (1986) - 16 x 8 ECRANS (128 SALLES)
+; CARTE OVERWORLD DU MONDE ZELDA (1986) - 16 x 8 ECRANS (128 SALLES)
 ; Format : 20 x 10 tuiles par ecran (320 x 80 tuiles au total).
 ; Symboles : . herbe  , touffes  f fleurs  T arbre  ~ eau  # rocher  _ chemin  O grotte
 ; ===========================================================================

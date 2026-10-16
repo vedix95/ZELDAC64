@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Générateur d'intégration complète des 44 monstres et boss de Zelda 1 NES dans enemies.asm.
+"""Générateur d'intégration complète des 44 monstres et boss de Zelda 1 (1986) dans enemies.asm.
 """
 
 def generate_asm():

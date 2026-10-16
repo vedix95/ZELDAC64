@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Génère les tables complètes des statistiques, IA et pointeurs de sprites
-pour tous les 44 ennemis officiels de Zelda 1 NES pour C64.
+pour tous les 44 ennemis officiels de Zelda 1 (1986) pour C64.
 """
 
 def generate():

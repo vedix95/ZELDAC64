@@ -15,5 +15,5 @@
 # Frame 12: yscroll = 1
 # Frame 14: yscroll = 0
 # Frame 16: décalage mémoire d'une ligne, yscroll = 7
-# -> L'écran glisse à 100% de manière continue, veloutée et constante, PIXEL PAR PIXEL, comme une vraie cinématique arcade/NES !
+# -> L'écran glisse à 100% de manière continue, veloutée et constante, PIXEL PAR PIXEL, comme une vraie cinématique arcade classique !
 print("Hardware pixel scroll timeline verified!")

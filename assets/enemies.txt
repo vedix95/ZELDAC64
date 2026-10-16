@@ -1,5 +1,5 @@
 # ===========================================================================
-# ENNEMIS OFFICIELS DE THE LEGEND OF ZELDA (NES 1986)
+# ENNEMIS OFFICIELS DE THE LEGEND OF ZELDA (1986)
 # Adaptés pour Commodore 64 VIC-II en mode multicolore (12 cols x 21 lignes).
 # Octorok et Moblin utilisent le cadre centré 8x16 (pad automatique 2,2).
 # Les projectiles utilisent la pleine taille (pad 0 0).
@@ -12,7 +12,7 @@
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# 1. OCTOROK ROUGE (Pieuvre cracheuse de pierres - Zelda 1 NES officiel)
+# 1. OCTOROK ROUGE (Pieuvre cracheuse de pierres - Zelda 1 officiel 1986)
 # ---------------------------------------------------------------------------
 # Marche face : 2 frames (tête à 2 lobes, yeux tan/pupilles marron, trompe cracheuse)
 [octo_down_0]
@@ -154,7 +154,7 @@ g.gbbbgg
 ............
 
 # ---------------------------------------------------------------------------
-# 2. MOBLIN ROUGE (Guerrier bouledogue avec lance - Zelda 1 NES officiel)
+# 2. MOBLIN ROUGE (Guerrier bouledogue avec lance - Zelda 1 officiel 1986)
 # ---------------------------------------------------------------------------
 # Marche face : 2 frames (oreilles pointues, bajoues, lance tenue à droite)
 [moblin_down_0]
@@ -320,7 +320,7 @@ bbbbbbbbbbss
 ............
 
 # ===========================================================================
-# NOUVEAUX ENNEMIS OFFICIELS ZELDA 1 NES (1986)
+# NOUVEAUX ENNEMIS OFFICIELS ZELDA 1 (1986)
 # ===========================================================================
 
 # ---------------------------------------------------------------------------

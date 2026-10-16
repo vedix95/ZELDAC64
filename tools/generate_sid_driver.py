@@ -141,7 +141,7 @@ def write_part(f, prefix, part):
 
 with open('src/intro_music_data.asm', 'w') as f:
     f.write("; ===========================================================================\n")
-    f.write("; intro_music_data.asm : Partition officielle de The Legend of Zelda (NES)\n")
+    f.write("; intro_music_data.asm : Partition officielle de The Legend of Zelda (1986)\n")
     f.write("; Transcrite et extraite directement du MIDI officiel de Koji Kondo\n")
     f.write(f"; Longueur totale : {len(score)} pas événementiels (Partie 1: {p1_len}, Partie 2: {p2_len})\n")
     f.write("; ===========================================================================\n\n")

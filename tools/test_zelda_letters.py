@@ -1,5 +1,5 @@
 # Modélisons des lettres de 2x2 caractères (16x16) pour Z E L D A
-# Le logo NES fait 5 lettres de 16x16 espacées d'1 colonne :
+# Le logo original fait 5 lettres de 16x16 espacées d'1 colonne :
 # 5 * 2 + 4 * 1 = 14 colonnes (de col 13 à 26).
 # C'est la taille idéale !
 # Chaque lettre est composée de 4 glyphes 8x8 : (TL, TR, BL, BR)

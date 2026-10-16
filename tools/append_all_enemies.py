@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Génère tous les sprites additionnels officiels de The Legend of Zelda 1 (NES 1986)
+"""Génère tous les sprites additionnels officiels de The Legend of Zelda (1986)
 pour Commodore 64 VIC-II et les ajoute dans assets/enemies.txt.
 """
 
 NEW_SPRITES = """
 # ===========================================================================
-# NOUVEAUX ENNEMIS OFFICIELS ZELDA 1 NES (1986)
+# NOUVEAUX ENNEMIS OFFICIELS ZELDA 1 (1986)
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
@@ -1191,4 +1191,4 @@ b....b..
 
 with open("assets/enemies.txt", "a", encoding="utf-8") as f:
     f.write(NEW_SPRITES)
-print("Tous les sprites officiels de Zelda 1 NES ont ete ajoutes avec succes dans assets/enemies.txt !")
+print("Tous les sprites officiels de Zelda 1 ont ete ajoutes avec succes dans assets/enemies.txt !")

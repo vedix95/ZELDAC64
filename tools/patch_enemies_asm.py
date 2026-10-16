@@ -21,7 +21,7 @@ def main():
 
     stat_tables = f"""
 ; ---------------------------------------------------------------------------
-; Tables statistiques des 45 types d'ennemis Zelda 1 NES
+; Tables statistiques des 45 types d'ennemis Zelda (1986)
 ; ---------------------------------------------------------------------------
 en_base_hp:
         !byte {hp_bytes}
@@ -78,7 +78,7 @@ get_enemy_sprite_and_color:
     header_pattern = r"(MAX_ENEMIES\s*=\s*8\s*\n)(.*?)(; Variables globales des ennemis)"
     new_constants = """MAX_ENEMIES             = 8
 
-; --- Identifiants officiels des ennemis de The Legend of Zelda 1 (NES 1986) ---
+; --- Identifiants officiels des ennemis de The Legend of Zelda (1986) ---
 TYPE_NONE               = 0
 
 ; Overworld

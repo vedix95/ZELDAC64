@@ -1,5 +1,5 @@
 # ===========================================================================
-# LINK : SPRITES OFFICIELS THE LEGEND OF ZELDA (NES 1986)
+# LINK : SPRITES OFFICIELS THE LEGEND OF ZELDA (1986)
 # Adaptés pour Commodore 64 VIC-II en mode multicolore (12 cols x 21 lignes).
 # Link utilise un cadre centré 8x16 (pad automatique 2,2).
 # L'épée et les objets utilisent la pleine largeur (pad 0 0).
@@ -12,7 +12,7 @@
 # ===========================================================================
 
 # ===========================================================================
-# MARCHE : BAS (Face - 2 images alternées NES officielles)
+# MARCHE : BAS (Face - 2 images alternées d'origine)
 # ===========================================================================
 [down_0]
 ..gggg..
@@ -51,7 +51,7 @@ ssbbbbg.
 ....bb..
 
 # ===========================================================================
-# MARCHE : HAUT (Dos - 2 images alternées NES officielles)
+# MARCHE : HAUT (Dos - 2 images alternées d'origine)
 # ===========================================================================
 [up_0]
 ..gggg..
@@ -90,7 +90,7 @@ ssbbbbg.
 .....b..
 
 # ===========================================================================
-# MARCHE : GAUCHE (Profil avec bouclier officiel NES et pointe du bonnet)
+# MARCHE : GAUCHE (Profil avec bouclier d'origine et pointe du bonnet)
 # ===========================================================================
 [left_0]
 ........
@@ -135,7 +135,7 @@ bbb...bb
 [right_1] mirror left_1
 
 # ===========================================================================
-# FENTE D'ATTAQUE : CORPS DE LINK (4 directions NES officielles)
+# FENTE D'ATTAQUE : CORPS DE LINK (4 directions d'origine)
 # ===========================================================================
 [attack_down]
 ..gggg..
@@ -269,7 +269,7 @@ gggggggssb..
 [sword_right] mirror sword_left
 
 # ===========================================================================
-# OBJETS D'INVENTAIRE OFFICIELS NES (Sprite 12x21, pad 0 0)
+# OBJETS D'INVENTAIRE OFFICIELS (1986) (Sprite 12x21, pad 0 0)
 # ===========================================================================
 [item_boomerang] pad 0 0
 ............

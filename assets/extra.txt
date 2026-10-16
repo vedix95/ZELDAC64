@@ -4,7 +4,7 @@
 # ===========================================================================
 
 # ===========================================================================
-# VIEIL HOMME DE LA GROTTE (Old Man - Zelda 1 NES authentique)
+# VIEIL HOMME DE LA GROTTE (Old Man - Zelda 1 authentique 1986)
 # Palette en grotte :
 #   g = robe rouge (VIC_SPRITE_COL = COL_RED)
 #   s = peau / visage (MC1 = PLAYER_SKIN = COL_LRED)
@@ -54,7 +54,7 @@ sggggggs
 .bb..bb.
 
 # ===========================================================================
-# MARCHAND DE L'OVERWORLD (Merchant - Zelda 1 NES authentique)
+# MARCHAND DE L'OVERWORLD (Merchant - Zelda 1 authentique 1986)
 #   g = tunique / turban (VIC_SPRITE_COL = COL_PURPLE ou COL_BLUE)
 #   s = peau (MC1 = PLAYER_SKIN = COL_LRED)
 #   b = barbe et yeux blancs (MC2 = COL_WHITE)
