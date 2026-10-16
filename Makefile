@@ -65,8 +65,7 @@ $(PRG): $(SRCS) | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ --vicelabels $(LABELS) -r $(REPORT) $(MAIN)
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-# Programme d'introduction autonome (Cascade, Légende, Trésors, Musique SID)
-$(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_music_data.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/input.asm | $(BLD_DIR)
+$(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_music_data.asm $(SRC_DIR)/intro_monsters_data.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/input.asm | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 

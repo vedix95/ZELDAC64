@@ -64,7 +64,7 @@ intro_standalone_init:
         lda #MEMSETUP_VALUE             ; écran $0400, caractères $2000
         sta VIC_MEMSETUP
         lda VIC_CTRL2
-        ora #%00010000                  ; bit 4 : texte multicolore
+        and #%11101111                  ; bit 4 = 0 : texte haute résolution (pixels nets 8x8)
         sta VIC_CTRL2
 
         ; Détecte l'unité de disquette courante
@@ -111,6 +111,7 @@ launch_zelda_game:
         jsr intro_music_stop
         lda #0
         sta SID_VOLUME
+        sta VIC_SPRITE_EN
 
         ; Copie le chargeur KERNAL dans le buffer cassette $033C
         ldx #0
