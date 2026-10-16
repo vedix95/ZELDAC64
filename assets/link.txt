@@ -12,7 +12,7 @@
 # ===========================================================================
 
 # ===========================================================================
-# MARCHE : BAS (Face - 2 images alternées d'origine)
+# MARCHE : BAS (Face - 2 images alternées avec bouclier authentique)
 # ===========================================================================
 [down_0]
 ..gggg..
@@ -22,11 +22,11 @@
 .sbssbs.
 .ssssss.
 .bggggb.
-.sggggsb
-.sggggsb
-.sbbbbss
-.gggggg.
-.gggggg.
+.sggggbb
+.sgggbss
+.sbbbsbb
+.ggggbss
+.gggggbs
 ..gggg..
 ..bbbb..
 ..bb....
@@ -40,18 +40,18 @@
 .sbssbs.
 .ssssss.
 .bggggb.
-bsggggs.
-bsggggs.
-ssbbbbs.
-.gggggg.
-.gggggg.
+bbggggs.
+ssbgggs.
+bbsbbbs.
+ssbgggg.
+sbggggg.
 ..gggg..
 ..bbbb..
 ....bb..
 ........
 
 # ===========================================================================
-# MARCHE : HAUT (Dos - 2 images alternées d'origine)
+# MARCHE : HAUT (Dos - 2 images alternées avec bouclier au dos)
 # ===========================================================================
 [up_0]
 ..gggg..
@@ -61,11 +61,11 @@ ssbbbbs.
 .bbggbb.
 .bbbbbb.
 .bggggb.
-.gggggg.
-.gggggg.
-.bbbbbb.
-.gggggg.
-.gggggg.
+.gggggbb
+.ggggbss
+.bbbbsbb
+.ggggbss
+.gggggbs
 ..gggg..
 ..bbbb..
 ..bb....
@@ -79,18 +79,18 @@ ssbbbbs.
 .bbggbb.
 .bbbbbb.
 .bggggb.
-.gggggg.
-.gggggg.
-.bbbbbb.
-.gggggg.
-.gggggg.
+bbggggs.
+ssbgggg.
+bbsbbbb.
+ssbgggg.
+sbggggg.
 ..gggg..
 ..bbbb..
 ....bb..
 ........
 
 # ===========================================================================
-# MARCHE : GAUCHE (Profil avec bouclier d'origine et pointe du bonnet)
+# MARCHE : GAUCHE (Profil avec bouclier frontal et pointe du bonnet)
 # ===========================================================================
 [left_0]
 ........
@@ -98,13 +98,13 @@ ssbbbbs.
 ..bggggg
 .sbbgggg
 .sbssggg
-.sssgb..
+.ssssgg.
 .sgggg..
-sbggggb.
-sbggggb.
-sbbbbbb.
-sbgggg..
-.bgggg..
+.bssbb..
+.bssgg..
+.bsbsg..
+.bsbgg..
+.bbgggg.
 ..bb..b.
 ..bb..b.
 ..bb....
@@ -116,13 +116,13 @@ sbgggg..
 ..bggggg
 .sbbgggg
 .sbssggg
-.sssgb..
+.ssssgg.
 .sgggg..
-sbggggb.
-sbggggb.
-sbbbbbb.
-sbgggg..
-.bgggg..
+.bssbb..
+.bssgg..
+.bsbsg..
+.bsbgg..
+.bbgggg.
 ..b..bb.
 ..b..bb.
 .....bb.
@@ -135,7 +135,7 @@ sbgggg..
 [right_1] mirror left_1
 
 # ===========================================================================
-# FENTE D'ATTAQUE : CORPS DE LINK (4 directions d'origine)
+# FENTE D'ATTAQUE : CORPS DE LINK (4 directions avec bouclier)
 # ===========================================================================
 [attack_down]
 ..gggg..
@@ -145,11 +145,11 @@ sbgggg..
 .sbssbs.
 .ssssss.
 .bggggb.
-.sggggsb
-.sggggsb
-.sbbbbss
-.gggggg.
-.gggggg.
+.sggggbb
+.sgggbss
+.sbbbsbb
+.ggggbss
+.gggggbs
 ..gggg..
 ..bbbb..
 ..bb....
@@ -163,11 +163,11 @@ sbgggg..
 .bbggbb.
 .bbbbbb.
 .bggggb.
-.gggggg.
-.gggggg.
-.bbbbbb.
-.gggggg.
-.gggggg.
+.gggggbb
+.ggggbss
+.bbbbsbb
+.ggggbss
+.gggggbs
 ..gggg..
 ..bbbb..
 ..bb....
@@ -175,20 +175,19 @@ sbgggg..
 
 [attack_left]
 ........
-...gggg.
-..bggggg
-.sbbgggg
-.sbssggg
-.sssgb..
-.sgggg..
-ssggggb.
-ssggggb.
-.bbbbbb.
-.gggggg.
-.gggggg.
-.bb...bb
-.bb...bb
-bb......
+..gggg..
+.bbgggg.
+sbbgggg.
+sbbgggg.
+ssssggbs
+sggggsbb
+sggggsbb
+sbbbbbbs
+sggggsbs
+.gggg...
+..bb..b.
+..bb..b.
+..bb....
 ........
 
 [attack_right] mirror attack_left
