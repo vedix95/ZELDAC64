@@ -1,0 +1,42 @@
+name: Build Zelda C64
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools (ACME, VICE, Python dependencies)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y acme vice
+          python -m pip install --upgrade pip
+          pip install Pillow
+
+      - name: Check build environment
+        run: make check
+
+      - name: Generate previews
+        run: make preview
+
+      - name: Build D64 Disk Image
+        run: make
+
+      - name: Upload playable D64 disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelda-c64-d64
+          path: build/zelda.d64

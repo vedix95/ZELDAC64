@@ -64,11 +64,31 @@ SID_V1_PW_HI    = $d403
 SID_V1_CTRL     = $d404
 SID_V1_AD       = $d405
 SID_V1_SR       = $d406
+
+SID_V2_FREQ_LO  = $d407
+SID_V2_FREQ_HI  = $d408
+SID_V2_PW_LO    = $d409
+SID_V2_PW_HI    = $d40a
 SID_V2_CTRL     = $d40b
-SID_POTX        = $d419         ; Potentiomètre X (Bouton 2 de la manette)
-SID_POTY        = $d41a         ; Potentiomètre Y (Bouton 3 de la manette)
+SID_V2_AD       = $d40c
+SID_V2_SR       = $d40d
+
+SID_V3_FREQ_LO  = $d40e
+SID_V3_FREQ_HI  = $d40f
+SID_V3_PW_LO    = $d410
+SID_V3_PW_HI    = $d411
+SID_V3_CTRL     = $d412
+SID_V3_AD       = $d413
+SID_V3_SR       = $d414
+
+SID_FC_LO       = $d415
+SID_FC_HI       = $d416
+SID_RES_FILT    = $d417
+SID_MODE_VOL    = $d418
 SID_VOLUME      = $d418
 SID_VOL         = $d418
+SID_POTX        = $d419         ; Potentiomètre X (Bouton 2 de la manette)
+SID_POTY        = $d41a         ; Potentiomètre Y (Bouton 3 de la manette)
 
 ; --- CIA ---
 CIA1_PORT_A     = $dc00         ; joystick 2
@@ -115,9 +135,33 @@ ZP_DST          = $0e           ; pointeur destination 16 bits ($0e-$0f)
 ZP_SCR          = $fb           ; pointeur 16 bits écran ($fb-$fc)
 ZP_COL          = $fd           ; pointeur 16 bits couleur ($fd-$fe)
 
+; --- Zone Mémoire Dynamique Cartes ($A000..$CFFF - 12 Ko) ---
+MAP_DATA_ADDR       = $a000
+map_rooms_w         = $a000
+map_rooms_h         = $a001
+map_rooms_cnt       = $a002
+map_bg_col          = $a003
+map_mc1_col         = $a004
+map_mc2_col         = $a005
+map_row_offset      = $a006
+room_tbl_lo         = $a016
+room_tbl_hi         = $a096
+MAP_DATA_MAX_PAGES  = 48        ; 48 pages x 256 octets = 12 Ko ($A000..$CFFF)
+
+WORLD_OVERWORLD     = 0
+WORLD_DUNGEON       = 1
+
 ; --- KERNAL ---
 CHROUT          = $ffd2
 GETIN           = $ffe4
+SETLFS          = $ffba
+SETNAM          = $ffbd
+LOAD            = $ffd5
+SAVE            = $ffd8
+CLRCHN          = $ffcc
+CLOSE           = $ffc3
+OPEN            = $ffc0
+DEVICE_NUM      = $ba
 
 ; --- Couleurs ---
 COL_BLACK       = 0

@@ -6,22 +6,32 @@
 ; reste vide (caractère 0 = fond uni).
 ; ---------------------------------------------------------------------------
 
-START_ROOM_X    = 1
-START_ROOM_Y    = 2
+START_ROOM_X    = 7
+START_ROOM_Y    = 7
 
-current_room_x:   !byte START_ROOM_X
-current_room_y:   !byte START_ROOM_Y
-current_room_idx: !byte 0
+current_room_x:     !byte START_ROOM_X
+current_room_y:     !byte START_ROOM_Y
+current_room_idx:   !byte 0
+
+current_world_type: !byte WORLD_OVERWORLD
+saved_ow_room_x:    !byte START_ROOM_X
+saved_ow_room_y:    !byte START_ROOM_Y
+saved_ow_player_x:  !word 0
+saved_ow_player_y:  !byte 0
+
+apply_map_colors:
+        lda map_bg_col
+        sta VIC_BACKGROUND
+        lda map_mc1_col
+        sta VIC_BG_MC1
+        lda map_mc2_col
+        sta VIC_BG_MC2
+        rts
 
 init_video:
         lda #1
         sta CURSOR_FLAG                 ; pas de curseur clignotant
-        lda #MAP_BG_COLOR
-        sta VIC_BACKGROUND
-        lda #MAP_MC1_COLOR
-        sta VIC_BG_MC1
-        lda #MAP_MC2_COLOR
-        sta VIC_BG_MC2
+        jsr apply_map_colors
         lda #COL_BLACK
         sta VIC_BORDER
         lda #MEMSETUP_VALUE             ; écran $0400, caractères $2000
@@ -60,8 +70,13 @@ load_room:
         sta current_room_idx
         tax
         lda room_tbl_lo,x
-        sta ZP_MAP
+        sta ZP_SRC
         lda room_tbl_hi,x
+        sta ZP_SRC+1
+        jsr decompress_room_main
+        lda #<room_buf
+        sta ZP_MAP
+        lda #>room_buf
         sta ZP_MAP+1
         jsr draw_map
         rts
@@ -150,3 +165,101 @@ draw_map:
         dec ZP_ROW
         bne .row
         rts
+
+; ---------------------------------------------------------------------------
+; enter_dungeon : Bascule vers le monde souterrain / Donjon
+; ---------------------------------------------------------------------------
+enter_dungeon:
+        ; 1. Sauvegarde la position Overworld
+        lda current_room_x
+        sta saved_ow_room_x
+        lda current_room_y
+        sta saved_ow_room_y
+        lda player_x
+        sta saved_ow_player_x
+        lda player_x+1
+        sta saved_ow_player_x+1
+        lda player_y
+        sta saved_ow_player_y
+
+        ; 2. Désactive ennemis, projectiles et objets
+        lda #0
+        sta en_type
+        sta en_type+1
+        sta en_proj_active
+        sta item_active
+        sta player_attacking
+
+        ; 3. Vider l'écran et recharger la carte Donjon
+        jsr clear_screen
+        jsr disk_load_map_underworld
+
+        ; 4. Placer Link dans la salle d'entrée du Donjon (1, 0)
+        lda #1
+        sta current_room_x
+        lda #0
+        sta current_room_y
+
+        lda #160
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #180
+        sta player_y
+        lda #DIR_UP
+        sta player_dir
+        lda #0
+        sta player_walk_anim
+        sta player_walk_tick
+
+        ; 5. Afficher la salle et les ennemis
+        jsr load_room
+        jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+; ---------------------------------------------------------------------------
+; exit_dungeon : Quitte le donjon et restaure la carte Overworld
+; ---------------------------------------------------------------------------
+exit_dungeon:
+        ; 1. Désactive ennemis et objets
+        lda #0
+        sta en_type
+        sta en_type+1
+        sta en_proj_active
+        sta item_active
+        sta player_attacking
+
+        ; 2. Vider l'écran et recharger la carte Overworld
+        jsr clear_screen
+        jsr disk_load_map_overworld
+
+        ; 3. Restaurer la salle et la position Overworld de Link
+        lda saved_ow_room_x
+        sta current_room_x
+        lda saved_ow_room_y
+        sta current_room_y
+
+        lda saved_ow_player_x
+        sta player_x
+        lda saved_ow_player_x+1
+        sta player_x+1
+        lda saved_ow_player_y
+        clc
+        adc #16                         ; Juste sous l'entrée
+        sta player_y
+        lda #DIR_DOWN
+        sta player_dir
+        lda #0
+        sta player_walk_anim
+        sta player_walk_tick
+
+        ; 4. Afficher la salle et les ennemis
+        jsr load_room
+        jsr hud_init
+        jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+

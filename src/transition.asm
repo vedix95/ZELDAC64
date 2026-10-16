@@ -36,8 +36,13 @@ transition_right:
         adc #1
         tax
         lda room_tbl_lo,x
-        sta ZP_TGT
+        sta ZP_SRC
         lda room_tbl_hi,x
+        sta ZP_SRC+1
+        jsr decompress_room_target
+        lda #<target_room_buf
+        sta ZP_TGT
+        lda #>target_room_buf
         sta ZP_TGT+1
 
         lda #0
@@ -186,8 +191,13 @@ transition_left:
         sbc #1
         tax
         lda room_tbl_lo,x
-        sta ZP_TGT
+        sta ZP_SRC
         lda room_tbl_hi,x
+        sta ZP_SRC+1
+        jsr decompress_room_target
+        lda #<target_room_buf
+        sta ZP_TGT
+        lda #>target_room_buf
         sta ZP_TGT+1
 
         lda #0
@@ -337,8 +347,13 @@ transition_down:
         adc current_room_x
         tax
         lda room_tbl_lo,x
-        sta ZP_TGT
+        sta ZP_SRC
         lda room_tbl_hi,x
+        sta ZP_SRC+1
+        jsr decompress_room_target
+        lda #<target_room_buf
+        sta ZP_TGT
+        lda #>target_room_buf
         sta ZP_TGT+1
 
         lda #0
@@ -471,8 +486,13 @@ transition_up:
         adc current_room_x
         tax
         lda room_tbl_lo,x
-        sta ZP_TGT
+        sta ZP_SRC
         lda room_tbl_hi,x
+        sta ZP_SRC+1
+        jsr decompress_room_target
+        lda #<target_room_buf
+        sta ZP_TGT
+        lda #>target_room_buf
         sta ZP_TGT+1
 
         lda #0

@@ -26,8 +26,18 @@ start:
 ; car pour le VIC-II (banque 0), la zone $1000-$1FFF voit la ROM des caractères (chargen).
 !align 63, 0
 !source "src/sprites.asm"
+!if * > $1000 {
+        !error "Les sprites Link debordent sur la zone ROM chargen ($1000)"
+}
 
 game_init:
+        ; Désactive la ROM BASIC ($A000-$BFFF) pour libérer les 64 Ko de RAM
+        ; $36 (%00110110) : RAM à $A000-$BFFF, I/O à $D000-$DFFF, KERNAL ACTIF à $E000-$FFFF
+        lda #$36
+        sta CPU_PORT
+
+        jsr disk_init
+        jsr disk_load_map_overworld
         jsr init_video
         jsr clear_screen
         jsr load_room
@@ -35,6 +45,12 @@ game_init:
         jsr player_init
         jsr items_init
         jsr enemies_init
+        jsr player_draw
+        jsr enemies_prep_multiplexer
+        jsr init_raster_irq
+
+        lda #STATE_PLAYING
+        sta game_state
 
 main_loop:
         jsr wait_frame
@@ -51,6 +67,24 @@ main_loop:
         jsr open_debug
         jmp main_loop
 +
+        ; Touche 2 : Bascule vers le Donjon (recharge map_uw)
+        lda key_2_pressed
+        beq +
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq +
+        jsr enter_dungeon
+        jmp main_loop
++
+        ; Touche 1 : Bascule vers l'Overworld (recharge map_ow)
+        lda key_1_pressed
+        beq +
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        beq +
+        jsr exit_dungeon
+        jmp main_loop
++
         ; Dispatch selon l'état de jeu
         lda game_state
         cmp #STATE_INVENTORY
@@ -59,7 +93,7 @@ main_loop:
         beq .in_cave
 
         ; --- ÉTAT DE JEU NORMAL ---
-        ; Bouton B : ouvre l'inventaire
+        ; Bouton B (Manette Xbox Bouton B / Touche 'B') : ouvre l'inventaire
         lda btn_b_pressed
         beq .play_frame
         jsr open_inventory
@@ -71,7 +105,7 @@ main_loop:
         jsr enemies_update
         jsr player_draw
         jsr items_draw
-        jsr enemies_draw
+        jsr enemies_prep_multiplexer
         jmp main_loop
 
 .in_inventory:
@@ -87,23 +121,20 @@ main_loop:
         jsr debug_update
         jmp main_loop
 
-; Synchronisation sur la ligne raster 255 (1 passage par image, 50/60 Hz).
+; Synchronisation sur l'interruption raster VBlank (50 Hz).
 wait_frame:
-.wait_line:
-        lda VIC_RASTER
-        cmp #$ff
-        bne .wait_line
-.leave_line:                    ; sortir de la ligne pour ne pas compter 2 fois
-        lda VIC_RASTER
-        cmp #$ff
-        beq .leave_line
+        lda #0
+        sta frame_ready
+.wait:
+        lda frame_ready
+        beq .wait
         rts
 
 !source "src/input.asm"
 !source "src/hud.asm"
 !source "src/player.asm"
 !source "src/tilemap.asm"
-!source "src/transition.asm"
+!source "src/gameplay.asm"
 
 ; Le jeu de caractères est à une adresse fixe : le code et les données
 ; ci-dessus doivent tenir avant ($1000-$1FFF).
@@ -113,26 +144,35 @@ wait_frame:
 * = CHARSET_ADDR
 !source "src/charset.asm"
 
-; Données de carte, sous-menus et logique des objets dans la RAM libre au-delà du jeu de caractères
+; Sprites des ennemis, PNJs et boss alignés à 64 octets dans Bank 0 (RAM $2800..$3FFF)
 * = $2800
-!source "src/items.asm"
-!source "src/inventory.asm"
-!source "src/map_data.asm"
-
-; Sprites des ennemis alignés à 64 octets dans Bank 0 (RAM $3000..$3FFF)
-!align 63, 0
 !source "src/sprites_enemies.asm"
+!source "src/sprites_extra.asm"
 
 !if * > $4000 {
-        !error "Les sprites ennemis debordent de la banque VIC 0 ($3FFF)"
+        !error "Les sprites debordent de la banque VIC 0 ($3FFF)"
 }
 
-; Logique et IA des ennemis (code CPU en RAM libre)
+; Code CPU au-delà de la banque VIC 0 ($4000..$CFFF)
+* = $4000
+!source "src/tiles_data.asm"
+!source "src/transition.asm"
+!source "src/items.asm"
 !source "src/enemies.asm"
+!source "src/inventory.asm"
+!source "src/inventory_draw.asm"
+
+; Module de communication disquette 1541 / D64
+!source "src/disk.asm"
 
 ; Écran de diagnostic matériel et cartographie mémoire (Touche 'D')
 !source "src/debug.asm"
 
 ; Grotte secrète de l'Épée ("C'est dangereux d'y aller tout seul")
 !source "src/cave.asm"
+
+!if * > MAP_DATA_ADDR {
+        !error "Le programme resident deborde sur la zone des cartes ($A000)"
+}
+
 

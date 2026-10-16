@@ -71,7 +71,57 @@ items_use_b:
 +       cmp #2
         bne +
         jmp spawn_bow
-+       jmp spawn_candle
++       cmp #3
+        bne +
+        jmp spawn_candle
++       cmp #4
+        bne +
+        jmp use_food
++       jmp use_potion
+
+use_food:
+        lda player_has_food
+        bne +
+        rts
++       lda #0
+        sta player_has_food
+        lda #15
+        sta SID_VOLUME
+        lda #$00
+        sta SID_V1_FREQ_LO
+        lda #$18
+        sta SID_V1_FREQ_HI
+        lda #$09
+        sta SID_V1_AD
+        lda #$00
+        sta SID_V1_SR
+        lda #%10000001
+        sta SID_V1_CTRL
+        rts
+
+use_potion:
+        lda player_has_potion
+        bne +
+        rts
++       lda hud_max_hearts
+        sta hud_cur_hearts
+        jsr hud_render
+
+        lda #15
+        sta SID_VOLUME
+        lda #$80
+        sta SID_V1_FREQ_LO
+        lda #$24
+        sta SID_V1_FREQ_HI
+        lda #$09
+        sta SID_V1_AD
+        lda #$00
+        sta SID_V1_SR
+        lda #%00010001
+        sta SID_V1_CTRL
+
+        dec player_has_potion
+        rts
 
 ; ---------------------------------------------------------------------------
 ; 1. BOOMERANG : part devant Link, suit Link en vol et revient vers lui
@@ -663,9 +713,9 @@ items_draw:
         lda item_active
         bne .draw_item
 
-        ; Aucun objet : désactive Sprites 2..6
+        ; Aucun objet : désactive Sprite 2
         lda VIC_SPRITE_EN
-        and #%10000011                  ; préserve Link (0) et Épée (1)
+        and #%11111011                  ; désactive Sprite 2 seul (préserve Link, épée, ennemis)
         sta VIC_SPRITE_EN
         rts
 
@@ -695,11 +745,6 @@ items_draw:
         asl                             ; bit 2
         ora ZP_TMP
         sta VIC_SPRITE_MSB
-
-        ; Éteint les sprites 3..6 au cas où
-        lda VIC_SPRITE_EN
-        and #%10000111
-        sta VIC_SPRITE_EN
 
         lda item_active
         cmp #ITEM_BOOMERANG

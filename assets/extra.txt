@@ -1,0 +1,206 @@
+# ===========================================================================
+# SPRITES ADDITIONNELS (PNJs, Grotte, Célébration, Objets)
+# Placés en RAM banque 0 au-delà de $3000 (hors de la zone ROM chargen $1000-$1FFF)
+# ===========================================================================
+
+# ===========================================================================
+# VIEIL HOMME DE LA GROTTE (Old Man - Zelda 1 NES authentique)
+# Palette en grotte :
+#   g = robe rouge (VIC_SPRITE_COL = COL_RED)
+#   s = peau / visage (MC1 = PLAYER_SKIN = COL_LRED)
+#   b = barbe & cheveux blancs (MC2 = COL_WHITE)
+#   . = noir (fond obscur de la grotte)
+# ===========================================================================
+[old_man]
+..ssss..
+..bbbb..
+..ssss..
+..ssss..
+..bssb..
+.gbbbbg.
+.gb..bg.
+gbbbbbbg
+sbgbbgbs
+sggbbggs
+sggbbggs
+gggggggg
+gggggggg
+.gggggg.
+..gggg..
+.gssssg.
+
+# ===========================================================================
+# LINK OBTENTION D'OBJET ("Item Get" - bras levés célébration officielle)
+#   g = tunique verte Link (VIC_SPRITE_COL0 = COL_GREEN)
+#   s = visage et mains (MC1 = PLAYER_SKIN = COL_LRED)
+#   b = lame d'épée blanche étincelante (MC2 = COL_WHITE)
+# ===========================================================================
+[item_get]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+bbssssbb
+bsbssbsb
+.ssssss.
+s.ssss.s
+sggggggs
+sggggggs
+.gggggg.
+.bbbbbb.
+.gggggg.
+.gggggg.
+.bb..bb.
+.bb..bb.
+
+# ===========================================================================
+# MARCHAND DE L'OVERWORLD (Merchant - Zelda 1 NES authentique)
+#   g = tunique / turban (VIC_SPRITE_COL = COL_PURPLE ou COL_BLUE)
+#   s = peau (MC1 = PLAYER_SKIN = COL_LRED)
+#   b = barbe et yeux blancs (MC2 = COL_WHITE)
+# ===========================================================================
+[merchant]
+..bbbb..
+.bbbbbb.
+.bbssbb.
+.sbssbs.
+.sbssbs.
+.bbssbb.
+.bbbbbb.
+bbbbbbbb
+bbggggbb
+bsggggsb
+bssbbssb
+ssbbbbss
+ssgbbgss
+.bbggbb.
+.bbbbbb.
+..b..b..
+
+# ===========================================================================
+# VIEILLE FEMME / APOTHICAIRE (Old Woman - Boutique de potions)
+#   g = fichu / châle rose-rouge (VIC_SPRITE_COL = COL_PURPLE ou COL_LRED)
+#   s = visage ridé (MC1 = PLAYER_SKIN = COL_LRED)
+#   b = tablier et cheveux blancs (MC2 = COL_WHITE)
+# ===========================================================================
+[old_woman]
+..gggg..
+..gbbg..
+.gbbbbg.
+.gbssbg.
+.gbssbg.
+.gbssbg.
+.gbssbg.
+.gbssbg.
+ggbssbgg
+gsbssbsg
+gsggggsg
+gggbbggg
+gggbbggg
+gggggggg
+.gggggg.
+.gssssg.
+
+# ===========================================================================
+# BOUCLIER MAGIQUE (Magical Shield - Orné de la croix rouge/argentée)
+#   g = bordure bouclier (VIC_SPRITE_COL = COL_BLUE ou COL_RED)
+#   s = corps métallique (MC1 = PLAYER_SKIN)
+#   b = croix sacrée blanche (MC2 = COL_WHITE)
+# ===========================================================================
+[item_shield]
+gggggggg
+gssssssg
+gs.bb.sg
+gs.bb.sg
+gsbbbbsg
+gsbbbbsg
+gs.bb.sg
+gs.bb.sg
+gssssssg
+.gggggg.
+..gggg..
+...gg...
+
+# ===========================================================================
+# CLEF DE DONJON (Dungeon Key - Clé dorée)
+#   g = tige dorée (VIC_SPRITE_COL = COL_YELLOW)
+#   s = reflets or (MC1 = PLAYER_SKIN)
+#   b = étincelle blanche (MC2 = COL_WHITE)
+# ===========================================================================
+[item_key]
+..gggg..
+.gssssg.
+.gs..sg.
+.gs..sg.
+.gssssg.
+..gggg..
+...gg...
+...gs...
+...gg...
+...gs...
+...gss..
+...gg...
+...gg...
+
+# ===========================================================================
+# COEUR DE RECUPERATION / CONTENEUR (Heart Container)
+#   g = contour rouge vif (VIC_SPRITE_COL = COL_RED)
+#   s = pulpe rouge clair (MC1 = PLAYER_SKIN)
+#   b = reflet étincelant blanc (MC2 = COL_WHITE)
+# ===========================================================================
+[item_heart]
+.gg..gg.
+gb.ggssg
+gbsssssg
+gssssssg
+.gssssg.
+..gssg..
+...gg...
+
+# ===========================================================================
+# ANNEAU BLEU (Blue Ring - Bague magique de protection)
+#   g = saphir étincelant (VIC_SPRITE_COL = COL_CYAN ou COL_BLUE)
+#   s = anneau d'or (MC1 = PLAYER_SKIN)
+#   b = éclat diamant (MC2 = COL_WHITE)
+# ===========================================================================
+[item_ring]
+...bb...
+..bggb..
+..ssss..
+.s....s.
+.s....s.
+..ssss..
+
+# ===========================================================================
+# APPAT POUR MONSTRES / VIANDE (Monster Bait / Food)
+#   g = rôti savoureux (VIC_SPRITE_COL = COL_RED ou COL_BROWN)
+#   s = chair (MC1 = PLAYER_SKIN)
+#   b = os blanc qui dépasse (MC2 = COL_WHITE)
+# ===========================================================================
+[item_food]
+..bb..bb..
+.bbbbbbbb.
+.bggggggb.
+.bssssssb.
+.bssssssb.
+.bggggggb.
+.bbbbbbbb.
+..bb..bb..
+
+# ===========================================================================
+# POTION DE VIE (Life Potion - Bleue ou Rouge)
+#   g = verre / fiole (VIC_SPRITE_COL = COL_BLUE ou COL_RED)
+#   s = liquide magique et bouchon (MC1 = PLAYER_SKIN)
+#   b = reflets cristallins (MC2 = COL_WHITE)
+# ===========================================================================
+[item_potion]
+...ss...
+...ss...
+..gggg..
+.gssssg.
+.gsbbsg.
+.gssssg.
+.gsbbsg.
+.gssssg.
+.gssssg.
+.gggggg.

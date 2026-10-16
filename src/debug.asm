@@ -8,6 +8,8 @@
 ;   - Page 3 : Télémétrie en direct (Link, santé, inventaire, monstres et PV)
 ; ---------------------------------------------------------------------------
 
+!zone debug
+
 GAUGE_CAP_L     = 107                   ; Caractère bord gauche [
 GAUGE_FULL      = 108                   ; Caractère segment plein █
 GAUGE_HALF      = 109                   ; Caractère demi-segment ▌
@@ -618,7 +620,7 @@ debug_draw_page0:
         lda #>txt_p0_v2
         sta ZP_SRC+1
         lda #COL_GREY
-        ldx #36
+        ldx #18
         jsr dbg_print_fixed
 
         ldx #19
@@ -629,7 +631,7 @@ debug_draw_page0:
         lda #>txt_p0_v3
         sta ZP_SRC+1
         lda #COL_GREY
-        ldx #36
+        ldx #18
         jsr dbg_print_fixed
 
         ldx #20
@@ -640,7 +642,7 @@ debug_draw_page0:
         lda #>txt_p0_v4
         sta ZP_SRC+1
         lda #COL_GREY
-        ldx #36
+        ldx #18
         jsr dbg_print_fixed
 
         ldx #21
@@ -855,7 +857,7 @@ debug_draw_page1:
         lda #>txt_p1_v1
         sta ZP_SRC+1
         lda #COL_WHITE
-        ldx #37
+        ldx #18
         jsr dbg_print_fixed
 
         ldx #21
@@ -866,7 +868,7 @@ debug_draw_page1:
         lda #>txt_p1_v2
         sta ZP_SRC+1
         lda #COL_GREY
-        ldx #37
+        ldx #18
         jsr dbg_print_fixed
 
         ldx #22
@@ -1491,23 +1493,23 @@ txt_p0_zones_h:
 txt_p0_prg_txt:
         !text " 1. CODE & DONNEES PRG     : 17.5 KB "
 txt_p0_prg_pct:
-        !text "(27% DE LA RAM)   "
+        !text "(27% RAM)"
 txt_p0_free_txt:
         !text " 2. MEMOIRE LIBRE LE JEU   : 33.2 KB "
 txt_p0_free_pct:
-        !text "(52% DE LA RAM)   "
+        !text "(52% RAM)"
 txt_p0_vic_h:
         !text " 3. RESSOURCES GRAPHIQUES VIC-II  "
 txt_p0_v1:
-        !text "    ECRAN / HUD    : $0400 (1000 B) "
+        !text "SCREEN/HUD:$0400  "
 txt_p0_v2:
-        !text "    SPRITES B0     : $0840 (1984 B) "
+        !text "SPRITES B0:$0840  "
 txt_p0_v3:
-        !text "    CHARSET 2K     : $2000 (2048 B) "
+        !text "CHARSET 2K:$2000  "
 txt_p0_v4:
-        !text "    SPRITES ENNEMI : $38C0 (1216 B) "
+        !text "SPRITES EN:$38C0  "
 txt_p0_v5:
-        !text "    MONDE 3X3      : $2800 (1800 B) "
+        !text "MAP BUFFER:$A000  "
 
 ; --- Textes Page 1 ---
 txt_p1_spr_h:
@@ -1515,15 +1517,15 @@ txt_p1_spr_h:
 txt_p1_spr_val:
         !text " BUDGET SPRITES: 6 / 8 ACTIFS (75%)"
 txt_p1_spr_rem:
-        !text "(2 DISPONIBLES EN RESERVE)"
+        !text "(2 LIBRES)"
 txt_p1_s0:
-        !text "  S0: LINK (JOUEUR)  S1: EPEE (ATTACK)"
+        !text "S0:LINK  S1:SWORD "
 txt_p1_s1:
-        !text "  S2: OBJET ARME     S3: ENNEMI 0     "
+        !text "S2:ITEM  S3:ENMY0 "
 txt_p1_s2:
-        !text "  S4: ENNEMI 1       S5: PROJECTILE   "
+        !text "S4:ENMY1 S5:PROJ  "
 txt_p1_s3:
-        !text "  S6-S7: SPARES / BOMBE 3X3 EXPLOSION "
+        !text "S6-S7:BOMB EXPLODE"
 txt_p1_rast_h:
         !text "[TEMPS DE CALCUL CPU (RASTER 50 HZ)] "
 txt_p1_rast_lim:
@@ -1539,13 +1541,13 @@ txt_p1_sid_h:
 txt_p1_sid_val:
         !text " CANAUX ACTIFS : 1 / 3 VOIX  (33%) "
 txt_p1_sid_rem:
-        !text "(2 LIBRES POUR MUSIQUE)    "
+        !text "(2 LIBRES)"
 txt_p1_v1:
-        !text "  V1: SFX (BRUITAGES, TIRS, IMPACTS)  "
+        !text "V1:SFX EFFECTS    "
 txt_p1_v2:
-        !text "  V2: LIBRE (CANAL RESERVE MONDE)     "
+        !text "V2:WORLD MUSIC    "
 txt_p1_v3:
-        !text "  V3: LIBRE (CANAL RESERVE BASSE)     "
+        !text "V3:BASS CHANNEL   "
 
 ; --- Textes Page 2 ---
 txt_p2_link_h:
@@ -1584,6 +1586,48 @@ txt_p2_eng_sub:
 txt_dir_letters:
         !text "DULR"
 txt_en_types:
-        !text "NONE"
-        !text "OCTO"
-        !text "MOBL"
+        !text "NONE"    ; 0
+        !text "OCTO"    ; 1: OCTO_RED
+        !text "OCTB"    ; 2: OCTO_BLUE
+        !text "MOBL"    ; 3: MOBLIN_RED
+        !text "MOBB"    ; 4: MOBLIN_BLUE
+        !text "TEKT"    ; 5: TEKTITE_RED
+        !text "TEKB"    ; 6: TEKTITE_BLUE
+        !text "LEEV"    ; 7: LEEVER_RED
+        !text "LEEB"    ; 8: LEEVER_BLUE
+        !text "PEAH"    ; 9: PEAHAT
+        !text "ARMO"    ; 10: ARMOS
+        !text "GHIN"    ; 11: GHINI
+        !text "ZORA"    ; 12: ZORA
+        !text "LYNE"    ; 13: LYNEL_RED
+        !text "LYNB"    ; 14: LYNEL_BLUE
+        !text "KEES"    ; 15: KEESE_RED
+        !text "KEEB"    ; 16: KEESE_BLUE
+        !text "ZOL "    ; 17: ZOL
+        !text "GEL "    ; 18: GEL
+        !text "ROPE"    ; 19: ROPE
+        !text "STAL"    ; 20: STALFOS
+        !text "GORI"    ; 21: GORIYA_RED
+        !text "GORB"    ; 22: GORIYA_BLUE
+        !text "DARK"    ; 23: DARKNUT_RED
+        !text "DARB"    ; 24: DARKNUT_BLUE
+        !text "WIZZ"    ; 25: WIZZROBE_RED
+        !text "WIZB"    ; 26: WIZZROBE_BLUE
+        !text "WALL"    ; 27: WALLMASTER
+        !text "LIKE"    ; 28: LIKE_LIKE
+        !text "POLS"    ; 29: POLS_VOICE
+        !text "GIBD"    ; 30: GIBDO
+        !text "VIRE"    ; 31: VIRE
+        !text "BUBB"    ; 32: BUBBLE
+        !text "TRAP"    ; 33: TRAP
+        !text "LANM"    ; 34: LANMOLA_RED
+        !text "LANB"    ; 35: LANMOLA_BLUE
+        !text "AQUA"    ; 36: AQUAMENTUS
+        !text "DODO"    ; 37: DODONGO
+        !text "MANH"    ; 38: MANHANDLA
+        !text "GLEE"    ; 39: GLEEOK
+        !text "DIGD"    ; 40: DIGDOGGER
+        !text "GOHM"    ; 41: GOHMA_RED
+        !text "GOHB"    ; 42: GOHMA_BLUE
+        !text "PATR"    ; 43: PATRA
+        !text "GANO"    ; 44: GANON

@@ -28,10 +28,24 @@ key_d:              !byte 0                 ; 1 si touche 'D' (Debug) enfoncée
 key_d_prev:         !byte 0
 key_d_pressed:      !byte 0                 ; 1 au front montant
 
+key_1:              !byte 0                 ; Touche '1'
+key_1_prev:         !byte 0
+key_1_pressed:      !byte 0
+key_2:              !byte 0                 ; Touche '2'
+key_2_prev:         !byte 0
+key_2_pressed:      !byte 0
+key_3:              !byte 0                 ; Touche '3'
+key_3_prev:         !byte 0
+key_3_pressed:      !byte 0
+key_4:              !byte 0                 ; Touche '4'
+key_4_prev:         !byte 0
+key_4_pressed:      !byte 0
+
 ; Variables de lecture matricielle anti-ghosting
 col_idle:           !byte 0                 ; état des colonnes au repos (Port A = $FF)
+col_row1:           !byte 0                 ; état des colonnes avec Ligne 1 active ('3' et '4')
 col_row3:           !byte 0                 ; état des colonnes avec Ligne 3 active ('B')
-col_row7:           !byte 0                 ; état des colonnes avec Ligne 7 active (Espace)
+col_row7:           !byte 0                 ; état des colonnes avec Ligne 7 active (Espace, '1', '2')
 col_row2:           !byte 0                 ; état des colonnes avec Ligne 2 active ('D' et 'X')
 
 ; Alias de compatibilité
@@ -52,6 +66,14 @@ read_input:
         sta btn_x_prev
         lda key_d
         sta key_d_prev
+        lda key_1
+        sta key_1_prev
+        lda key_2
+        sta key_2_prev
+        lda key_3
+        sta key_3_prev
+        lda key_4
+        sta key_4_prev
 
         ; -------------------------------------------------------------------
         ; 1. LECTURE DU JOYSTICK PORT 2 & BOUTON A (FIRE 1 = ARME SECONDAIRE)
@@ -107,13 +129,19 @@ read_input:
         sta col_idle
 
         sei
+        ; Test Ligne 1 ($FD) : Touches '3' (Col 0) et '4' (Col 3)
+        lda #%11111101
+        sta CIA1_PORT_A
+        lda CIA1_PORT_B
+        sta col_row1
+
         ; Test Ligne 3 ($F7) : Touche 'B' (Inventaire / Menu)
         lda #%11110111
         sta CIA1_PORT_A
         lda CIA1_PORT_B
         sta col_row3
 
-        ; Test Ligne 7 ($7F) : Touche ESPACE (Manette X / Touche Espace)
+        ; Test Ligne 7 ($7F) : Touche ESPACE (Manette X), '1' (Col 0), '2' (Col 3)
         lda #%01111111
         sta CIA1_PORT_A
         lda CIA1_PORT_B
@@ -198,6 +226,61 @@ read_input:
         eor #$ff
         and key_d
         sta key_d_pressed
+
+        ; -------------------------------------------------------------------
+        ; 6. TRAITEMENT TOUCHES '1', '2', '3', '4' (PAGES D'INVENTAIRE DIRECTES)
+        ; -------------------------------------------------------------------
+        ; Touche '1' (Ligne 7, Col 0 -> col_row7 bit 0 = 0)
+        lda #0
+        sta key_1
+        lda col_row7
+        and #%00000001
+        bne +
+        lda #1
+        sta key_1
++       lda key_1_prev
+        eor #$ff
+        and key_1
+        sta key_1_pressed
+
+        ; Touche '2' (Ligne 7, Col 3 -> col_row7 bit 3 = 0)
+        lda #0
+        sta key_2
+        lda col_row7
+        and #%00001000
+        bne +
+        lda #1
+        sta key_2
++       lda key_2_prev
+        eor #$ff
+        and key_2
+        sta key_2_pressed
+
+        ; Touche '3' (Ligne 1, Col 0 -> col_row1 bit 0 = 0)
+        lda #0
+        sta key_3
+        lda col_row1
+        and #%00000001
+        bne +
+        lda #1
+        sta key_3
++       lda key_3_prev
+        eor #$ff
+        and key_3
+        sta key_3_pressed
+
+        ; Touche '4' (Ligne 1, Col 3 -> col_row1 bit 3 = 0)
+        lda #0
+        sta key_4
+        lda col_row1
+        and #%00001000
+        bne +
+        lda #1
+        sta key_4
++       lda key_4_prev
+        eor #$ff
+        and key_4
+        sta key_4_pressed
 
         ; -------------------------------------------------------------------
         ; Vider le tampon clavier KERNAL ($C6 = 0) pour empêcher l'accumulation

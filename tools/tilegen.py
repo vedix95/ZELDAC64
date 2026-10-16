@@ -212,6 +212,63 @@ FONT_8X8 = {
     113: [0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],  # Ligne haute
     114: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00],  # Ligne basse
     115: [0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00],  # Ligne mediane separation
+
+    # Icones et graphismes Intro Zelda 1 (codes 116..127)
+    116: [0x00, 0x18, 0x3C, 0x7E, 0xDB, 0xFF, 0x00, 0x00],  # Triforce sacree
+    117: [0x18, 0x18, 0x18, 0x7E, 0x18, 0x18, 0x18, 0x00],  # Epee magique
+    118: [0x7E, 0xFF, 0xBD, 0xBD, 0x7E, 0x3C, 0x18, 0x00],  # Bouclier magique
+    119: [0x06, 0x0F, 0x1B, 0x33, 0x66, 0xCC, 0x98, 0x30],  # Flute / Recorder
+    120: [0x00, 0xFF, 0xDB, 0xDB, 0xFF, 0xDB, 0x00, 0x00],  # Radeau (Raft)
+    121: [0xC3, 0xFF, 0xC3, 0xC3, 0xFF, 0xC3, 0xC3, 0x00],  # Echelle (Ladder)
+    122: [0x3C, 0x66, 0xC3, 0xC3, 0xC3, 0x66, 0x3C, 0x00],  # Bracelet de force
+    123: [0x18, 0x18, 0x3C, 0x7E, 0x7E, 0x7E, 0x3C, 0x00],  # Potion de vie
+    124: [0x24, 0x48, 0x90, 0x24, 0x48, 0x90, 0x24, 0x48],  # Cascade eau phase 0
+    125: [0x48, 0x90, 0x24, 0x48, 0x90, 0x24, 0x48, 0x90],  # Cascade eau phase 1
+    126: [0x90, 0x24, 0x48, 0x90, 0x24, 0x48, 0x90, 0x24],  # Cascade eau phase 2
+    127: [0x00, 0x00, 0x42, 0xA5, 0x5A, 0x24, 0xFF, 0x7E],  # Ecume de cascade
+
+    128: [0xFF, 0xDB, 0xFF, 0xED, 0xFF, 0xDB, 0xFF, 0xBD],
+    129: [0x3C, 0x7E, 0xFF, 0xDB, 0xFF, 0xED, 0xFF, 0xDB],
+    130: [0x0F, 0x1F, 0x3F, 0x7F, 0x7F, 0x3F, 0x1F, 0x0F],
+    131: [0xF0, 0xF8, 0xFC, 0xFE, 0xFE, 0xFC, 0xF8, 0xF0],
+    132: [0x18, 0x3C, 0x7E, 0x3C, 0x7E, 0xFF, 0x7E, 0xFF],
+    133: [0x3C, 0x7E, 0xFF, 0x18, 0x18, 0x18, 0x3C, 0x00],
+    134: [0x00, 0x44, 0xAA, 0x11, 0x00, 0x22, 0x55, 0x88],
+    135: [0x42, 0xA5, 0xDB, 0xFF, 0x7E, 0x3C, 0x18, 0x00],
+    136: [0xFF, 0xFF, 0x03, 0x07, 0x0E, 0x1C, 0x38, 0x70],
+    137: [0xFF, 0xFF, 0xE0, 0xC0, 0x80, 0x00, 0x00, 0x00],
+    138: [0xE0, 0xC0, 0x80, 0x00, 0x00, 0x00, 0xFF, 0xFF],
+    139: [0x00, 0x00, 0x01, 0x03, 0x07, 0x0E, 0xFF, 0xFF],
+    140: [0xFF, 0xFF, 0xE0, 0xE0, 0xE0, 0xE0, 0xFF, 0xFF],
+    141: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFE, 0xFE],
+    142: [0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xFF, 0xFF],
+    143: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF],
+    144: [0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0],
+    145: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+    146: [0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xFF, 0xFF],
+    147: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF],
+    148: [0xFF, 0xFF, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0],
+    149: [0xFC, 0xFE, 0x07, 0x03, 0x03, 0x03, 0x03, 0x03],
+    150: [0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xFF, 0xFF],
+    151: [0x03, 0x03, 0x03, 0x03, 0x03, 0x07, 0xFE, 0xFC],
+    152: [0x07, 0x0F, 0x1E, 0x3C, 0x78, 0xF0, 0xFF, 0xFF],
+    153: [0xE0, 0xF0, 0x78, 0x3C, 0x1E, 0x0F, 0xFF, 0xFF],
+    154: [0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0, 0xE0],
+    155: [0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07],
+    156: [0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F],
+    157: [0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE],
+    158: [0x07, 0x0F, 0x1E, 0x3C, 0x78, 0xF0, 0xFF, 0xFF],
+    159: [0xE0, 0xF0, 0x78, 0x3C, 0x1E, 0x0F, 0xFF, 0xFF],
+
+    # Bordures et enroulements de parchemin (codes 160..167)
+    160: [0x07, 0x1F, 0x3F, 0x7E, 0xFC, 0xF8, 0xF8, 0xF8],
+    161: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+    162: [0xE0, 0xF8, 0xFC, 0x7E, 0x3F, 0x1F, 0x1F, 0x1F],
+    163: [0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
+    164: [0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
+    165: [0xF8, 0xF8, 0xF8, 0xFC, 0x7E, 0x3F, 0x1F, 0x07],
+    166: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF],
+    167: [0x1F, 0x1F, 0x1F, 0x3F, 0x7E, 0xFC, 0xF8, 0xE0],
 }
 
 
@@ -239,14 +296,34 @@ def write_charset(path, tiles, src):
             f.write(f"        !byte {b}   ; char {i}\n")
 
 
-def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world):
+def compress_room_rle(room):
+    flat = [t for row in room for t in row]
+    rle = []
+    j = 0
+    while j < len(flat):
+        run = 1
+        while j + run < len(flat) and flat[j + run] == flat[j]:
+            run += 1
+        t = flat[j]
+        rem = run
+        while rem > 0:
+            c = min(rem, 31)
+            byte = ((c - 1) << 3) | (t & 7)
+            rle.append(byte)
+            rem -= c
+        j += run
+    rle.append(0xFF)  # marqueur de fin de salle ($FF)
+    return rle
+
+
+def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
     with open(path, "w", encoding="utf-8") as f:
-        f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_world} - ne pas editer.\n")
+        f.write("; GENERE par tools/tilegen.py - Donnees de tuiles et decompressor resident\n")
         f.write(f"MAP_W           = {MAP_W}\nMAP_H           = {MAP_H}\n")
         f.write(f"MAP_BG_COLOR    = {cfg['bg']}\nMAP_MC1_COLOR   = {cfg['mc1']}\n")
         f.write(f"MAP_MC2_COLOR   = {cfg['mc2']}\n\n")
         f.write(f"WORLD_ROOMS_X   = {rooms_x}\nWORLD_ROOMS_Y   = {rooms_y}\n")
-        f.write(f"WORLD_ROOMS_CNT = {len(rooms)}\n\n")
+        f.write("WORLD_ROOMS_CNT = 128\n\n")
         f.write("TILE_SOLID      = %00000001\n\n")
         for i, t in enumerate(tiles):
             f.write(f"TILE_{ident(t['name'])} = {i}\n")
@@ -257,23 +334,80 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world):
         for t in tiles:
             f.write(f"        !byte {'TILE_SOLID' if t['solid'] else '0'}   ; {t['name']}\n")
 
-        f.write("\n; table ry * WORLD_ROOMS_X\nworld_row_offset:\n        !byte ")
-        f.write(", ".join(str(ry * rooms_x) for ry in range(rooms_y)) + "\n")
-
         f.write("\n; table ty * MAP_W\ntile_row_offset:\n        !byte ")
         f.write(", ".join(str(ty * MAP_W) for ty in range(MAP_H)) + "\n")
 
-        f.write("\n; tables des pointeurs de chaque salle (ordre Y puis X)\nroom_tbl_lo:\n        !byte ")
-        f.write(", ".join(f"<room_{i:02d}" for i in range(len(rooms))) + "\n")
+        f.write("\n; Pointeur vers la table de rangées dynamique de la carte active ($A006)\n")
+        f.write("world_row_offset = map_row_offset\n")
+
+        f.write("\nroom_buf:        !fill 200, 0            ; Tampon de la salle active decompressee\n")
+        f.write("target_room_buf: !fill 200, 0            ; Tampon de la salle cible (transition)\n\n")
+        f.write("; ---------------------------------------------------------------------------\n")
+        f.write("; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf\n")
+        f.write("; Format : bit 7..3 = (run - 1) [0..30 -> 1..31 tuiles], bit 2..0 = tile (0..7)\n")
+        f.write("; Fin de salle : $FF\n")
+        f.write("; ---------------------------------------------------------------------------\n")
+        f.write("decompress_room_main:\n")
+        f.write("        ldy #0\n        ldx #0\n.drm_loop:\n")
+        f.write("        lda (ZP_SRC),y\n        cmp #$ff\n        beq .drm_done\n        iny\n")
+        f.write("        pha\n        lsr\n        lsr\n        lsr\n        clc\n        adc #1\n        sta ZP_TMP\n")
+        f.write("        pla\n        and #7\n.drm_put:\n")
+        f.write("        sta room_buf,x\n        inx\n        dec ZP_TMP\n        bne .drm_put\n")
+        f.write("        cpx #200\n        bcc .drm_loop\n.drm_done:\n        rts\n\n")
+        f.write("; ---------------------------------------------------------------------------\n")
+        f.write("; Decompression RLE compact (1-octet) dans target_room_buf\n")
+        f.write("; ---------------------------------------------------------------------------\n")
+        f.write("decompress_room_target:\n")
+        f.write("        ldy #0\n        ldx #0\n.drt_loop:\n")
+        f.write("        lda (ZP_SRC),y\n        cmp #$ff\n        beq .drt_done\n        iny\n")
+        f.write("        pha\n        lsr\n        lsr\n        lsr\n        clc\n        adc #1\n        sta ZP_TMP\n")
+        f.write("        pla\n        and #7\n.drt_put:\n")
+        f.write("        sta target_room_buf,x\n        inx\n        dec ZP_TMP\n        bne .drt_put\n")
+        f.write("        cpx #200\n        bcc .drt_loop\n.drt_done:\n        rts\n\n")
+
+
+def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, overlay_mode=False):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_world}\n")
+        f.write("!cpu 6510\n* = $a000\n\n")
+        f.write(f"map_rooms_w:    !byte {rooms_x}\n")
+        f.write(f"map_rooms_h:    !byte {rooms_y}\n")
+        f.write(f"map_rooms_cnt:  !byte {len(rooms)}\n")
+        f.write(f"map_bg_col:     !byte {cfg['bg']}\n")
+        f.write(f"map_mc1_col:    !byte {cfg['mc1']}\n")
+        f.write(f"map_mc2_col:    !byte {cfg['mc2']}\n\n")
+
+        # Table des offsets ry * rooms_x alignée sur 16 octets fixes ($A006..$A015)
+        row_offsets = [ry * rooms_x for ry in range(rooms_y)]
+        while len(row_offsets) < 16:
+            row_offsets.append(0)
+        f.write("; Table des offsets ry * map_rooms_w (16 octets : $A006..$A015)\nmap_row_offset:\n        !byte ")
+        f.write(", ".join(str(v) for v in row_offsets) + "\n\n")
+
+        # Tables des pointeurs paddées à 128 entrées ($A016..$A095 et $A096..$A115)
+        f.write("; Tables des pointeurs (128 octets LO : $A016..$A095 / 128 octets HI : $A096..$A115)\n")
+        f.write("room_tbl_lo:\n        !byte ")
+        f.write(", ".join(f"<room_{i:02d}" for i in range(len(rooms))))
+        if len(rooms) < 128:
+            f.write("\n        !fill " + str(128 - len(rooms)) + ", 0\n")
+        else:
+            f.write("\n")
+
         f.write("room_tbl_hi:\n        !byte ")
-        f.write(", ".join(f">room_{i:02d}" for i in range(len(rooms))) + "\n")
+        f.write(", ".join(f">room_{i:02d}" for i in range(len(rooms))))
+        if len(rooms) < 128:
+            f.write("\n        !fill " + str(128 - len(rooms)) + ", 0\n\n")
+        else:
+            f.write("\n\n")
 
         for i, room in enumerate(rooms):
             rx = i % rooms_x
             ry = i // rooms_x
-            f.write(f"\n; Salle ({rx}, {ry}) - {MAP_W}x{MAP_H} tuiles = {MAP_W * MAP_H} octets\nroom_{i:02d}:\n")
-            for row in room:
-                f.write("        !byte " + ", ".join(str(v) for v in row) + "\n")
+            rle = compress_room_rle(room)
+            f.write(f"; Salle ({rx}, {ry}) - RLE compact ({len(rle)} octets)\nroom_{i:02d}:\n")
+            for chunk_start in range(0, len(rle), 16):
+                chunk = rle[chunk_start:chunk_start + 16]
+                f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
 
 
 def preview(path, cfg, tiles, grid, scale=2):
@@ -291,18 +425,75 @@ def preview(path, cfg, tiles, grid, scale=2):
     write_png(path, pix)
 
 
+def write_underworld_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_world} - ne pas editer.\n")
+        f.write("!cpu 6510\n* = $a000\n\n")
+        f.write(f"map_rooms_w:    !byte {rooms_x}\n")
+        f.write(f"map_rooms_h:    !byte {rooms_y}\n")
+        f.write(f"map_rooms_cnt:  !byte {len(rooms)}\n")
+        # Couleurs donjon : Fond noir (0), MC1 marron (9), MC2 gris (12)
+        f.write("map_bg_col:     !byte 0   ; noir\n")
+        f.write("map_mc1_col:    !byte 9   ; marron\n")
+        f.write("map_mc2_col:    !byte 12  ; gris\n\n")
+
+        row_offsets = [ry * rooms_x for ry in range(rooms_y)]
+        while len(row_offsets) < 16:
+            row_offsets.append(0)
+        f.write("; Table des offsets ry * map_rooms_w (16 octets : $A006..$A015)\nmap_row_offset:\n        !byte ")
+        f.write(", ".join(str(v) for v in row_offsets) + "\n\n")
+
+        f.write("; Tables des pointeurs (128 octets LO : $A016..$A095 / 128 octets HI : $A096..$A115)\n")
+        f.write("room_tbl_lo:\n        !byte ")
+        f.write(", ".join(f"<u_room_{i:02d}" for i in range(len(rooms))))
+        if len(rooms) < 128:
+            f.write("\n        !fill " + str(128 - len(rooms)) + ", 0\n")
+        else:
+            f.write("\n")
+
+        f.write("room_tbl_hi:\n        !byte ")
+        f.write(", ".join(f">u_room_{i:02d}" for i in range(len(rooms))))
+        if len(rooms) < 128:
+            f.write("\n        !fill " + str(128 - len(rooms)) + ", 0\n\n")
+        else:
+            f.write("\n\n")
+
+        for i, room in enumerate(rooms):
+            rx = i % rooms_x
+            ry = i // rooms_x
+            rle = compress_room_rle(room)
+            f.write(f"; Salle Souterraine ({rx}, {ry}) - RLE compact ({len(rle)} octets)\nu_room_{i:02d}:\n")
+            for chunk_start in range(0, len(rle), 16):
+                chunk = rle[chunk_start:chunk_start + 16]
+                f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("tiles")
     ap.add_argument("world")
     ap.add_argument("--charset", required=True)
     ap.add_argument("--map-out", required=True, dest="map_out")
+    ap.add_argument("--tiles-out", default=None, dest="tiles_out")
+    ap.add_argument("--underworld", default=None)
+    ap.add_argument("--underworld-out", default=None, dest="underworld_out")
     ap.add_argument("--preview")
     a = ap.parse_args()
     cfg, tiles = parse_tiles(a.tiles)
     rooms, rx, ry, grid = parse_world(a.world, tiles)
     write_charset(a.charset, tiles, a.tiles)
-    write_map(a.map_out, cfg, tiles, rooms, rx, ry, a.tiles, a.world)
+
+    if a.tiles_out:
+        write_tiles_data(a.tiles_out, cfg, tiles, rx, ry)
+        write_map(a.map_out, cfg, tiles, rooms, rx, ry, a.tiles, a.world, overlay_mode=True)
+    else:
+        write_map(a.map_out, cfg, tiles, rooms, rx, ry, a.tiles, a.world, overlay_mode=False)
+
+    if a.underworld and a.underworld_out:
+        u_rooms, u_rx, u_ry, _ = parse_world(a.underworld, tiles)
+        write_underworld_map(a.underworld_out, cfg, tiles, u_rooms, u_rx, u_ry, a.tiles, a.underworld)
+        print(f"Underworld : {u_rx}x{u_ry} ecrans ({len(u_rooms)} salles souterraines)")
+
     if a.preview:
         preview(a.preview, cfg, tiles, grid)
     print(f"{len(tiles)} tuiles, monde {rx}x{ry} ecrans ({len(rooms)} salles)")

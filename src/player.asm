@@ -36,7 +36,25 @@ SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame blanche
 player_x:         !word 180             ; position courante de Link
 player_y:         !byte 150             ; centré dans la clairière (Zelda 1 NES)
 player_dir:       !byte DIR_UP          ; Link regarde vers le haut (grotte)
-player_has_sword: !byte 0               ; 0 = sans épée, 1 = épée obtenue dans la grotte
+player_has_sword:      !byte 0          ; 0 = sans épée, 1 = bois, 2 = blanche, 3 = magique
+player_has_shield:     !byte 1          ; 1 = petit bouclier, 2 = grand bouclier magique
+player_has_blue_ring:  !byte 0          ; 0 = tunique verte, 1 = anneau bleu (dégâts divisés par 2)
+player_has_bracelet:   !byte 0          ; 1 = bracelet de force
+player_has_raft:       !byte 0          ; 1 = radeau
+player_has_stepladder: !byte 0          ; 1 = échelle
+player_has_magic_key:  !byte 0          ; 1 = clef magique
+
+; Objets d'inventaire Slot B
+player_has_boomerang:  !byte 1          ; 1 = boomerang
+player_has_bow:        !byte 1          ; 1 = arc
+player_has_arrows:     !byte 1          ; 1 = flèches
+player_has_candle:     !byte 1          ; 1 = bougie bleue
+player_has_food:       !byte 0          ; 1 = viande / appât
+player_has_potion:     !byte 0          ; 0 = aucune, 1 = bleue, 2 = rouge
+
+; Triforce de la Sagesse (8 fragments numérotés 1 à 8)
+player_triforce_pieces: !byte %00000000 ; masque 8 bits
+player_blue_ring_hits:  !byte 0          ; compteur alternance dégâts Anneau Bleu
 
 ; Animation de marche
 player_walk_anim: !byte 0               ; image courante (0 ou 1)
@@ -109,19 +127,22 @@ player_update:
         rts                             ; Link reste immobile pendant le coup
 
 .check_attack_start:
-        ; Déclenchement sur appui Bouton X (Épée)
+        ; Déclenchement sur appui Bouton X (Manette Xbox Bouton X / Touche 'X' / Espace : Épée)
         lda btn_x_pressed
         beq .check_item_a
         ; Link ne peut attaquer que s'il a récupéré l'épée dans la grotte !
         lda player_has_sword
         beq .check_item_a
+        ; Si l'épée est maudite par un Bubble : impossible d'attaquer
+        lda sword_cursed_timer
+        bne .check_item_a
         lda #ATTACK_FRAMES
         sta player_attacking
         jsr sound_sword
         rts
 
 .check_item_a:
-        ; Déclenchement sur appui Bouton A (Arme secondaire équipée)
+        ; Déclenchement sur appui Bouton A (Manette Xbox Bouton A / Feu joystick : Arme secondaire)
         lda btn_a_pressed
         beq .handle_movement
         jsr player_use_item_b
@@ -214,9 +235,12 @@ player_update:
         lda target_x
         cmp #<(PLAYER_X_MAX + 1)
         bcc .right_not_border
-        lda current_room_x
-        cmp #(WORLD_ROOMS_X - 1)
-        bcs .clamp_right
+        lda map_rooms_w
+        sec
+        sbc #1
+        cmp current_room_x
+        beq .clamp_right
+        bcc .clamp_right
         jsr transition_right
         jmp .no_right
 .clamp_right:
@@ -329,9 +353,26 @@ player_update:
         ; Vérifie si le bord bas de l'écran est atteint
         cmp #(PLAYER_Y_MAX + 1)
         bcc .down_not_border
+
+        ; Si on est dans le donjon dans la salle d'entrée (1, 0), franchir le seuil sud = sortir
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .check_down_trans
+        lda current_room_x
+        cmp #1
+        bne .check_down_trans
         lda current_room_y
-        cmp #(WORLD_ROOMS_Y - 1)
-        bcs .clamp_down
+        bne .check_down_trans
+        jsr exit_dungeon
+        jmp .no_down
+
+.check_down_trans:
+        lda map_rooms_h
+        sec
+        sbc #1
+        cmp current_room_y
+        beq .clamp_down
+        bcc .clamp_down
         jsr transition_down
         jmp .no_down
 .clamp_down:
@@ -556,6 +597,15 @@ player_use_item_b:
 
 ; Recopie la position et les pointeurs dans les registres VIC-II.
 player_draw:
+        ; Couleur de Link (Verte ou Blanche si Anneau Bleu)
+        lda player_has_blue_ring
+        beq +
+        lda #COL_WHITE
+        sta VIC_SPRITE_COL0
+        jmp ++
++       lda #COL_GREEN
+        sta VIC_SPRITE_COL0
+++
         lda player_attacking
         bne +
         jmp .draw_normal

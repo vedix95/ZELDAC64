@@ -1,7 +1,44 @@
+# ---------------------------------------------------------------------------
+# C64 Zelda - .gitignore
+# ---------------------------------------------------------------------------
+
+# Fichiers de compilation C64
 build/
 *.prg
 *.d64
 *.vs
 *.rep
+*.dat
+*.crt
+
+# ROMs sous copyright (Ne jamais commiter de ROMs commerciales)
+*.nes
+zelda.nes
+
+# Logs et scripts temporaires d'émulateur VICE
+*.mon
+*.out
+*.log
+monitor.log
+
+# Sauvegardes et temporaires
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# IDE et OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,38 @@
+# Nouveaux caractères graphiques pour le parchemin (codes 160..167) :
+# 160: Coin HG enroulé du parchemin
+# 161: Bord haut avec ombre de rouleau
+# 162: Coin HD enroulé du parchemin
+# 163: Bord gauche déroulé
+# 164: Bord droit déroulé
+# 165: Coin BG enroulé
+# 166: Bord bas avec ombre de rouleau
+# 167: Coin BD enroulé
+parchment_glyphs = {
+    160: [0x07, 0x1F, 0x3F, 0x7E, 0xFC, 0xF8, 0xF8, 0xF8],
+    161: [0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+    162: [0xE0, 0xF8, 0xFC, 0x7E, 0x3F, 0x1F, 0x1F, 0x1F],
+    163: [0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
+    164: [0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
+    165: [0xF8, 0xF8, 0xF8, 0xFC, 0x7E, 0x3F, 0x1F, 0x07],
+    166: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF],
+    167: [0x1F, 0x1F, 0x1F, 0x3F, 0x7E, 0xFC, 0xF8, 0xE0],
+}
+
+with open('tools/tilegen.py', 'r') as f:
+    code = f.read()
+
+marker = "    159: [0xE0, 0xF0, 0x78, 0x3C, 0x1E, 0x0F, 0xFF, 0xFF],"
+new_lines = []
+for k, v in parchment_glyphs.items():
+    hex_str = ", ".join(f"0x{b:02X}" for b in v)
+    new_lines.append(f"    {k}: [{hex_str}],")
+
+replacement = marker + "\n\n    # Bordures et enroulements de parchemin (codes 160..167)\n" + "\n".join(new_lines)
+
+if marker in code:
+    code = code.replace(marker, replacement)
+    with open('tools/tilegen.py', 'w') as f:
+        f.write(code)
+    print("Added parchment glyphs to tools/tilegen.py!")
+else:
+    print("Marker not found in tools/tilegen.py!")

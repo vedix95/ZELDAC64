@@ -153,11 +153,12 @@ def main():
     ap.add_argument("source")
     ap.add_argument("-o", "--output", required=True)
     ap.add_argument("--preview")
+    ap.add_argument("--prefix", default=None, help="Prefix for sprite labels")
     a = ap.parse_args()
 
     order, frames = parse(a.source)
     grids = {n: to_grid(frames[n]) for n in order}
-    prefix = os.path.splitext(os.path.basename(a.source))[0]
+    prefix = a.prefix if a.prefix is not None else os.path.splitext(os.path.basename(a.source))[0]
 
     with open(a.output, "w", encoding="utf-8") as f:
         f.write(f"; GENERE par tools/sprgen.py depuis {a.source} - ne pas editer a la main.\n")

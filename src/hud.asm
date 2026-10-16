@@ -28,8 +28,8 @@ hud_max_hearts:   !byte 3               ; 3 cœurs max
 hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
 hud_selected_b:   !byte 0               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
 
-; Salles visitées (9 octets, 1 par salle, 1 = visitée)
-visited_rooms:    !byte 0, 0, 0,  0, 0, 0,  0, 1, 0    ; départ en (1,2) = salle 7
+; Salles visitées (128 octets pour la grille 16x8, 1 = visitée)
+visited_rooms:    !fill 128, 0
 
 ; Coordonnées écran pour chaque cellule de la minimap 3x3
 hud_map_offsets:
@@ -37,12 +37,14 @@ hud_map_offsets:
         !byte 81, 83, 85                ; ry = 1 (ligne 2, cols 1, 3, 5)
         !byte 121, 123, 125             ; ry = 2 (ligne 3, cols 1, 3, 5)
 
-; Noms des objets slot B (4 caractères chacun)
+; Noms des objets slot B (4 caractères chacun, 6 objets)
 b_item_names:
         !text "BOOM"
         !text "BOMB"
         !text "BOW "
         !text "CAND"
+        !text "FOOD"
+        !text "POTI"
 
 ; ---------------------------------------------------------------------------
 ; hud_init : initialise le cadre complet du HUD
@@ -166,7 +168,7 @@ hud_init:
 ; hud_render : met à jour les données dynamiques du HUD
 ; ---------------------------------------------------------------------------
 hud_render:
-        ; 1. Mise à jour de la Minimap 3x3
+        ; 1. Mise à jour de la position de la carte (16x8)
         ; Marque la salle active comme visitée
         ldx current_room_y
         lda world_row_offset,x
@@ -176,35 +178,57 @@ hud_render:
         lda #1
         sta visited_rooms,x
 
-        ; Dessin des 9 salles de la minimap
-        ldx #0                          ; salle 0..8
-.map_loop:
-        cpx current_room_idx
-        bne .not_current
-        lda #HUD_MAP_ACTIVE             ; Salle active : point jaune
-        ldy #COL_YELLOW
-        jmp .put_map_char
-.not_current:
-        lda visited_rooms,x
-        beq .unvis
-        lda #HUD_MAP_VISITED            ; Salle explorée : cadre blanc
-        ldy #COL_WHITE
-        jmp .put_map_char
-.unvis:
-        lda #HUD_MAP_EMPTY              ; Non explorée : point noir
-        ldy #COL_BLACK
+        ; Ligne 1 : "R:" + Colonne (A..P) + "-" + Rangée (1..8)
+        lda #'R'
+        sta SCREEN_RAM+41
+        lda #':'
+        sta SCREEN_RAM+42
+        lda #'A'
+        clc
+        adc current_room_x
+        sta SCREEN_RAM+43
+        lda #'-'
+        sta SCREEN_RAM+44
+        lda #'1'
+        clc
+        adc current_room_y
+        sta SCREEN_RAM+45
+        lda #' '
+        sta SCREEN_RAM+46
 
-.put_map_char:
-        sta ZP_TMP
-        sty ZP_BASE
-        ldy hud_map_offsets,x
-        lda ZP_TMP
-        sta SCREEN_RAM,y
-        lda ZP_BASE
-        sta COLOR_RAM,y
-        inx
-        cpx #9
-        bne .map_loop
+        lda #COL_YELLOW
+        sta COLOR_RAM+41
+        sta COLOR_RAM+42
+        lda #COL_WHITE
+        sta COLOR_RAM+43
+        sta COLOR_RAM+44
+        sta COLOR_RAM+45
+
+        ; Ligne 2 : Coordonnées matricielles [XX,Y]
+        lda #'['
+        sta SCREEN_RAM+81
+        lda current_room_x
+        jsr print_2digits
+        sta SCREEN_RAM+82
+        stx SCREEN_RAM+83
+        lda #','
+        sta SCREEN_RAM+84
+        lda #'0'
+        clc
+        adc current_room_y
+        sta SCREEN_RAM+85
+        lda #']'
+        sta SCREEN_RAM+86
+
+        lda #COL_CYAN
+        sta COLOR_RAM+81
+        lda #COL_WHITE
+        sta COLOR_RAM+82
+        sta COLOR_RAM+83
+        sta COLOR_RAM+84
+        sta COLOR_RAM+85
+        lda #COL_CYAN
+        sta COLOR_RAM+86
 
         ; 2. Compteurs avec icônes Zelda en colonne 16
         ; Rubis : icône losange ◆ + compteur 2 chiffres
