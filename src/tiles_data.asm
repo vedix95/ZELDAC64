@@ -20,22 +20,26 @@ TILE_WALL = 5
 TILE_SAND = 6
 TILE_CAVE = 7
 TILE_GRAVE = 8
+TILE_BRIDGE_H = 9
+TILE_BRIDGE_V = 10
+TILE_WALL_PASS = 11
+TILE_WALL_BOMB = 12
 
 ; Caractere de base de chaque tuile (2x2 = 4 caracteres)
 tile_char_base:
-        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0
 
 ; Couleurs de chaque zone regionale (+8 pour mode multicolore)
 zone0_tile_color:
-        !byte 8, 9, 9, 8, 14, 8, 8, 8, 9, 0, 0, 0, 0, 0, 0, 0
+        !byte 8, 9, 9, 8, 14, 8, 8, 8, 9, 8, 8, 8, 8, 0, 0, 0
 zone1_tile_color:
-        !byte 10, 15, 15, 10, 14, 10, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+        !byte 10, 15, 15, 10, 14, 10, 15, 8, 9, 8, 8, 10, 10, 0, 0, 0
 zone2_tile_color:
-        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
 zone3_tile_color:
-        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
 zone_dungeon_tile_color:
-        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 0, 0, 0, 0, 0, 0, 0
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
 
 zone_color_lo:
         !byte <zone0_tile_color, <zone1_tile_color, <zone2_tile_color, <zone3_tile_color
@@ -56,7 +60,7 @@ tile_color = active_tile_color
 
 ; drapeaux de chaque tuile (bit 0 = solide)
 tile_flags:
-        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, 0, 0, 0
 
 ; table ty * MAP_W
 tile_row_offset:

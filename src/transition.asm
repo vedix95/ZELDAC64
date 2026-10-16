@@ -27,6 +27,8 @@ col_row_hi:
 !zone transition_right
 
 transition_right:
+        lda #STATE_TRANSITION
+        sta game_state
         jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_x + 1)
         ldx current_room_y
@@ -173,6 +175,8 @@ transition_right:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
         rts
 
 ; ---------------------------------------------------------------------------
@@ -181,6 +185,8 @@ transition_right:
 !zone transition_left
 
 transition_left:
+        lda #STATE_TRANSITION
+        sta game_state
         jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_x - 1)
         ldx current_room_y
@@ -329,6 +335,8 @@ transition_left:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
         rts
 
 ; ---------------------------------------------------------------------------
@@ -337,6 +345,8 @@ transition_left:
 !zone transition_down
 
 transition_down:
+        lda #STATE_TRANSITION
+        sta game_state
         jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_y + 1)
         ldx current_room_y
@@ -467,6 +477,8 @@ transition_down:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
         rts
 
 ; ---------------------------------------------------------------------------
@@ -475,6 +487,8 @@ transition_down:
 !zone transition_up
 
 transition_up:
+        lda #STATE_TRANSITION
+        sta game_state
         jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_y - 1)
         ldx current_room_y
@@ -609,4 +623,6 @@ transition_up:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
         rts

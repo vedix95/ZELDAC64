@@ -19,6 +19,10 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 | :---: | :---: | :---: |
 | ![Salle de départ](docs/images/shot_start.png) | ![Cimetière avec ennemis](docs/images/shot_graveyard.png) | ![Overworld](docs/images/shot_overworld.png) |
 
+| Entrée du Niveau 1 (L'Aigle) | Franchissement du pont de la rivière | Désert avec Peahats et Leevers |
+| :---: | :---: | :---: |
+| ![Entrée Niveau 1](docs/images/shot_level1_entrance.png) | ![Pont de la rivière](docs/images/shot_bridge.png) | ![Désert](docs/images/shot_desert.png) |
+
 ### Cinématique d'Introduction Authentique (Chute d'eau, Parchemin & Bestiaire)
 
 | Écran Titre & Cascade Animée | Déroulement de la Légende d'Hyrule | Présentation de tous les Trésors | Défilé des Monstres (Ghini) |
@@ -52,7 +56,13 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
   - **Arc & Flèches** : Tirs à distance avec décompte de rubis.
   - **Bougie bleue** : Émission de flammes illuminant et attaquant.
 - **Intelligence artificielle des ennemis & butin** :
-  - Octoroks (rouges et bleus), Moblins, Tektites, Keeses, Leevers avec comportements authentiques, tirs et tables de butin (cœurs, rubis, fées, bombes).
+  - Octoroks (rouges et bleus), Moblins, Tektites, Keeses, Leevers, Peahats volants du désert et Zoras fluviaux avec tirs de boules de feu traversantes.
+  - Animation de mort authentique avec nuage de fumée et dissipation progressive.
+  - Disparition propre des monstres lors des transitions d'écran en défilement.
+- **Passages secrets & Murs explosables à la bombe** :
+  - Détection des déflagrations de bombes sur les murs fissurés, ouverture persistante des entrées de cavernes cachées et carillon de secret SID 8 notes.
+- **Réseau hydrographique & Ponts franchissables** :
+  - Ponts horizontaux et verticaux praticables permettant d'accéder au Niveau 1 (L'Aigle) et aux différentes îles de l'Overworld.
 - **Grottes secrètes & PNJ** :
   - Le vieil homme (*« IT'S DANGEROUS TO GO ALONE ! TAKE THIS. »*), torches animées et ramassage d'épée.
 - **HUD & Inventaire graphique complet** :

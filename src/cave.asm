@@ -1417,7 +1417,7 @@ txt_gamble_2:   !text "CHOISIS UN SAC DE RUBIS.    ", 0
 ; ===========================================================================
 room_cave_types:
         ; Rangée 0 (0..15 : A-1 .. P-1)
-        !byte 0, 0, 0, 0, CAVE_TYPE_HINT_1, 0, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
+        !byte 0, 0, 0, 0, CAVE_TYPE_HINT_1, CAVE_TYPE_DUNGEON_1, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
         ; Rangée 1 (16..31 : A-2 .. P-2)
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_A
         ; Rangée 2 (32..47 : A-3 .. P-3)

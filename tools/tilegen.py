@@ -53,23 +53,28 @@ ZONE_MC2 = [
 ]
 
 # Couleurs de tuiles propres (Color RAM, 0-7) par zone :
-# Tuiles : 0:grass, 1:tufts, 2:flowers, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave
+# Tuiles : 0:grass, 1:tufts, 2:flowers, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave,
+#          9:bridge_h, 10:bridge_v, 11:wall_pass, 12:wall_bomb
 ZONE_TILE_COLORS = [
     # Zone 0: Cimetiere (fond dgrey, MC1 black, MC2 white)
     [COLORS["black"], COLORS["white"], COLORS["white"], COLORS["black"],
-     COLORS["blue"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"]],
+     COLORS["blue"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 
     # Zone 1: Montagne de la Mort (fond brown, MC1 orange, MC2 white)
     [COLORS["red"], COLORS["yellow"], COLORS["yellow"], COLORS["red"],
-     COLORS["blue"], COLORS["red"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
+     COLORS["blue"], COLORS["red"], COLORS["yellow"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["red"], COLORS["red"]],
 
     # Zone 2: Plaines (fond lgreen, MC1 orange, MC2 white)
     [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
-     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
+     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 
     # Zone 3: Cote (fond orange, MC1 brown, MC2 white)
     [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
-     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"]],
+     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 ]
 
 DEFAULT_ROOM_ZONES = [

@@ -79,6 +79,32 @@ load_room:
         sta ZP_SRC+1
         jsr decompress_room_main
 
+        ; Restauration des grottes secrètes déjà ouvertes à la bombe
+        lda current_world_type
+        bne +
+        ldx current_room_idx
+        txa
+        lsr
+        lsr
+        lsr
+        tax
+        lda current_room_idx
+        and #7
+        tay
+        lda bit_powers,y
+        and overworld_secrets_opened,x
+        beq +
+
+        ldy #199
+-       lda room_buf,y
+        cmp #TILE_WALL_BOMB
+        bne .sk_bomb_conv
+        lda #TILE_CAVE
+        sta room_buf,y
+.sk_bomb_conv:
+        dey
+        bpl -
++
         ; Application des couleurs de la zone active
         lda current_world_type
         bne .lr_dungeon
@@ -304,4 +330,114 @@ exit_dungeon:
         lda #STATE_PLAYING
         sta game_state
         rts
+
+; ---------------------------------------------------------------------------
+; redraw_single_tile : redessine immédiatement la tuile Y (2x2 caractères) à l'écran
+; Entrée : Y = index de la tuile dans room_buf (0..199)
+; ---------------------------------------------------------------------------
+redraw_single_tile:
+        sty ZP_TMP
+        ; Calcul tile_y = ZP_TMP / 20 et tile_x = ZP_TMP % 20
+        ldx #0
+        lda ZP_TMP
+.div20_loop:
+        cmp #20
+        bcc .div20_done
+        sec
+        sbc #20
+        inx
+        jmp .div20_loop
+.div20_done:
+        ; X = tile_y (0..9), A = tile_x (0..19)
+        asl                             ; A = tile_x * 2 (colonne texte 0..38)
+        sta ZP_TCOL
+
+        ; Pointeur écran ligne haute
+        lda tile_y_scr_lo,x
+        clc
+        adc ZP_TCOL
+        sta ZP_SCR
+        sta ZP_COL
+        lda tile_y_scr_hi,x
+        adc #0
+        sta ZP_SCR+1
+        clc
+        adc #>(COLOR_RAM - SCREEN_RAM)  ; + $D4 ($04 -> $D8)
+        sta ZP_COL+1
+
+        ; Données de la tuile
+        ldy ZP_TMP
+        lda room_buf,y
+        tax
+        lda active_tile_color,x
+        sta ZP_TMP                      ; couleur
+        lda tile_char_base,x
+        sta ZP_BASE                     ; caractère base
+
+        ; Caractères haut-gauche et haut-droite
+        ldy #0
+        lda ZP_BASE
+        sta (ZP_SCR),y
+        lda ZP_TMP
+        sta (ZP_COL),y
+        iny
+        lda ZP_BASE
+        ora #1
+        sta (ZP_SCR),y
+        lda ZP_TMP
+        sta (ZP_COL),y
+
+        ; Pointeur ligne basse (+40 colonnes)
+        lda ZP_SCR
+        clc
+        adc #40
+        sta ZP_SCR
+        sta ZP_COL
+        bcc +
+        inc ZP_SCR+1
+        inc ZP_COL+1
++
+        ldy #0
+        lda ZP_BASE
+        ora #2
+        sta (ZP_SCR),y
+        lda ZP_TMP
+        sta (ZP_COL),y
+        iny
+        lda ZP_BASE
+        ora #3
+        sta (ZP_SCR),y
+        lda ZP_TMP
+        sta (ZP_COL),y
+        rts
+
+tile_y_scr_lo:
+        !byte <(SCREEN_RAM + 160 + 0*80)
+        !byte <(SCREEN_RAM + 160 + 1*80)
+        !byte <(SCREEN_RAM + 160 + 2*80)
+        !byte <(SCREEN_RAM + 160 + 3*80)
+        !byte <(SCREEN_RAM + 160 + 4*80)
+        !byte <(SCREEN_RAM + 160 + 5*80)
+        !byte <(SCREEN_RAM + 160 + 6*80)
+        !byte <(SCREEN_RAM + 160 + 7*80)
+        !byte <(SCREEN_RAM + 160 + 8*80)
+        !byte <(SCREEN_RAM + 160 + 9*80)
+
+tile_y_scr_hi:
+        !byte >(SCREEN_RAM + 160 + 0*80)
+        !byte >(SCREEN_RAM + 160 + 1*80)
+        !byte >(SCREEN_RAM + 160 + 2*80)
+        !byte >(SCREEN_RAM + 160 + 3*80)
+        !byte >(SCREEN_RAM + 160 + 4*80)
+        !byte >(SCREEN_RAM + 160 + 5*80)
+        !byte >(SCREEN_RAM + 160 + 6*80)
+        !byte >(SCREEN_RAM + 160 + 7*80)
+        !byte >(SCREEN_RAM + 160 + 8*80)
+        !byte >(SCREEN_RAM + 160 + 9*80)
+
+overworld_secrets_opened:
+        !fill 16, 0
+
+bit_powers:
+        !byte 1, 2, 4, 8, 16, 32, 64, 128
 

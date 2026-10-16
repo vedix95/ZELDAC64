@@ -501,9 +501,9 @@ world_enemies:
         ; Salle  40 : ( 8,  2) I-3
         !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  2,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,  16,  2,   TYPE_PEAHAT     ,   7,  2,   TYPE_PEAHAT     ,  12,  7,   TYPE_ZORA       ,   8,  8,   TYPE_NONE       ,   0,  0
         ; Salle  41 : ( 9,  2) J-3
-        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_LEEVER_RED ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_LEEVER_RED ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  42 : (10,  2) K-3
-        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_LEEVER_BLUE,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_LEEVER_BLUE,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_LEEVER_BLUE,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  43 : (11,  2) L-3
         !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  44 : (12,  2) M-3
@@ -537,7 +537,7 @@ world_enemies:
         ; Salle  58 : (10,  3) K-4
         !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  59 : (11,  3) L-4
-        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_LEEVER_BLUE,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_LEEVER_BLUE,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  60 : (12,  3) M-4
         !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  61 : (13,  3) N-4
@@ -1307,10 +1307,13 @@ update_single_enemy:
         ; S'oriente vers Link
         jsr ai_calc_dir_to_player
         sta en_dir,x
-        ; Crache une boule de feu si aucun projectile actif !
+        ; Crache une boule de feu (prioritaire sur les projectiles ordinaires)
         lda en_proj_active
         beq +
-        rts
+        lda en_proj_type
+        cmp #PROJ_FIREBALL
+        bne +                           ; remplace un projectile ordinaire
+        rts                             ; boule de feu déjà en cours
 +       lda #1
         sta en_proj_active
         lda #PROJ_FIREBALL
@@ -1853,6 +1856,13 @@ update_enemy_projectile:
         bcs .pj_kill
 
         ; 3. Collision avec le décor (arbre, rocher, mur)
+        ; Les boules de feu et ondes magiques volent dans les airs (survolent l'eau, arbres et rochers)
+        lda en_proj_type
+        cmp #PROJ_FIREBALL
+        beq .pj_skip_solid
+        cmp #PROJ_MAGIC
+        beq .pj_skip_solid
+
         lda en_proj_x
         clc
         adc #4
@@ -1867,6 +1877,7 @@ update_enemy_projectile:
         jsr check_point_solid
         bcs .pj_kill
 
+.pj_skip_solid:
         ; 4. Test de parade au bouclier de Link ou dégâts
         jsr check_projectile_hit_link
         rts

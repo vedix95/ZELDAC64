@@ -7,6 +7,8 @@
 ;   - Bougie      : Flamme vacillante projetée devant Link qui brûle au sol
 ; ---------------------------------------------------------------------------
 
+!zone items
+
 ITEM_NONE       = 0
 ITEM_BOOMERANG  = 1
 ITEM_BOMB       = 2
@@ -43,6 +45,9 @@ items_init:
         sta item_active
         sta item_state
         sta item_timer
+        sta secret_chime_active
+        sta secret_chime_timer
+        sta secret_chime_idx
         ; Masque tous les sprites de projectiles (bits 2..6)
         lda VIC_SPRITE_EN
         and #%10000011                  ; préserve Link (0) et Épée (1)
@@ -295,6 +300,10 @@ set_spawn_coords:
 ; items_update : mis à jour à chaque frame en jeu
 ; ---------------------------------------------------------------------------
 items_update:
+        lda secret_chime_active
+        beq +
+        jsr update_secret_chime
++
         lda item_active
         bne +
         rts
@@ -538,6 +547,7 @@ update_bomb:
         sta item_state
         lda #24                         ; durée de la déflagration 3x3
         sta item_timer
+        jsr bomb_check_secret_wall
 
         ; Déclenche le son d'explosion puissante
         lda #15
@@ -924,3 +934,168 @@ items_draw:
         ora #%01111100
         sta VIC_SPRITE_MC
         rts
+
+; ---------------------------------------------------------------------------
+; bomb_check_secret_wall : vérifie si le souffle de la bombe touche un mur secret B
+; ---------------------------------------------------------------------------
+bomb_check_secret_wall:
+        lda current_world_type
+        beq +
+        rts
++
+
+        ; 1. Centre de la déflagration
+        lda item_x
+        sta col_x
+        lda item_x+1
+        sta col_x+1
+        lda item_y
+        sta col_y
+        jsr .test_bomb_point
+        bcs .do_found_secret
+
+        ; 2. Nord (item_y - 14)
+        lda item_x
+        sta col_x
+        lda item_x+1
+        sta col_x+1
+        sec
+        lda item_y
+        sbc #14
+        sta col_y
+        jsr .test_bomb_point
+        bcs .do_found_secret
+
+        ; 3. Sud (item_y + 14)
+        lda item_x
+        sta col_x
+        lda item_x+1
+        sta col_x+1
+        clc
+        lda item_y
+        adc #14
+        sta col_y
+        jsr .test_bomb_point
+        bcs .do_found_secret
+
+        ; 4. Ouest (item_x - 14)
+        sec
+        lda item_x
+        sbc #14
+        sta col_x
+        lda item_x+1
+        sbc #0
+        sta col_x+1
+        lda item_y
+        sta col_y
+        jsr .test_bomb_point
+        bcs .do_found_secret
+
+        ; 5. Est (item_x + 14)
+        clc
+        lda item_x
+        adc #14
+        sta col_x
+        lda item_x+1
+        adc #0
+        sta col_x+1
+        lda item_y
+        sta col_y
+        jsr .test_bomb_point
+        bcc .bc_done
+
+.do_found_secret:
+        jmp .found_secret
+
+.bc_done:
+        rts
+
+.test_bomb_point:
+        jsr get_tile_at_point           ; A = tile_id, Y = offset tuile dans room_buf
+        cmp #TILE_WALL_BOMB
+        bne +
+        sec                             ; Carry = 1 : trouvé !
+        rts
++       clc
+        rts
+
+.found_secret:
+        ; Y contient l'offset de la tuile dans room_buf (0..199)
+        lda #TILE_CAVE
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret
+        jsr record_room_secret_opened
+        rts
+
+record_room_secret_opened:
+        lda current_world_type
+        bne +
+        ldx current_room_idx
+        txa
+        lsr
+        lsr
+        lsr
+        tax
+        lda current_room_idx
+        and #7
+        tay
+        lda bit_powers,y
+        ora overworld_secrets_opened,x
+        sta overworld_secrets_opened,x
++       rts
+
+; ---------------------------------------------------------------------------
+; sound_secret : déclenche le carillon triomphal de découverte secrète
+; ---------------------------------------------------------------------------
+sound_secret:
+        lda #1
+        sta secret_chime_active
+        lda #0
+        sta secret_chime_idx
+        lda #1                          ; première note dès la prochaine frame
+        sta secret_chime_timer
+        rts
+
+update_secret_chime:
+        dec secret_chime_timer
+        bne .chime_done
+        lda #7                          ; 7 frames par note (~0.14s)
+        sta secret_chime_timer
+
+        ldx secret_chime_idx
+        cpx #8
+        bcs .stop_chime
+
+        lda secret_chime_lo,x
+        sta SID_V2_FREQ_LO
+        lda secret_chime_hi,x
+        sta SID_V2_FREQ_HI
+        lda #15
+        sta SID_VOLUME
+        lda #$03
+        sta SID_V2_AD
+        lda #$a4
+        sta SID_V2_SR
+        lda #%00010001                  ; Triangle + Gate ON
+        sta SID_V2_CTRL
+        inc secret_chime_idx
+        rts
+
+.stop_chime:
+        lda #%00010000                  ; Gate OFF
+        sta SID_V2_CTRL
+        lda #0
+        sta secret_chime_active
+.chime_done:
+        rts
+
+secret_chime_lo:
+        !byte $1c, $bd, $d4, $e7, $2f, $91, $5d, $a0
+secret_chime_hi:
+        !byte $16, $14, $10, $0c, $0c, $11, $17, $1d
+
+secret_chime_active:    !byte 0
+secret_chime_timer:     !byte 0
+secret_chime_idx:       !byte 0
+
