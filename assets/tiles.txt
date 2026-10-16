@@ -141,22 +141,23 @@ cccccccc
 c1cc1ccc
 
 [cave] O black
-11111111
+c121121c
+12211221
+11222211
+121cc121
 11cccc11
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-1cccccc1
-11111111
+c1cccc1c
+12cccc21
+c1cccc1c
+12cccc21
+c1cccc1c
+12cccc21
+c1cccc1c
+12cccc21
+c1cccc1c
+12cccc21
+c1cccc1c
+
 
 [grave] G white solid
 ...22...
