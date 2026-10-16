@@ -27,6 +27,7 @@ col_row_hi:
 !zone transition_right
 
 transition_right:
+        jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_x + 1)
         ldx current_room_y
         lda world_row_offset,x
@@ -180,6 +181,7 @@ transition_right:
 !zone transition_left
 
 transition_left:
+        jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_x - 1)
         ldx current_room_y
         lda world_row_offset,x
@@ -335,6 +337,7 @@ transition_left:
 !zone transition_down
 
 transition_down:
+        jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_y + 1)
         ldx current_room_y
         inx
@@ -472,6 +475,7 @@ transition_down:
 !zone transition_up
 
 transition_up:
+        jsr enemies_clear
         ; Pointeur ZP_TGT vers la salle cible (current_room_y - 1)
         ldx current_room_y
         dex
