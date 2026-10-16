@@ -1,5 +1,6 @@
 # The Legend of Zelda — Port C64
 
+[![GitHub Release](https://img.shields.io/github/v/release/vedix95/ZELDAC64?color=blue&label=Version)](https://github.com/vedix95/ZELDAC64/releases)
 [![Build Zelda C64](https://github.com/vedix95/ZELDAC64/actions/workflows/ci.yml/badge.svg)](https://github.com/vedix95/ZELDAC64/actions)
 [![Platform: Commodore 64](https://img.shields.io/badge/Platform-Commodore%2064-blue.svg)](https://en.wikipedia.org/wiki/Commodore_64)
 [![Assembler: ACME](https://img.shields.io/badge/Assembler-ACME%206510-orange.svg)](https://sourceforge.net/projects/acme-crossass/)
@@ -8,6 +9,21 @@
 Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend of Zelda** (1986) pour l'ordinateur 8-bits **Commodore 64**, entièrement programmée en assembleur 6510 pour l'assembleur [ACME](https://sourceforge.net/projects/acme-crossass/) et testée avec l'émulateur [VICE](https://vice-emu.sourceforge.io/).
 
 > *Ce projet est la création d'un passionné d'informatique rétro réalisée à l'aide de son IA préférée issue de chez Google.*
+
+---
+
+## 💾 Téléchargement Direct & Releases (v0.5.0)
+
+L'image disquette officielle et les fichiers compilés prêts à jouer sont disponibles au téléchargement sur la page des releases :
+
+- 🎮 **[Télécharger l'image disquette v0.5.0 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- 📦 **[Fichier exécutable direct (`zelda.prg`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚙️ **Compilation Automatique (CI/CD)** : Chaque release est automatiquement compilée et publiée par GitHub Actions avec `acme` et `c1541`.
+
+Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
+```sh
+x64sc -autostart zelda.d64
+```
 
 ---
 
