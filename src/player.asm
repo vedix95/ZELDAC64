@@ -109,6 +109,8 @@ player_init:
         lda #%00000001                  ; seul le sprite 0 est actif au départ
         sta VIC_SPRITE_EN
         lda #0
+        sta VIC_SPRITE_EXP_X            ; réinitialise l'agrandissement X
+        sta VIC_SPRITE_EXP_Y            ; réinitialise l'agrandissement Y
         sta player_attacking
         sta player_walk_anim
         sta player_walk_tick

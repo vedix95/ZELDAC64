@@ -112,6 +112,8 @@ launch_zelda_game:
         lda #0
         sta SID_VOLUME
         sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
         ; Copie le chargeur KERNAL dans le buffer cassette $033C
         ldx #0

@@ -35,6 +35,9 @@ init_video:
         jsr apply_map_colors
         lda #COL_BLACK
         sta VIC_BORDER
+        lda #0
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
         lda #MEMSETUP_VALUE             ; écran $0400, caractères $2000
         sta VIC_MEMSETUP
         lda VIC_CTRL2

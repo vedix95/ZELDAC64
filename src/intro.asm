@@ -149,6 +149,8 @@ intro_init:
         ; Masque tous les sprites au début
         lda #0
         sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
         ; Initialisation du SID pour la musique
         jsr intro_music_init
@@ -439,9 +441,11 @@ intro_update:
         bcc .show_next_mon
 
         ; Tous les monstres ont défilé !
-        ; Masque Sprite 0
+        ; Masque Sprite 0 et réinitialise l'agrandissement
         lda #0
         sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
         ; Fondu vers la cascade
         lda #INTRO_PHASE_FADE_WATER
@@ -489,6 +493,10 @@ intro_draw_waterfall:
         lda #COL_BLACK
         sta VIC_BACKGROUND
         sta VIC_BORDER
+        lda #0
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
         ; Efface l'écran (1000 caractères espace) et met les couleurs à noir
         ldx #0
