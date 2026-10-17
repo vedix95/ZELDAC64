@@ -262,10 +262,10 @@ enter_dungeon:
         jsr clear_screen
         jsr disk_load_map_underworld
 
-        ; 4. Placer Link dans la salle d'entrée du Donjon (1, 0)
-        lda #1
+        ; 4. Placer Link dans la salle d'entrée du Donjon (3, 7)
+        lda #3
         sta current_room_x
-        lda #0
+        lda #7
         sta current_room_y
 
         lda #160

@@ -148,6 +148,7 @@ room_tbl_lo         = $a016
 room_tbl_hi         = $a096
 room_zone_palette   = $a116
 MAP_DATA_MAX_PAGES  = 48        ; 48 pages x 256 octets = 12 Ko ($A000..$CFFF)
+MAP_ENEMIES_ADDR    = $b800
 
 WORLD_OVERWORLD     = 0
 WORLD_DUNGEON       = 1

@@ -343,8 +343,9 @@ player_update:
         ; ===================================================================
         lda joy
         and #JOY_DOWN
-        beq .no_down
-        lda #DIR_DOWN
+        bne +
+        jmp .no_down
++       lda #DIR_DOWN
         sta player_dir
 
         clc
@@ -356,14 +357,15 @@ player_update:
         cmp #(PLAYER_Y_MAX + 1)
         bcc .down_not_border
 
-        ; Si on est dans le donjon dans la salle d'entrée (1, 0), franchir le seuil sud = sortir
+        ; Si on est dans le donjon dans la salle d'entrée (3, 7), franchir le seuil sud = sortir
         lda current_world_type
         cmp #WORLD_DUNGEON
         bne .check_down_trans
         lda current_room_x
-        cmp #1
+        cmp #3
         bne .check_down_trans
         lda current_room_y
+        cmp #7
         bne .check_down_trans
         jsr exit_dungeon
         jmp .no_down

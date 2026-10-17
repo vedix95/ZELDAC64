@@ -77,6 +77,22 @@ ZONE_TILE_COLORS = [
      COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 ]
 
+ZONE_DUNGEON_TILE_COLORS = [
+    COLORS["black"],   # 0: grass (sol noir donjon)
+    COLORS["dgrey"],   # 1: tufts (détail sol)
+    COLORS["red"],     # 2: flowers (torches / feu)
+    COLORS["cyan"],    # 3: tree (bloc / pilier cyan Level 1)
+    COLORS["blue"],    # 4: water (eau)
+    COLORS["cyan"],    # 5: wall (murs de pierre cyan)
+    COLORS["grey"],    # 6: sand (dalle centrale / passerelle)
+    COLORS["black"],   # 7: cave (escalier / fosse)
+    COLORS["black"],   # 8: grave
+    COLORS["black"],   # 9: bridge_h
+    COLORS["black"],   # 10: bridge_v
+    COLORS["cyan"],    # 11: wall_pass
+    COLORS["cyan"],    # 12: wall_bomb
+]
+
 DEFAULT_ROOM_ZONES = [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -453,7 +469,9 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         # Couleurs de donjon
         dungeon_cols = []
         for i in range(16):
-            if i < len(tiles):
+            if i < len(ZONE_DUNGEON_TILE_COLORS):
+                dungeon_cols.append(ZONE_DUNGEON_TILE_COLORS[i] + 8)
+            elif i < len(tiles):
                 dungeon_cols.append(tiles[i]["color"] + 8)
             else:
                 dungeon_cols.append(0)
@@ -557,6 +575,9 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
                 chunk = rle[chunk_start:chunk_start + 16]
                 f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
 
+        if overlay_mode:
+            f.write("\n* = $b800\n!source \"src/map_overworld_enemies.inc\"\n")
+
 
 def preview(path, cfg, tiles, grid, rooms_x=16, rooms_y=8, scale=2):
     room_zones = get_room_zones(rooms_x * rooms_y)
@@ -588,9 +609,9 @@ def write_underworld_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, s
         f.write(f"map_rooms_w:    !byte {rooms_x}\n")
         f.write(f"map_rooms_h:    !byte {rooms_y}\n")
         f.write(f"map_rooms_cnt:  !byte {len(rooms)}\n")
-        # Couleurs donjon : Fond noir (0), MC1 marron (9), MC2 gris (12)
+        # Couleurs donjon : Fond noir (0), MC1 cyan (3), MC2 gris (12)
         f.write("map_bg_col:     !byte 0   ; noir\n")
-        f.write("map_mc1_col:    !byte 9   ; marron\n")
+        f.write("map_mc1_col:    !byte 3   ; cyan donjon Niveau 1\n")
         f.write("map_mc2_col:    !byte 12  ; gris\n\n")
 
         row_offsets = [ry * rooms_x for ry in range(rooms_y)]
@@ -625,6 +646,8 @@ def write_underworld_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, s
             for chunk_start in range(0, len(rle), 16):
                 chunk = rle[chunk_start:chunk_start + 16]
                 f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
+
+        f.write("\n* = $b800\n!source \"src/map_underworld_enemies.inc\"\n")
 
 
 def main():

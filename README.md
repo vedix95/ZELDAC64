@@ -12,13 +12,13 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.5.0)
+## 💾 Téléchargement Direct & Releases (v0.6a)
 
-L'image disquette officielle et les fichiers compilés prêts à jouer sont disponibles au téléchargement sur la page des releases :
+L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.5.0 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- 📦 **[Fichier exécutable direct (`zelda.prg`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- ⚙️ **Compilation Automatique (CI/CD)** : Chaque release est automatiquement compilée et publiée par GitHub Actions avec `acme` et `c1541`.
+- 🎮 **[Télécharger l'image disquette v0.6a (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident et le streaming dynamique des cartes et ennemis Overworld & Donjons.
+- 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
 
 Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
 ```sh
@@ -56,8 +56,11 @@ x64sc -autostart zelda.d64
 - **Monde Overworld complet (128 salles — 16×8 écrans)** :
   - Fidélité complète à la disposition originale du jeu classique de 1986.
   - Transitions fluides d'écran à écran lors du franchissement des bordures.
-- **Donjons Underworld (Level 1)** :
-  - Salles souterraines avec portes, verrous et architecture dédiée.
+- **Donjons Underworld authentiques (128 salles extraites de la ROM NES)** :
+  - Extraction directe depuis la ROM originale `zelda.nes` : géométrie des salles 20×10 tuiles, portes ouvertes/fermées et agencement de l'aigle (Niveau 1).
+  - Palette authentique teal/cyan du Niveau 1 (murs et blocs cyan VIC-II, sol noir, dalles grises, torches rouges).
+  - Bestiaire et monstres souterrains complets : Stalfos, Goriyas, Keeses, slimes Gel/Zol, Wallmasters, pièges Trap et boss Aquamentus.
+  - Streaming dynamique des ennemis depuis la disquette 1541 en `$B800` pour préserver la mémoire vive résidente sous les 64 Ko.
 - **Cinématique d'introduction complète** :
   - Chute d'eau animée avec défilement vertical matériel du VIC-II.
   - Défilement du parchemin contant la légende d'Hyrule, présentation des trésors et logo Zelda.

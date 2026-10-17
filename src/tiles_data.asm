@@ -39,7 +39,7 @@ zone2_tile_color:
 zone3_tile_color:
         !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
 zone_dungeon_tile_color:
-        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
+        !byte 8, 19, 10, 11, 14, 11, 20, 8, 8, 8, 8, 11, 11, 0, 0, 0
 
 zone_color_lo:
         !byte <zone0_tile_color, <zone1_tile_color, <zone2_tile_color, <zone3_tile_color
