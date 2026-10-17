@@ -55,6 +55,18 @@ x64sc -autostart zelda.d64
 
 ---
 
+## 🎵 Bande-Sonore SID & Extraits Audio MP3
+
+Les musiques du jeu ont été fidèlement retranscrites et synthétisées directement sur la puce sonore analogique **MOS SID 6581/8580** du Commodore 64 à partir des partitions originales NES. Enregistrement direct sous émulation cycle-accurate reSID (48 kHz, 192 kbps) :
+
+| Piste & Scène | Description | Écoute directe | Fichier MP3 |
+| :--- | :--- | :---: | :---: |
+| 🛡️ **Thème Overworld (Aventure)** | La boucle légendaire d'exploration d'Hyrule, avec sa ligne de basse profonde Voice 3 calibrée à l'octave exacte sans suraigus. | <audio controls src="docs/audio/zelda_overworld.mp3"></audio> | [zelda_overworld.mp3](docs/audio/zelda_overworld.mp3) |
+| 🗝️ **Thème des Donjons (Underworld)** | L'atmosphère mystérieuse des Labyrinthes 1 à 8, avec ses arpèges G-mineur entrelacés en onde Pulse 50% sur 2 voix et basse sourde. | <audio controls src="docs/audio/zelda_dungeon.mp3"></audio> | [zelda_dungeon.mp3](docs/audio/zelda_dungeon.mp3) |
+| 📜 **Thème d'Introduction & Titre** | La partition épique de l'écran-titre avec cascade et du défilement de la Légende d'Hyrule. | <audio controls src="docs/audio/zelda_intro.mp3"></audio> | [zelda_intro.mp3](docs/audio/zelda_intro.mp3) |
+
+---
+
 ## Points forts & Fonctionnalités
 
 - **Monde Overworld complet (128 salles — 16×8 écrans)** :
@@ -205,7 +217,9 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 │   ├── underworld.txt          # Carte des donjons Underworld (Level 1)
 │   └── *.mid                   # Fichiers MIDI sources transcrits pour le SID
 ├── docs/                       # Documentation et médias
+│   ├── audio/                  # Enregistrements audio SID authentiques (MP3 192k)
 │   └── images/                 # Captures d'écran et aperçus pour GitHub
+├── LegendOfZeldaNESRecomp/     # Référence complète du décompilateur Zelda NES
 ├── scripts/                    # Scripts utilitaires shell (vérification d'environnement)
 │   └── check-env.sh            # Vérification des dépendances logicielles
 ├── src/                        # Code source assembleur 6510 (ACME)

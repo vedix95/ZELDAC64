@@ -1,0 +1,38 @@
+build/
+build_release/
+build_debug/
+*.nes
+*.bin
+*.sav
+*.log
+*.zip
+.mcp.json
+debug.ini
+*.cdl
+*.mlbl
+*.cht
+disasm_ref/
+tmp_*.py
+
+# HD texture pack (user-supplied; never committed) + recompiler regen artifacts
+hdpack/
+*.csv
+
+nestopia-core
+
+build_ui/
+
+# Local voxel development and visual-capture artifacts
+build-voxel*/
+build-mods*/
+zelda_voxel.png
+tests/*.nss
+
+# Cycle migration validation and local ROM derivatives
+build-cycle/
+build-legacy/
+cycle-evidence/
+diagnostics/
+*.dmp
+__pycache__/
+release/
