@@ -31,6 +31,14 @@ CAVE_TYPE_HINT_2       = 10     ; Salle 15 (Arbres secrets)
 CAVE_TYPE_HINT_3       = 11     ; Salle 55 (Cascade de l'Est)
 CAVE_TYPE_GAMBLE       = 12     ; Salle 112 (Jeu de hasard)
 CAVE_TYPE_DUNGEON_1    = 13     ; Entrée Donjon N1 (Niveau 1 : L'Aigle)
+CAVE_TYPE_DUNGEON_2    = 14     ; Entrée Donjon N2 (Niveau 2 : La Lune)
+CAVE_TYPE_DUNGEON_3    = 15     ; Entrée Donjon N3 (Niveau 3 : Le Manji)
+CAVE_TYPE_DUNGEON_4    = 16     ; Entrée Donjon N4 (Niveau 4 : Le Serpent)
+CAVE_TYPE_DUNGEON_5    = 17     ; Entrée Donjon N5 (Niveau 5 : Le Lézard)
+CAVE_TYPE_DUNGEON_6    = 18     ; Entrée Donjon N6 (Niveau 6 : Le Dragon)
+CAVE_TYPE_DUNGEON_7    = 19     ; Entrée Donjon N7 (Niveau 7 : Le Démon)
+CAVE_TYPE_DUNGEON_8    = 20     ; Entrée Donjon N8 (Niveau 8 : Le Lion)
+CAVE_TYPE_DUNGEON_9    = 21     ; Entrée Donjon N9 (Niveau 9 : La Montagne de la Mort)
 
 ; Types d'objets en vente/au sol
 ITEM_ID_NONE            = 0
@@ -123,7 +131,9 @@ cave_enter:
         lda room_cave_types,x
         sta current_cave_type
         cmp #CAVE_TYPE_DUNGEON_1
-        bne +
+        bcc +
+        cmp #(CAVE_TYPE_DUNGEON_9 + 1)
+        bcs +
         jmp enter_dungeon
 +
 
@@ -1417,15 +1427,20 @@ txt_gamble_2:   !text "CHOISIS UN SAC DE RUBIS.    ", 0
 ; ===========================================================================
 room_cave_types:
         ; Rangée 0 (0..15 : A-1 .. P-1)
-        !byte 0, 0, 0, 0, CAVE_TYPE_HINT_1, CAVE_TYPE_DUNGEON_1, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
+        ; Salle 5: N9 (Mont du Péril / Spectacle Rock), Salle 10: N5 (Cascade)
+        !byte 0, 0, 0, 0, CAVE_TYPE_HINT_1, CAVE_TYPE_DUNGEON_9, 0, 0, 0, 0, CAVE_TYPE_DUNGEON_5, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
         ; Rangée 1 (16..31 : A-2 .. P-2)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_A
+        ; Salle 20: N6 (Crâne du Cimetière)
+        !byte 0, 0, 0, 0, CAVE_TYPE_DUNGEON_6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_A
         ; Rangée 2 (32..47 : A-3 .. P-3)
-        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE
+        ; Salle 34: N7 (Étang asséché), Salle 35: N4 (Île du radeau)
+        !byte 0, 0, CAVE_TYPE_DUNGEON_7, CAVE_TYPE_DUNGEON_4, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE
         ; Rangée 3 (48..63 : A-4 .. P-4)
-        !byte 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_DUNGEON_1, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, 0, 0, 0
+        ; Salle 51: N2 (Forêt de l'Ouest), Salle 55: N1 (L'Aigle sur l'île), Salle 62: N8 (Buisson de la Côte)
+        !byte 0, 0, 0, CAVE_TYPE_DUNGEON_2, 0, 0, 0, CAVE_TYPE_DUNGEON_1, 0, 0, 0, 0, 0, 0, CAVE_TYPE_DUNGEON_8, 0
         ; Rangée 4 (64..79 : A-5 .. P-5)
-        !byte 0, 0, 0, 0, CAVE_TYPE_SHOP_B, CAVE_TYPE_POTION_SHOP, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
+        ; Salle 70: N3 (Forêt du Manji)
+        !byte 0, 0, 0, 0, CAVE_TYPE_SHOP_B, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_DUNGEON_3, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
         ; Rangée 5 (80..95 : A-6 .. P-6)
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_A, 0
         ; Rangée 6 (96..111 : A-7 .. P-7)

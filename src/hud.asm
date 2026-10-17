@@ -178,7 +178,27 @@ hud_render:
         lda #1
         sta visited_rooms,x
 
-        ; Ligne 1 : "R:" + Colonne (A..P) + "-" + Rangée (1..8)
+        ; Ligne 1 : "LV:" + Niveau (1..9) si Donjon, ou "R:" + Colonne-Rangée si Overworld
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .hud_ow_coord
+
+        lda #'L'
+        sta SCREEN_RAM+41
+        lda #'V'
+        sta SCREEN_RAM+42
+        lda #':'
+        sta SCREEN_RAM+43
+        lda #'0'
+        clc
+        adc current_dungeon_level
+        sta SCREEN_RAM+44
+        lda #' '
+        sta SCREEN_RAM+45
+        sta SCREEN_RAM+46
+        jmp .hud_coord_col
+
+.hud_ow_coord:
         lda #'R'
         sta SCREEN_RAM+41
         lda #':'
@@ -196,6 +216,7 @@ hud_render:
         lda #' '
         sta SCREEN_RAM+46
 
+.hud_coord_col:
         lda #COL_YELLOW
         sta COLOR_RAM+41
         sta COLOR_RAM+42

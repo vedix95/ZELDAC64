@@ -45,6 +45,10 @@ $(SRC_DIR)/sprites_enemies.asm: assets/enemies.txt tools/sprgen.py
 $(SRC_DIR)/sprites_extra.asm: assets/extra.txt tools/sprgen.py
 	$(PYTHON) tools/sprgen.py assets/extra.txt --prefix link -o $@
 
+# music_data.inc est généré depuis zelda.nes et intro_music_data.asm
+$(SRC_DIR)/music_data.inc: tools/generate_game_audio.py $(SRC_DIR)/intro_music_data.asm
+	$(PYTHON) tools/generate_game_audio.py
+
 # charset.asm, tiles_data.asm, map_overworld.asm et map_underworld.asm sont générés ensemble
 $(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm &: assets/tiles.txt assets/world.txt assets/underworld.txt tools/tilegen.py
 	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/world.txt \

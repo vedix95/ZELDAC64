@@ -12,12 +12,12 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.6a)
+## 💾 Téléchargement Direct & Releases (v0.7)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.6a (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident et le streaming dynamique des cartes et ennemis Overworld & Donjons.
+- 🎮 **[Télécharger l'image disquette v0.7 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game authentiques (Overworld & Donjons) et le streaming dynamique des cartes et ennemis Overworld & 9 Donjons.
 - 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
 
 Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
@@ -56,9 +56,15 @@ x64sc -autostart zelda.d64
 - **Monde Overworld complet (128 salles — 16×8 écrans)** :
   - Fidélité complète à la disposition originale du jeu classique de 1986.
   - Transitions fluides d'écran à écran lors du franchissement des bordures.
-- **Donjons Underworld authentiques (128 salles extraites de la ROM NES)** :
-  - Extraction directe depuis la ROM originale `zelda.nes` : géométrie des salles 20×10 tuiles, portes ouvertes/fermées et agencement de l'aigle (Niveau 1).
-  - Palette authentique teal/cyan du Niveau 1 (murs et blocs cyan VIC-II, sol noir, dalles grises, torches rouges).
+- **Musiques in-game authentiques & Moteur Audio SID (Mono & Dual SID)** :
+  - **Thème légendaire de l'Overworld** : 449 pas, polyphonie 3 voix complète (mélodie cuivrée pulse V1, contre-chant et harmonies sawtooth V2, basse bondissante triangle et caisse claire noise V3).
+  - **Thème envoûtant des Donjons (Underworld)** : Partition extraite directement de la ROM originale NES (`zelda.nes` Banque 0).
+  - **Rendu somptueux sur un seul SID standard** : Gestion fine des priorités SFX (bruits d'épée, tirs, bouclier, ennemis touchés/éliminés, rubis) garantissant la continuité du rythme.
+  - **Support Dual SID ($D420 stéréo)** : Touche `3` en jeu pour basculer instantanément en mode stéréo (désaccord fin +2 Hz pour un effet chorus analogique sur les mélodies, et déport exclusif des effets sonores sur le 2e SID).
+- **Les 9 Donjons complets d'Hyrule (Niveaux 1 à 9)** :
+  - Intégration de l'ensemble des 9 donjons de la première quête : Niveau 1 (*L'Aigle*), Niveau 2 (*La Lune*), Niveau 3 (*Le Manji*), Niveau 4 (*Le Serpent*), Niveau 5 (*Le Lézard*), Niveau 6 (*Le Dragon*), Niveau 7 (*Le Démon*), Niveau 8 (*Le Lion*) et Niveau 9 (*La Montagne de la Mort*).
+  - Entrées de donjon authentiques réparties sur la carte Overworld (arbres, grottes, passages secrets) et portes de sortie au sud de chaque niveau.
+  - Palettes de couleurs authentiques pour chaque donjon (Cyan, Bleu, Vert, Gris clair, Rouge, Orange/Marron, Vert forêt, Bleu ciel, Rouge cramoisi).
   - Bestiaire et monstres souterrains complets : Stalfos, Goriyas, Keeses, slimes Gel/Zol, Wallmasters, pièges Trap et boss Aquamentus.
   - Streaming dynamique des ennemis depuis la disquette 1541 en `$B800` pour préserver la mémoire vive résidente sous les 64 Ko.
 - **Cinématique d'introduction complète** :
@@ -142,6 +148,7 @@ Le jeu se joue idéalement avec une manette ou un joystick branché sur le **Por
 | `A` | Utiliser l'arme secondaire active (Boomerang, Bombe, Arc, Bougie) |
 | `B` | Ouvrir / Fermer le menu d'inventaire |
 | `D` | Ouvrir / Fermer le moniteur de debug (mémoire, registres VIC-II / SID) |
+| `3` | Basculer mode Dual SID ($D420 stéréo) / Mono SID ($D400) |
 | `Espace` / `Entrée` | Valider / Passer l'écran d'introduction |
 
 ---
@@ -151,9 +158,9 @@ Le jeu se joue idéalement avec une manette ou un joystick branché sur le **Por
 La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers principaux :
 
 1. `INTRO` (`PRG`) : Programme d'introduction autonome exécuté au démarrage (`$0801`–`$3FFF`), gérant la cascade, le parchemin en défilement vertical fin et la musique SID complète.
-2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$7FFF`).
+2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$9F55`), incluant le pilote audio SID Overworld & Underworld.
 3. `MAP_OW` (`DAT`) : Données binaires de la carte de l'Overworld (128 salles), chargées dynamiquement à l'adresse `$A000` via le bus série IEC KERNAL.
-4. `MAP_UW` (`DAT`) : Données binaires des donjons de l'Underworld, chargées dynamiquement à `$A000`.
+4. `MAP_UW` (`DAT`) : Données binaires des 9 donjons de l'Underworld, chargées dynamiquement à `$A000`.
 
 ### Carte mémoire du C64
 
@@ -161,13 +168,11 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 +------------------+ $FFFF
 | Vecteurs KERNAL  |
 +------------------+ $E000
-| ROM KERNAL / I/O | $D000 - $DFFF : Registres VIC-II, SID, CIA 1/2, Color RAM
+| ROM KERNAL / I/O | $D000 - $DFFF : Registres VIC-II, SID 1 ($D400), SID 2 ($D420), CIA 1/2, Color RAM
 +------------------+ $D000
 | Zone dynamique   | $A000 - $CFFF : Carte active chargée depuis D64 (MAP_OW / MAP_UW)
 +------------------+ $A000
-| RAM libre        | $8000 - $9FFF : Buffers et données dynamiques
-+------------------+ $8000
-| Moteur de jeu    | $0801 - $7FFF : Code assembleur, tables d'IA, multiplexeur, HUD
+| Moteur de jeu    | $0801 - $9FFF : Code assembleur, tables d'IA, multiplexeur, HUD, moteur audio SID
 +------------------+ $2000 - $27FF : Jeu de caractères multicolore des tuiles (Charset)
 | Mémoire écran    | $0400 - $07E7 : Matrice d'écran vidéo VIC-II ($07F8-$07FF : Pointers sprites)
 +------------------+ $0400
@@ -197,31 +202,35 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 │   └── check-env.sh            # Vérification des dépendances logicielles
 ├── src/                        # Code source assembleur 6510 (ACME)
 │   ├── main.asm                # Point d'entrée, stub BASIC, boucle principale et IRQ
+│   ├── sound.asm               # Moteur audio SID (Mono et Dual SID $D420, Overworld & Donjon, SFX)
+│   ├── music_data.inc          # [GÉNÉRÉ] Partitions et notes Overworld et Donjon
 │   ├── c64.inc                 # Définitions matérielles (VIC-II, SID, CIA, Page Zéro)
 │   ├── player.asm              # Déplacements, animations et boîte de collision de Link
 │   ├── enemies.asm             # IA des ennemis, tables de comportement, attaques et butin
 │   ├── items.asm               # Gestion des armes secondaires, projectiles et ramassage
 │   ├── inventory.asm           # Logique du menu d'inventaire
 │   ├── inventory_draw.asm      # Rendu graphique en 4 pages du menu d'inventaire
-│   ├── hud.asm                 # Rendu dynamique du HUD (cœurs, mini-carte, compteurs)
-│   ├── cave.asm                # Système des grottes secrètes (Vieil Homme, flammes)
-│   ├── tilemap.asm             # Moteur de rendu des tuiles et transitions de salle
+│   ├── hud.asm                 # Rendu dynamique du HUD (cœurs, mini-carte, compteurs, niveau)
+│   ├── cave.asm                # Système des grottes secrètes et entrées des 9 donjons
+│   ├── tilemap.asm             # Moteur de rendu des tuiles, palettes et transitions
 │   ├── sprites.asm             # [GÉNÉRÉ] Données binaires des sprites de Link
 │   ├── sprites_enemies.asm     # [GÉNÉRÉ] Données binaires des sprites d'ennemis
 │   ├── sprites_extra.asm       # [GÉNÉRÉ] Données binaires des sprites spéciaux et PNJ
 │   ├── charset.asm             # [GÉNÉRÉ] Jeu de caractères multicolores VIC-II
 │   ├── tiles_data.asm          # [GÉNÉRÉ] Tables de correspondance et attributs des tuiles
 │   ├── map_overworld.asm       # [GÉNÉRÉ] Données compilables de la carte Overworld
-│   ├── map_underworld.asm      # [GÉNÉRÉ] Données compilables de l'Underworld
+│   ├── map_underworld.asm      # [GÉNÉRÉ] Données compilables de l'Underworld (9 donjons)
 │   ├── disk.asm                # Routines KERNAL IEC de streaming disquette 1541
 │   ├── intro.asm               # Logique de la cinématique d'introduction
 │   ├── intro_main.asm          # Point d'entrée de l'exécutable autonome d'intro
-│   ├── intro_music_data.asm    # Partitions et commandes pour le pilote sonore SID
+│   ├── intro_music_data.asm    # Partitions et commandes pour le pilote sonore de l'intro
 │   ├── input.asm               # Lecture sécurisée du joystick port 2 et du clavier
 │   ├── transition.asm          # Gestion des transitions d'écran à écran
 │   └── debug.asm               # Moniteur de debug mémoire et registres matériels
 ├── tools/                      # Outils Python de conversion, extraction et édition
 │   ├── editor.py               # Éditeur visuel interactif web de niveaux et d'ennemis
+│   ├── generate_game_audio.py  # Extraction et encodage compact des musiques pour SID
+│   ├── convert_nes_underworld.py # Extraction des 9 donjons depuis la ROM NES
 │   ├── sprgen.py               # Générateur de sprites C64 depuis l'ASCII art
 │   ├── tilegen.py              # Compilateur de tuiles et cartes du monde
 │   ├── midi_to_sid.py          # Convertisseur MIDI vers code assembleur SID

@@ -14,11 +14,14 @@ current_room_y:     !byte START_ROOM_Y
 current_room_idx:   !byte 0
 current_zone:       !byte 0
 
-current_world_type: !byte WORLD_OVERWORLD
-saved_ow_room_x:    !byte START_ROOM_X
-saved_ow_room_y:    !byte START_ROOM_Y
-saved_ow_player_x:  !word 0
-saved_ow_player_y:  !byte 0
+current_world_type:     !byte WORLD_OVERWORLD
+saved_ow_room_x:        !byte START_ROOM_X
+saved_ow_room_y:        !byte START_ROOM_Y
+saved_ow_player_x:      !word 0
+saved_ow_player_y:      !byte 0
+current_dungeon_level:   !byte 1
+dungeon_entrance_room_x: !byte 3
+dungeon_entrance_room_y: !byte 7
 
 apply_map_colors:
         lda map_bg_col
@@ -135,13 +138,8 @@ load_room:
         jmp .lr_draw
 
 .lr_dungeon:
-        jsr apply_map_colors
-        ldy #15
-.cpy_uw_col:
-        lda zone_dungeon_tile_color,y
-        sta active_tile_color,y
-        dey
-        bpl .cpy_uw_col
+        jsr apply_dungeon_colors
+        jmp .lr_draw
 
 .lr_draw:
         lda #<room_buf
@@ -234,8 +232,48 @@ draw_map:
         bne .row
         rts
 
+
+; --- Palettes et Couleurs des 9 Donjons de Zelda 1 ---
+dungeon_mc1_table:
+        !byte 3, 6, 5, 15, 2, 8, 5, 14, 2       ; Cyan, Bleu, Vert, Gris, Rouge, Orange, Vert, Bleu clair, Rouge sombre
+dungeon_wall_color:
+        !byte 11, 14, 13, 23, 10, 16, 13, 22, 10
+base_dungeon_tile_color:
+        !byte 8, 19, 10, 11, 14, 11, 20, 8, 8, 8, 8, 11, 11, 0, 0, 0
+
+apply_dungeon_colors:
+        lda #COL_BLACK
+        sta VIC_BACKGROUND
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcc +
+        ldx #0
++       lda dungeon_mc1_table,x
+        sta VIC_BG_MC1
+        lda #12                         ; Gris clair pour les dalles
+        sta VIC_BG_MC2
+
+        ldy #15
+-       lda base_dungeon_tile_color,y
+        sta active_tile_color,y
+        dey
+        bpl -
+
+        lda dungeon_wall_color,x
+        sta active_tile_color + 3       ; TILE_TREE (bloc)
+        sta active_tile_color + 5       ; TILE_WALL (mur)
+        sta active_tile_color + 11      ; TILE_WALL_PASS
+        sta active_tile_color + 12      ; TILE_WALL_BOMB
+        rts
+
+dungeon_start_rx:
+        !byte 3, 12, 10, 6, 9, 14, 1, 7, 10
+dungeon_start_ry:
+        !byte 7,  7,  7, 7, 6,  6, 0, 0,  0
+
 ; ---------------------------------------------------------------------------
-; enter_dungeon : Bascule vers le monde souterrain / Donjon
+; enter_dungeon : Bascule vers le monde souterrain / Donjon (Niveaux 1 à 9)
 ; ---------------------------------------------------------------------------
 enter_dungeon:
         ; 1. Sauvegarde la position Overworld
@@ -262,11 +300,27 @@ enter_dungeon:
         jsr clear_screen
         jsr disk_load_map_underworld
 
-        ; 4. Placer Link dans la salle d'entrée du Donjon (3, 7)
-        lda #3
+        ; 4. Détermine le Niveau de Donjon (1..9) selon current_cave_type
+        lda current_cave_type
+        sec
+        sbc #CAVE_TYPE_DUNGEON_1
+        bcs +
+        lda #0
++       cmp #9
+        bcc +
+        lda #0
++       tax
+        inx
+        stx current_dungeon_level
+        dex
+
+        ; Positionne Link dans la salle d'entrée du Donjon
+        lda dungeon_start_rx,x
         sta current_room_x
-        lda #7
+        sta dungeon_entrance_room_x
+        lda dungeon_start_ry,x
         sta current_room_y
+        sta dungeon_entrance_room_y
 
         lda #160
         sta player_x
@@ -279,6 +333,10 @@ enter_dungeon:
         lda #0
         sta player_walk_anim
         sta player_walk_tick
+
+        ; Lance la musique authentique du Donjon (Underworld)
+        lda #MUSIC_DUNGEON
+        jsr music_play
 
         ; 5. Afficher la salle et les ennemis
         jsr load_room
@@ -322,6 +380,10 @@ exit_dungeon:
         lda #0
         sta player_walk_anim
         sta player_walk_tick
+
+        ; Relance la musique héroïque de l'Overworld
+        lda #MUSIC_OVERWORLD
+        jsr music_play
 
         ; 4. Afficher la salle et les ennemis
         jsr load_room

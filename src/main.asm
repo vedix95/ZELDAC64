@@ -49,18 +49,25 @@ game_init:
         jsr player_draw
         jsr enemies_prep_multiplexer
         jsr init_raster_irq
+        jsr sound_init
+        jsr sound_detect_dual_sid
+        lda #MUSIC_OVERWORLD
+        jsr music_play
 
         lda #STATE_PLAYING
         sta game_state
 
 main_loop:
         jsr wait_frame
+        jsr music_update
         jsr read_input
 
         ; Si déjà en mode debug
         lda game_state
         cmp #STATE_DEBUG
-        beq .in_debug
+        bne +
+        jmp .in_debug
++
 
         ; Touche D : ouvre l'écran de debug depuis n'importe où
         lda key_d_pressed
@@ -85,6 +92,20 @@ main_loop:
         beq +
         jsr exit_dungeon
         jmp main_loop
++
+        ; Touche 3 : Bascule Dual SID (Mono 1 SID / Stéréo 2 SIDs $D420)
+        lda key_3_pressed
+        beq +
+        lda dual_sid_enabled
+        eor #1
+        sta dual_sid_enabled
+        beq .disable_sid2
+        lda #15
+        sta SID2_VOLUME
+        jmp +
+.disable_sid2:
+        lda #0
+        sta SID2_VOLUME
 +
         ; Dispatch selon l'état de jeu
         lda game_state
@@ -171,6 +192,9 @@ wait_frame:
 
 ; Grotte secrète de l'Épée ("C'est dangereux d'y aller tout seul")
 !source "src/cave.asm"
+
+; Moteur Audio et partitions (Single SID + Dual SID)
+!source "src/sound.asm"
 
 !if * > MAP_DATA_ADDR {
         !error "Le programme resident deborde sur la zone des cartes ($A000)"

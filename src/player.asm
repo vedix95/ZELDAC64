@@ -357,15 +357,15 @@ player_update:
         cmp #(PLAYER_Y_MAX + 1)
         bcc .down_not_border
 
-        ; Si on est dans le donjon dans la salle d'entrée (3, 7), franchir le seuil sud = sortir
+        ; Si on est dans le donjon dans la salle d'entrée du donjon actif, franchir le seuil sud = sortir
         lda current_world_type
         cmp #WORLD_DUNGEON
         bne .check_down_trans
         lda current_room_x
-        cmp #3
+        cmp dungeon_entrance_room_x
         bne .check_down_trans
         lda current_room_y
-        cmp #7
+        cmp dungeon_entrance_room_y
         bne .check_down_trans
         jsr exit_dungeon
         jmp .no_down
@@ -577,20 +577,7 @@ check_point_solid:
         rts
 
 ; Bruitage d'attaque à l'épée via le synthétiseur SID (bruit blanc + déclin percussif)
-sound_sword:
-        lda #15
-        sta SID_VOLUME                  ; volume maximum
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$48
-        sta SID_V1_FREQ_HI              ; souffle d'acier tranchant
-        lda #$09                        ; Attaque 2 ms, Déclin ~168 ms
-        sta SID_V1_AD
-        lda #$00                        ; Soutien 0, Relâchement 6 ms
-        sta SID_V1_SR
-        lda #%10000001                  ; Forme d'onde : Bruit (Noise) + Gate ON
-        sta SID_V1_CTRL
-        rts
+; sound_sword delegue a src/sound.asm
 
 ; ---------------------------------------------------------------------------
 ; player_use_item_b : déclenché par le Bouton B (arme secondaire équipée)
