@@ -233,7 +233,7 @@ update_items_page:
         lda btn_a_pressed
         beq .check_joy_horiz
         lda hud_selected_b
-        cmp #5
+        cmp #7
         beq .wrap_a_min
         inc hud_selected_b
         jmp .a_changed
@@ -242,6 +242,7 @@ update_items_page:
         sta hud_selected_b
 .a_changed:
         jsr sound_select_item
+        jsr inv_update_cursor
         rts
 
 .check_joy_horiz:
@@ -254,7 +255,7 @@ update_items_page:
         dec hud_selected_b
         jmp .sel_changed
 .wrap_left:
-        lda #5
+        lda #7
         sta hud_selected_b
         jmp .sel_changed
 
@@ -264,7 +265,7 @@ update_items_page:
         and #JOY_RIGHT
         beq .items_idle
         lda hud_selected_b
-        cmp #5
+        cmp #7
         beq .wrap_right
         inc hud_selected_b
         jmp .sel_changed
@@ -274,8 +275,10 @@ update_items_page:
 
 .sel_changed:
         jsr sound_select_item
+        jsr inv_update_cursor
 .items_idle:
         rts
+
 
 ; ---------------------------------------------------------------------------
 ; update_triforce_page : Page 1

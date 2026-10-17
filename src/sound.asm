@@ -133,17 +133,7 @@ sound_init:
 ; sound_detect_dual_sid : Teste la présence d'une seconde puce SID en $D420
 ; ---------------------------------------------------------------------------
 sound_detect_dual_sid:
-        lda #15
-        sta SID2_VOLUME
-        ; Teste si le registre répond
-        lda SID2_VOLUME
-        and #$0f
-        cmp #15
-        bne .no_sid2
-        lda #1
-        sta dual_sid_enabled
-        rts
-.no_sid2:
+        ; Mode 1 SID par defaut pour une fidelite maximale
         lda #0
         sta dual_sid_enabled
         rts
@@ -173,47 +163,56 @@ music_play:
         rts
 
 .init_overworld_inst:
-        ; --- Instruments Overworld ---
-        ; Voix 1 : Cuivre / Trompette héroïque (Pulse 50%)
-        lda #$09
+        ; --- Instruments Overworld Authentiques ---
+        ; Voix 1 : Cuivre / Lead héroïque (Pulse 50%)
+        lda #$00
+        sta SID1_V1_PW_LO
+        lda #$08                        ; Impulsion 50%
+        sta SID1_V1_PW_HI
+        lda #$08                        ; Attack 2ms, Decay 750ms
         sta SID1_V1_AD
-        lda #$a0
+        lda #$c2                        ; Sustain 12, Release 24ms
         sta SID1_V1_SR
         lda #%01000001
         sta SID1_V1_CTRL
 
-        ; Voix 2 : Harmonie / Contre-chant (Sawtooth chaud)
-        lda #$09
+        ; Voix 2 : Harmonie & Basse héroïque (Sawtooth chaud)
+        lda #$07                        ; Attack 2ms, Decay 500ms
         sta SID1_V2_AD
-        lda #$80
+        lda #$a2                        ; Sustain 10, Release 24ms
         sta SID1_V2_SR
         lda #%00100001
         sta SID1_V2_CTRL
 
-        ; Voix 3 : Percussion / Basse (Noise / Triangle)
-        lda #$00
+        ; Voix 3 : Percussion caisse claire militaire (Noise)
+        lda #$03
         sta SID1_V3_AD
-        lda #$f0
+        lda #$00
         sta SID1_V3_SR
-        lda #%00010001
+        lda #%10000001
         sta SID1_V3_CTRL
 
         ; Si Dual SID, configure SID 2 pour le chorus stéréo
         lda dual_sid_enabled
         beq +
-        lda #$09
+        lda #$00
+        sta SID2_V1_PW_LO
+        lda #$08
+        sta SID2_V1_PW_HI
+        lda #$08
         sta SID2_V1_AD
-        lda #$a0
+        lda #$c2
         sta SID2_V1_SR
         lda #%01000001
         sta SID2_V1_CTRL
-        lda #$09
+        lda #$07
         sta SID2_V2_AD
-        lda #$80
+        lda #$a2
         sta SID2_V2_SR
         lda #%00100001
         sta SID2_V2_CTRL
 +       rts
+
 
 .init_dungeon_inst:
         ; --- Instruments Underworld (Dungeon) ---
@@ -247,6 +246,10 @@ music_play:
 
         lda dual_sid_enabled
         beq +
+        lda #$00
+        sta SID2_V1_PW_LO
+        lda #$04
+        sta SID2_V1_PW_HI
         lda #$0c
         sta SID2_V1_AD
         lda #$a0
@@ -405,10 +408,14 @@ music_update:
 +
         ldx temp_v1
         beq .v1_mute
+        cpx #$fe                        ; $FE = TIE / HOLD (prolonger la note sans réarmer l'enveloppe)
+        beq .skip_v1
         lda music_note_freq_lo,x
         sta SID1_V1_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V1_FREQ_HI
+        lda #%01000000                  ; Gate OFF pour réarmer l'ADSR
+        sta SID1_V1_CTRL
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V1_CTRL
 
@@ -422,6 +429,8 @@ music_update:
         lda music_note_freq_hi,x
         adc #0
         sta SID2_V1_FREQ_HI
+        lda #%01000000
+        sta SID2_V1_CTRL
         lda #%01000001
         sta SID2_V1_CTRL
         jmp .skip_v1
@@ -437,10 +446,14 @@ music_update:
         ; --- VOIX 2 : Harmonie / Contre-chant ---
         ldx temp_v2
         beq .v2_mute
+        cpx #$fe                        ; $FE = TIE / HOLD (prolonger l'harmonie sans réarmer)
+        beq .skip_v2
         lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V2_FREQ_HI
+        lda #%00100000                  ; Gate OFF pour réarmer l'ADSR
+        sta SID1_V2_CTRL
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
 
@@ -450,6 +463,8 @@ music_update:
         sta SID2_V2_FREQ_LO
         lda music_note_freq_hi,x
         sta SID2_V2_FREQ_HI
+        lda #%00100000
+        sta SID2_V2_CTRL
         lda #%00100001
         sta SID2_V2_CTRL
         jmp .skip_v2
@@ -471,6 +486,8 @@ music_update:
 +
         lda temp_v3
         beq .v3_mute
+        cmp #$fe                        ; $FE = TIE / HOLD
+        beq .skip_v3
         cmp #$80
         beq .v3_percussion
 
@@ -480,6 +497,8 @@ music_update:
         sta SID1_V3_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V3_FREQ_HI
+        lda #%00010000                  ; Gate OFF pour réarmer l'ADSR
+        sta SID1_V3_CTRL
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
         rts

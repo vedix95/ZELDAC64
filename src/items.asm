@@ -14,6 +14,7 @@ ITEM_BOOMERANG  = 1
 ITEM_BOMB       = 2
 ITEM_BOW        = 3
 ITEM_CANDLE     = 4
+ITEM_WAND       = 5
 
 item_active:    !byte ITEM_NONE         ; type d'arme active (0 = aucune)
 item_x:         !word 0                 ; position X en pixels sprite (16 bits)
@@ -82,7 +83,13 @@ items_use_b:
 +       cmp #4
         bne +
         jmp use_food
-+       jmp use_potion
++       cmp #5
+        bne +
+        jmp use_potion
++       cmp #6
+        bne +
+        jmp use_whistle
++       jmp use_wand
 
 use_food:
         lda player_has_food
@@ -126,6 +133,102 @@ use_potion:
         sta SID_V1_CTRL
 
         dec player_has_potion
+        rts
+
+use_whistle:
+        lda player_has_whistle
+        bne +
+        rts
++
+        ; Joue la mélodie de la flûte (synthèse SID)
+        lda #15
+        sta SID_VOLUME
+        lda #$80
+        sta SID_V1_FREQ_LO
+        lda #$48
+        sta SID_V1_FREQ_HI
+        lda #$09
+        sta SID_V1_AD
+        lda #$40
+        sta SID_V1_SR
+        lda #%00010001                  ; Triangle
+        sta SID_V1_CTRL
+
+        ; Si Digdogger est dans la salle (Niveau 5) : il rétrécit !
+        ldx #0
+.chk_dig:
+        lda en_state,x
+        cmp #EN_STATE_DEAD
+        beq +
+        lda en_type,x
+        cmp #TYPE_DIGDOGGER
+        bne +
+        lda #TYPE_GEL
+        sta en_type,x
+        lda #2
+        sta en_hp,x
+        lda #AI_ROAM
+        sta en_ai_type,x
+        lda #0
+        sta en_anim,x
++       inx
+        cpx #MAX_ENEMIES
+        bcc .chk_dig
+
+        ; Si dans l'Overworld : téléporte vers l'entrée du donjon !
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        bne .whistle_end
+        lda #55                         ; Entrée Niveau 1
+        sta current_room_idx
+        lda #7
+        sta current_room_x
+        lda #3
+        sta current_room_y
+        lda #180
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #150
+        sta player_y
+        jsr load_room
+        jsr hud_init
+        jsr player_draw
+        jsr enemies_init
+        jsr enemies_prep_multiplexer
+        jsr sound_secret_chime
+.whistle_end:
+        rts
+
+use_wand:
+        lda player_has_wand
+        bne +
+        rts
++
+        lda #ITEM_WAND
+        sta item_active
+        lda player_dir
+        sta item_dir
+        lda #0
+        sta item_state
+        lda #28                         ; 28 frames de portée
+        sta item_timer
+        jsr set_spawn_coords
+
+
+        ; Son d'onde magique
+        lda #15
+        sta SID_VOLUME
+        lda #$00
+        sta SID_V1_FREQ_LO
+        lda #$50
+        sta SID_V1_FREQ_HI
+        lda #$09
+        sta SID_V1_AD
+        lda #$00
+        sta SID_V1_SR
+        lda #%00100001                  ; Dent de scie
+        sta SID_V1_CTRL
         rts
 
 ; ---------------------------------------------------------------------------
@@ -318,7 +421,10 @@ items_update:
 +       cmp #ITEM_BOW
         bne +
         jmp update_bow
-+       jmp update_candle
++       cmp #ITEM_CANDLE
+        bne +
+        jmp update_candle
++       jmp update_wand
 
 ; ---------------------------------------------------------------------------
 ; Mise à jour Boomerang (suit le joueur en vol aller et tête chercheuse au retour)
@@ -548,6 +654,7 @@ update_bomb:
         lda #24                         ; durée de la déflagration 3x3
         sta item_timer
         jsr bomb_check_secret_wall
+        jsr dungeon_on_bomb_explode
 
         ; Déclenche le son d'explosion puissante
         lda #15
@@ -717,12 +824,111 @@ update_candle:
         rts
 
 ; ---------------------------------------------------------------------------
+; update_wand : déplace l'onde magique et teste les collisions
+; ---------------------------------------------------------------------------
+update_wand:
+        dec item_timer
+        bne +
+        lda #ITEM_NONE
+        sta item_active
+        rts
++
+        lda item_dir
+        cmp #DIR_UP
+        beq .w_up
+        cmp #DIR_DOWN
+        beq .w_dn
+        cmp #DIR_LEFT
+        beq .w_lf
+
+        ; Droite
+        clc
+        lda item_x
+        adc #4
+        sta item_x
+        lda item_x+1
+        adc #0
+        sta item_x+1
+        jmp .w_chk
+.w_lf:
+        sec
+        lda item_x
+        sbc #4
+        sta item_x
+        lda item_x+1
+        sbc #0
+        sta item_x+1
+        jmp .w_chk
+.w_up:
+        sec
+        lda item_y
+        sbc #4
+        sta item_y
+        jmp .w_chk
+.w_dn:
+        clc
+        lda item_y
+        adc #4
+        sta item_y
+
+.w_chk:
+        lda item_y
+        cmp #PLAYER_Y_MIN
+        bcc .w_despawn
+        cmp #PLAYER_Y_MAX
+        bcs .w_despawn
+        rts
+.w_despawn:
+        lda #ITEM_NONE
+        sta item_active
+        rts
+
+; ---------------------------------------------------------------------------
 ; items_draw : configure et affiche les sprites pour l'arme active
 ; ---------------------------------------------------------------------------
 items_draw:
         lda item_active
         bne .draw_item
 
+        ; Vérifie si un drop de donjon doit être affiché sur Sprite 2
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .no_drop_to_draw
+        lda dungeon_drop_active
+        beq .no_drop_to_draw
+
+        lda dungeon_drop_x
+        sta VIC_SPRITE_X2
+        lda dungeon_drop_y
+        sta VIC_SPRITE_Y2
+        lda VIC_SPRITE_MSB
+        and #%11111011
+        sta VIC_SPRITE_MSB
+
+        lda dungeon_drop_type
+        cmp #DROP_KEY
+        bne +
+        lda #< (sprite_link_item_key / 64)
+        sta SPRITE_PTR2
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_HEART_CONTAINER
+        bne +
+        lda #< (sprite_link_item_heart / 64)
+        sta SPRITE_PTR2
+        lda #COL_RED
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_TRIFORCE
+        bne +
+        lda #< (sprite_link_item_get / 64)
+        sta SPRITE_PTR2
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++
+.no_drop_to_draw:
         ; Aucun objet : désactive Sprite 2
         lda VIC_SPRITE_EN
         and #%11111011                  ; désactive Sprite 2 seul (préserve Link, épée, ennemis)
@@ -805,6 +1011,8 @@ items_draw:
         jmp .enable_spr2
 
 .drw_candle:
+        cmp #ITEM_CANDLE
+        bne .drw_wand
         ; --- BOUGIE / FLAMME VACILLANTE ---
         lda item_anim
         and #4
@@ -814,6 +1022,14 @@ items_draw:
 +       lda #< (sprite_link_proj_flame_0 / 64)
 ++      sta SPRITE_PTR2
         lda #COL_LIGHT_RED
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.drw_wand:
+        ; --- BAGUETTE MAGIQUE : ONDE BLEUE ---
+        lda #< (sprite_enemies_proj_magic / 64)
+        sta SPRITE_PTR2
+        lda #COL_CYAN
         sta VIC_SPRITE_COL2
 
 .enable_spr2:
@@ -1048,6 +1264,7 @@ record_room_secret_opened:
 ; ---------------------------------------------------------------------------
 ; sound_secret : déclenche le carillon triomphal de découverte secrète
 ; ---------------------------------------------------------------------------
+sound_secret_chime:
 sound_secret:
         lda #1
         sta secret_chime_active

@@ -147,6 +147,7 @@ load_room:
         lda #>room_buf
         sta ZP_MAP+1
         jsr draw_map
+        jsr dungeon_on_enter_room
         rts
 
 ; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).
@@ -267,6 +268,28 @@ apply_dungeon_colors:
         sta active_tile_color + 12      ; TILE_WALL_BOMB
         rts
 
+; ===========================================================================
+; TABLE DES 128 SALLES DE L'OVERWORLD VERS LES 9 DONJONS (Niveau 1..9)
+; 0 = pas de donjon
+; ===========================================================================
+dungeon_room_levels:
+        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 4: N9, Salle 10: N5
+        !byte 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0
+        ; Rangée 1 (16..31 : A-2 .. P-2) - Salle 20: N6
+        !byte 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 34: N4
+        !byte 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 3 (48..63 : A-4 .. P-4) - Salle 51: N7, Salle 55: N1, Salle 60: N2, Salle 62: N8
+        !byte 0, 0, 0, 7, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 8, 0
+        ; Rangée 4 (64..79 : A-5 .. P-5) - Salle 68: N3
+        !byte 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 5 (80..95 : A-6 .. P-6)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 6 (96..111 : A-7 .. P-7)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 7 (112..127 : A-8 .. P-8)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
 dungeon_start_rx:
         !byte 3, 12, 10, 6, 9, 14, 1, 7, 10
 dungeon_start_ry:
@@ -300,19 +323,17 @@ enter_dungeon:
         jsr clear_screen
         jsr disk_load_map_underworld
 
-        ; 4. Détermine le Niveau de Donjon (1..9) selon current_cave_type
-        lda current_cave_type
-        sec
-        sbc #CAVE_TYPE_DUNGEON_1
-        bcs +
-        lda #0
-+       cmp #9
+        ; 4. Détermine le Niveau de Donjon (1..9)
+        lda current_dungeon_level
+        bne +
+        lda #1
+        sta current_dungeon_level
++       sec
+        sbc #1
+        cmp #9
         bcc +
         lda #0
 +       tax
-        inx
-        stx current_dungeon_level
-        dex
 
         ; Positionne Link dans la salle d'entrée du Donjon
         lda dungeon_start_rx,x

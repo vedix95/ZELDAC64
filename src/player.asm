@@ -29,7 +29,7 @@ DIR_LEFT        = 2
 DIR_RIGHT       = 3
 
 PLAYER_COLOR    = COL_GREEN             ; tunique de Link
-PLAYER_SKIN     = COL_LRED              ; multicolore 1  : peau / garde dorée
+PLAYER_SKIN     = COL_ORANGE            ; multicolore 1  : peau / garde dorée (teinte authentique Link)
 PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture, poignée
 SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame blanche brillante
 
@@ -51,6 +51,9 @@ player_has_arrows:     !byte 1          ; 1 = flèches
 player_has_candle:     !byte 1          ; 1 = bougie bleue
 player_has_food:       !byte 0          ; 1 = viande / appât
 player_has_potion:     !byte 0          ; 0 = aucune, 1 = bleue, 2 = rouge
+player_has_whistle:    !byte 1          ; 1 = flûte magique
+player_has_wand:       !byte 1          ; 1 = baguette magique
+
 
 ; Triforce de la Sagesse (8 fragments numérotés 1 à 8)
 player_triforce_pieces: !byte %00000000 ; masque 8 bits
@@ -450,8 +453,39 @@ player_update:
         jsr get_tile_at_point
         cmp #TILE_CAVE
         bne +
-        jsr cave_enter
+        jsr check_room_entrance
 +       rts
+
+; ---------------------------------------------------------------------------
+; check_room_entrance : Gère l'entrée dans les donjons ou les grottes
+; Découplage strict entre donjons (1..9) et grottes overworld (boutiques, etc.)
+; ---------------------------------------------------------------------------
+check_room_entrance:
+        ; Uniquement actif en mode Overworld et en état de jeu normal
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        bne .chk_ent_done
+        lda game_state
+        cmp #STATE_PLAYING
+        bne .chk_ent_done
+
+        ; 1. Priorité absolue : entrée d'un des 9 Donjons (Niveaux 1 à 9)
+        ldx current_room_idx
+        lda dungeon_room_levels,x
+        beq .chk_cave
+        sta current_dungeon_level
+        jsr enter_dungeon
+        rts
+
+.chk_cave:
+        ; 2. Entrée dans une des grottes authentiques (boutiques, sage, etc.)
+        ldx current_room_idx
+        lda room_cave_types,x
+        beq .chk_ent_done
+        sta current_cave_type
+        jsr cave_enter
+.chk_ent_done:
+        rts
 
 ; ---------------------------------------------------------------------------
 ; check_v_edge : teste 2 points sur une colonne verticale (col_x, col_y1) et (col_x, col_y2)
@@ -565,6 +599,11 @@ check_point_solid:
         jsr get_tile_at_point
         cmp #$ff
         beq .free
+        cmp #TILE_WATER
+        bne .not_water
+        lda player_has_stepladder
+        bne .free
+.not_water:
         tax
         lda tile_flags,x
         and #TILE_SOLID
@@ -597,6 +636,10 @@ player_draw:
 +       lda #COL_GREEN
         sta VIC_SPRITE_COL0
 ++
+        lda #PLAYER_SKIN
+        sta VIC_SPRITE_MC1
+        lda #PLAYER_BROWN
+        sta VIC_SPRITE_MC2
         lda player_attacking
         bne +
         jmp .draw_normal

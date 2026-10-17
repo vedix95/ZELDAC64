@@ -46,6 +46,7 @@ game_init:
         jsr player_init
         jsr items_init
         jsr enemies_init
+        jsr dungeon_init
         jsr player_draw
         jsr enemies_prep_multiplexer
         jsr init_raster_irq
@@ -125,6 +126,7 @@ main_loop:
         jsr player_update
         jsr items_update
         jsr enemies_update
+        jsr dungeon_update
         jsr player_draw
         jsr items_draw
         jsr enemies_prep_multiplexer
@@ -181,6 +183,7 @@ wait_frame:
 !source "src/transition.asm"
 !source "src/items.asm"
 !source "src/enemies.asm"
+!source "src/dungeon.asm"
 !source "src/inventory.asm"
 !source "src/inventory_draw.asm"
 

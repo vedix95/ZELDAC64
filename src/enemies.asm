@@ -619,6 +619,15 @@ update_single_enemy:
 +       cmp #AI_WATER
         bne +
         jmp .exec_ai_water
++       cmp #AI_SLIME
+        bne +
+        jmp .exec_ai_slime
++       cmp #AI_TELEPORT
+        bne +
+        jmp .exec_ai_teleport
++       cmp #AI_BOSS
+        bne +
+        jmp .exec_ai_boss
 +       jmp .exec_ai_roam
 
 .update_hurt:
@@ -1042,6 +1051,277 @@ update_single_enemy:
         lda #16                         ; 16 frames de plongeon
         sta en_timer,x
         rts
+
+; ===========================================================================
+; IA : AI_SLIME (Zol, Gel)
+; ===========================================================================
+.exec_ai_slime:
+        lda en_global_frame
+        and #1
+        beq .slime_anim
+        jmp .exec_ai_roam
+.slime_anim:
+        inc en_anim_tick,x
+        lda en_anim_tick,x
+        cmp #16
+        bcc +
+        lda #0
+        sta en_anim_tick,x
+        lda en_anim,x
+        eor #1
+        sta en_anim,x
++       rts
+
+; ===========================================================================
+; IA : AI_TELEPORT (Wizzrobe)
+; ===========================================================================
+.exec_ai_teleport:
+        dec en_timer,x
+        bne +
+        lda en_anim,x
+        eor #1
+        sta en_anim,x
+        bne .wizz_emerge
+        ; Disparaît : 30 frames
+        lda #30
+        sta en_timer,x
+        rts
+.wizz_emerge:
+        ; Apparaît et tire
+        lda #40
+        sta en_timer,x
+        jsr spawn_enemy_magic_proj
++       rts
+
+spawn_enemy_magic_proj:
+        lda en_proj_active
+        bne +
+        lda #1
+        sta en_proj_active
+        lda #PROJ_MAGIC
+        sta en_proj_type
+        lda player_dir
+        sta en_proj_dir
+        lda en_idx
+        asl
+        tay
+        lda en_x,y
+        sta en_proj_x
+        lda en_x+1,y
+        sta en_proj_x+1
+        ldx en_idx
+        lda en_y,x
+        sta en_proj_y
+        jsr sound_enemy_shoot
++       rts
+
+; ===========================================================================
+; IA : AI_BOSS (Aquamentus, Dodongo, Manhandla, Gleeok, Digdogger, Gohma, etc.)
+; ===========================================================================
+.exec_ai_boss:
+        ldy en_type,x
+        cpy #TYPE_AQUAMENTUS
+        bne +
+        jmp .boss_aquamentus
++       cpy #TYPE_DODONGO
+        bne +
+        jmp .boss_dodongo
++       cpy #TYPE_MANHANDLA
+        bne +
+        jmp .boss_manhandla
++       cpy #TYPE_GLEEOK
+        bne +
+        jmp .boss_gleeok
++       cpy #TYPE_DIGDOGGER
+        bne +
+        jmp .boss_digdogger
++       cpy #TYPE_GOHMA_RED
+        bne +
+        jmp .boss_gohma
++       cpy #TYPE_GOHMA_BLUE
+        bne +
+        jmp .boss_gohma
++       cpy #TYPE_PATRA
+        bne +
+        jmp .boss_patra
++       cpy #TYPE_GANON
+        bne +
+        jmp .boss_ganon
++       jmp .exec_ai_roam
+
+.boss_aquamentus:
+        lda en_idx
+        asl
+        tay
+        lda en_dir,x
+        cmp #DIR_LEFT
+        beq .aqua_left
+        ; Droite
+        clc
+        lda en_x,y
+        adc #1
+        sta en_x,y
+        lda en_x+1,y
+        adc #0
+        sta en_x+1,y
+        lda en_x,y
+        cmp #220
+        bcc .aqua_shoot
+        lda #DIR_LEFT
+        sta en_dir,x
+        jmp .aqua_shoot
+.aqua_left:
+        sec
+        lda en_x,y
+        sbc #1
+        sta en_x,y
+        lda en_x+1,y
+        sbc #0
+        sta en_x+1,y
+        lda en_x,y
+        cmp #150
+        bcs .aqua_shoot
+        lda #DIR_RIGHT
+        sta en_dir,x
+.aqua_shoot:
+        dec en_timer,x
+        beq +
+        jmp .boss_anim
++       lda #60
+        sta en_timer,x
+        jsr spawn_boss_fireball
+        jmp .boss_anim
+
+.boss_dodongo:
+        ; Mange une bombe si à portée
+        lda item_active
+        cmp #ITEM_BOMB
+        bne +
+        lda item_state
+        bne +
+        lda en_idx
+        asl
+        tay
+        sec
+        lda item_x
+        sbc en_x,y
+        bcs ++
+        eor #$ff
+        adc #1
+++      cmp #18
+        bcs +
+        ; Mange la bombe !
+        lda #ITEM_NONE
+        sta item_active
+        lda #50
+        sta en_timer,x
+        lda #EN_STATE_HURT
+        sta en_state,x
+        sec
+        lda en_hp,x
+        sbc #4
+        bcc .dodongo_dead
+        beq .dodongo_dead
+        sta en_hp,x
+        jsr sound_enemy_hit
+        rts
+.dodongo_dead:
+        jmp .en_killed
++       jmp .exec_ai_roam
+
+.boss_manhandla:
+        lda en_hp,x
+        cmp #4
+        bcs +
+        jsr .exec_ai_roam
++       jmp .exec_ai_roam
+
+.boss_gleeok:
+        inc en_anim_tick,x
+        lda en_anim_tick,x
+        and #16
+        lsr
+        lsr
+        lsr
+        lsr
+        sta en_anim,x
+        dec en_timer,x
+        bne +
+        lda #45
+        sta en_timer,x
+        jsr spawn_boss_fireball
++       rts
+
+.boss_digdogger:
+        jmp .exec_ai_roam
+
+.boss_gohma:
+        dec en_timer,x
+        bne +
+        lda #40
+        sta en_timer,x
+        lda en_anim,x
+        eor #1
+        sta en_anim,x
++       jmp .exec_ai_roam
+
+.boss_patra:
+        jmp .exec_ai_roam
+
+.boss_ganon:
+        dec en_timer,x
+        bne +
+        lda #50
+        sta en_timer,x
+        lda en_idx
+        asl
+        tay
+        jsr get_rand
+        and #127
+        clc
+        adc #90
+        sta en_x,y
+        jsr get_rand
+        and #63
+        clc
+        adc #110
+        ldx en_idx
+        sta en_y,x
+        jsr spawn_boss_fireball
++       rts
+
+.boss_anim:
+        inc en_anim_tick,x
+        lda en_anim_tick,x
+        and #16
+        lsr
+        lsr
+        lsr
+        lsr
+        sta en_anim,x
+        rts
+
+spawn_boss_fireball:
+        lda en_proj_active
+        bne +
+        lda #1
+        sta en_proj_active
+        lda #PROJ_FIREBALL
+        sta en_proj_type
+        lda #DIR_LEFT
+        sta en_proj_dir
+        lda en_idx
+        asl
+        tay
+        lda en_x,y
+        sta en_proj_x
+        lda en_x+1,y
+        sta en_proj_x+1
+        ldx en_idx
+        lda en_y,x
+        sta en_proj_y
+        jsr sound_enemy_shoot
++       rts
 
 ; ===========================================================================
 ; IA 5 : AI_ROAM (Octorok, Moblin, Lynel, Stalfos, Darknut, etc.)
@@ -1860,6 +2140,10 @@ test_sword_single:
 +       cpy #TYPE_VIRE
         bne +
         jsr split_vire_to_keese
++       lda en_ai_type,y
+        cmp #AI_BOSS
+        bne +
+        jsr dungeon_spawn_boss_heart
 +       lda #EN_STATE_DYING
         sta en_state,x
         lda #16                         ; durée du nuage de fumée
@@ -2009,7 +2293,8 @@ test_body_single:
         cmp #TYPE_ZORA
         bne +
         lda en_anim_tick,x
-        beq .bd_miss
+        bne +
+        rts
 +
         lda en_idx
         asl
@@ -2063,6 +2348,28 @@ test_body_single:
         bne +
         lda #250
         sta sword_cursed_timer
++
+        ; Wallmaster ramène Link à l'entrée du donjon
+        cpy #TYPE_WALLMASTER
+        bne +
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        lda dungeon_entrance_room_x
+        sta current_room_x
+        lda dungeon_entrance_room_y
+        sta current_room_y
+        lda #180
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #190
+        sta player_y
+        jsr load_room
+        jsr enemies_init
+        jsr enemies_prep_multiplexer
+        jsr sound_enemy_hit
+        rts
 +
         jsr hurt_link
 .bd_miss:
@@ -2305,6 +2612,22 @@ init_raster_irq:
 ; ---------------------------------------------------------------------------
 irq_top:
         lda game_state
+        cmp #STATE_INVENTORY
+        bne .check_playing
+        lda inv_page
+        cmp #INV_PAGE_ITEMS
+        bne .skip_top
+        jsr inv_p0_irq_row1
+        lda #122                        ; Raster entre Y=106 et Y=134
+        sta VIC_RASTER
+        lda #< irq_p0_row2
+        sta $0314
+        lda #> irq_p0_row2
+        sta $0315
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
+.check_playing:
         cmp #STATE_PLAYING
         bne .skip_top
 
@@ -2315,6 +2638,7 @@ irq_top:
         bne .skip_top
 
 .do_top:
+
         jsr apply_top_sprites
         jsr apply_proj_sprite7
 

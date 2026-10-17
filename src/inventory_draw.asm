@@ -8,7 +8,7 @@
 
 !zone inventory_draw
 
-; Tables des sprites et couleurs des 6 armes sélectionnables (Slot B)
+; Tables des sprites et couleurs des 8 armes sélectionnables (Slot B)
 item_sprite_ptrs:
         !byte (sprite_link_item_boomerang / 64)
         !byte (sprite_link_item_bomb / 64)
@@ -16,6 +16,8 @@ item_sprite_ptrs:
         !byte (sprite_link_item_candle / 64)
         !byte (sprite_link_item_food / 64)
         !byte (sprite_link_item_potion / 64)
+        !byte (sprite_link_item_whistle / 64)
+        !byte (sprite_link_item_wand / 64)
 
 item_colors:
         !byte COL_LIGHT_BLUE            ; 0: Boomerang
@@ -24,15 +26,18 @@ item_colors:
         !byte COL_LIGHT_BLUE            ; 3: Bougie
         !byte COL_BROWN                 ; 4: Viande / Appât
         !byte COL_RED                   ; 5: Potion
+        !byte COL_YELLOW                ; 6: Flûte
+        !byte COL_LIGHT_BLUE            ; 7: Baguette Magique
 
-; Coordonnées X des 6 objets (2 rangées de 3 colonnes)
+; Coordonnées X des 8 objets (2 rangées de 4 colonnes)
 cursor_x_coords:
-        !byte 152, 196, 240             ; rangée 1 : Boomerang, Bombe, Arc
-        !byte 152, 196, 240             ; rangée 2 : Bougie, Viande, Potion
+        !byte 148, 178, 208, 238        ; rangée 1 : Boomerang, Bombe, Arc, Bougie
+        !byte 148, 178, 208, 238        ; rangée 2 : Viande, Potion, Flûte, Baguette
 
 cursor_y_coords:
-        !byte 106, 106, 106             ; rangée 1
-        !byte 134, 134, 134             ; rangée 2
+        !byte 106, 106, 106, 106        ; rangée 1
+        !byte 134, 134, 134, 134        ; rangée 2
+
 
 flash_colors:
         !byte COL_YELLOW, COL_LIGHT_RED, COL_WHITE, COL_ORANGE
@@ -318,59 +323,8 @@ setup_p0_sprites:
         lda #106
         sta VIC_SPRITE_Y0
 
-        ; Sprites 1..3 (Rangée 1) : Boomerang, Bombe, Arc (Y=106)
-        lda #(sprite_link_item_boomerang / 64)
-        sta SPRITE_PTR1
-        lda #(sprite_link_item_bomb / 64)
-        sta SPRITE_PTR2
-        lda #(sprite_link_item_bow / 64)
-        sta SPRITE_PTR3
-
-        lda #COL_LIGHT_BLUE
-        sta VIC_SPRITE_COL1
-        lda #COL_BLUE
-        sta VIC_SPRITE_COL2
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL3
-
-        lda #152
-        sta VIC_SPRITE_X1
-        lda #196
-        sta VIC_SPRITE_X2
-        lda #240
-        sta VIC_SPRITE_X3
-
-        lda #106
-        sta VIC_SPRITE_Y1
-        sta VIC_SPRITE_Y2
-        sta VIC_SPRITE_Y3
-
-        ; Sprites 4..6 (Rangée 2) : Bougie, Viande, Potion (Y=134)
-        lda #(sprite_link_item_candle / 64)
-        sta SPRITE_PTR4
-        lda #(sprite_link_item_food / 64)
-        sta SPRITE_PTR5
-        lda #(sprite_link_item_potion / 64)
-        sta SPRITE_PTR6
-
-        lda #COL_LIGHT_BLUE
-        sta VIC_SPRITE_COL4
-        lda #COL_BROWN
-        sta VIC_SPRITE_COL5
-        lda #COL_RED
-        sta VIC_SPRITE_COL6
-
-        lda #152
-        sta VIC_SPRITE_X4
-        lda #196
-        sta VIC_SPRITE_X5
-        lda #240
-        sta VIC_SPRITE_X6
-
-        lda #134
-        sta VIC_SPRITE_Y4
-        sta VIC_SPRITE_Y5
-        sta VIC_SPRITE_Y6
+        ; Initialise la rangée 1 pour le démarrage
+        jsr inv_p0_irq_row1
 
         ; Sprite 7 : Curseur cadre de sélection (clignotant)
         lda #(sprite_link_item_frame / 64)
@@ -382,11 +336,97 @@ setup_p0_sprites:
 
         lda #0
         sta VIC_SPRITE_MSB
-        lda #%11111111                  ; Tous les 8 sprites actifs
+        lda #%10011111                  ; Sprites 0, 1, 2, 3, 4, 7 actifs
         sta VIC_SPRITE_EN
-        lda #%01111111                  ; Sprites 0..6 multicolores, Sprite 7 haute résolution
+        lda #%00011111                  ; Sprites 0..4 multicolores, Sprite 7 haute résolution
         sta VIC_SPRITE_MC
         rts
+
+; ---------------------------------------------------------------------------
+; Multiplexeur raster pour la Page 0 de l'inventaire (grille 4x2 d'objets)
+; ---------------------------------------------------------------------------
+inv_p0_irq_row1:
+        ; Sprites 1..4 (Rangée 1) : Boomerang, Bombe, Arc, Bougie (Y=106)
+        lda #(sprite_link_item_boomerang / 64)
+        sta SPRITE_PTR1
+        lda #(sprite_link_item_bomb / 64)
+        sta SPRITE_PTR2
+        lda #(sprite_link_item_bow / 64)
+        sta SPRITE_PTR3
+        lda #(sprite_link_item_candle / 64)
+        sta SPRITE_PTR4
+
+        lda #COL_LIGHT_BLUE
+        sta VIC_SPRITE_COL1
+        lda #COL_BLUE
+        sta VIC_SPRITE_COL2
+        lda #COL_WHITE
+        sta VIC_SPRITE_COL3
+        lda #COL_LIGHT_BLUE
+        sta VIC_SPRITE_COL4
+
+        lda #148
+        sta VIC_SPRITE_X1
+        lda #178
+        sta VIC_SPRITE_X2
+        lda #208
+        sta VIC_SPRITE_X3
+        lda #238
+        sta VIC_SPRITE_X4
+
+        lda #106
+        sta VIC_SPRITE_Y1
+        sta VIC_SPRITE_Y2
+        sta VIC_SPRITE_Y3
+        sta VIC_SPRITE_Y4
+        rts
+
+irq_p0_row2:
+        ; Sprites 1..4 (Rangée 2) : Viande, Potion, Flûte, Baguette (Y=134)
+        lda #(sprite_link_item_food / 64)
+        sta SPRITE_PTR1
+        lda #(sprite_link_item_potion / 64)
+        sta SPRITE_PTR2
+        lda #(sprite_link_item_whistle / 64)
+        sta SPRITE_PTR3
+        lda #(sprite_link_item_wand / 64)
+        sta SPRITE_PTR4
+
+        lda #COL_BROWN
+        sta VIC_SPRITE_COL1
+        lda #COL_RED
+        sta VIC_SPRITE_COL2
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL3
+        lda #COL_LIGHT_BLUE
+        sta VIC_SPRITE_COL4
+
+        lda #148
+        sta VIC_SPRITE_X1
+        lda #178
+        sta VIC_SPRITE_X2
+        lda #208
+        sta VIC_SPRITE_X3
+        lda #238
+        sta VIC_SPRITE_X4
+
+        lda #134
+        sta VIC_SPRITE_Y1
+        sta VIC_SPRITE_Y2
+        sta VIC_SPRITE_Y3
+        sta VIC_SPRITE_Y4
+
+        ; Prochaine interruption au bas de l'écran (raster 250)
+        lda #250
+        sta VIC_RASTER
+        lda #< irq_bottom
+        sta $0314
+        lda #> irq_bottom
+        sta $0315
+
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
 
 inv_update_cursor:
         ldx hud_selected_b
@@ -1255,11 +1295,11 @@ txt_p0_items_r2:    !text "BOUG    VIAN    POTI"
 txt_p0_stock_line:  !text "RUBIS:      CLEFS:      BOMBES:     "
 txt_p0_tip:         !text "[GAUCHE/DROITE] CHOISIR  [A] EQUIPER"
 
-; Descriptifs des 6 armes (exactement 36 caractères)
+; Descriptifs des 8 armes (exactement 36 caractères)
 p0_desc_lo:
-        !byte <desc_boom, <desc_bomb, <desc_bow, <desc_cand, <desc_food, <desc_potion
+        !byte <desc_boom, <desc_bomb, <desc_bow, <desc_cand, <desc_food, <desc_potion, <desc_whistle, <desc_wand
 p0_desc_hi:
-        !byte >desc_boom, >desc_bomb, >desc_bow, >desc_cand, >desc_food, >desc_potion
+        !byte >desc_boom, >desc_bomb, >desc_bow, >desc_cand, >desc_food, >desc_potion, >desc_whistle, >desc_wand
 
 desc_boom:          !text "BOOMERANG (ETOURDIT LES ENNEMIS)    ", 0
 desc_bomb:          !text "BOMBES (EXPLOSIONS ET DEBRIS)       ", 0
@@ -1267,6 +1307,9 @@ desc_bow:           !text "ARC ET FLECHES (ATTAQUE A DISTANCE) ", 0
 desc_cand:          !text "BOUGIE BLEUE (FLAMMES ET SECRETS)   ", 0
 desc_food:          !text "APPAT (ATTRACTEUR POUR MONSTRES)    ", 0
 desc_potion:        !text "POTION DE VIE (RESTAURE LES COEURS) ", 0
+desc_whistle:       !text "FLUTE (REVELE SECRETS ET WARPS)     ", 0
+desc_wand:          !text "BAGUETTE MAGIQUE (ONDES DE CHOC)    ", 0
+
 
 ; Textes Page 1 (Triforce)
 txt_p1_title:       !text "  LA TRIFORCE DE LA SAGESSE   "

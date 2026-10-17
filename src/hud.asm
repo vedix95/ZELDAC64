@@ -37,7 +37,7 @@ hud_map_offsets:
         !byte 81, 83, 85                ; ry = 1 (ligne 2, cols 1, 3, 5)
         !byte 121, 123, 125             ; ry = 2 (ligne 3, cols 1, 3, 5)
 
-; Noms des objets slot B (4 caractères chacun, 6 objets)
+; Noms des objets slot B (4 caractères chacun, 8 objets)
 b_item_names:
         !text "BOOM"
         !text "BOMB"
@@ -45,6 +45,8 @@ b_item_names:
         !text "CAND"
         !text "FOOD"
         !text "POTI"
+        !text "FLUT"
+        !text "WAND"
 
 ; ---------------------------------------------------------------------------
 ; hud_init : initialise le cadre complet du HUD
