@@ -29,7 +29,7 @@ DIR_LEFT        = 2
 DIR_RIGHT       = 3
 
 PLAYER_COLOR    = COL_GREEN             ; tunique de Link
-PLAYER_SKIN     = COL_ORANGE            ; multicolore 1  : peau / garde dorée (teinte authentique Link)
+PLAYER_SKIN     = COL_LIGHT_RED         ; multicolore 1  : peau / chair authentique (rose/flesh C64)
 PLAYER_BROWN    = COL_BROWN             ; multicolore 2  : cheveux, ceinture, poignée
 SWORD_COLOR     = COL_WHITE             ; couleur propre sprite 1 : lame blanche brillante
 
@@ -54,6 +54,9 @@ player_has_potion:     !byte 0          ; 0 = aucune, 1 = bleue, 2 = rouge
 player_has_whistle:    !byte 1          ; 1 = flûte magique
 player_has_wand:       !byte 1          ; 1 = baguette magique
 
+
+player_has_compass:     !byte 0          ; 1 = boussole du donjon actif
+player_has_dungeon_map:  !byte 0          ; 1 = plan du donjon actif
 
 ; Triforce de la Sagesse (8 fragments numérotés 1 à 8)
 player_triforce_pieces: !byte %00000000 ; masque 8 bits

@@ -12,12 +12,12 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.7)
+## 💾 Téléchargement Direct & Releases (v0.8.0)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.7 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game authentiques (Overworld & Donjons) et le streaming dynamique des cartes et ennemis Overworld & 9 Donjons.
+- 🎮 **[Télécharger l'image disquette v0.8.0 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES (Overworld & Donjons) et le streaming dynamique des cartes et ennemis Overworld & 9 Donjons.
 - 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
 
 Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
@@ -29,15 +29,19 @@ x64sc -autostart zelda.d64
 
 ## Captures d'écran
 
-### En jeu (Overworld, Donjons & Cimetière)
+### En jeu (Overworld, Donjons, Monstres & Boss)
 
-| Salle de départ & Grotte de l'Épée | Dans le Cimetière avec ennemis | Exploration Overworld (128 salles) |
-| :---: | :---: | :---: |
-| ![Salle de départ](docs/images/shot_start.png) | ![Cimetière avec ennemis](docs/images/shot_graveyard.png) | ![Overworld](docs/images/shot_overworld.png) |
+| Overworld & Radar GPS | Entrée du Donjon 1 (L'Aigle) |
+| :---: | :---: |
+| ![Overworld](docs/images/shot_overworld.png) | ![Entrée Donjon 1](docs/images/shot_dungeon1.png) |
 
-| Entrée du Niveau 1 (L'Aigle) | Franchissement du pont de la rivière | Désert avec Peahats et Leevers |
+| Combat contre le Boss Aquamentus | Salle des Monstres Stalfos (Donjon 1) |
+| :---: | :---: |
+| ![Boss Aquamentus](docs/images/shot_boss_aquamentus.png) | ![Monstres Stalfos](docs/images/shot_dungeon_enemies.png) |
+
+| Salle de départ & Grotte de l'Épée | Cimetière avec Ghinis | Désert avec Peahats |
 | :---: | :---: | :---: |
-| ![Entrée Niveau 1](docs/images/shot_level1_entrance.png) | ![Pont de la rivière](docs/images/shot_bridge.png) | ![Désert](docs/images/shot_desert.png) |
+| ![Salle de départ](docs/images/shot_start.png) | ![Cimetière avec ennemis](docs/images/shot_graveyard.png) | ![Désert](docs/images/shot_desert.png) |
 
 ### Cinématique d'Introduction Authentique (Chute d'eau, Parchemin & Bestiaire)
 
@@ -56,17 +60,24 @@ x64sc -autostart zelda.d64
 - **Monde Overworld complet (128 salles — 16×8 écrans)** :
   - Fidélité complète à la disposition originale du jeu classique de 1986.
   - Transitions fluides d'écran à écran lors du franchissement des bordures.
-- **Musiques in-game authentiques & Moteur Audio SID (Mono & Dual SID)** :
-  - **Thème légendaire de l'Overworld** : 449 pas, polyphonie 3 voix complète (mélodie cuivrée pulse V1, contre-chant et harmonies sawtooth V2, basse bondissante triangle et caisse claire noise V3).
-  - **Thème envoûtant des Donjons (Underworld)** : Partition extraite directement de la ROM originale NES (`zelda.nes` Banque 0).
+- **Musiques in-game 100% authentiques NES & Moteur Audio SID** :
+  - **Thème légendaire d'exploration Overworld** : Boucle d'aventure authentique (sans confusion avec l'intro), basse profonde Voice 3 calibrée sur l'octave exacte du processeur Triangle NES, éliminant tout sifflement aigu.
+  - **Thème envoûtant des Donjons (Underworld)** : Partition pure des Niveaux 1 à 8 extraite de la cartouche NES (`zelda.nes` Banque 0), arpège G-mineur envoûtant en onde Pulse 50% sur 2 voix entrelacées et basse continue.
   - **Rendu somptueux sur un seul SID standard** : Gestion fine des priorités SFX (bruits d'épée, tirs, bouclier, ennemis touchés/éliminés, rubis) garantissant la continuité du rythme.
   - **Support Dual SID ($D420 stéréo)** : Touche `3` en jeu pour basculer instantanément en mode stéréo (désaccord fin +2 Hz pour un effet chorus analogique sur les mélodies, et déport exclusif des effets sonores sur le 2e SID).
 - **Les 9 Donjons complets d'Hyrule (Niveaux 1 à 9)** :
   - Intégration de l'ensemble des 9 donjons de la première quête : Niveau 1 (*L'Aigle*), Niveau 2 (*La Lune*), Niveau 3 (*Le Manji*), Niveau 4 (*Le Serpent*), Niveau 5 (*Le Lézard*), Niveau 6 (*Le Dragon*), Niveau 7 (*Le Démon*), Niveau 8 (*Le Lion*) et Niveau 9 (*La Montagne de la Mort*).
-  - Entrées de donjon authentiques réparties sur la carte Overworld (arbres, grottes, passages secrets) et portes de sortie au sud de chaque niveau.
+  - **Découplage strict Grottes / Donjons** : Les 23 cavernes overworld (marchands, fées, vieil homme) sont gérées par des routines dédiées sans consommer de mémoire souterraine, réservant l'Underworld aux vrais labyrinthes de donjon.
+  - **Mécanique des portes 1:1 NES** : Les portes restent ouvertes pendant l'exploration normale pour laisser le joueur progresser librement ; les volets métalliques ne se referment que dans la salle officielle du Boss tant que celui-ci est vivant.
   - Palettes de couleurs authentiques pour chaque donjon (Cyan, Bleu, Vert, Gris clair, Rouge, Orange/Marron, Vert forêt, Bleu ciel, Rouge cramoisi).
   - Bestiaire et monstres souterrains complets : Stalfos, Goriyas, Keeses, slimes Gel/Zol, Wallmasters, pièges Trap et boss Aquamentus.
   - Streaming dynamique des ennemis depuis la disquette 1541 en `$B800` pour préserver la mémoire vive résidente sous les 64 Ko.
+- **HUD & Mini-carte matricielle intégrée** :
+  - **En Donjon** : En-tête officiel `LEVEL-X` en blanc et mini-carte matricielle 5×3 fenêtrée sur la position de Link (point jaune brillant `HUD_MAP_ACTIVE`), coloration cyan des salles explorées, balise rouge de la Triforce si boussole acquise.
+  - **En Overworld** : En-tête `HYRULE ` en vert clair et radar GPS Hyrule avec coordonnées de secteur (A-1 .. P-8).
+  - Compteurs en temps réel : cœurs de vie, rubis avec icône losange `◆`, clés `🗝`, bombes `💣`, et armes actives A et B.
+- **Link & Graphismes fidèles** :
+  - Teinte de peau couleur chair C64 (`COL_LIGHT_RED`), tunique verte, bouclier latéral visible dans toutes les orientations.
 - **Cinématique d'introduction complète** :
   - Chute d'eau animée avec défilement vertical matériel du VIC-II.
   - Défilement du parchemin contant la légende d'Hyrule, présentation des trésors et logo Zelda.
@@ -90,9 +101,6 @@ x64sc -autostart zelda.d64
   - Ponts horizontaux et verticaux praticables permettant d'accéder au Niveau 1 (L'Aigle) et aux différentes îles de l'Overworld.
 - **Grottes secrètes & PNJ** :
   - Le vieil homme (*« IT'S DANGEROUS TO GO ALONE ! TAKE THIS. »*), torches animées et ramassage d'épée.
-- **HUD & Inventaire graphique complet** :
-  - Affichage tête haute en temps réel (cœurs de vie, mini-carte dynamique, compteurs de rubis, clés et bombes, armes actives A et B).
-  - Écran d'inventaire interactif accessible avec la touche `B`.
 - **Architecture disquette D64 à chargement dynamique** :
   - Image disquette 1541 standard (`zelda.d64`) contenant l'intro, le moteur de jeu résident et les cartes chargées à la demande via les routines KERNAL IEC en `$A000`.
 - **Éditeur de niveau visuel intégré** (`tools/editor.py`) :

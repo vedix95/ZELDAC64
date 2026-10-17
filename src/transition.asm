@@ -175,6 +175,7 @@ transition_right:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        jsr dungeon_on_enter_room
         lda #STATE_PLAYING
         sta game_state
         rts
@@ -335,6 +336,7 @@ transition_left:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        jsr dungeon_on_enter_room
         lda #STATE_PLAYING
         sta game_state
         rts
@@ -477,6 +479,7 @@ transition_down:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        jsr dungeon_on_enter_room
         lda #STATE_PLAYING
         sta game_state
         rts
@@ -623,6 +626,7 @@ transition_up:
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
+        jsr dungeon_on_enter_room
         lda #STATE_PLAYING
         sta game_state
         rts

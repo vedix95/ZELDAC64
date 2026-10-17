@@ -31,6 +31,8 @@ start:
         !error "Les sprites Link debordent sur la zone ROM chargen ($1000)"
 }
 
+START_IN_DUNGEON = 0 ; 0 = Overworld normal, 1 = Donjon 1 Entrée, 2 = Donjon 1 Boss Aquamentus, 3 = Donjon 1 Stalfos
+
 game_init:
         ; Désactive la ROM BASIC ($A000-$BFFF) pour libérer les 64 Ko de RAM
         ; $36 (%00110110) : RAM à $A000-$BFFF, I/O à $D000-$DFFF, KERNAL ACTIF à $E000-$FFFF
@@ -38,7 +40,41 @@ game_init:
         sta CPU_PORT
 
         jsr disk_init
+!if START_IN_DUNGEON == 0 {
         jsr disk_load_map_overworld
+        lda #WORLD_OVERWORLD
+        sta current_world_type
+} else {
+        jsr disk_load_map_underworld
+        lda #WORLD_DUNGEON
+        sta current_world_type
+        lda #1
+        sta current_dungeon_level
+!if START_IN_DUNGEON == 1 {
+        lda #3
+        sta current_room_x
+        lda #7
+        sta current_room_y
+} else if START_IN_DUNGEON == 2 {
+        lda #5
+        sta current_room_x
+        lda #3
+        sta current_room_y
+        lda #70
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #144
+        sta player_y
+        lda #DIR_RIGHT
+        sta player_dir
+} else if START_IN_DUNGEON == 3 {
+        lda #4
+        sta current_room_x
+        lda #7
+        sta current_room_y
+}
+}
         jsr init_video
         jsr clear_screen
         jsr load_room
@@ -47,12 +83,19 @@ game_init:
         jsr items_init
         jsr enemies_init
         jsr dungeon_init
+!if START_IN_DUNGEON != 0 {
+        jsr dungeon_on_enter_room
+}
         jsr player_draw
         jsr enemies_prep_multiplexer
         jsr init_raster_irq
         jsr sound_init
         jsr sound_detect_dual_sid
+!if START_IN_DUNGEON == 0 {
         lda #MUSIC_OVERWORLD
+} else {
+        lda #MUSIC_DUNGEON
+}
         jsr music_play
 
         lda #STATE_PLAYING
@@ -155,7 +198,6 @@ wait_frame:
         rts
 
 !source "src/input.asm"
-!source "src/hud.asm"
 !source "src/player.asm"
 !source "src/tilemap.asm"
 !source "src/gameplay.asm"
@@ -184,6 +226,7 @@ wait_frame:
 !source "src/items.asm"
 !source "src/enemies.asm"
 !source "src/dungeon.asm"
+!source "src/hud.asm"
 !source "src/inventory.asm"
 !source "src/inventory_draw.asm"
 

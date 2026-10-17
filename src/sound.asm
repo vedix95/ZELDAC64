@@ -184,12 +184,12 @@ music_play:
         lda #%00100001
         sta SID1_V2_CTRL
 
-        ; Voix 3 : Percussion caisse claire militaire (Noise)
-        lda #$03
+        ; Voix 3 : Basse héroïque marchante (Triangle pur)
+        lda #$09                        ; Attack 2ms, Decay 750ms
         sta SID1_V3_AD
-        lda #$00
+        lda #$e2                        ; Sustain 14, Release 24ms
         sta SID1_V3_SR
-        lda #%10000001
+        lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
 
         ; Si Dual SID, configure SID 2 pour le chorus stéréo
@@ -211,35 +211,45 @@ music_play:
         sta SID2_V2_SR
         lda #%00100001
         sta SID2_V2_CTRL
+        lda #$09
+        sta SID2_V3_AD
+        lda #$e2
+        sta SID2_V3_SR
+        lda #%00010001
+        sta SID2_V3_CTRL
 +       rts
 
 
 .init_dungeon_inst:
-        ; --- Instruments Underworld (Dungeon) ---
-        ; Voix 1 : Sonde mystique / Lead gothique (Pulse creux)
+        ; --- Instruments Underworld (Dungeon) Authentiques ---
+        ; Voix 1 : Pulse 50% ($0800), arpeggio lead
         lda #$00
         sta SID1_V1_PW_LO
-        lda #$04                        ; Impulsion 25% (timbre sombre et nasillard)
+        lda #$08                        ; Impulsion 50%
         sta SID1_V1_PW_HI
-        lda #$0c
+        lda #$09                        ; Attack 2ms, Decay 750ms
         sta SID1_V1_AD
-        lda #$a0
+        lda #$c0                        ; Sustain 12, Release 6ms
         sta SID1_V1_SR
         lda #%01000001
         sta SID1_V1_CTRL
 
-        ; Voix 2 : Orgue souterrain menaçant (Sawtooth soutenu)
-        lda #$0f
+        ; Voix 2 : Pulse 50% ($0800), arpeggio contre-chant (NES Square 0)
+        lda #$00
+        sta SID1_V2_PW_LO
+        lda #$08
+        sta SID1_V2_PW_HI
+        lda #$09
         sta SID1_V2_AD
-        lda #$90
+        lda #$c0
         sta SID1_V2_SR
-        lda #%00100001
+        lda #%01000001                  ; Pulse Gate ON (matching pulse timbre)
         sta SID1_V2_CTRL
 
-        ; Voix 3 : Basse des profondeurs (Triangle pur)
-        lda #$00
+        ; Voix 3 : Basse des profondeurs (Triangle pur, octave basse)
+        lda #$09
         sta SID1_V3_AD
-        lda #$f0
+        lda #$e2
         sta SID1_V3_SR
         lda #%00010001
         sta SID1_V3_CTRL
@@ -248,20 +258,32 @@ music_play:
         beq +
         lda #$00
         sta SID2_V1_PW_LO
-        lda #$04
+        lda #$08
         sta SID2_V1_PW_HI
-        lda #$0c
+        lda #$09
         sta SID2_V1_AD
-        lda #$a0
+        lda #$c0
         sta SID2_V1_SR
         lda #%01000001
         sta SID2_V1_CTRL
-        lda #$0f
+
+        lda #$00
+        sta SID2_V2_PW_LO
+        lda #$08
+        sta SID2_V2_PW_HI
+        lda #$09
         sta SID2_V2_AD
-        lda #$90
+        lda #$c0
         sta SID2_V2_SR
-        lda #%00100001
+        lda #%01000001
         sta SID2_V2_CTRL
+
+        lda #$09
+        sta SID2_V3_AD
+        lda #$e2
+        sta SID2_V3_SR
+        lda #%00010001
+        sta SID2_V3_CTRL
 +       rts
 
 ; ---------------------------------------------------------------------------
@@ -452,25 +474,51 @@ music_update:
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V2_FREQ_HI
+
+        lda current_music
+        cmp #MUSIC_DUNGEON
+        beq .v2_pulse
+        ; Overworld : Sawtooth
         lda #%00100000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V2_CTRL
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
+        jmp .v2_dual_sid
 
+.v2_pulse:
+        ; Underworld : Pulse 50%
+        lda #%01000000                  ; Gate OFF
+        sta SID1_V2_CTRL
+        lda #%01000001                  ; Pulse Gate ON
+        sta SID1_V2_CTRL
+
+.v2_dual_sid:
         lda dual_sid_enabled
         beq .skip_v2
         lda music_note_freq_lo,x
+        clc
+        adc #2
         sta SID2_V2_FREQ_LO
         lda music_note_freq_hi,x
+        adc #0
         sta SID2_V2_FREQ_HI
+        lda current_music
+        cmp #MUSIC_DUNGEON
+        beq .v2_dual_pulse
         lda #%00100000
         sta SID2_V2_CTRL
         lda #%00100001
         sta SID2_V2_CTRL
         jmp .skip_v2
+.v2_dual_pulse:
+        lda #%01000000
+        sta SID2_V2_CTRL
+        lda #%01000001
+        sta SID2_V2_CTRL
+        jmp .skip_v2
 
 .v2_mute:
-        lda #%00100000                  ; Gate OFF
+        lda #%00000000                  ; Gate OFF
         sta SID1_V2_CTRL
         lda dual_sid_enabled
         beq .skip_v2
@@ -491,7 +539,7 @@ music_update:
         cmp #$80
         beq .v3_percussion
 
-        ; Basse mélodique (Underworld)
+        ; Basse mélodique (Overworld & Underworld)
         tax
         lda music_note_freq_lo,x
         sta SID1_V3_FREQ_LO
@@ -501,10 +549,21 @@ music_update:
         sta SID1_V3_CTRL
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
+
+        lda dual_sid_enabled
+        beq .skip_v3
+        lda music_note_freq_lo,x
+        sta SID2_V3_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID2_V3_FREQ_HI
+        lda #%00010000
+        sta SID2_V3_CTRL
+        lda #%00010001
+        sta SID2_V3_CTRL
         rts
 
 .v3_percussion:
-        ; Caisse claire / Percussion militaire Overworld
+        ; Caisse claire / Percussion militaire
         lda #$80
         sta SID1_V3_FREQ_LO
         lda #$28
@@ -522,6 +581,9 @@ music_update:
 .v3_mute:
         lda #%00010000                  ; Gate OFF
         sta SID1_V3_CTRL
+        lda dual_sid_enabled
+        beq .skip_v3
+        sta SID2_V3_CTRL
 .skip_v3:
         rts
 

@@ -5,7 +5,7 @@ map_enemies:
         ; Salle   0 : ( 0,  0)
         !byte TYPE_DARKNUT_BLUE , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle   1 : ( 1,  0)
-        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_STALFOS      , 15,  1,   TYPE_STALFOS      , 15,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle   2 : ( 2,  0)
         !byte TYPE_ROPE         , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle   3 : ( 3,  0)
@@ -17,13 +17,13 @@ map_enemies:
         ; Salle   6 : ( 6,  0)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle   7 : ( 7,  0)
-        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GIBDO        , 10,  4,   TYPE_GIBDO        ,  4,  1,   TYPE_GIBDO        ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle   8 : ( 8,  0)
         !byte TYPE_GIBDO        , 10,  4,   TYPE_GIBDO        ,  4,  1,   TYPE_GIBDO        ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle   9 : ( 9,  0)
         !byte TYPE_DARKNUT_RED  , 10,  4,   TYPE_DARKNUT_RED  ,  4,  1,   TYPE_DARKNUT_RED  ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  10 : (10,  0)
-        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_GORIYA_RED   , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  11 : (11,  0)
         !byte TYPE_STALFOS      , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  12 : (12,  0)
@@ -103,13 +103,13 @@ map_enemies:
         ; Salle  49 : ( 1,  3)
         !byte TYPE_AQUAMENTUS   , 10,  4,   TYPE_AQUAMENTUS   ,  4,  1,   TYPE_AQUAMENTUS   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  50 : ( 2,  3)
-        !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_GORIYA_RED   , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  51 : ( 3,  3)
         !byte TYPE_KEESE_RED    , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  52 : ( 4,  3)
         !byte TYPE_KEESE_BLUE   , 11,  4,   TYPE_KEESE_BLUE   ,  4,  1,   TYPE_KEESE_BLUE   ,  5,  7,   TYPE_KEESE_BLUE   , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  53 : ( 5,  3)
-        !byte TYPE_GOHMA_RED    , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_AQUAMENTUS   , 14,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  54 : ( 6,  3)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  55 : ( 7,  3)
@@ -135,17 +135,17 @@ map_enemies:
         ; Salle  65 : ( 1,  4)
         !byte TYPE_STALFOS      , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  66 : ( 2,  4)
-        !byte TYPE_GEL          , 10,  4,   TYPE_GEL          ,  4,  1,   TYPE_GEL          ,  4,  7,   TYPE_GEL          , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  67 : ( 3,  4)
-        !byte TYPE_KEESE_RED    , 10,  3,   TYPE_KEESE_RED    ,  4,  7,   TYPE_KEESE_RED    , 15,  7,   TYPE_KEESE_RED    ,  4,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_KEESE_BLUE   , 10,  3,   TYPE_KEESE_BLUE   ,  4,  7,   TYPE_KEESE_BLUE   , 15,  7,   TYPE_KEESE_BLUE   ,  4,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  68 : ( 4,  4)
         !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  69 : ( 5,  4)
         !byte TYPE_TRAP         ,  2,  2,   TYPE_TRAP         , 17,  2,   TYPE_GEL          , 10,  4,   TYPE_GEL          , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  70 : ( 6,  4)
-        !byte TYPE_AQUAMENTUS   , 15,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
-        ; Salle  71 : ( 7,  4)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Salle  71 : ( 7,  4)
+        !byte TYPE_KEESE_BLUE   , 10,  4,   TYPE_KEESE_BLUE   ,  4,  1,   TYPE_KEESE_BLUE   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  72 : ( 8,  4)
         !byte TYPE_ROPE         , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  73 : ( 9,  4)
@@ -167,7 +167,7 @@ map_enemies:
         ; Salle  81 : ( 1,  5)
         !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_STALFOS      , 15,  1,   TYPE_STALFOS      , 15,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  82 : ( 2,  5)
-        !byte TYPE_GEL          , 11,  4,   TYPE_GEL          ,  4,  1,   TYPE_GEL          ,  5,  7,   TYPE_GEL          , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_KEESE_RED    , 11,  4,   TYPE_KEESE_RED    ,  4,  1,   TYPE_KEESE_RED    ,  5,  7,   TYPE_KEESE_RED    , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  83 : ( 3,  5)
         !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  84 : ( 4,  5)
@@ -175,7 +175,7 @@ map_enemies:
         ; Salle  85 : ( 5,  5)
         !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  86 : ( 6,  5)
-        !byte TYPE_WALLMASTER   , 10,  4,   TYPE_WALLMASTER   ,  4,  1,   TYPE_WALLMASTER   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_WALLMASTER   , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  87 : ( 7,  5)
         !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  88 : ( 8,  5)
@@ -201,11 +201,11 @@ map_enemies:
         ; Salle  98 : ( 2,  6)
         !byte TYPE_AQUAMENTUS   , 10,  4,   TYPE_AQUAMENTUS   ,  4,  1,   TYPE_AQUAMENTUS   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle  99 : ( 3,  6)
-        !byte TYPE_KEESE_RED    , 11,  4,   TYPE_KEESE_RED    ,  4,  1,   TYPE_KEESE_RED    ,  5,  7,   TYPE_KEESE_RED    , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      , 11,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  5,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 100 : ( 4,  6)
-        !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_KEESE_BLUE   ,  4,  7,   TYPE_KEESE_BLUE   , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
-        ; Salle 101 : ( 5,  6)
         !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Salle 101 : ( 5,  6)
+        !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 102 : ( 6,  6)
         !byte TYPE_KEESE_BLUE   , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 103 : ( 7,  6)
@@ -213,7 +213,7 @@ map_enemies:
         ; Salle 104 : ( 8,  6)
         !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 105 : ( 9,  6)
-        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  , 10,  4,   TYPE_DARKNUT_RED  ,  4,  1,   TYPE_DARKNUT_RED  ,  4,  7,   TYPE_DARKNUT_RED  ,  6,  4,   TYPE_DARKNUT_RED  , 13,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 106 : (10,  6)
         !byte TYPE_DARKNUT_BLUE , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 107 : (11,  6)
@@ -223,7 +223,7 @@ map_enemies:
         ; Salle 109 : (13,  6)
         !byte TYPE_GIBDO        , 10,  4,   TYPE_GIBDO        ,  4,  1,   TYPE_GIBDO        ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 110 : (14,  6)
-        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GIBDO        , 10,  3,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 111 : (15,  6)
         !byte TYPE_GEL          , 11,  4,   TYPE_GEL          ,  4,  1,   TYPE_GEL          ,  5,  7,   TYPE_GEL          , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 112 : ( 0,  7)
@@ -231,11 +231,11 @@ map_enemies:
         ; Salle 113 : ( 1,  7)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 114 : ( 2,  7)
-        !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_KEESE_RED    , 10,  4,   TYPE_KEESE_RED    ,  4,  1,   TYPE_KEESE_RED    ,  4,  7,   TYPE_KEESE_RED    , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 115 : ( 3,  7)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 116 : ( 4,  7)
-        !byte TYPE_KEESE_RED    , 10,  4,   TYPE_KEESE_RED    ,  4,  1,   TYPE_KEESE_RED    ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  4,  1,   TYPE_STALFOS      ,  4,  7,   TYPE_STALFOS      , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 117 : ( 5,  7)
         !byte TYPE_GEL          , 10,  4,   TYPE_GEL          , 15,  1,   TYPE_GEL          , 15,  7,   TYPE_GEL          ,  6,  1,   TYPE_GEL          ,  6,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 118 : ( 6,  7)
@@ -247,7 +247,7 @@ map_enemies:
         ; Salle 121 : ( 9,  7)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 122 : (10,  7)
-        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_WALLMASTER   , 10,  4,   TYPE_WALLMASTER   ,  4,  1,   TYPE_WALLMASTER   ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 123 : (11,  7)
         !byte TYPE_GORIYA_RED   , 10,  4,   TYPE_GORIYA_RED   ,  4,  1,   TYPE_GORIYA_RED   ,  4,  7,   TYPE_GORIYA_RED   , 15,  1,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 124 : (12,  7)
@@ -255,6 +255,6 @@ map_enemies:
         ; Salle 125 : (13,  7)
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 126 : (14,  7)
-        !byte TYPE_GIBDO        , 10,  4,   TYPE_GIBDO        ,  4,  1,   TYPE_GIBDO        ,  4,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Salle 127 : (15,  7)
         !byte TYPE_KEESE_RED    , 10,  4,   TYPE_KEESE_RED    , 15,  1,   TYPE_KEESE_RED    , 15,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0

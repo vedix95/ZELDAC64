@@ -147,7 +147,6 @@ load_room:
         lda #>room_buf
         sta ZP_MAP+1
         jsr draw_map
-        jsr dungeon_on_enter_room
         rts
 
 ; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).
@@ -291,9 +290,9 @@ dungeon_room_levels:
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 dungeon_start_rx:
-        !byte 3, 12, 10, 6, 9, 14, 1, 7, 10
+        !byte 3, 13, 12, 1, 6, 9, 9, 14, 6
 dungeon_start_ry:
-        !byte 7,  7,  7, 7, 6,  6, 0, 0,  0
+        !byte 7,  7,  7, 7, 7, 7, 7,  7, 7
 
 ; ---------------------------------------------------------------------------
 ; enter_dungeon : Bascule vers le monde souterrain / Donjon (Niveaux 1 à 9)
@@ -361,7 +360,9 @@ enter_dungeon:
 
         ; 5. Afficher la salle et les ennemis
         jsr load_room
+        jsr hud_init
         jsr enemies_room_init
+        jsr dungeon_on_enter_room
         lda #STATE_PLAYING
         sta game_state
         rts

@@ -56,11 +56,11 @@ $(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm $(SRC_DIR)/map_overworld.asm $(
 		--underworld assets/underworld.txt --underworld-out $(SRC_DIR)/map_underworld.asm
 
 # Cartes Overworld et Donjons compilées sous forme de fichiers binaires séparés à charger à $A000
-$(PRG_OW_MAP): $(SRC_DIR)/map_overworld.asm | $(BLD_DIR)
+$(PRG_OW_MAP): $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_overworld_enemies.inc | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-$(PRG_UW_MAP): $(SRC_DIR)/map_underworld.asm | $(BLD_DIR)
+$(PRG_UW_MAP): $(SRC_DIR)/map_underworld.asm $(SRC_DIR)/map_underworld_enemies.inc | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 

@@ -34,6 +34,12 @@ DROP_COMPASS            = 3
 DROP_MAP                = 4
 DROP_TRIFORCE           = 5
 
+; Tables des salles officielles de boss et triforce (Niveaux 1 à 9)
+dungeon_boss_rooms:
+        !byte $35, $0e, $4d, $13, $24, $1c, $2a, $3c, $42
+dungeon_triforce_rooms:
+        !byte $36, $0d, $3d, $03, $14, $0c, $2b, $2c, $32
+
 ; ---------------------------------------------------------------------------
 ; dungeon_init : réinitialisation globale
 ; ---------------------------------------------------------------------------
@@ -63,14 +69,15 @@ dungeon_on_enter_room:
         sta dungeon_drop_type
 
         ; Vérifie si c'est la salle de la Triforce du niveau actif
-        ; En règle générale, la salle de la Triforce est la salle (entrance_x, 1) ou salle boss-1
-        lda current_room_y
-        cmp #0
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcs .check_boss_room
+        lda dungeon_triforce_rooms,x
+        cmp current_room_idx
         bne .check_boss_room
-        ; Rangée 0 : si aucune bête et niveau < 9, c'est la Triforce !
-        lda current_dungeon_level
-        cmp #9
-        beq .check_boss_room
+
+        ; C'est la salle de la Triforce du donjon actif !
         lda #DROP_TRIFORCE
         sta dungeon_drop_type
         lda #1
@@ -84,7 +91,16 @@ dungeon_on_enter_room:
         rts
 
 .check_boss_room:
-        ; Si la salle contient des monstres vivants, les volets se ferment !
+        ; Vérifie si c'est la salle du Boss du niveau actif
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcs .no_monsters
+        lda dungeon_boss_rooms,x
+        cmp current_room_idx
+        bne .no_monsters
+
+        ; C'est la salle du Boss ! Si des monstres sont vivants, les volets se ferment !
         ldx #0
         ldy #0
 -       lda en_state,x
@@ -352,12 +368,15 @@ dungeon_open_shutters:
 ; dungeon_spawn_room_drop : fait apparaître un butin mérité au centre de la salle
 ; ---------------------------------------------------------------------------
 dungeon_spawn_room_drop:
-        ; Vérifie si c'est une salle de boss
-        ldx current_room_idx
-        cpx #$23                        ; Salle Aquamentus (Niveau 1)
+        ; Vérifie si c'est une salle de boss officielle
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcs .not_boss_drop
+        lda dungeon_boss_rooms,x
+        cmp current_room_idx
         beq .spawn_boss_heart
-        cpx #$12                        ; Autre salle de boss
-        beq .spawn_boss_heart
+.not_boss_drop:
 
         ; Sinon, lâche une petite clef de donjon
         lda #DROP_KEY

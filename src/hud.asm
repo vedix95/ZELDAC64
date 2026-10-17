@@ -28,14 +28,16 @@ hud_max_hearts:   !byte 3               ; 3 cœurs max
 hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
 hud_selected_b:   !byte 0               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
 
-; Salles visitées (128 octets pour la grille 16x8, 1 = visitée)
-visited_rooms:    !fill 128, 0
+; Salles visitées (128 octets pour Overworld et 128 octets pour Donjons)
+visited_rooms:
+visited_ow_rooms: !fill 128, 0
+visited_uw_rooms: !fill 128, 0
 
-; Coordonnées écran pour chaque cellule de la minimap 3x3
-hud_map_offsets:
-        !byte 41, 43, 45                ; ry = 0 (ligne 1, cols 1, 3, 5)
-        !byte 81, 83, 85                ; ry = 1 (ligne 2, cols 1, 3, 5)
-        !byte 121, 123, 125             ; ry = 2 (ligne 3, cols 1, 3, 5)
+hud_cur_line:     !byte 0
+hud_cur_col:      !byte 0
+hud_base_off:     !byte 0
+hud_calc_ry:      !byte 0
+hud_calc_rx:      !byte 0
 
 ; Noms des objets slot B (4 caractères chacun, 8 objets)
 b_item_names:
@@ -63,18 +65,7 @@ hud_init:
         cpx #160                        ; 4 lignes x 40 colonnes = 160 octets
         bne .clear_hud
 
-        ; Ligne 0 : Titres
-        ; "[MAP]"
-        lda #'['
-        sta SCREEN_RAM+1
-        lda #'M'
-        sta SCREEN_RAM+2
-        lda #'A'
-        sta SCREEN_RAM+3
-        lda #'P'
-        sta SCREEN_RAM+4
-        lda #']'
-        sta SCREEN_RAM+5
+        ; Ligne 0 : Titres dynamiques gérés par hud_render (LEVEL-N / HYRULE)
 
         ; "RUPEES"
         lda #'R'
@@ -152,8 +143,8 @@ hud_init:
         ; Épée dans le slot X : dynamique selon player_has_sword
         jsr hud_update_sword
 
-        ; Ligne 3 : Ligne de séparation (colonnes 6 à 39)
-        ldx #6
+        ; Ligne 3 : Ligne de séparation (colonnes 8 à 39)
+        ldx #8
 .sep_line:
         lda #'-'
         sta SCREEN_RAM+120,x
@@ -171,87 +162,337 @@ hud_init:
 ; ---------------------------------------------------------------------------
 hud_render:
         ; 1. Mise à jour de la position de la carte (16x8)
-        ; Marque la salle active comme visitée
+        ; Marque la salle active comme visitée dans la table appropriée
         ldx current_room_y
         lda world_row_offset,x
         clc
         adc current_room_x
         tax
         lda #1
-        sta visited_rooms,x
+        ldy current_world_type
+        bne +
+        sta visited_ow_rooms,x
+        jmp ++
++       sta visited_uw_rooms,x
+++
 
-        ; Ligne 1 : "LV:" + Niveau (1..9) si Donjon, ou "R:" + Colonne-Rangée si Overworld
+        ; --- En-tête Ligne 0 (Cols 1..7) ---
         lda current_world_type
         cmp #WORLD_DUNGEON
-        bne .hud_ow_coord
+        bne .hud_hdr_ow
 
+        ; Donjon : "LEVEL-X" (ex: LEVEL-1)
         lda #'L'
-        sta SCREEN_RAM+41
+        sta SCREEN_RAM+1
+        lda #'E'
+        sta SCREEN_RAM+2
         lda #'V'
-        sta SCREEN_RAM+42
-        lda #':'
-        sta SCREEN_RAM+43
+        sta SCREEN_RAM+3
+        lda #'E'
+        sta SCREEN_RAM+4
+        lda #'L'
+        sta SCREEN_RAM+5
+        lda #'-'
+        sta SCREEN_RAM+6
         lda #'0'
         clc
         adc current_dungeon_level
-        sta SCREEN_RAM+44
-        lda #' '
-        sta SCREEN_RAM+45
-        sta SCREEN_RAM+46
-        jmp .hud_coord_col
+        sta SCREEN_RAM+7
 
-.hud_ow_coord:
+        lda #COL_WHITE
+        sta COLOR_RAM+1
+        sta COLOR_RAM+2
+        sta COLOR_RAM+3
+        sta COLOR_RAM+4
+        sta COLOR_RAM+5
+        sta COLOR_RAM+6
+        sta COLOR_RAM+7
+        jmp .render_map_cells
+
+.hud_hdr_ow:
+        ; Overworld : "HYRULE "
+        lda #'H'
+        sta SCREEN_RAM+1
+        lda #'Y'
+        sta SCREEN_RAM+2
         lda #'R'
-        sta SCREEN_RAM+41
-        lda #':'
-        sta SCREEN_RAM+42
-        lda #'A'
-        clc
-        adc current_room_x
-        sta SCREEN_RAM+43
-        lda #'-'
-        sta SCREEN_RAM+44
-        lda #'1'
-        clc
-        adc current_room_y
-        sta SCREEN_RAM+45
+        sta SCREEN_RAM+3
+        lda #'U'
+        sta SCREEN_RAM+4
+        lda #'L'
+        sta SCREEN_RAM+5
+        lda #'E'
+        sta SCREEN_RAM+6
         lda #' '
-        sta SCREEN_RAM+46
+        sta SCREEN_RAM+7
 
-.hud_coord_col:
-        lda #COL_YELLOW
+        lda #COL_LIGHT_GREEN
+        sta COLOR_RAM+1
+        sta COLOR_RAM+2
+        sta COLOR_RAM+3
+        sta COLOR_RAM+4
+        sta COLOR_RAM+5
+        sta COLOR_RAM+6
+        sta COLOR_RAM+7
+
+.render_map_cells:
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        jmp .render_dungeon_minimap
++
+
+        ; --- Overworld : Radar Hyrule GPS (Lignes 1..3, Cols 1..5) ---
+        ; Ligne 1 : "+---+"
+        lda #'+'
+        sta SCREEN_RAM+41
+        sta SCREEN_RAM+45
+        lda #'-'
+        sta SCREEN_RAM+42
+        sta SCREEN_RAM+43
+        sta SCREEN_RAM+44
+        lda #COL_GREY
         sta COLOR_RAM+41
         sta COLOR_RAM+42
-        lda #COL_WHITE
         sta COLOR_RAM+43
         sta COLOR_RAM+44
         sta COLOR_RAM+45
 
-        ; Ligne 2 : Coordonnées matricielles [XX,Y]
-        lda #'['
+        ; Ligne 2 : "| . |" avec position proportionnelle de Link
+        lda #'|'
         sta SCREEN_RAM+81
-        lda current_room_x
-        jsr print_2digits
-        sta SCREEN_RAM+82
-        stx SCREEN_RAM+83
-        lda #','
-        sta SCREEN_RAM+84
-        lda #'0'
-        clc
-        adc current_room_y
         sta SCREEN_RAM+85
-        lda #']'
-        sta SCREEN_RAM+86
-
-        lda #COL_CYAN
+        lda #' '
+        sta SCREEN_RAM+82
+        sta SCREEN_RAM+83
+        sta SCREEN_RAM+84
+        lda #COL_GREY
         sta COLOR_RAM+81
-        lda #COL_WHITE
         sta COLOR_RAM+82
         sta COLOR_RAM+83
         sta COLOR_RAM+84
         sta COLOR_RAM+85
+
+        ; Colonne du point vert : 82 + (current_room_x * 3) / 16 (82, 83 ou 84)
+        lda current_room_x
+        cmp #6
+        bcc .ow_dot_c0
+        cmp #11
+        bcc .ow_dot_c1
+        ldx #84
+        bne .ow_dot_draw
+.ow_dot_c0:
+        ldx #82
+        bne .ow_dot_draw
+.ow_dot_c1:
+        ldx #83
+.ow_dot_draw:
+        lda #HUD_MAP_ACTIVE
+        sta SCREEN_RAM,x
+        lda #COL_LIGHT_GREEN
+        sta COLOR_RAM,x
+
+        ; Ligne 3 : "+---+" et coordonnées de secteur en colonnes 6 et 7
+        lda #'+'
+        sta SCREEN_RAM+121
+        sta SCREEN_RAM+125
+        lda #'-'
+        sta SCREEN_RAM+122
+        sta SCREEN_RAM+123
+        sta SCREEN_RAM+124
+        lda #COL_GREY
+        sta COLOR_RAM+121
+        sta COLOR_RAM+122
+        sta COLOR_RAM+123
+        sta COLOR_RAM+124
+        sta COLOR_RAM+125
+
+        ; Secteur en cols 6-7 : Lettre X (A..P) sur Ligne 2, Chiffre Y (1..8) sur Ligne 3
+        lda #'A'
+        clc
+        adc current_room_x
+        sta SCREEN_RAM+87
+        lda #COL_WHITE
+        sta COLOR_RAM+87
+        lda #'1'
+        clc
+        adc current_room_y
+        sta SCREEN_RAM+127
+        lda #COL_WHITE
+        sta COLOR_RAM+127
+        jmp .counters
+
+.render_dungeon_minimap:
+        ; --- Donjon : Minimap matricielle 5 colonnes x 3 lignes ---
+        ; Fenêtre centrée sur Link :
+        ;   Ligne 1 : ry = current_room_y - 1 (offset 40)
+        ;   Ligne 2 : ry = current_room_y     (offset 80)
+        ;   Ligne 3 : ry = current_room_y + 1 (offset 120)
+        ;   Cols 1..5 : rx = current_room_x - 2 .. current_room_x + 2
+        ; Link est toujours au centre (Col 3, Ligne 2) en jaune brillant !
+
+        ldy #0
+        sty hud_cur_line
+.map_row_loop:
+        ; Calcule ry = current_room_y - 1 + hud_cur_line
+        lda current_room_y
+        sec
+        sbc #1
+        clc
+        adc hud_cur_line
+        sta hud_calc_ry
+
+        ; Calcule offset écran de base pour la ligne (40, 80 ou 120)
+        lda hud_cur_line
+        beq .row_off_0
+        cmp #1
+        beq .row_off_1
+        lda #120
+        bne .row_off_set
+.row_off_0:
+        lda #40
+        bne .row_off_set
+.row_off_1:
+        lda #80
+.row_off_set:
+        sta hud_base_off
+
+        ; Boucle sur les 5 colonnes (cols 1..5)
+        ldx #0
+        stx hud_cur_col
+.map_col_loop:
+        ; Calcule rx = current_room_x - 2 + hud_cur_col
+        lda current_room_x
+        sec
+        sbc #2
+        clc
+        adc hud_cur_col
+        sta hud_calc_rx
+
+        ; Calcul adresse écran de la cellule : hud_base_off + 1 + hud_cur_col
+        lda hud_base_off
+        clc
+        adc #1
+        adc hud_cur_col
+        tay                             ; Y = offset écran dans SCREEN_RAM
+
+        ; Vérifie les limites du monde (0 <= rx < 16 et 0 <= ry < 8)
+        lda hud_calc_ry
+        bmi .cell_blank_jmp
+        cmp #8
+        bcs .cell_blank_jmp
+        lda hud_calc_rx
+        bmi .cell_blank_jmp
+        cmp #16
+        bcc .cell_in_bounds
+.cell_blank_jmp:
+        jmp .cell_blank
+.cell_in_bounds:
+
+        ; Index de la salle = ry * 16 + rx
+        tax
+        lda world_row_offset,x
+        clc
+        adc hud_calc_rx
+        tax                             ; X = index salle (0..127)
+
+        ; Si c'est la salle actuelle de Link -> HUD_MAP_ACTIVE en Jaune
+        lda hud_calc_rx
+        cmp current_room_x
+        bne .chk_cell_triforce
+        lda hud_calc_ry
+        cmp current_room_y
+        bne .chk_cell_triforce
+        lda #HUD_MAP_ACTIVE
+        sta SCREEN_RAM,y
+        lda #COL_YELLOW
+        sta COLOR_RAM,y
+        jmp .next_col
+
+.chk_cell_triforce:
+        ; Si joueur a la boussole et c'est la salle de la Triforce -> Rouge
+        lda player_has_compass
+        beq .chk_cell_visited
+        lda current_dungeon_level
+        beq .chk_cell_visited
+        sec
+        sbc #1
+        cmp #9
+        bcs .chk_cell_visited
+        pha
+        txa
+        pha
+        lda current_dungeon_level
+        sec
+        sbc #1
+        tax
+        lda dungeon_triforce_rooms,x
+        sta ZP_TMP
+        pla
+        tax
+        pla
+        cpx ZP_TMP
+        bne .chk_cell_visited
+        lda #HUD_MAP_ACTIVE
+        sta SCREEN_RAM,y
+        lda #COL_LIGHT_RED
+        sta COLOR_RAM,y
+        jmp .next_col
+
+.chk_cell_visited:
+        ; Si la salle a été visitée -> HUD_MAP_VISITED en Cyan
+        lda visited_uw_rooms,x
+        beq .chk_cell_mapped
+        lda #HUD_MAP_VISITED
+        sta SCREEN_RAM,y
         lda #COL_CYAN
-        sta COLOR_RAM+86
+        sta COLOR_RAM,y
+        jmp .next_col
+
+.chk_cell_mapped:
+        ; Si joueur a la carte du donjon -> HUD_MAP_EMPTY en Gris foncé
+        lda player_has_dungeon_map
+        beq .cell_blank
+        lda #HUD_MAP_EMPTY
+        sta SCREEN_RAM,y
+        lda #COL_DARK_GREY
+        sta COLOR_RAM,y
+        jmp .next_col
+
+.cell_blank:
+        lda #' '
+        sta SCREEN_RAM,y
+        lda #COL_BLACK
+        sta COLOR_RAM,y
+
+.next_col:
+        inc hud_cur_col
+        lda hud_cur_col
+        cmp #5
+        bcs +
+        jmp .map_col_loop
++
+
+        ; Nettoie cols 6 et 7 de cette ligne
+        lda hud_base_off
+        clc
+        adc #6
+        tay
+        lda #' '
+        sta SCREEN_RAM,y
+        sta SCREEN_RAM+1,y
+        lda #COL_BLACK
+        sta COLOR_RAM,y
+        sta COLOR_RAM+1,y
+
+        inc hud_cur_line
+        lda hud_cur_line
+        cmp #3
+        bcs +
+        jmp .map_row_loop
++
+
+.counters:
 
         ; 2. Compteurs avec icônes Zelda en colonne 16
         ; Rubis : icône losange ◆ + compteur 2 chiffres
