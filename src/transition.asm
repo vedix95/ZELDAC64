@@ -38,11 +38,13 @@ transition_right:
         clc
         adc #1
         tax
+        stx target_room_idx
         lda room_tbl_lo,x
         sta ZP_SRC
         lda room_tbl_hi,x
         sta ZP_SRC+1
         jsr decompress_room_target
+        jsr dungeon_apply_room_state_target
         lda #<target_room_buf
         sta ZP_TGT
         lda #>target_room_buf
@@ -197,11 +199,13 @@ transition_left:
         sec
         sbc #1
         tax
+        stx target_room_idx
         lda room_tbl_lo,x
         sta ZP_SRC
         lda room_tbl_hi,x
         sta ZP_SRC+1
         jsr decompress_room_target
+        jsr dungeon_apply_room_state_target
         lda #<target_room_buf
         sta ZP_TGT
         lda #>target_room_buf
@@ -357,11 +361,13 @@ transition_down:
         clc
         adc current_room_x
         tax
+        stx target_room_idx
         lda room_tbl_lo,x
         sta ZP_SRC
         lda room_tbl_hi,x
         sta ZP_SRC+1
         jsr decompress_room_target
+        jsr dungeon_apply_room_state_target
         lda #<target_room_buf
         sta ZP_TGT
         lda #>target_room_buf
@@ -500,11 +506,13 @@ transition_up:
         clc
         adc current_room_x
         tax
+        stx target_room_idx
         lda room_tbl_lo,x
         sta ZP_SRC
         lda room_tbl_hi,x
         sta ZP_SRC+1
         jsr decompress_room_target
+        jsr dungeon_apply_room_state_target
         lda #<target_room_buf
         sta ZP_TGT
         lda #>target_room_buf

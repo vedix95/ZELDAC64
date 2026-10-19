@@ -83,6 +83,7 @@ load_room:
         lda room_tbl_hi,x
         sta ZP_SRC+1
         jsr decompress_room_main
+        jsr dungeon_apply_room_state_active
 
         ; Restauration des grottes secrètes déjà ouvertes à la bombe
         lda current_world_type
@@ -326,6 +327,11 @@ enter_dungeon:
         ; 4. Vider l'écran et charger le Donjon depuis la disquette
         jsr clear_screen
         jsr disk_load_dungeon
+        lda current_dungeon_level
+        cmp dungeon_active_level
+        beq +
+        jsr dungeon_init
++
 
         ; 5. Positionne Link dans la salle d'entrée du Donjon
         lda current_dungeon_level

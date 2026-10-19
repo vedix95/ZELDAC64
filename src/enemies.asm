@@ -477,12 +477,34 @@ init_slot_from_table:
         lda (ZP_SRC),y                  ; type
         sta en_type,x
         bne +
+.dead_slot:
         lda #EN_STATE_DEAD
         sta en_state,x
         lda #$ff
         sta en_y,x
         rts
 +
+        ; Donjon : si la salle a déjà été nettoyée, les monstres (sauf pièges) ne réapparaissent pas
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .do_spawn_enemy
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        and #DUNG_ROOM_CLEARED
+        beq .do_spawn_enemy
+        ldx en_idx
+        lda en_type,x
+        cmp #TYPE_TRAP
+        beq .do_spawn_enemy
+        jmp .dead_slot
+
+.do_spawn_enemy:
+        lda en_idx
+        asl
+        clc
+        adc en_idx
+        tay                             ; Restaure Y = en_idx * 3
+        ldx en_idx
         lda #EN_STATE_WALK
         sta en_state,x
         jsr get_rand

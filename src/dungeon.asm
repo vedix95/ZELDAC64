@@ -25,6 +25,9 @@ dungeon_drop_type:      !byte 0         ; 1=Key, 2=Heart Container, 3=Compass, 4
 dungeon_drop_x:         !word 180
 dungeon_drop_y:         !byte 148
 triforce_fanfare_timer: !byte 0
+target_room_idx:        !byte 0
+dungeon_active_level:   !byte $ff
+dungeon_room_state      = $033c
 
 DROP_NONE               = 0
 DROP_KEY                = 1
@@ -34,6 +37,14 @@ DROP_MAP                = 4
 DROP_TRIFORCE           = 5
 DROP_BOOMERANG          = 6
 DROP_BOW                = 7
+
+DUNG_DOOR_N_OPEN        = %00000001     ; Porte Nord déverrouillée / ouverte
+DUNG_DOOR_S_OPEN        = %00000010     ; Porte Sud déverrouillée / ouverte
+DUNG_DOOR_W_OPEN        = %00000100     ; Porte Ouest déverrouillée / ouverte
+DUNG_DOOR_E_OPEN        = %00001000     ; Porte Est déverrouillée / ouverte
+DUNG_ROOM_CLEARED       = %00010000     ; Monstres éliminés (volets ouverts)
+DUNG_ITEM_COLLECTED     = %00100000     ; Objet de salle ramassé
+DUNG_SECRET_REVEALED    = %01000000     ; Escalier de l'arc révélé (bloc poussé)
 
 ; Tables des salles officielles de boss et triforce (Niveaux 1 à 9)
 dungeon_boss_rooms:
@@ -52,6 +63,13 @@ dungeon_init:
         sta dungeon_drop_active
         sta dungeon_drop_type
         sta triforce_fanfare_timer
+        lda current_dungeon_level
+        sta dungeon_active_level
+        lda #0
+        ldx #127
+-       sta dungeon_room_state,x
+        dex
+        bpl -
         rts
 
 ; ---------------------------------------------------------------------------
@@ -69,16 +87,14 @@ dungeon_on_enter_room:
         sta dungeon_drop_active
         sta dungeon_drop_type
 
-        ; Vérifie si c'est la salle de la Triforce du niveau actif
-        ldx current_dungeon_level
-        dex
-        cpx #9
-        bcs .check_boss_room
-        lda dungeon_triforce_rooms,x
-        cmp current_room_idx
-        bne .check_boss_room
+        ldx current_room_idx
 
-        ; C'est la salle de la Triforce du donjon actif !
+        ; 1. Salle Triforce (0x36)
+        cpx #$36
+        bne .check_floor_key
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
+        bne .done_enter
         lda #DROP_TRIFORCE
         sta dungeon_drop_type
         lda #1
@@ -91,44 +107,13 @@ dungeon_on_enter_room:
         sta dungeon_drop_y
         rts
 
-.check_boss_room:
-        ldx current_dungeon_level
-        dex
-        cpx #9
-        bcs .check_special_rooms
-        lda dungeon_boss_rooms,x
-        cmp current_room_idx
-        bne .check_special_rooms
-
-        ; Salle du Boss : volets fermés si boss vivant !
-        ldx #0
-        ldy #0
--       lda en_state,x
-        cmp #EN_STATE_DEAD
-        beq +
-        iny
-+       inx
-        cpx #MAX_ENEMIES
-        bcc -
-        cpy #0
-        bne +
-        jmp .no_monsters
-+       lda #1
-        sta dungeon_shutter_closed
-        jsr dungeon_close_shutters
-        rts
-
-.check_special_rooms:
-        lda current_dungeon_level
-        cmp #1
-        beq +
-        jmp .no_monsters
-+
-
-        ; Niveau 1 : salles avec drops ou volets
-        lda current_room_idx
-        cmp #$72                        ; Salle Ouest Entrée : Clé au sol
-        bne +
+.check_floor_key:
+        ; 2. Salle 0x72 (Clé au sol à gauche de l'entrée)
+        cpx #$72
+        bne .check_cleared_drop
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
+        bne .check_shutters_enter
         lda #DROP_KEY
         sta dungeon_drop_type
         lda #1
@@ -139,66 +124,247 @@ dungeon_on_enter_room:
         sta dungeon_drop_x+1
         lda #180
         sta dungeon_drop_y
-        rts
+        jmp .check_shutters_enter
 
-+       cmp #$54                        ; Salle Boussole
-        bne +
-        lda player_has_compass
-        bne .no_monsters
-        lda #DROP_COMPASS
-        sta dungeon_drop_type
-        lda #1
-        sta dungeon_drop_active
-        lda #180
-        sta dungeon_drop_x
-        lda #0
-        sta dungeon_drop_x+1
-        lda #148
-        sta dungeon_drop_y
-        rts
+.check_cleared_drop:
+        ; Si la salle a déjà été nettoyée de ses monstres mais que l'objet n'a pas encore été ramassé :
+        lda dungeon_room_state,x
+        and #DUNG_ROOM_CLEARED
+        beq .check_shutters_enter
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
+        bne .check_shutters_enter
+        jsr dungeon_spawn_room_drop
 
-+       cmp #$45                        ; Salle Carte
-        bne +
-        lda player_has_dungeon_map
-        bne .no_monsters
-        lda #DROP_MAP
-        sta dungeon_drop_type
-        lda #1
-        sta dungeon_drop_active
-        lda #180
-        sta dungeon_drop_x
-        lda #0
-        sta dungeon_drop_x+1
-        lda #148
-        sta dungeon_drop_y
-        rts
+.check_shutters_enter:
+        ; 3. Vérification des volets pour la salle active
+        jsr dungeon_room_has_shutters
+        bcc .no_shutters_here
 
-+       cmp #$44                        ; Salle Boomerang (Goriyas)
-        beq .shutters_on_enemies
-        cmp #$23                        ; Salle U-Wall (Goriyas)
-        beq .shutters_on_enemies
-        jmp .no_monsters
+        ; La salle a des volets : est-elle déjà cleared ?
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        and #DUNG_ROOM_CLEARED
+        bne .already_cleared
 
-.shutters_on_enemies:
-        ldx #0
-        ldy #0
--       lda en_state,x
-        cmp #EN_STATE_DEAD
-        beq +
-        iny
-+       inx
-        cpx #MAX_ENEMIES
-        bcc -
+        ; Pas encore cleared : si des monstres vivants, on ferme les volets !
+        jsr dungeon_count_alive_enemies
         cpy #0
-        beq .no_monsters
+        beq .already_cleared
         lda #1
         sta dungeon_shutter_closed
         jsr dungeon_close_shutters
         rts
 
-.no_monsters:
+.already_cleared:
         lda #0
         sta dungeon_shutter_closed
+        rts
+
+.no_shutters_here:
+        lda #0
+        sta dungeon_shutter_closed
+.done_enter:
+        rts
+
+; ---------------------------------------------------------------------------
+; dungeon_count_alive_enemies : compte les ennemis vivants (hors traps et bubbles)
+; Sortie : Y = nombre d'ennemis vivants
+; ---------------------------------------------------------------------------
+dungeon_count_alive_enemies:
+        ldx #0
+        ldy #0
+-       lda en_state,x
+        cmp #EN_STATE_DEAD
+        beq +
+        lda en_type,x
+        cmp #TYPE_TRAP
+        beq +
+        cmp #TYPE_BUBBLE
+        beq +
+        iny
++       inx
+        cpx #MAX_ENEMIES
+        bcc -
+        rts
+
+; ---------------------------------------------------------------------------
+; dungeon_room_has_shutters : indique si la salle possède des volets
+; Sortie : Carry = 1 si volets, Carry = 0 sinon
+; ---------------------------------------------------------------------------
+dungeon_room_has_shutters:
+        lda current_dungeon_level
+        cmp #1
+        bne .chk_generic_boss
+        lda current_room_idx
+        cmp #$53                        ; Salle 0x53 : Volet Nord
+        beq .has_shutt
+        cmp #$52                        ; Salle 0x52 : Volet Est
+        beq .has_shutt
+        cmp #$42                        ; Salle 0x42 : Volet Ouest
+        beq .has_shutt
+        cmp #$44                        ; Salle 0x44 : Goriyas (Boomerang)
+        beq .has_shutt
+        cmp #$23                        ; Salle 0x23 : Goriyas
+        beq .has_shutt
+        cmp #$35                        ; Salle 0x35 : Boss Aquamentus
+        beq .has_shutt
+        clc
+        rts
+.chk_generic_boss:
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcs .no_shutt
+        lda dungeon_boss_rooms,x
+        cmp current_room_idx
+        beq .has_shutt
+.no_shutt:
+        clc
+        rts
+.has_shutt:
+        sec
+        rts
+
+; ---------------------------------------------------------------------------
+; dungeon_get_room_drop_type : renvoie le type d'objet attribué à la salle
+; Sortie : A = DROP_*
+; ---------------------------------------------------------------------------
+dungeon_get_room_drop_type:
+        lda current_dungeon_level
+        cmp #1
+        bne .check_boss_drop_generic
+        lda current_room_idx
+        cmp #$74
+        beq .ret_key
+        cmp #$63
+        beq .ret_key
+        cmp #$53
+        beq .ret_key
+        cmp #$33
+        beq .ret_key
+        cmp #$23
+        beq .ret_key
+        cmp #$54
+        beq .ret_compass
+        cmp #$45
+        beq .ret_map
+        cmp #$44
+        beq .ret_boomerang
+        cmp #$35
+        beq .ret_heart
+        lda #DROP_NONE
+        rts
+
+.check_boss_drop_generic:
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcs .ret_none
+        lda dungeon_boss_rooms,x
+        cmp current_room_idx
+        beq .ret_heart
+.ret_none:
+        lda #DROP_NONE
+        rts
+.ret_key:
+        lda #DROP_KEY
+        rts
+.ret_compass:
+        lda #DROP_COMPASS
+        rts
+.ret_map:
+        lda #DROP_MAP
+        rts
+.ret_boomerang:
+        lda #DROP_BOOMERANG
+        rts
+.ret_heart:
+        lda #DROP_HEART_CONTAINER
+        rts
+
+; ---------------------------------------------------------------------------
+; dungeon_on_room_cleared_doors : ouvre les portes connexes des volets spéciaux
+; ---------------------------------------------------------------------------
+dungeon_on_room_cleared_doors:
+        lda current_dungeon_level
+        cmp #1
+        beq .lvl1_cleared_doors
+        rts
+
+.lvl1_cleared_doors:
+        lda current_room_idx
+        cmp #$53
+        bne +
+        ldx #$53
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_N_OPEN
+        sta dungeon_room_state,x
+        ldx #$43
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_S_OPEN
+        sta dungeon_room_state,x
+        rts
+
++       cmp #$35
+        bne +
+        ldx #$35
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        ldx #$36
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        rts
+
++       cmp #$52
+        bne +
+        ldx #$52
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        ldx #$53
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        rts
+
++       cmp #$42
+        bne +
+        ldx #$42
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        ldx #$41
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        rts
+
++       cmp #$44
+        bne +
+        ldx #$44
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        ldx #$43
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        rts
+
++       cmp #$23
+        bne .done_doors_cleared
+        ldx #$23
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        ldx #$22
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+.done_doors_cleared:
         rts
 
 ; ---------------------------------------------------------------------------
@@ -212,7 +378,7 @@ dungeon_update:
 +
         ; 1. Gestion de la fanfare de la Triforce en cours
         lda triforce_fanfare_timer
-        beq .check_shutters
+        beq .check_room_objectives
         dec triforce_fanfare_timer
         bne .hold_triforce
         ; Fin de la célébration : retour à l'extérieur dans l'overworld !
@@ -225,30 +391,31 @@ dungeon_update:
         sta SPRITE_PTR0
         rts
 
-.check_shutters:
-        ; 2. Vérification des volets fermés : si tous les monstres sont morts, ouverture !
-        lda dungeon_shutter_closed
-        beq .check_push_block
+.check_room_objectives:
+        ; 2. Vérification des objectifs de salle et volets fermés
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        and #DUNG_ROOM_CLEARED
+        bne .check_push_block           ; Déjà cleared !
 
-        ldx #0
-        ldy #0
--       lda en_state,x
-        cmp #EN_STATE_DEAD
-        beq +
-        iny
-+       inx
-        cpx #MAX_ENEMIES
-        bcc -
-
+        jsr dungeon_count_alive_enemies
         cpy #0
-        bne .check_push_block
-        ; Tous les monstres sont vaincus !
+        bne .check_push_block           ; Monstres vivants !
+
+        ; Tous les monstres de la pièce sont vaincus !
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_ROOM_CLEARED
+        sta dungeon_room_state,x
+
+        lda dungeon_shutter_closed
+        beq +
         lda #0
         sta dungeon_shutter_closed
         jsr dungeon_open_shutters
         jsr sound_secret_chime
-
-        ; Apparition du butin de salle
++
+        jsr dungeon_on_room_cleared_doors
         jsr dungeon_spawn_room_drop
 
 .check_push_block:
@@ -333,6 +500,10 @@ dungeon_update:
         bne +
         lda #1
         sta player_has_bow
+        ldx #$22
+        lda dungeon_room_state,x
+        ora #DUNG_ITEM_COLLECTED
+        sta dungeon_room_state,x
         jsr sound_item_fanfare
         jsr hud_render
 +       rts
@@ -344,6 +515,12 @@ check_link_pushing_block:
         lda current_room_idx
         cmp #$22                        ; Salle 0x22 (Bow room)
         bne .check_generic_block
+
+        ; Salle 0x22 : les monstres doivent être éliminés
+        ldx #$22
+        lda dungeon_room_state,x
+        and #DUNG_ROOM_CLEARED
+        beq .no_block
 
         ; Salle 0x22 : Link pousse vers le haut contre le bloc gauche (offset 86)
         lda player_dir
@@ -399,6 +576,11 @@ dungeon_do_push_block:
         cmp #$22
         bne .do_generic_push
 
+        ldx #$22
+        lda dungeon_room_state,x
+        ora #DUNG_SECRET_REVEALED
+        sta dungeon_room_state,x
+
         ; Salle 0x22 : Déplace le bloc (86 -> 66) et révèle l'escalier (88)
         ldy #86
         lda #TILE_DUNG_FLOOR
@@ -430,11 +612,17 @@ dungeon_do_push_block:
 +       rts
 
 ; ---------------------------------------------------------------------------
+; Tables des indices de tuiles pour les portes (N, S, W, E)
+; ---------------------------------------------------------------------------
+dung_door_tiles_1: !byte 9, 189, 80, 99
+dung_door_tiles_2: !byte 10, 190, 100, 119
+
+; ---------------------------------------------------------------------------
 ; dungeon_close_shutters : ferme visuellement les portes ouvertes de la salle
 ; ---------------------------------------------------------------------------
 dungeon_close_shutters:
-        ; Porte Nord : tuiles 9 et 10
-        ldy #9
+        ldx #3
+-       ldy dung_door_tiles_1,x
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_OPEN
         bne +
@@ -442,64 +630,21 @@ dungeon_close_shutters:
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-        ldy #10
+        ldy dung_door_tiles_2,x
         lda #TILE_DUNG_DOOR_SHUTTER
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-
-+       ; Porte Sud : tuiles 189 et 190
-        ldy #189
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_OPEN
-        bne +
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #190
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-
-+       ; Porte Ouest : tuiles 80 et 100
-        ldy #80
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_OPEN
-        bne +
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #100
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-
-+       ; Porte Est : tuiles 99 et 119
-        ldy #99
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_OPEN
-        bne +
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #119
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-+       rts
++       dex
+        bpl -
+        rts
 
 ; ---------------------------------------------------------------------------
 ; dungeon_open_shutters : rouvre les volets de la salle (4 directions)
 ; ---------------------------------------------------------------------------
 dungeon_open_shutters:
-        ; Porte Nord
-        ldy #9
+        ldx #3
+-       ldy dung_door_tiles_1,x
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_SHUTTER
         bne +
@@ -507,81 +652,30 @@ dungeon_open_shutters:
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-        ldy #10
+        ldy dung_door_tiles_2,x
         lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-
-+       ; Porte Sud
-        ldy #189
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_SHUTTER
-        bne +
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #190
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-
-+       ; Porte Ouest
-        ldy #80
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_SHUTTER
-        bne +
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #100
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-
-+       ; Porte Est
-        ldy #99
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_SHUTTER
-        bne +
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #119
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-+       rts
++       dex
+        bpl -
+        rts
 
 ; ---------------------------------------------------------------------------
 ; dungeon_spawn_room_drop : fait apparaître un butin mérité au centre de la salle
 ; ---------------------------------------------------------------------------
+dungeon_spawn_boss_heart = dungeon_spawn_room_drop
+
 dungeon_spawn_room_drop:
-        ldx current_dungeon_level
-        dex
-        cpx #9
-        bcs .not_boss_drop
-        lda dungeon_boss_rooms,x
-        cmp current_room_idx
-        beq .spawn_boss_heart
-.not_boss_drop:
-        lda current_dungeon_level
-        cmp #1
-        bne .default_key_drop
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
+        bne .no_drop
 
-        ; Si salle 0x44 (Boomerang) : drop Boomerang !
-        lda current_room_idx
-        cmp #$44
-        bne .default_key_drop
-        lda player_has_boomerang
-        bne .default_key_drop
-        lda #DROP_BOOMERANG
+        jsr dungeon_get_room_drop_type
+        cmp #DROP_NONE
+        beq .no_drop
+
         sta dungeon_drop_type
         lda #1
         sta dungeon_drop_active
@@ -591,44 +685,18 @@ dungeon_spawn_room_drop:
         sta dungeon_drop_x+1
         lda #148
         sta dungeon_drop_y
-        rts
-
-.default_key_drop:
-        lda #DROP_KEY
-        sta dungeon_drop_type
-        lda #1
-        sta dungeon_drop_active
-        lda #180
-        sta dungeon_drop_x
-        lda #0
-        sta dungeon_drop_x+1
-        lda #148
-        sta dungeon_drop_y
-        rts
-
-dungeon_spawn_boss_heart:
-.spawn_boss_heart:
-        lda #DROP_HEART_CONTAINER
-        sta dungeon_drop_type
-        lda #1
-        sta dungeon_drop_active
-        lda #180
-        sta dungeon_drop_x
-        lda #0
-        sta dungeon_drop_x+1
-        lda #148
-        sta dungeon_drop_y
-        ; Ouvre les volets et joue le carillon secret
-        lda #0
-        sta dungeon_shutter_closed
-        jsr dungeon_open_shutters
-        jsr sound_secret_chime
+.no_drop:
         rts
 
 ; ---------------------------------------------------------------------------
 ; dungeon_collect_drop : ramasse l'objet au sol
 ; ---------------------------------------------------------------------------
 dungeon_collect_drop:
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_ITEM_COLLECTED
+        sta dungeon_room_state,x
+
         lda dungeon_drop_type
         cmp #DROP_KEY
         bne +
@@ -712,8 +780,197 @@ dungeon_collect_drop:
         rts
 
 ; ---------------------------------------------------------------------------
+; dungeon_apply_room_state_active : applique l'état sauvegardé à room_buf
+; ---------------------------------------------------------------------------
+dungeon_apply_room_state_active:
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq +
+        rts
++       lda #<room_buf
+        sta ZP_DST
+        lda #>room_buf
+        sta ZP_DST+1
+        ldx current_room_idx
+        jmp dungeon_apply_room_state_internal
+
+; ---------------------------------------------------------------------------
+; dungeon_apply_room_state_target : applique l'état sauvegardé à target_room_buf
+; ---------------------------------------------------------------------------
+dungeon_apply_room_state_target:
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq +
+        rts
++       lda #<target_room_buf
+        sta ZP_DST
+        lda #>target_room_buf
+        sta ZP_DST+1
+        ldx target_room_idx
+        jmp dungeon_apply_room_state_internal
+
+; ---------------------------------------------------------------------------
+; dungeon_apply_room_state_internal : applique l'état de la salle index X au tampon ZP_DST
+; ---------------------------------------------------------------------------
+dung_door_masks: !byte DUNG_DOOR_N_OPEN, DUNG_DOOR_S_OPEN, DUNG_DOOR_W_OPEN, DUNG_DOOR_E_OPEN
+
+dungeon_apply_room_state_internal:
+        cpx #128
+        bcc +
+        rts
++       stx ZP_IDX
+        lda dungeon_room_state,x
+        sta ZP_TMP
+
+        ldx #3
+.apply_door_loop:
+        lda ZP_TMP
+        and dung_door_masks,x
+        beq .check_cleared_door
+        ldy dung_door_tiles_1,x
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_DST),y
+        ldy dung_door_tiles_2,x
+        sta (ZP_DST),y
+        jmp .next_door_apply
+
+.check_cleared_door:
+        lda ZP_TMP
+        and #DUNG_ROOM_CLEARED
+        beq .next_door_apply
+        ldy dung_door_tiles_1,x
+        lda (ZP_DST),y
+        cmp #TILE_DUNG_DOOR_SHUTTER
+        bne .next_door_apply
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_DST),y
+        ldy dung_door_tiles_2,x
+        sta (ZP_DST),y
+
+.next_door_apply:
+        dex
+        bpl .apply_door_loop
+
+        ; Escalier secret salle 0x22 si déjà révélé
+        lda ZP_IDX
+        cmp #$22
+        bne .done_apply
+        lda ZP_TMP
+        and #DUNG_SECRET_REVEALED
+        beq .done_apply
+
+        ldy #86
+        lda #TILE_DUNG_FLOOR
+        sta (ZP_DST),y
+        ldy #66
+        lda #TILE_DUNG_BLOCK
+        sta (ZP_DST),y
+        ldy #88
+        lda #TILE_DUNG_STAIRS
+        sta (ZP_DST),y
+
+.done_apply:
+        rts
+
+; ---------------------------------------------------------------------------
+; Routines d'ouverture de portes bidirectionnelles (Nord, Sud, Ouest, Est)
+; ---------------------------------------------------------------------------
+dungeon_open_north_door:
+        ldy #9
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #10
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_N_OPEN
+        sta dungeon_room_state,x
+        txa
+        sec
+        sbc #16
+        tax
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_S_OPEN
+        sta dungeon_room_state,x
+        rts
+
+dungeon_open_south_door:
+        ldy #189
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #190
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_S_OPEN
+        sta dungeon_room_state,x
+        txa
+        clc
+        adc #16
+        tax
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_N_OPEN
+        sta dungeon_room_state,x
+        rts
+
+dungeon_open_west_door:
+        ldy #80
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #100
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        dex
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        rts
+
+dungeon_open_east_door:
+        ldy #99
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #119
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        inx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        rts
+
+; ---------------------------------------------------------------------------
 ; dungeon_check_key_door : ouvre les portes verrouillées si Link a une clé
-;   Gère les 4 directions : Nord (9), Sud (189), Ouest (80), Est (99)
 ; ---------------------------------------------------------------------------
 dungeon_check_key_door:
         lda hud_keys
@@ -734,26 +991,12 @@ dungeon_check_key_door:
         bcc .chk_south
         cmp #215
         bcs .chk_south
-
         ldy #9
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_south
-
-        ; Ouvre la porte nord !
         jsr .consume_key
-        ldy #9
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #10
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        rts
+        jmp dungeon_open_north_door
 
 .chk_south:
         ; 2. Porte Sud (y >= 195, x ~ 145..215)
@@ -767,26 +1010,12 @@ dungeon_check_key_door:
         bcc .chk_west
         cmp #215
         bcs .chk_west
-
         ldy #189
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_west
-
-        ; Ouvre la porte sud !
         jsr .consume_key
-        ldy #189
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #190
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        rts
+        jmp dungeon_open_south_door
 
 .chk_west:
         ; 3. Porte Ouest (x <= 48, y ~ 125..180)
@@ -800,26 +1029,12 @@ dungeon_check_key_door:
         bcc .chk_east
         cmp #180
         bcs .chk_east
-
         ldy #80
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_east
-
-        ; Ouvre la porte ouest !
         jsr .consume_key
-        ldy #80
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #100
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        rts
+        jmp dungeon_open_west_door
 
 .chk_east:
         ; 4. Porte Est (x >= 280, y ~ 125..180)
@@ -833,25 +1048,12 @@ dungeon_check_key_door:
         bcc .done_doors
         cmp #180
         bcs .done_doors
-
         ldy #99
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .done_doors
-
-        ; Ouvre la porte est !
         jsr .consume_key
-        ldy #99
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #119
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
+        jmp dungeon_open_east_door
 
 .done_doors:
         rts
@@ -865,7 +1067,6 @@ dungeon_check_key_door:
 
 ; ---------------------------------------------------------------------------
 ; dungeon_on_bomb_explode : vérifie si l'explosion d'une bombe ouvre un mur
-;   Gère les 4 directions : Nord (9), Sud (189), Ouest (80), Est (99)
 ; ---------------------------------------------------------------------------
 dungeon_on_bomb_explode:
         lda current_world_type
@@ -888,17 +1089,7 @@ dungeon_on_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .chk_bomb_south
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #10
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        rts
+        jmp dungeon_open_north_door
 
 .chk_bomb_south:
         ; 2. Mur Sud : y > 200, x ~ 150..210
@@ -916,17 +1107,7 @@ dungeon_on_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .chk_bomb_west
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #190
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        rts
+        jmp dungeon_open_south_door
 
 .chk_bomb_west:
         ; 3. Mur Ouest : x < 50, y ~ 120..180
@@ -944,17 +1125,7 @@ dungeon_on_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .chk_bomb_east
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #100
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        rts
+        jmp dungeon_open_west_door
 
 .chk_bomb_east:
         ; 4. Mur Est : x > 270, y ~ 120..180
@@ -972,16 +1143,7 @@ dungeon_on_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .done_bomb
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #119
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
+        jmp dungeon_open_east_door
 
 .done_bomb:
         rts

@@ -77,12 +77,12 @@ game_init:
 }
         jsr init_video
         jsr clear_screen
+        jsr dungeon_init
         jsr load_room
         jsr hud_init
         jsr player_init
         jsr items_init
         jsr enemies_init
-        jsr dungeon_init
 !if START_IN_DUNGEON != 0 {
         jsr dungeon_on_enter_room
 }
