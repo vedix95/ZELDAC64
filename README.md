@@ -12,11 +12,11 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.8.1)
+## 💾 Téléchargement Direct & Releases (v0.8.2)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.8.1 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- 🎮 **[Télécharger l'image disquette v0.8.2 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
 - ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES (Overworld & Donjons), le bestiaire complet extrait fidèlement de la ROM `zelda.nes`, et les 9 Donjons autonomes (`DUNG1.DAT` à `DUNG9.DAT`) chargés à la volée.
 - 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
 
@@ -77,11 +77,19 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
   - **Thème envoûtant des Donjons (Underworld)** : Partition pure des Niveaux 1 à 8 extraite de la cartouche NES (`zelda.nes` Banque 0), arpège G-mineur envoûtant en onde Pulse 50% sur 2 voix entrelacées et basse continue.
   - **Rendu somptueux sur un seul SID standard** : Gestion fine des priorités SFX (bruits d'épée, tirs, bouclier, ennemis touchés/éliminés, rubis) garantissant la continuité du rythme.
   - **Support Dual SID ($D420 stéréo)** : Touche `3` en jeu pour basculer instantanément en mode stéréo (désaccord fin +2 Hz pour un effet chorus analogique sur les mélodies, et déport exclusif des effets sonores sur le 2e SID).
-- **Les 9 Donjons complets d'Hyrule en fichiers autonomes (`DUNG1.DAT` à `DUNG9.DAT`)** :
+- **Moteur de Donjon 100% fidèle NES Zelda 1 & Fichiers Autonomes (`DUNG1.DAT` à `DUNG9.DAT`)** :
   - **Architecture Multi-Fichiers 1541** : Remplacement de l'ancien bloc monolithique par 9 overlays de donjons distincts (`DUNG1.DAT` à `DUNG9.DAT`), compilés séparément et chargés dynamiquement à la volée en `$A000` via KERNAL IEC lors de l'entrée dans un donjon ou du changement de niveau.
-  - **Optimisation drastique de la RAM** : L'Overworld et les donjons ne se partagent plus la même mémoire vive résidente. Chaque fichier donjon embarque ses propres salles, portes, clés, objets, décors et tables d'apparition de monstres et de boss.
-  - **Mécanique des portes 1:1 NES** : Portes ouvertes, portes verrouillées nécessitant une clé `🗝`, portes à volets métalliques s'ouvrant après élimination des ennemis ou du boss de fin de donjon.
-  - Palettes de couleurs authentiques pour chaque donjon (Cyan, Bleu, Vert, Gris clair, Rouge, Orange/Marron, Vert forêt, Bleu ciel, Rouge cramoisi).
+  - **Portes bidirectionnelles synchrones** : Ouvrir une porte verrouillée (Locked door) avec une clé ouvre immédiatement et de manière persistante la porte opposée dans la salle adjacente (Nord $\leftrightarrow$ Sud et Ouest $\leftrightarrow$ Est). Idem pour les passages détruits à la bombe (Bombable walls). Fin définitive de tout bug où Link restait coincé dans un mur en passant une porte.
+  - **Portes à volets automatiques (Shutter doors)** : Fermeture automatique à l'entrée dans une salle non nettoyée, et réouverture instantanée dès que tous les monstres de la salle sont vaincus.
+  - **Triggers d'événements et apparitions d'objets (Guide Level 1 : L'Aigle 1:1)** :
+    - Clé dans la première salle Stalfos (`0x74`), boussole (`0x54`), boomerang en bois chez les Goriyas (`0x44`), carte du donjon chez les Keese (`0x45`), clés supplémentaires (`0x63`, `0x53`, `0x33`, `0x23`) et clé au sol (`0x72`).
+    - Pièce secrète de l'Arc (`0x22`) : les Blade Traps s'activent, l'élimination des monstres permet de pousser le bloc central gauche pour faire apparaître l'escalier menant à l'Arc.
+    - Combat contre le Boss Aquamentus (`0x35`) : réceptacle de cœur à la mort du dragon et ouverture automatique du volet nord vers la salle du trésor.
+    - Salle de la Triforce (`0x36`) : récupération du premier Fragment de la Triforce avec fanfare de victoire et téléportation automatique à l'extérieur du donjon.
+  - **Persistance des salles vidées** : Les ennemis normaux ne réapparaissent pas dans les salles déjà nettoyées lors des allers-retours.
+  - **Murs scellés infranchissables** : Clamping des bordures sur les salles fermées (`dummy_sealed_room`), éliminant tout risque de softlock hors du donjon.
+  - **Palettes de couleurs authentiques** pour chaque donjon (Cyan, Bleu, Vert, Gris clair, Rouge, Orange/Marron, Vert forêt, Bleu ciel, Rouge cramoisi).
+  - **Optimisation drastique de la RAM** : Déport de l'état des 64 salles de donjon dans le buffer cassette KERNAL inutilisé (`$033C`–`$037F`), maintenant l'exécutable résident sous le seuil critique de `$A000` (`$9FEE`).
 - **Bestiaire et Boss 100% fidèles extraits de la ROM `zelda.nes`** :
   - **Élimination complète des sprites approximatifs et du bug de dilatation** : Les graphismes proviennent directement des banques CHR de la cartouche NES (`zelda.nes`).
   - **Squelettes Stalfos** : Crâne avec orbites noires creuses, cage thoracique avec côtes et vertèbres visibles, marche fluide avec doubles épées.
@@ -161,7 +169,7 @@ Le jeu se joue idéalement avec une manette ou un joystick branché sur le **Por
 La disquette 1541 est formatée sous le nom `zelda,01` et contient les fichiers suivants :
 
 1. `INTRO` (`PRG`) : Programme d'introduction autonome exécuté au démarrage (`$0801`–`$3FFF`), gérant la cascade, le parchemin en défilement vertical fin et la musique SID complète.
-2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$9F55`), incluant le pilote audio SID Overworld & Underworld et les 83 sprites d'ennemis originaux en `$2800`–`$3FFF`.
+2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$9FEE`), incluant le pilote audio SID Overworld & Underworld et les 83 sprites d'ennemis originaux en `$2800`–`$3FFF`.
 3. `MAP_OW` (`DAT`) : Données binaires de la carte de l'Overworld (128 salles), chargées dynamiquement à l'adresse `$A000` via le bus série IEC KERNAL.
 4. `DUNG1` à `DUNG9` (`DAT`) : Fichiers autonomes de chacun des 9 donjons d'Hyrule (salles, portes, clés, objets, décors et tables d'ennemis/boss), chargés dynamiquement à `$A000`.
 
