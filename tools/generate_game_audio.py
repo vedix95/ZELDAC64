@@ -15,29 +15,44 @@ Fréquences APU NES :
 
 import os
 import sys
+import json
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DATA_PATH = os.path.join(BASE_DIR, "assets", "music_data.json")
 ROM_PATH = os.path.join(BASE_DIR, "zelda.nes")
 OUT_INC_PATH = os.path.join(BASE_DIR, "src", "music_data.inc")
 
-def load_rom_bank0():
-    if not os.path.exists(ROM_PATH):
-        sys.exit(f"Erreur : '{ROM_PATH}' introuvable.")
-    with open(ROM_PATH, "rb") as f:
-        rom = f.read()[16:] # sauter le header iNES de 16 octets
-    return rom[0:0x4000]
+def load_audio_source():
+    if os.path.exists(DATA_PATH):
+        with open(DATA_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    if os.path.exists(ROM_PATH):
+        print(f"[*] assets/music_data.json introuvable, extraction depuis {ROM_PATH}...")
+        sys.path.insert(0, os.path.dirname(__file__))
+        from extract_music import extract_music_data
+        data = extract_music_data(ROM_PATH)
+        with open(DATA_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        return data
+    sys.exit(
+        f"Erreur : Ni '{DATA_PATH}' ni '{ROM_PATH}' n'ont été trouvés.\n"
+        f"Pour compiler l'audio, 'assets/music_data.json' doit être présent dans le dépôt Git."
+    )
 
 def build_audio_data():
-    b0 = load_rom_bank0()
+    data = load_audio_source()
 
-    # Table des périodes APU NES à $9F00 (Offset $1F00 dans Bank 0)
-    # Deux octets Big-Endian par note (64 notes)
-    freq_table = [(b0[0x1F00 + i*2] << 8) | b0[0x1F00 + i*2 + 1] for i in range(64)]
+    # Table des périodes APU NES
+    freq_table = data["freq_table"]
 
-    # Tables de durée de notes (NoteLengthTable) à $9FD1 (Offset $1FD1 dans Bank 0)
-    note_len_table = b0[0x1FD1 : 0x1FD1 + 32]
+    # Tables de durée de notes
+    note_len_table = data["note_len_table"]
     ow_durs = note_len_table[16 : 24] # NoteLengthTable2 ($10) pour Overworld
     uw_durs = note_len_table[0 : 8]   # NoteLengthTable0 ($00) pour Underworld
+
+    ow_scripts = data["ow_scripts"]
+    uw_scripts = data["uw_scripts"]
+    ow_phrase_order = data.get("ow_phrase_order", ['P2', 'P3', 'P5', 'P2', 'P4', 'P5'])
 
     def nes_note_to_sid(b, is_trg=False):
         if b == 0 or b == 8:
@@ -47,28 +62,15 @@ def build_audio_data():
             return 0
         period = freq_table[idx]
         if period > 0:
-            # Le canal Triangle NES a un séquenceur de 32 pas vs 16 pas pour Square :
-            # pour la même valeur de période, Triangle joue exactement 1 octave plus bas !
             divisor = 32.0 if is_trg else 16.0
             hz = 1789773.0 / (divisor * (period + 1))
             return int(round(hz * 17.0284))
         return 0
 
     # -----------------------------------------------------------------------
-    # 1. Extraction Overworld : Boucle principale d'aventure (sans fanfare intro)
-    # Phrases 2, 3, 5, 2, 4, 5 de SongScriptOverworld0
+    # 1. Décodage Overworld
     # -----------------------------------------------------------------------
-    ow_phrases = [
-        ('P2', 0x8F0F, 0x16, 0x35, 0xCE),
-        ('P3', 0x8F55, 0x26, 0x60, 0x88),
-        ('P5', 0x8FE4, 0x1A, 0x3B, 0xF2),
-        ('P2', 0x8F0F, 0x16, 0x35, 0xCE),
-        ('P4', 0x9032, 0x2D, 0x59, 0xA4),
-        ('P5', 0x8FE4, 0x1A, 0x3B, 0xF2),
-    ]
-
-    def decode_ow_channel(script_addr, start_off, end_off, max_ticks, is_trg=False):
-        script = b0[script_addr - 0x8000:]
+    def decode_ow_channel(script_bytes, start_off, end_off, max_ticks, is_trg=False):
         p = start_off
         t = 0
         cur_dur = ow_durs[0]
@@ -76,7 +78,7 @@ def build_audio_data():
         loop_cnt = 0
         loop_start = 0
         while p < end_off and t < max_ticks:
-            b = script[p]
+            b = script_bytes[p]
             p += 1
             if b == 0:
                 break
@@ -96,8 +98,13 @@ def build_audio_data():
 
     ow_c1, ow_c2, ow_c3 = [], [], []
     cur_t = 0
-    for name, saddr, sq0_off, trg_off, noise_off in ow_phrases:
-        p_script = b0[saddr - 0x8000:]
+    for name in ow_phrase_order:
+        sc = ow_scripts[name]
+        p_script = sc["bytes"]
+        sq0_off = sc["sq0_off"]
+        trg_off = sc["trg_off"]
+        noise_off = sc["noise_off"]
+
         p, p_len = 0, 0
         c_dur = ow_durs[0]
         while p < sq0_off:
@@ -115,9 +122,9 @@ def build_audio_data():
                 else:
                     break
 
-        ev1 = decode_ow_channel(saddr, 0, sq0_off, p_len, is_trg=False)
-        ev2 = decode_ow_channel(saddr, sq0_off, trg_off, p_len, is_trg=False)
-        ev3 = decode_ow_channel(saddr, trg_off, noise_off, p_len, is_trg=True)
+        ev1 = decode_ow_channel(p_script, 0, sq0_off, p_len, is_trg=False)
+        ev2 = decode_ow_channel(p_script, sq0_off, trg_off, p_len, is_trg=False)
+        ev3 = decode_ow_channel(p_script, trg_off, noise_off, p_len, is_trg=True)
 
         for t, dur, sid in ev1: ow_c1.append((cur_t + t, dur, sid))
         for t, dur, sid in ev2: ow_c2.append((cur_t + t, dur, sid))
@@ -125,20 +132,15 @@ def build_audio_data():
         cur_t += p_len
 
     # -----------------------------------------------------------------------
-    # 2. Extraction Underworld : SongScriptUnderworld0 ($90DD et $913A)
-    # Thème authentique culte des Donjons 1 à 8 en Sol mineur
-    # Phrase 1 : 640 ticks APU
-    # Phrase 2 : 520 ticks APU
-    # Total boucle complète : 1160 ticks (~19.33 secondes)
+    # 2. Décodage Underworld
     # -----------------------------------------------------------------------
-    def decode_uw_track(script_addr, start, end, is_trg=False):
-        script = b0[script_addr - 0x8000:]
+    def decode_uw_track(script_bytes, start, end, is_trg=False):
         p = start
         t = 0
         cur_dur = uw_durs[0]
         evs = []
         while p < end:
-            b = script[p]
+            b = script_bytes[p]
             p += 1
             if b == 0:
                 break
@@ -149,7 +151,7 @@ def build_audio_data():
                 cur_dur = uw_durs[b & 0x07]
                 if p >= end:
                     break
-                b2 = script[p]
+                b2 = script_bytes[p]
                 p += 1
                 if b2 == 0:
                     break
@@ -157,17 +159,17 @@ def build_audio_data():
                 t += cur_dur
         return evs
 
-    # Phrase 1 ($90DD) : 640 ticks
-    # Sq1: 0..0x22, Sq0: 0x22..0x45, Trg: 0x45..0x5D
-    uw_p1_c1 = decode_uw_track(0x90DD, 0, 0x22, is_trg=False)
-    uw_p1_c2 = decode_uw_track(0x90DD, 0x22, 0x45, is_trg=False)
-    uw_p1_c3 = decode_uw_track(0x90DD, 0x45, 0x5D, is_trg=True)
+    uw_p1 = uw_scripts["P1"]
+    uw_p1_bytes = uw_p1["bytes"]
+    uw_p1_c1 = decode_uw_track(uw_p1_bytes, 0, uw_p1["sq0_off"], is_trg=False)
+    uw_p1_c2 = decode_uw_track(uw_p1_bytes, uw_p1["sq0_off"], uw_p1["trg_off"], is_trg=False)
+    uw_p1_c3 = decode_uw_track(uw_p1_bytes, uw_p1["trg_off"], uw_p1["end_off"], is_trg=True)
 
-    # Phrase 2 ($913A) : 520 ticks
-    # Sq1: 0..0x1C, Sq0: 0x1C..0x39, Trg: 0x39..0x6A
-    uw_p2_c1 = decode_uw_track(0x913A, 0, 0x1C, is_trg=False)
-    uw_p2_c2 = decode_uw_track(0x913A, 0x1C, 0x39, is_trg=False)
-    uw_p2_c3 = decode_uw_track(0x913A, 0x39, 0x6A, is_trg=True)
+    uw_p2 = uw_scripts["P2"]
+    uw_p2_bytes = uw_p2["bytes"]
+    uw_p2_c1 = decode_uw_track(uw_p2_bytes, 0, uw_p2["sq0_off"], is_trg=False)
+    uw_p2_c2 = decode_uw_track(uw_p2_bytes, uw_p2["sq0_off"], uw_p2["trg_off"], is_trg=False)
+    uw_p2_c3 = decode_uw_track(uw_p2_bytes, uw_p2["trg_off"], uw_p2["end_off"], is_trg=True)
 
     uw_c1 = uw_p1_c1 + [(640 + t, d, s) for t, d, s in uw_p2_c1]
     uw_c2 = uw_p1_c2 + [(640 + t, d, s) for t, d, s in uw_p2_c2]

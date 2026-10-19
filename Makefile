@@ -29,7 +29,7 @@ D64     := $(BLD_DIR)/$(NAME).d64
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
-.PHONY: all run run-game debug d64 clean distclean check preview editor
+.PHONY: all run run-game debug d64 clean distclean check preview editor extract-music
 
 all: $(D64)
 
@@ -45,9 +45,13 @@ $(SRC_DIR)/sprites_enemies.asm: assets/enemies.txt tools/sprgen.py
 $(SRC_DIR)/sprites_extra.asm: assets/extra.txt tools/sprgen.py
 	$(PYTHON) tools/sprgen.py assets/extra.txt --prefix link -o $@
 
-# music_data.inc est généré depuis zelda.nes et assets/zelda1.mid
-$(SRC_DIR)/music_data.inc: tools/generate_game_audio.py assets/zelda1.mid zelda.nes
+# music_data.inc est généré depuis assets/music_data.json
+$(SRC_DIR)/music_data.inc: assets/music_data.json tools/generate_game_audio.py
 	$(PYTHON) tools/generate_game_audio.py
+
+# Extraction des partitions authentiques depuis zelda.nes (optionnel pour dev local)
+extract-music: tools/extract_music.py
+	$(PYTHON) tools/extract_music.py
 
 # charset.asm, tiles_data.asm, map_overworld.asm et map_underworld.asm sont générés ensemble
 $(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm &: assets/tiles.txt assets/world.txt assets/underworld.txt tools/tilegen.py
