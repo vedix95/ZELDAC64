@@ -11,8 +11,10 @@ disk_device:    !byte 8                 ; Unité active (8 par défaut)
 name_map_ow:    !text "MAP_OW"
 NAME_MAP_OW_LEN = 6
 
-name_map_uw:    !text "MAP_UW"
-NAME_MAP_UW_LEN = 6
+name_dung_file: !text "DUNG1"
+NAME_DUNG_LEN   = 5
+
+cached_dungeon_level: !byte 0
 
 name_savedat:   !text "SAVE.DAT"
 NAME_SAVEDAT_LEN   = 8
@@ -137,7 +139,9 @@ disk_load_file:
         jsr LOAD
 
         php                             ; préserve le code de statut (Carry)
+        tax
         jsr disk_restore_game_io
+        txa
         plp                             ; restaure Carry (0=ok, 1=erreur)
         rts
 
@@ -191,36 +195,177 @@ disk_save_file:
 ; disk_load_map_overworld : Purge la mémoire et charge la carte Overworld
 ; ---------------------------------------------------------------------------
 disk_load_map_overworld:
+        ; Invalide le cache donjon
+        lda #0
+        sta cached_dungeon_level
+
+        ; Restaure le pointeur d'ennemis Overworld ($B800)
+        lda #<$b800
+        sta map_enemies_ptr
+        lda #>$b800
+        sta map_enemies_ptr+1
+
+        ; Masque l'écran pendant le chargement (bus IEC / DMA propre)
+        lda VIC_CTRL1
+        and #%11101111
+        sta VIC_CTRL1
+
         jsr clear_map_memory
         lda #NAME_MAP_OW_LEN
-        ldx #< name_map_ow
-        ldy #> name_map_ow
+        ldx #<name_map_ow
+        ldy #>name_map_ow
         jsr disk_load_file
         bcs .ow_err
+
+        ; Restaure le jeu de caractères Overworld ($2000 et $2540)
+        jsr copy_map_charset
+        jsr set_overworld_tables
+
+        ; Réinitialise le cache de donjon
+        lda #0
+        sta cached_dungeon_level
+
         jsr apply_map_colors
         lda #WORLD_OVERWORLD
         sta current_world_type
+
+        lda VIC_CTRL1
+        ora #%00010000
+        sta VIC_CTRL1
         clc
         rts
+
 .ow_err:
+        lda VIC_CTRL1
+        ora #%00010000
+        sta VIC_CTRL1
         sec
         rts
 
 ; ---------------------------------------------------------------------------
-; disk_load_map_underworld : Purge la mémoire et charge la carte Donjon
+; copy_map_charset : Copie 512 octets de caractères depuis MAP_CHARSET_PTR
+;   - 256 octets vers $2000 (caractères 0..31, tuiles 0..7)
+;   - 256 octets vers $2540 (caractères 168..199, tuiles 8..15)
 ; ---------------------------------------------------------------------------
-disk_load_map_underworld:
-        jsr clear_map_memory
-        lda #NAME_MAP_UW_LEN
-        ldx #< name_map_uw
-        ldy #> name_map_uw
-        jsr disk_load_file
-        bcs .uw_err
-        jsr apply_map_colors
+copy_map_charset:
+        lda MAP_CHARSET_PTR
+        sta ZP_SRC
+        lda MAP_CHARSET_PTR+1
+        sta ZP_SRC+1
+        ora ZP_SRC
+        beq .no_copy
+
+        ldy #0
+-       lda (ZP_SRC),y
+        sta $2000,y
+        iny
+        bne -
+
+        inc ZP_SRC+1
+-       lda (ZP_SRC),y
+        sta $2540,y
+        iny
+        bne -
+.no_copy:
+        rts
+
+set_dungeon_tables:
+        ldx #15
+-       lda dung_tile_char_base,x
+        sta tile_char_base,x
+        lda dung_tile_flags,x
+        sta tile_flags,x
+        dex
+        bpl -
+        rts
+
+set_overworld_tables:
+        ldx #15
+-       lda ow_tile_char_base,x
+        sta tile_char_base,x
+        lda ow_tile_flags,x
+        sta tile_flags,x
+        dex
+        bpl -
+        rts
+
+; ---------------------------------------------------------------------------
+; disk_load_dungeon : Charge le fichier donjon correspondant à current_dungeon_level
+;   - Optimisation cache : si déjà en RAM, évite l'I/O disquette (0 délai)
+;   - Masquage écran (blanking DMA) pendant la lecture IEC
+;   - Mise à jour dynamique de map_enemies_ptr et des couleurs
+; ---------------------------------------------------------------------------
+disk_load_dungeon:
+        ; Valider current_dungeon_level (1..9)
+        lda current_dungeon_level
+        bne +
+        lda #1
+        sta current_dungeon_level
++       cmp cached_dungeon_level
+        bne .load_from_disk
+        ; Déjà en cache RAM ! Applique les couleurs et sort instantanément
+        jsr copy_map_charset
+        jsr set_dungeon_tables
+        jsr apply_dungeon_colors
         lda #WORLD_DUNGEON
         sta current_world_type
         clc
         rts
-.uw_err:
+
+.load_from_disk:
+        ; 1. Masquer l'écran pour un accès DMA / bus IEC silencieux et propre
+        lda VIC_CTRL1
+        and #%11101111          ; Bit 4 = 0 (écran masqué)
+        sta VIC_CTRL1
+
+        ; 2. Prépare le nom de fichier "DUNG1" .. "DUNG9"
+        lda current_dungeon_level
+        ora #$30                ; '1'..'9'
+        sta name_dung_file + 4
+
+        ; 3. Purge la mémoire carte dynamique ($A000..$CFFF)
+        jsr clear_map_memory
+
+        ; 4. Charge le fichier binaire du donjon
+        lda #NAME_DUNG_LEN
+        ldx #<name_dung_file
+        ldy #>name_dung_file
+        jsr disk_load_file
+        bcs .dung_err
+
+        ; Permute le jeu de caractères pour le Donjon ($2000 et $2540)
+        jsr copy_map_charset
+        jsr set_dungeon_tables
+
+        ; 5. Extrait le pointeur d'ennemis du donjon depuis l'en-tête ($A116)
+        lda $a116
+        sta map_enemies_ptr
+        lda $a117
+        sta map_enemies_ptr+1
+
+        ; 6. Met à jour le cache et le type de monde
+        lda current_dungeon_level
+        sta cached_dungeon_level
+        lda #WORLD_DUNGEON
+        sta current_world_type
+
+        ; 7. Applique les couleurs authentiques du donjon
+        jsr apply_dungeon_colors
+
+        ; 8. Réactive l'affichage écran
+        lda VIC_CTRL1
+        ora #%00010000          ; Bit 4 = 1 (écran visible)
+        sta VIC_CTRL1
+        clc
+        rts
+
+.dung_err:
+        lda VIC_CTRL1
+        ora #%00010000
+        sta VIC_CTRL1
         sec
         rts
+
+; Alias de compatibilité
+disk_load_map_underworld:
+        jmp disk_load_dungeon

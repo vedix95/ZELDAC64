@@ -52,20 +52,10 @@ open_inventory:
         sta visited_rooms,x
 
         ; Bip sonore d'ouverture
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$20
-        sta SID_V1_FREQ_HI
-        lda #$05
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%00010001
-        sta SID_V1_CTRL
+        jsr sound_inv_flip
 
         lda #COL_BLACK
+        sta active_bg_color
         sta VIC_BACKGROUND
         sta VIC_BORDER
 
@@ -114,12 +104,10 @@ close_inventory:
         sta VIC_SPRITE_MC
 
         lda #MAP_BG_COLOR
+        sta active_bg_color
         sta VIC_BACKGROUND
         lda #COL_BLACK
         sta VIC_BORDER
-
-        lda #%00010000
-        sta SID_V1_CTRL
 
         jsr load_room
         jsr hud_init
@@ -334,32 +322,13 @@ update_map_page:
 ; inv_sound_flip : bip sonore de changement d'onglet
 ; ---------------------------------------------------------------------------
 inv_sound_flip:
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$28
-        sta SID_V1_FREQ_HI
-        lda #$02
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%00010001
-        sta SID_V1_CTRL
-        rts
+        jmp sound_inv_flip
 
 ; ---------------------------------------------------------------------------
 ; sound_select_item : son de sélection d'arme
 ; ---------------------------------------------------------------------------
 sound_select_item:
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$30
-        sta SID_V1_FREQ_HI
-        lda #$04
-        sta SID_V1_AD
-        lda #%00010001
-        sta SID_V1_CTRL
+        jsr sound_inv_select
         jsr inv_update_cursor
         jsr hud_render
         rts

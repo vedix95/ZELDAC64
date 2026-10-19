@@ -135,7 +135,21 @@ def preview(path, order, grids, scale=12, prefix=""):
         if "sword" in name:
             palette = PREVIEW_SWORD
         elif prefix == "enemies":
-            palette = PREVIEW_ENEMY
+            palette = dict(PREVIEW_ENEMY)
+            if "stalfos" in name or "keese" in name or "polsvoice" in name:
+                palette[2] = (0xEE, 0xEE, 0xEE) # Blanc C64
+            elif "aquamentus" in name or "zora" in name or "manhandla" in name:
+                palette[2] = (0x58, 0x8D, 0x43) # Vert C64
+            elif "ganon" in name:
+                palette[2] = (0x67, 0x39, 0xB0) # Violet C64
+            elif "dodongo" in name or "armos" in name or "gibdo" in name:
+                palette[2] = (0x6F, 0x4F, 0x25) # Marron C64
+            elif "trap" in name or "death" in name:
+                palette[2] = (0x80, 0x80, 0x80) # Gris C64
+            elif "bubble" in name:
+                palette[2] = (0xEE, 0xEE, 0xEE)
+            else:
+                palette[2] = (0x9F, 0x47, 0x3E) # Rouge vif ennemi
         else:
             palette = PREVIEW_LINK
         for y in range(SPR_H):

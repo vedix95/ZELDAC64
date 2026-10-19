@@ -452,6 +452,27 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         for i, t in enumerate(tiles):
             f.write(f"TILE_{ident(t['name'])} = {i}\n")
 
+        f.write("\n; Constantes des tuiles de donjon (16 tuiles 16x16)\n")
+        f.write("TILE_DUNG_FLOOR         = 0     ; Sol en dalle\n")
+        f.write("TILE_DUNG_WALL_TOP      = 1     ; Mur superieur\n")
+        f.write("TILE_DUNG_WALL_BOT      = 2     ; Mur inferieur\n")
+        f.write("TILE_DUNG_WALL_LEFT     = 3     ; Mur gauche\n")
+        f.write("TILE_DUNG_WALL_RIGHT    = 4     ; Mur droit\n")
+        f.write("TILE_DUNG_BLOCK         = 5     ; Bloc diamant 3D\n")
+        f.write("TILE_DUNG_STATUE        = 6     ; Statue dragon\n")
+        f.write("TILE_DUNG_STAIRS        = 7     ; Escalier secret\n")
+        f.write("TILE_DUNG_CORNER_TL     = 8     ; Biseau 45 haut-gauche\n")
+        f.write("TILE_DUNG_CORNER_TR     = 9     ; Biseau 45 haut-droit\n")
+        f.write("TILE_DUNG_CORNER_BL     = 10    ; Biseau 45 bas-gauche\n")
+        f.write("TILE_DUNG_CORNER_BR     = 11    ; Biseau 45 bas-droit\n")
+        f.write("TILE_DUNG_DOOR_OPEN     = 12    ; Porte ouverte (passage)\n")
+        f.write("TILE_DUNG_DOOR_LOCKED   = 13    ; Porte verrouillee avec serrure\n")
+        f.write("TILE_DUNG_DOOR_SHUTTER  = 14    ; Volet / herse metallique\n")
+        f.write("TILE_DUNG_DOOR_BOMB     = 15    ; Mur fissure a la bombe\n\n")
+
+        f.write("ow_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0\n")
+        f.write("dung_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 172, 176, 180, 184, 188, 192, 196\n")
+
         f.write("\n; Caractere de base de chaque tuile (2x2 = 4 caracteres)\ntile_char_base:\n        !byte ")
         bases = [TILE_CHAR_BASES[i] if i < len(tiles) else 0 for i in range(16)]
         f.write(", ".join(str(v) for v in bases) + "\n")
@@ -485,6 +506,9 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("zone_mc2_color:\n        !byte " + ", ".join(str(c) for c in ZONE_MC2) + "\n\n")
 
         f.write("; Tampon de couleur des tuiles de la salle active\nactive_tile_color:\n        !fill 16, 0\ntile_color = active_tile_color\n\n")
+
+        f.write("ow_tile_flags:\n        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, 0, 0, 0\n")
+        f.write("dung_tile_flags:\n        !byte 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID\n\n")
 
         f.write("; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n        !byte ")
         flags = [("TILE_SOLID" if t["solid"] else "0") for t in tiles]
@@ -539,10 +563,11 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
 
         # Table des offsets ry * rooms_x alignée sur 16 octets fixes ($A006..$A015)
         row_offsets = [ry * rooms_x for ry in range(rooms_y)]
-        while len(row_offsets) < 16:
+        while len(row_offsets) < 8:
             row_offsets.append(0)
-        f.write("; Table des offsets ry * map_rooms_w (16 octets : $A006..$A015)\nmap_row_offset:\n        !byte ")
-        f.write(", ".join(str(v) for v in row_offsets) + "\n\n")
+        f.write("; Table des offsets ry * map_rooms_w (8 octets : $A006..$A00D)\nmap_row_offset:\n        !byte ")
+        f.write(", ".join(str(v) for v in row_offsets[:8]) + "\n")
+        f.write("; Pointeur vers le jeu de caracteres de la carte ($A00E..$A00F)\nmap_charset_ptr:\n        !word overworld_charset\n        !fill 6, 0\n\n")
 
         # Tables des pointeurs paddées à 128 entrées ($A016..$A095 et $A096..$A115)
         f.write("; Tables des pointeurs (128 octets LO : $A016..$A095 / 128 octets HI : $A096..$A115)\n")
@@ -576,7 +601,26 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
                 f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
 
         if overlay_mode:
+            f.write("\n; 512 octets de caracteres Overworld pour restauration apres donjon\noverworld_charset:\n")
+            chars = {i: [0] * 8 for i in range(256)}
+            for i, t in enumerate(tiles):
+                base = TILE_CHAR_BASES[i]
+                for q, (label, c0, r0) in enumerate((("HG", 0, 0), ("HD", 4, 0),
+                                                     ("BG", 0, 8), ("BD", 4, 8))):
+                    chars[base + q] = char_bytes(t["rows"], c0, r0)
+
+            # Chars 0..31
+            f.write("; Chars 0..31 (Tuiles 0..7 : 256 octets)\n")
+            for c in range(32):
+                f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
+
+            # Chars 168..199
+            f.write("; Chars 168..199 (Tuiles 8..15 : 256 octets)\n")
+            for c in range(168, 200):
+                f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
+
             f.write("\n* = $b800\n!source \"src/map_overworld_enemies.inc\"\n")
+
 
 
 def preview(path, cfg, tiles, grid, rooms_x=16, rooms_y=8, scale=2):

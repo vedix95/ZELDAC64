@@ -26,13 +26,14 @@ dungeon_drop_x:         !word 180
 dungeon_drop_y:         !byte 148
 triforce_fanfare_timer: !byte 0
 
-; Types de drops de donjon
 DROP_NONE               = 0
 DROP_KEY                = 1
 DROP_HEART_CONTAINER    = 2
 DROP_COMPASS            = 3
 DROP_MAP                = 4
 DROP_TRIFORCE           = 5
+DROP_BOOMERANG          = 6
+DROP_BOW                = 7
 
 ; Tables des salles officielles de boss et triforce (Niveaux 1 à 9)
 dungeon_boss_rooms:
@@ -91,29 +92,105 @@ dungeon_on_enter_room:
         rts
 
 .check_boss_room:
-        ; Vérifie si c'est la salle du Boss du niveau actif
         ldx current_dungeon_level
         dex
         cpx #9
-        bcs .no_monsters
+        bcs .check_special_rooms
         lda dungeon_boss_rooms,x
         cmp current_room_idx
-        bne .no_monsters
+        bne .check_special_rooms
 
-        ; C'est la salle du Boss ! Si des monstres sont vivants, les volets se ferment !
+        ; Salle du Boss : volets fermés si boss vivant !
         ldx #0
         ldy #0
 -       lda en_state,x
         cmp #EN_STATE_DEAD
         beq +
-        iny                             ; Y = nombre de monstres vivants
+        iny
 +       inx
         cpx #MAX_ENEMIES
         bcc -
+        cpy #0
+        bne +
+        jmp .no_monsters
++       lda #1
+        sta dungeon_shutter_closed
+        jsr dungeon_close_shutters
+        rts
 
+.check_special_rooms:
+        lda current_dungeon_level
+        cmp #1
+        beq +
+        jmp .no_monsters
++
+
+        ; Niveau 1 : salles avec drops ou volets
+        lda current_room_idx
+        cmp #$72                        ; Salle Ouest Entrée : Clé au sol
+        bne +
+        lda #DROP_KEY
+        sta dungeon_drop_type
+        lda #1
+        sta dungeon_drop_active
+        lda #230
+        sta dungeon_drop_x
+        lda #0
+        sta dungeon_drop_x+1
+        lda #180
+        sta dungeon_drop_y
+        rts
+
++       cmp #$54                        ; Salle Boussole
+        bne +
+        lda player_has_compass
+        bne .no_monsters
+        lda #DROP_COMPASS
+        sta dungeon_drop_type
+        lda #1
+        sta dungeon_drop_active
+        lda #180
+        sta dungeon_drop_x
+        lda #0
+        sta dungeon_drop_x+1
+        lda #148
+        sta dungeon_drop_y
+        rts
+
++       cmp #$45                        ; Salle Carte
+        bne +
+        lda player_has_dungeon_map
+        bne .no_monsters
+        lda #DROP_MAP
+        sta dungeon_drop_type
+        lda #1
+        sta dungeon_drop_active
+        lda #180
+        sta dungeon_drop_x
+        lda #0
+        sta dungeon_drop_x+1
+        lda #148
+        sta dungeon_drop_y
+        rts
+
++       cmp #$44                        ; Salle Boomerang (Goriyas)
+        beq .shutters_on_enemies
+        cmp #$23                        ; Salle U-Wall (Goriyas)
+        beq .shutters_on_enemies
+        jmp .no_monsters
+
+.shutters_on_enemies:
+        ldx #0
+        ldy #0
+-       lda en_state,x
+        cmp #EN_STATE_DEAD
+        beq +
+        iny
++       inx
+        cpx #MAX_ENEMIES
+        bcc -
         cpy #0
         beq .no_monsters
-        ; Ferme les volets de la salle
         lda #1
         sta dungeon_shutter_closed
         jsr dungeon_close_shutters
@@ -233,24 +310,67 @@ dungeon_update:
 .check_locked_door:
         ; 5. Porte verrouillée : ouverture automatique si Link touche une porte avec une clé
         jsr dungeon_check_key_door
-        rts
+
+        ; 6. Escalier secret vers l'Arc (Salle 0x22)
+        lda current_room_idx
+        cmp #$22
+        bne +
+        lda player_has_bow
+        bne +
+        lda player_x
+        clc
+        adc #8
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
+        lda player_y
+        clc
+        adc #12
+        sta col_y
+        jsr get_tile_at_point
+        cmp #TILE_DUNG_STAIRS
+        bne +
+        lda #1
+        sta player_has_bow
+        jsr sound_item_fanfare
+        jsr hud_render
++       rts
 
 ; ---------------------------------------------------------------------------
 ; check_link_pushing_block : vérifie si Link pousse contre un bloc poussable
 ; ---------------------------------------------------------------------------
 check_link_pushing_block:
+        lda current_room_idx
+        cmp #$22                        ; Salle 0x22 (Bow room)
+        bne .check_generic_block
+
+        ; Salle 0x22 : Link pousse vers le haut contre le bloc gauche (offset 86)
         lda player_dir
         cmp #DIR_UP
-        beq .push_up
-        cmp #DIR_RIGHT
-        beq .push_right
-        clc
+        bne .no_block
+        lda player_y
+        cmp #140
+        bcc .no_block
+        cmp #170
+        bcs .no_block
+        lda player_x
+        cmp #100
+        bcc .no_block
+        cmp #135
+        bcs .no_block
+        sec
         rts
 
-.push_up:
+.check_generic_block:
+        lda dungeon_shutter_closed
+        beq .no_block
+        lda player_dir
+        cmp #DIR_UP
+        bne .no_block
         sec
         lda player_y
-        sbc #18
+        sbc #16
         sta col_y
         lda player_x
         clc
@@ -260,26 +380,10 @@ check_link_pushing_block:
         adc #0
         sta col_x+1
         jsr get_tile_at_point
-        cmp #TILE_TREE                  ; Bloc/pilier de donjon
+        cmp #TILE_DUNG_BLOCK
         beq .found_block
-        clc
-        rts
 
-.push_right:
-        clc
-        lda player_x
-        adc #20
-        sta col_x
-        lda player_x+1
-        adc #0
-        sta col_x+1
-        lda player_y
-        clc
-        adc #8
-        sta col_y
-        jsr get_tile_at_point
-        cmp #TILE_TREE
-        beq .found_block
+.no_block:
         clc
         rts
 
@@ -291,84 +395,174 @@ check_link_pushing_block:
 ; dungeon_do_push_block : déplace le bloc et révèle le secret
 ; ---------------------------------------------------------------------------
 dungeon_do_push_block:
-        ; Révèle un escalier secret au centre de la salle ou ouvre les volets
+        lda current_room_idx
+        cmp #$22
+        bne .do_generic_push
+
+        ; Salle 0x22 : Déplace le bloc (86 -> 66) et révèle l'escalier (88)
+        ldy #86
+        lda #TILE_DUNG_FLOOR
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+
+        ldy #66
+        lda #TILE_DUNG_BLOCK
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+
+        ldy #88
+        lda #TILE_DUNG_STAIRS
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        rts
+
+.do_generic_push:
         lda dungeon_shutter_closed
         beq +
         lda #0
         sta dungeon_shutter_closed
         jsr dungeon_open_shutters
-+
-        ; Place un escalier (TILE_CAVE) au centre de la salle si pas encore fait
-        ldy #90                         ; tuile (10, 4) = 4*20 + 10 = 90
-        lda #TILE_CAVE
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        rts
+        jsr sound_secret_chime
++       rts
 
 ; ---------------------------------------------------------------------------
-; dungeon_close_shutters : ferme visuellement les 4 portes de la salle
+; dungeon_close_shutters : ferme visuellement les portes ouvertes de la salle
 ; ---------------------------------------------------------------------------
 dungeon_close_shutters:
         ; Porte Nord : tuiles 9 et 10
         ldy #9
-        lda #TILE_WALL
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne +
+        lda #TILE_DUNG_DOOR_SHUTTER
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
         ldy #10
-        lda #TILE_WALL
+        lda #TILE_DUNG_DOOR_SHUTTER
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
 
-        ; Porte Sud : tuiles 189 et 190
++       ; Porte Sud : tuiles 189 et 190
         ldy #189
-        lda #TILE_WALL
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne +
+        lda #TILE_DUNG_DOOR_SHUTTER
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
         ldy #190
-        lda #TILE_WALL
+        lda #TILE_DUNG_DOOR_SHUTTER
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-        rts
+
++       ; Porte Ouest : tuiles 80 et 100
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne +
+        lda #TILE_DUNG_DOOR_SHUTTER
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #100
+        lda #TILE_DUNG_DOOR_SHUTTER
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+
++       ; Porte Est : tuiles 99 et 119
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne +
+        lda #TILE_DUNG_DOOR_SHUTTER
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #119
+        lda #TILE_DUNG_DOOR_SHUTTER
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
++       rts
 
 ; ---------------------------------------------------------------------------
-; dungeon_open_shutters : rouvre les portes de la salle
+; dungeon_open_shutters : rouvre les volets de la salle (4 directions)
 ; ---------------------------------------------------------------------------
 dungeon_open_shutters:
         ; Porte Nord
         ldy #9
-        lda #TILE_GRASS
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_SHUTTER
+        bne +
+        lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
         ldy #10
-        lda #TILE_GRASS
+        lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
 
-        ; Porte Sud
++       ; Porte Sud
         ldy #189
-        lda #TILE_GRASS
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_SHUTTER
+        bne +
+        lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
         ldy #190
-        lda #TILE_GRASS
+        lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-        rts
+
++       ; Porte Ouest
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_SHUTTER
+        bne +
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #100
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+
++       ; Porte Est
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_SHUTTER
+        bne +
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #119
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
++       rts
 
 ; ---------------------------------------------------------------------------
 ; dungeon_spawn_room_drop : fait apparaître un butin mérité au centre de la salle
 ; ---------------------------------------------------------------------------
 dungeon_spawn_room_drop:
-        ; Vérifie si c'est une salle de boss officielle
         ldx current_dungeon_level
         dex
         cpx #9
@@ -377,8 +571,29 @@ dungeon_spawn_room_drop:
         cmp current_room_idx
         beq .spawn_boss_heart
 .not_boss_drop:
+        lda current_dungeon_level
+        cmp #1
+        bne .default_key_drop
 
-        ; Sinon, lâche une petite clef de donjon
+        ; Si salle 0x44 (Boomerang) : drop Boomerang !
+        lda current_room_idx
+        cmp #$44
+        bne .default_key_drop
+        lda player_has_boomerang
+        bne .default_key_drop
+        lda #DROP_BOOMERANG
+        sta dungeon_drop_type
+        lda #1
+        sta dungeon_drop_active
+        lda #180
+        sta dungeon_drop_x
+        lda #0
+        sta dungeon_drop_x+1
+        lda #148
+        sta dungeon_drop_y
+        rts
+
+.default_key_drop:
         lda #DROP_KEY
         sta dungeon_drop_type
         lda #1
@@ -423,6 +638,7 @@ dungeon_collect_drop:
         lda #0
         sta dungeon_drop_active
         rts
+
 +       cmp #DROP_HEART_CONTAINER
         bne +
         inc hud_max_hearts
@@ -433,12 +649,43 @@ dungeon_collect_drop:
         lda #0
         sta dungeon_drop_active
         rts
+
++       cmp #DROP_COMPASS
+        bne +
+        lda #1
+        sta player_has_compass
+        jsr hud_render
+        jsr sound_item_fanfare
+        lda #0
+        sta dungeon_drop_active
+        rts
+
++       cmp #DROP_MAP
+        bne +
+        lda #1
+        sta player_has_dungeon_map
+        jsr hud_render
+        jsr sound_item_fanfare
+        lda #0
+        sta dungeon_drop_active
+        rts
+
++       cmp #DROP_BOOMERANG
+        bne +
+        lda #1
+        sta player_has_boomerang
+        jsr hud_render
+        jsr sound_item_fanfare
+        lda #0
+        sta dungeon_drop_active
+        rts
+
 +       cmp #DROP_TRIFORCE
         bne +
         ; --- OBTENTION DE LA TRIFORCE ! ---
         lda current_dungeon_level
         sec
-        sbc #1                          ; 0..7
+        sbc #1
         tay
         lda #1
 -       cpy #0
@@ -449,12 +696,10 @@ dungeon_collect_drop:
 ++      ora player_triforce_pieces
         sta player_triforce_pieces
 
-        ; Soin complet
         lda hud_max_hearts
         sta hud_cur_hearts
         jsr hud_render
 
-        ; Déclenche la célébration pendant 150 frames (~3 secondes)
         lda #150
         sta triforce_fanfare_timer
         jsr sound_item_fanfare
@@ -468,6 +713,7 @@ dungeon_collect_drop:
 
 ; ---------------------------------------------------------------------------
 ; dungeon_check_key_door : ouvre les portes verrouillées si Link a une clé
+;   Gère les 4 directions : Nord (9), Sud (189), Ouest (80), Est (99)
 ; ---------------------------------------------------------------------------
 dungeon_check_key_door:
         lda hud_keys
@@ -477,63 +723,149 @@ dungeon_check_key_door:
         rts
 
 .has_key:
-        ; Link est-il tout en haut contre le chambranle nord (y ~ 82..88, x ~ 170..190) ?
+        ; 1. Porte Nord (y <= 88, x ~ 160..200)
         lda player_y
         cmp #88
         bcs .chk_south
         lda player_x+1
         bne .chk_south
         lda player_x
-        cmp #168
+        cmp #160
         bcc .chk_south
-        cmp #196
+        cmp #200
         bcs .chk_south
 
-        ; Vérifie si la porte nord est fermée/solide
         ldy #9
-        lda (ZP_MAP),y
-        cmp #TILE_WALL
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_south
 
         ; Ouvre la porte nord !
-        lda player_has_magic_key
-        bne +
-        dec hud_keys
-        jsr hud_render
-+       jsr dungeon_open_shutters
+        jsr .consume_key
+        ldy #9
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #10
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
         jsr sound_secret_chime
         rts
 
 .chk_south:
-        ; Link est-il tout en bas contre le chambranle sud (y ~ 220, x ~ 170..190) ?
+        ; 2. Porte Sud (y >= 218, x ~ 160..200)
         lda player_y
         cmp #218
-        bcc .done_doors
+        bcc .chk_west
         lda player_x+1
-        bne .done_doors
+        bne .chk_west
         lda player_x
-        cmp #168
-        bcc .done_doors
-        cmp #196
-        bcs .done_doors
+        cmp #160
+        bcc .chk_west
+        cmp #200
+        bcs .chk_west
 
         ldy #189
-        lda (ZP_MAP),y
-        cmp #TILE_WALL
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
+        bne .chk_west
+
+        ; Ouvre la porte sud !
+        jsr .consume_key
+        ldy #189
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #190
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        rts
+
+.chk_west:
+        ; 3. Porte Ouest (x <= 36, y ~ 130..170)
+        lda player_x+1
+        bne .chk_east
+        lda player_x
+        cmp #36
+        bcs .chk_east
+        lda player_y
+        cmp #130
+        bcc .chk_east
+        cmp #170
+        bcs .chk_east
+
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
+        bne .chk_east
+
+        ; Ouvre la porte ouest !
+        jsr .consume_key
+        ldy #80
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #100
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        rts
+
+.chk_east:
+        ; 4. Porte Est (x >= 284, y ~ 130..170)
+        lda player_x+1
+        beq .done_doors
+        lda player_x
+        cmp #<284
+        bcc .done_doors
+        lda player_y
+        cmp #130
+        bcc .done_doors
+        cmp #170
+        bcs .done_doors
+
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
         bne .done_doors
 
-        lda player_has_magic_key
-        bne +
-        dec hud_keys
-        jsr hud_render
-+       jsr dungeon_open_shutters
+        ; Ouvre la porte est !
+        jsr .consume_key
+        ldy #99
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #119
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
         jsr sound_secret_chime
 
 .done_doors:
         rts
 
+.consume_key:
+        lda player_has_magic_key
+        bne +
+        dec hud_keys
+        jsr hud_render
++       rts
+
 ; ---------------------------------------------------------------------------
 ; dungeon_on_bomb_explode : vérifie si l'explosion d'une bombe ouvre un mur
+;   Gère les 4 directions : Nord (9), Sud (189), Ouest (80), Est (99)
 ; ---------------------------------------------------------------------------
 dungeon_on_bomb_explode:
         lda current_world_type
@@ -541,45 +873,115 @@ dungeon_on_bomb_explode:
         beq +
         rts
 +
-        ; Si la bombe explose près du mur nord (y < 100, x ~ 160..200)
+        ; 1. Mur Nord : y < 100, x ~ 150..210
         lda item_y
         cmp #100
-        bcs +
+        bcs .chk_bomb_south
         lda item_x+1
-        bne +
+        bne .chk_bomb_south
         lda item_x
         cmp #150
-        bcc +
+        bcc .chk_bomb_south
         cmp #210
-        bcs +
-        ; Ouvre le passage nord !
+        bcs .chk_bomb_south
         ldy #9
-        lda #TILE_WALL_PASS
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .chk_bomb_south
+        lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
         ldy #10
-        lda #TILE_WALL_PASS
+        lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
         jsr sound_secret_chime
-+       rts
+        rts
 
-; ---------------------------------------------------------------------------
-; sound_item_fanfare : fanfare triomphale de trouvaille d'objet
-; ---------------------------------------------------------------------------
-sound_item_fanfare:
-        lda #15
-        sta SID_VOLUME
-        lda #$80
-        sta SID_V1_FREQ_LO
-        lda #$50
-        sta SID_V1_FREQ_HI
-        lda #$09
-        sta SID_V1_AD
-        lda #$40
-        sta SID_V1_SR
-        lda #%00010001                  ; Triangle
-        sta SID_V1_CTRL
+.chk_bomb_south:
+        ; 2. Mur Sud : y > 200, x ~ 150..210
+        lda item_y
+        cmp #200
+        bcc .chk_bomb_west
+        lda item_x+1
+        bne .chk_bomb_west
+        lda item_x
+        cmp #150
+        bcc .chk_bomb_west
+        cmp #210
+        bcs .chk_bomb_west
+        ldy #189
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .chk_bomb_west
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #190
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        rts
+
+.chk_bomb_west:
+        ; 3. Mur Ouest : x < 50, y ~ 120..180
+        lda item_x+1
+        bne .chk_bomb_east
+        lda item_x
+        cmp #50
+        bcs .chk_bomb_east
+        lda item_y
+        cmp #120
+        bcc .chk_bomb_east
+        cmp #180
+        bcs .chk_bomb_east
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .chk_bomb_east
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #100
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        rts
+
+.chk_bomb_east:
+        ; 4. Mur Est : x > 270, y ~ 120..180
+        lda item_x+1
+        beq .done_bomb
+        lda item_x
+        cmp #<270
+        bcc .done_bomb
+        lda item_y
+        cmp #120
+        bcc .done_bomb
+        cmp #180
+        bcs .done_bomb
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .done_bomb
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #119
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+
+.done_bomb:
         rts

@@ -362,6 +362,7 @@ get_enemy_sprite_and_color:
 ; ---------------------------------------------------------------------------
 ; Table de spawn dynamique des ennemis de la carte active ()
 ; ---------------------------------------------------------------------------
+map_enemies_ptr:        !word $b800
 map_enemies             = $b800
 world_enemies           = map_enemies
 underworld_enemies      = map_enemies
@@ -449,10 +450,10 @@ enemies_room_init:
         sta ZP_SRC+1
         clc
         lda ZP_SRC
-        adc #<map_enemies
+        adc map_enemies_ptr
         sta ZP_SRC
         lda ZP_SRC+1
-        adc #>map_enemies
+        adc map_enemies_ptr+1
         sta ZP_SRC+1
 
         ldy #0
@@ -2401,19 +2402,8 @@ hurt_link:
 
 .skip_heart_loss:
 .dead_link:
-        ; Son de blessure Link (bruit blanc grave)
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$14
-        sta SID_V1_FREQ_HI
-        lda #$08
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%10000001
-        sta SID_V1_CTRL
+        ; Son de blessure Link (géré proprement sur Voix 3)
+        jsr sound_link_hurt
         rts
 
 ; ---------------------------------------------------------------------------
@@ -2590,7 +2580,7 @@ init_raster_irq:
         lda VIC_CTRL1
         and #%01111111                  ; Raster bit 8 = 0
         sta VIC_CTRL1
-        lda #70                         ; Premier raster sous le HUD
+        lda #82                         ; Raster 82 : fin du HUD / début bordure droite
         sta VIC_RASTER
 
         lda #< irq_top
@@ -2611,6 +2601,17 @@ init_raster_irq:
 ; irq_top : phase haute (raster 70) - configure Sprites 3, 4, 5, 6 (ennemis 0..3)
 ; ---------------------------------------------------------------------------
 irq_top:
+        ; Attend la bordure droite de la scanline 82 (cycles 57..63)
+        ; pour basculer sans glitch vers la couleur de fond de la zone de jeu
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda active_bg_color
+        sta VIC_BACKGROUND
+
         lda game_state
         cmp #STATE_INVENTORY
         bne .check_playing
@@ -2683,10 +2684,14 @@ irq_mid:
 ; irq_bottom : phase basse (raster 250, VBlank) - signal nouvelle frame
 ; ---------------------------------------------------------------------------
 irq_bottom:
+        ; Restaure le fond noir du HUD (lignes 0..3) pendant le VBlank
+        lda #COL_BLACK
+        sta VIC_BACKGROUND
+
         lda #1
         sta frame_ready
 
-        lda #70
+        lda #82                         ; Prochaine IRQ sur raster 82
         sta VIC_RASTER
         lda #< irq_top
         sta $0314

@@ -25,6 +25,29 @@ TILE_BRIDGE_V = 10
 TILE_WALL_PASS = 11
 TILE_WALL_BOMB = 12
 
+; Constantes des tuiles de donjon (16 tuiles 16x16)
+TILE_DUNG_FLOOR         = 0     ; Sol en dalle
+TILE_DUNG_WALL_TOP      = 1     ; Mur superieur
+TILE_DUNG_WALL_BOT      = 2     ; Mur inferieur
+TILE_DUNG_WALL_LEFT     = 3     ; Mur gauche
+TILE_DUNG_WALL_RIGHT    = 4     ; Mur droit
+TILE_DUNG_BLOCK         = 5     ; Bloc diamant 3D
+TILE_DUNG_STATUE        = 6     ; Statue dragon
+TILE_DUNG_STAIRS        = 7     ; Escalier secret
+TILE_DUNG_CORNER_TL     = 8     ; Biseau 45 haut-gauche
+TILE_DUNG_CORNER_TR     = 9     ; Biseau 45 haut-droit
+TILE_DUNG_CORNER_BL     = 10    ; Biseau 45 bas-gauche
+TILE_DUNG_CORNER_BR     = 11    ; Biseau 45 bas-droit
+TILE_DUNG_DOOR_OPEN     = 12    ; Porte ouverte (passage)
+TILE_DUNG_DOOR_LOCKED   = 13    ; Porte verrouillee avec serrure
+TILE_DUNG_DOOR_SHUTTER  = 14    ; Volet / herse metallique
+TILE_DUNG_DOOR_BOMB     = 15    ; Mur fissure a la bombe
+
+ow_tile_char_base:
+        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0
+dung_tile_char_base:
+        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 172, 176, 180, 184, 188, 192, 196
+
 ; Caractere de base de chaque tuile (2x2 = 4 caracteres)
 tile_char_base:
         !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0
@@ -57,6 +80,11 @@ zone_mc2_color:
 active_tile_color:
         !fill 16, 0
 tile_color = active_tile_color
+
+ow_tile_flags:
+        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, 0, 0, 0
+dung_tile_flags:
+        !byte 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID
 
 ; drapeaux de chaque tuile (bit 0 = solide)
 tile_flags:

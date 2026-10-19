@@ -12,12 +12,12 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.8.0)
+## 💾 Téléchargement Direct & Releases (v0.8.1)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.8.0 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES (Overworld & Donjons) et le streaming dynamique des cartes et ennemis Overworld & 9 Donjons.
+- 🎮 **[Télécharger l'image disquette v0.8.1 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚙️ **Distribution tout-en-un 1541** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES (Overworld & Donjons), le bestiaire complet extrait fidèlement de la ROM `zelda.nes`, et les 9 Donjons autonomes (`DUNG1.DAT` à `DUNG9.DAT`) chargés à la volée.
 - 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
 
 Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
@@ -77,44 +77,27 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
   - **Thème envoûtant des Donjons (Underworld)** : Partition pure des Niveaux 1 à 8 extraite de la cartouche NES (`zelda.nes` Banque 0), arpège G-mineur envoûtant en onde Pulse 50% sur 2 voix entrelacées et basse continue.
   - **Rendu somptueux sur un seul SID standard** : Gestion fine des priorités SFX (bruits d'épée, tirs, bouclier, ennemis touchés/éliminés, rubis) garantissant la continuité du rythme.
   - **Support Dual SID ($D420 stéréo)** : Touche `3` en jeu pour basculer instantanément en mode stéréo (désaccord fin +2 Hz pour un effet chorus analogique sur les mélodies, et déport exclusif des effets sonores sur le 2e SID).
-- **Les 9 Donjons complets d'Hyrule (Niveaux 1 à 9)** :
-  - Intégration de l'ensemble des 9 donjons de la première quête : Niveau 1 (*L'Aigle*), Niveau 2 (*La Lune*), Niveau 3 (*Le Manji*), Niveau 4 (*Le Serpent*), Niveau 5 (*Le Lézard*), Niveau 6 (*Le Dragon*), Niveau 7 (*Le Démon*), Niveau 8 (*Le Lion*) et Niveau 9 (*La Montagne de la Mort*).
-  - **Découplage strict Grottes / Donjons** : Les 23 cavernes overworld (marchands, fées, vieil homme) sont gérées par des routines dédiées sans consommer de mémoire souterraine, réservant l'Underworld aux vrais labyrinthes de donjon.
-  - **Mécanique des portes 1:1 NES** : Les portes restent ouvertes pendant l'exploration normale pour laisser le joueur progresser librement ; les volets métalliques ne se referment que dans la salle officielle du Boss tant que celui-ci est vivant.
+- **Les 9 Donjons complets d'Hyrule en fichiers autonomes (`DUNG1.DAT` à `DUNG9.DAT`)** :
+  - **Architecture Multi-Fichiers 1541** : Remplacement de l'ancien bloc monolithique par 9 overlays de donjons distincts (`DUNG1.DAT` à `DUNG9.DAT`), compilés séparément et chargés dynamiquement à la volée en `$A000` via KERNAL IEC lors de l'entrée dans un donjon ou du changement de niveau.
+  - **Optimisation drastique de la RAM** : L'Overworld et les donjons ne se partagent plus la même mémoire vive résidente. Chaque fichier donjon embarque ses propres salles, portes, clés, objets, décors et tables d'apparition de monstres et de boss.
+  - **Mécanique des portes 1:1 NES** : Portes ouvertes, portes verrouillées nécessitant une clé `🗝`, portes à volets métalliques s'ouvrant après élimination des ennemis ou du boss de fin de donjon.
   - Palettes de couleurs authentiques pour chaque donjon (Cyan, Bleu, Vert, Gris clair, Rouge, Orange/Marron, Vert forêt, Bleu ciel, Rouge cramoisi).
-  - Bestiaire et monstres souterrains complets : Stalfos, Goriyas, Keeses, slimes Gel/Zol, Wallmasters, pièges Trap et boss Aquamentus.
-  - Streaming dynamique des ennemis depuis la disquette 1541 en `$B800` pour préserver la mémoire vive résidente sous les 64 Ko.
-- **HUD & Mini-carte matricielle intégrée** :
-  - **En Donjon** : En-tête officiel `LEVEL-X` en blanc et mini-carte matricielle 5×3 fenêtrée sur la position de Link (point jaune brillant `HUD_MAP_ACTIVE`), coloration cyan des salles explorées, balise rouge de la Triforce si boussole acquise.
-  - **En Overworld** : En-tête `HYRULE ` en vert clair et radar GPS Hyrule avec coordonnées de secteur (A-1 .. P-8).
-  - Compteurs en temps réel : cœurs de vie, rubis avec icône losange `◆`, clés `🗝`, bombes `💣`, et armes actives A et B.
-- **Link & Graphismes fidèles** :
-  - Teinte de peau couleur chair C64 (`COL_LIGHT_RED`), tunique verte, bouclier latéral visible dans toutes les orientations.
-- **Cinématique d'introduction complète** :
-  - Chute d'eau animée avec défilement vertical matériel du VIC-II.
-  - Défilement du parchemin contant la légende d'Hyrule, présentation des trésors et logo Zelda.
-  - Musique d'intro complète et fidèle reproduite sur le processeur audio **SID 6581/8580** (3 voix).
-- **Moteur de sprites & multiplexage dynamique** :
-  - Multiplexeur de sprites géré par interruption raster IRQ permettant d'afficher jusqu'à 8 ennemis ou projectiles simultanément à l'écran.
-  - Sprites multicolores pour Link, les ennemis, les objets et les PNJ.
-- **Système de combat & arsenal complet** :
-  - **Épée** : Attaque au corps-à-corps avec rayon d'épée projeté lorsque la vie est pleine.
-  - **Boomerang** : Animation de rotation avec trajectoire de vol et retour vers Link.
-  - **Bombes** : Déflagration 3×3 destructrice de blocs et d'ennemis.
-  - **Arc & Flèches** : Tirs à distance avec décompte de rubis.
-  - **Bougie bleue** : Émission de flammes illuminant et attaquant.
-- **Intelligence artificielle des ennemis & butin** :
-  - Octoroks (rouges et bleus), Moblins, Tektites, Keeses, Leevers, Peahats volants du désert et Zoras fluviaux avec tirs de boules de feu traversantes.
-  - Animation de mort authentique avec nuage de fumée et dissipation progressive.
-  - Disparition propre des monstres lors des transitions d'écran en défilement.
-- **Passages secrets & Murs explosables à la bombe** :
-  - Détection des déflagrations de bombes sur les murs fissurés, ouverture persistante des entrées de cavernes cachées et carillon de secret SID 8 notes.
-- **Réseau hydrographique & Ponts franchissables** :
-  - Ponts horizontaux et verticaux praticables permettant d'accéder au Niveau 1 (L'Aigle) et aux différentes îles de l'Overworld.
-- **Grottes secrètes & PNJ** :
-  - Le vieil homme (*« IT'S DANGEROUS TO GO ALONE ! TAKE THIS. »*), torches animées et ramassage d'épée.
-- **Architecture disquette D64 à chargement dynamique** :
-  - Image disquette 1541 standard (`zelda.d64`) contenant l'intro, le moteur de jeu résident et les cartes chargées à la demande via les routines KERNAL IEC en `$A000`.
+- **Bestiaire et Boss 100% fidèles extraits de la ROM `zelda.nes`** :
+  - **Élimination complète des sprites approximatifs et du bug de dilatation** : Les graphismes proviennent directement des banques CHR de la cartouche NES (`zelda.nes`).
+  - **Squelettes Stalfos** : Crâne avec orbites noires creuses, cage thoracique avec côtes et vertèbres visibles, marche fluide avec doubles épées.
+  - **Chauve-souris Keese** : Ailes déployées à découpe dentelée et yeux incandescents (frame 0), ailes repliées vers le bas (frame 1).
+  - **Diablotins Goriya** : Oreilles pointues, museau de diablotin, posture de face et de profil brandissant le boomerang.
+  - **Boss géants plein format (12×21 double-pixels C64)** :
+    - **Aquamentus** : Dragon vert cornu à gueule béante garnie de crocs, ailes écailleuses, serres et crachat de triples boules de feu rotatives.
+    - **Dodongo** : Dinosaure cuirassé quadrupède avec écailles dorsales et queue articulée.
+    - **Gohma** : Araignée colossale avec œil unique fermé et grand œil ouvert avec iris et pupille.
+    - **Ganon** : Démon-sanglier géant avec crâne menaçant, défenses et trident.
+  - **Bestiaire souterrain & Overworld complet (83 sprites)** : Darknut, Pols Voice (grandes oreilles de lapin et moustaches), Gibdo (momie en bandelettes), Like Like (tube ondulé mangeur de bouclier), Vire, Wizzrobe (robe et capuche de sorcier), Wallmaster (main rampante à 5 doigts), Octoroks, Moblins, Tektites, Leevers, Peahats, Armos, Ghinis, Zoras et Lynels.
+- **HUD sur fond noir & Mini-carte 1:1** :
+  - **HUD sur fond noir complet** : Alignement parfait sans trait résiduel sous la barre d'état.
+  - **Mini-carte matricielle 1 pixel par salle** : En Overworld (radar GPS vert clair) et en Donjon (mini-carte blanche avec coloration cyan des salles explorées et position de Link en jaune vif).
+- **Moteur Audio SID & Restitution des Voix** :
+  - Correction de la reprise du canal musical : à chaque utilisation d'arme (coup d'épée, boomerang, bombe), le canal sonore SID est immédiatement et proprement restitué à la musique d'ambiance sans interruption ni perte de note.
 - **Éditeur de niveau visuel intégré** (`tools/editor.py`) :
   - Interface web interactive en Python permettant d'éditer la carte, les salles, les ennemis et les objets avec recompilation à la volée.
 
@@ -175,12 +158,12 @@ Le jeu se joue idéalement avec une manette ou un joystick branché sur le **Por
 
 ## Architecture de la Disquette C64 (`zelda.d64`)
 
-La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers principaux :
+La disquette 1541 est formatée sous le nom `zelda,01` et contient les fichiers suivants :
 
 1. `INTRO` (`PRG`) : Programme d'introduction autonome exécuté au démarrage (`$0801`–`$3FFF`), gérant la cascade, le parchemin en défilement vertical fin et la musique SID complète.
-2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$9F55`), incluant le pilote audio SID Overworld & Underworld.
+2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$9F55`), incluant le pilote audio SID Overworld & Underworld et les 83 sprites d'ennemis originaux en `$2800`–`$3FFF`.
 3. `MAP_OW` (`DAT`) : Données binaires de la carte de l'Overworld (128 salles), chargées dynamiquement à l'adresse `$A000` via le bus série IEC KERNAL.
-4. `MAP_UW` (`DAT`) : Données binaires des 9 donjons de l'Underworld, chargées dynamiquement à `$A000`.
+4. `DUNG1` à `DUNG9` (`DAT`) : Fichiers autonomes de chacun des 9 donjons d'Hyrule (salles, portes, clés, objets, décors et tables d'ennemis/boss), chargés dynamiquement à `$A000`.
 
 ### Carte mémoire du C64
 
@@ -241,7 +224,8 @@ La disquette 1541 est formatée sous le nom `zelda,01` et contient 4 fichiers pr
 │   ├── charset.asm             # [GÉNÉRÉ] Jeu de caractères multicolores VIC-II
 │   ├── tiles_data.asm          # [GÉNÉRÉ] Tables de correspondance et attributs des tuiles
 │   ├── map_overworld.asm       # [GÉNÉRÉ] Données compilables de la carte Overworld
-│   ├── map_underworld.asm      # [GÉNÉRÉ] Données compilables de l'Underworld (9 donjons)
+│   ├── dungeon.asm             # Moteur de règles des donjons (portes, clés, volets, secrets)
+│   ├── dung1.asm ... dung9.asm # [GÉNÉRÉ] Fichiers assembleur autonomes des 9 Donjons d'Hyrule
 │   ├── disk.asm                # Routines KERNAL IEC de streaming disquette 1541
 │   ├── intro.asm               # Logique de la cinématique d'introduction
 │   ├── intro_main.asm          # Point d'entrée de l'exécutable autonome d'intro

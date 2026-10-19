@@ -17,6 +17,7 @@ zelda.nes
 assets/nes/
 tools/*nes*
 tools/extract_overworld_enemies.py
+1.png
 
 # Logs et scripts temporaires d'émulateur VICE
 *.mon

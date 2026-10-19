@@ -22,9 +22,11 @@ saved_ow_player_y:      !byte 0
 current_dungeon_level:   !byte 1
 dungeon_entrance_room_x: !byte 3
 dungeon_entrance_room_y: !byte 7
+active_bg_color:        !byte COL_BLACK
 
 apply_map_colors:
         lda map_bg_col
+        sta active_bg_color
         sta VIC_BACKGROUND
         lda map_mc1_col
         sta VIC_BG_MC1
@@ -118,6 +120,7 @@ load_room:
         sta current_zone
         tax
         lda zone_bg_color,x
+        sta active_bg_color
         sta VIC_BACKGROUND
         lda zone_mc1_color,x
         sta VIC_BG_MC1
@@ -243,6 +246,7 @@ base_dungeon_tile_color:
 
 apply_dungeon_colors:
         lda #COL_BLACK
+        sta active_bg_color
         sta VIC_BACKGROUND
         ldx current_dungeon_level
         dex
@@ -251,20 +255,15 @@ apply_dungeon_colors:
         ldx #0
 +       lda dungeon_mc1_table,x
         sta VIC_BG_MC1
-        lda #12                         ; Gris clair pour les dalles
+        lda #14                         ; Light Blue pour MC2 (reflets, murs et portes)
         sta VIC_BG_MC2
 
+        ; Couleur individuelle des tuiles en mode multicolore : Bleu (6) + 8 = 14
+        lda #14
         ldy #15
--       lda base_dungeon_tile_color,y
-        sta active_tile_color,y
+-       sta active_tile_color,y
         dey
         bpl -
-
-        lda dungeon_wall_color,x
-        sta active_tile_color + 3       ; TILE_TREE (bloc)
-        sta active_tile_color + 5       ; TILE_WALL (mur)
-        sta active_tile_color + 11      ; TILE_WALL_PASS
-        sta active_tile_color + 12      ; TILE_WALL_BOMB
         rts
 
 ; ===========================================================================
@@ -318,23 +317,25 @@ enter_dungeon:
         sta item_active
         sta player_attacking
 
-        ; 3. Vider l'écran et recharger la carte Donjon
-        jsr clear_screen
-        jsr disk_load_map_underworld
-
-        ; 4. Détermine le Niveau de Donjon (1..9)
+        ; 3. Détermine le Niveau de Donjon (1..9)
         lda current_dungeon_level
         bne +
         lda #1
         sta current_dungeon_level
-+       sec
++
+        ; 4. Vider l'écran et charger le Donjon depuis la disquette
+        jsr clear_screen
+        jsr disk_load_dungeon
+
+        ; 5. Positionne Link dans la salle d'entrée du Donjon
+        lda current_dungeon_level
+        sec
         sbc #1
         cmp #9
         bcc +
         lda #0
 +       tax
 
-        ; Positionne Link dans la salle d'entrée du Donjon
         lda dungeon_start_rx,x
         sta current_room_x
         sta dungeon_entrance_room_x

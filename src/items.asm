@@ -97,18 +97,7 @@ use_food:
         rts
 +       lda #0
         sta player_has_food
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$18
-        sta SID_V1_FREQ_HI
-        lda #$09
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%10000001
-        sta SID_V1_CTRL
+        jsr sound_food
         rts
 
 use_potion:
@@ -118,20 +107,7 @@ use_potion:
 +       lda hud_max_hearts
         sta hud_cur_hearts
         jsr hud_render
-
-        lda #15
-        sta SID_VOLUME
-        lda #$80
-        sta SID_V1_FREQ_LO
-        lda #$24
-        sta SID_V1_FREQ_HI
-        lda #$09
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%00010001
-        sta SID_V1_CTRL
-
+        jsr sound_potion
         dec player_has_potion
         rts
 
@@ -141,18 +117,7 @@ use_whistle:
         rts
 +
         ; Joue la mélodie de la flûte (synthèse SID)
-        lda #15
-        sta SID_VOLUME
-        lda #$80
-        sta SID_V1_FREQ_LO
-        lda #$48
-        sta SID_V1_FREQ_HI
-        lda #$09
-        sta SID_V1_AD
-        lda #$40
-        sta SID_V1_SR
-        lda #%00010001                  ; Triangle
-        sta SID_V1_CTRL
+        jsr sound_flute
 
         ; Si Digdogger est dans la salle (Niveau 5) : il rétrécit !
         ldx #0
@@ -217,18 +182,7 @@ use_wand:
 
 
         ; Son d'onde magique
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$50
-        sta SID_V1_FREQ_HI
-        lda #$09
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%00100001                  ; Dent de scie
-        sta SID_V1_CTRL
+        jsr sound_wand
         rts
 
 ; ---------------------------------------------------------------------------
@@ -245,20 +199,7 @@ spawn_boomerang:
         sta item_timer
 
         jsr set_spawn_coords
-
-        ; Bruitage rotatif
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$28
-        sta SID_V1_FREQ_HI
-        lda #$24
-        sta SID_V1_AD
-        lda #$20
-        sta SID_V1_SR
-        lda #%00010001                  ; Triangle + Gate ON
-        sta SID_V1_CTRL
+        jsr sound_boomerang
         rts
 
 ; ---------------------------------------------------------------------------
@@ -305,18 +246,7 @@ spawn_bow:
         jsr set_spawn_coords
 
         ; Sifflement rapide de la flèche
-        lda #15
-        sta SID_VOLUME
-        lda #$80
-        sta SID_V1_FREQ_LO
-        lda #$48
-        sta SID_V1_FREQ_HI
-        lda #$02
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%10000001                  ; Bruit blanc
-        sta SID_V1_CTRL
+        jsr sound_arrow
         rts
 
 ; ---------------------------------------------------------------------------
@@ -335,18 +265,7 @@ spawn_candle:
         jsr set_spawn_coords
 
         ; Crépitement de la flamme
-        lda #15
-        sta SID_VOLUME
-        lda #$40
-        sta SID_V1_FREQ_LO
-        lda #$1c
-        sta SID_V1_FREQ_HI
-        lda #$28
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%10000001
-        sta SID_V1_CTRL
+        jsr sound_candle
         rts
 
 ; ---------------------------------------------------------------------------
@@ -631,9 +550,6 @@ follow_player_x:
         ; Attrapé !
         lda #ITEM_NONE
         sta item_active
-        ; Éteint le son
-        lda #%00010000
-        sta SID_V1_CTRL
 .bm_ret_done:
         rts
 
@@ -657,18 +573,7 @@ update_bomb:
         jsr dungeon_on_bomb_explode
 
         ; Déclenche le son d'explosion puissante
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$0e
-        sta SID_V1_FREQ_HI
-        lda #$00
-        sta SID_V1_AD
-        lda #$09
-        sta SID_V1_SR
-        lda #%10000001                  ; Bruit blanc
-        sta SID_V1_CTRL
+        jsr sound_bomb_explode
 .bmb_done:
         rts
 
@@ -888,14 +793,18 @@ update_wand:
 ; ---------------------------------------------------------------------------
 items_draw:
         lda item_active
-        bne .draw_item
-
+        beq +
+        jmp .draw_item
++
         ; Vérifie si un drop de donjon doit être affiché sur Sprite 2
         lda current_world_type
         cmp #WORLD_DUNGEON
-        bne .no_drop_to_draw
-        lda dungeon_drop_active
-        beq .no_drop_to_draw
+        beq +
+        jmp .no_drop_to_draw
++       lda dungeon_drop_active
+        bne +
+        jmp .no_drop_to_draw
++
 
         lda dungeon_drop_x
         sta VIC_SPRITE_X2
@@ -923,6 +832,27 @@ items_draw:
 +       cmp #DROP_TRIFORCE
         bne +
         lda #< (sprite_link_item_get / 64)
+        sta SPRITE_PTR2
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_COMPASS
+        bne +
+        lda #< (sprite_link_item_ring / 64)
+        sta SPRITE_PTR2
+        lda #COL_ORANGE
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_MAP
+        bne +
+        lda #< (sprite_link_item_food / 64)
+        sta SPRITE_PTR2
+        lda #COL_LIGHT_BLUE
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_BOOMERANG
+        bne +
+        lda #< (sprite_link_item_boomerang / 64)
         sta SPRITE_PTR2
         lda #COL_YELLOW
         sta VIC_SPRITE_COL2
@@ -1304,6 +1234,9 @@ update_secret_chime:
         sta SID_V2_CTRL
         lda #0
         sta secret_chime_active
+        lda #2
+        sta sfx_voice
+        jsr restore_music_voice
 .chime_done:
         rts
 

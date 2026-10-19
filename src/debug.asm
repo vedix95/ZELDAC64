@@ -23,22 +23,12 @@ open_debug:
 
         ; Fond et bordure noirs
         lda #COL_BLACK
+        sta active_bg_color
         sta VIC_BACKGROUND
         sta VIC_BORDER
 
         ; Bip sonore SID
-        lda #15
-        sta SID_VOLUME
-        lda #$80
-        sta SID_V1_FREQ_LO
-        lda #$40
-        sta SID_V1_FREQ_HI
-        lda #$04
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%00010001                  ; Triangle
-        sta SID_V1_CTRL
+        jsr sound_inv_flip
 
         jsr debug_render_screen
         rts
@@ -64,9 +54,6 @@ debug_update:
 ; close_debug : ferme le debug et restaure l'affichage du jeu
 ; ---------------------------------------------------------------------------
 close_debug:
-        lda #%00010000
-        sta SID_V1_CTRL
-
         lda prev_game_state
         cmp #STATE_INVENTORY
         bne +
@@ -84,6 +71,7 @@ close_debug:
         sta game_state
 
         lda #COL_BLACK
+        sta active_bg_color
         sta VIC_BACKGROUND
         sta VIC_BORDER
 

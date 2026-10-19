@@ -136,9 +136,7 @@ cave_enter:
         sta player_walk_tick
 
         ; Coupe le son SID
-        lda #%10000000
-        sta SID_V1_CTRL
-        sta SID_V2_CTRL
+        jsr music_stop
 
         ; 6. Configure les emplacements d'objets selon le type de grotte
         jsr cave_setup_room_items
@@ -437,18 +435,7 @@ cave_trigger_moblin:
         jsr hud_render
 
         ; Jingle sonore de rubis
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$38
-        sta SID_V1_FREQ_HI
-        lda #$02
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%00010001
-        sta SID_V1_CTRL
+        jsr sound_rupee
 +       rts
 
 ; Gabarit résident de 200 octets pour les 23 grottes de l'Overworld
@@ -469,6 +456,7 @@ cave_room_template:
 ; ---------------------------------------------------------------------------
 cave_draw_screen:
         lda #COL_BLACK
+        sta active_bg_color
         sta VIC_BACKGROUND
         sta VIC_BORDER
         lda #COL_BROWN
@@ -911,19 +899,7 @@ cave_buy_slot3:
 
 .cant_afford:
         ; Son d'échec / rebond
-        lda #15
-        sta SID_VOLUME
-        lda #$00
-        sta SID_V1_FREQ_LO
-        lda #$12
-        sta SID_V1_FREQ_HI
-        lda #$05
-        sta SID_V1_AD
-        lda #$00
-        sta SID_V1_SR
-        lda #%10000001
-        sta SID_V1_CTRL
-        rts
+        jmp sound_shield_block
 
 ; ---------------------------------------------------------------------------
 ; cave_grant_item : attribue l'objet selon son ID et choisit le sprite célébré
@@ -1328,6 +1304,7 @@ cave_exit:
         sta player_walk_tick
 
         lda #MAP_BG_COLOR
+        sta active_bg_color
         sta VIC_BACKGROUND
         lda #COL_BLACK
         sta VIC_BORDER

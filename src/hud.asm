@@ -20,6 +20,8 @@ HUD_CHAR_BOMB   = 100                   ; code caractère bombe
 HUD_MAP_EMPTY   = 104                   ; salle non visitée
 HUD_MAP_ACTIVE  = 105                   ; salle active (plein)
 HUD_MAP_VISITED = 106                   ; salle visitée (cadre)
+HUD_MAP_CHAR_L  = 107                   ; minimap gauche (8x8 pixels)
+HUD_MAP_CHAR_R  = 108                   ; minimap droite (8x8 pixels)
 
 hud_rupees:       !byte 15              ; rubis initiaux
 hud_keys:         !byte 1               ; clefs initiales
@@ -33,11 +35,47 @@ visited_rooms:
 visited_ow_rooms: !fill 128, 0
 visited_uw_rooms: !fill 128, 0
 
-hud_cur_line:     !byte 0
-hud_cur_col:      !byte 0
-hud_base_off:     !byte 0
-hud_calc_ry:      !byte 0
-hud_calc_rx:      !byte 0
+hud_blink_tick:   !byte 0
+minimap_px:       !byte 0
+minimap_py:       !byte 0
+
+; Décalages pour centrer chaque Donjon (1..9) dans le canevas 16x8 pixels
+dung_shift_x:
+        !byte 4, $f9, $fc, 5, 2, $fd, $fd, $fa, 3       ; +4, -7, -4, +5, +2, -3, -3, -6, +3
+dung_shift_y:
+        !byte $ff, 0, $fe, 0, $ff, 0, $ff, $ff, $ff     ; -1, 0, -2, 0, -1, 0, -1, -1, -1
+
+; Coordonnées pixel de la salle Triforce pour chaque Donjon (1..9)
+dungeon_tri_px:
+        !byte 10, 6, 9, 8, 6, 9, 8, 6, 5
+dungeon_tri_py:
+        !byte 2, 0, 1, 0, 0, 0, 1, 1, 2
+
+bitmask:
+        !byte $80, $40, $20, $10, $08, $04, $02, $01
+bitmask_inv:
+        !byte $7f, $bf, $df, $ef, $f7, $fb, $fd, $fe
+
+; Silhouettes complètes des 9 Donjons officiels Zelda 1 (16 octets par niveau = 16x8 pixels)
+dungeon_shapes:
+        ; Lvl 1 (Eagle / Aigle)
+        !byte $00, $03, $07, $03, $03, $03, $03, $00, $00, $00, $60, $c0, $80, $c0, $80, $00
+        ; Lvl 2 (Moon / Lune)
+        !byte $03, $01, $01, $01, $01, $01, $03, $02, $80, $80, $80, $80, $80, $80, $80, $00
+        ; Lvl 3 (Manji)
+        !byte $00, $03, $03, $03, $03, $01, $00, $00, $00, $c0, $c0, $c0, $80, $80, $00, $00
+        ; Lvl 4 (Steer / Gnou)
+        !byte $07, $07, $06, $07, $06, $06, $07, $06, $c0, $80, $00, $00, $00, $00, $00, $00
+        ; Lvl 5 (Lizard / Lézard)
+        !byte $03, $03, $01, $01, $01, $01, $00, $00, $80, $80, $c0, $c0, $c0, $c0, $c0, $00
+        ; Lvl 6 (Dragon)
+        !byte $07, $07, $07, $07, $07, $07, $07, $07, $c0, $c0, $00, $00, $00, $00, $00, $00
+        ; Lvl 7 (Demon / Démon)
+        !byte $07, $07, $07, $07, $07, $07, $07, $00, $00, $80, $00, $00, $e0, $e0, $00, $00
+        ; Lvl 8 (Lion)
+        !byte $00, $03, $07, $03, $03, $01, $03, $00, $00, $00, $c0, $80, $c0, $c0, $c0, $00
+        ; Lvl 9 (Death Mountain / Montagne de la Mort)
+        !byte $00, $03, $07, $07, $03, $03, $00, $00, $00, $00, $80, $c0, $c0, $c0, $e0, $00
 
 ; Noms des objets slot B (4 caractères chacun, 8 objets)
 b_item_names:
@@ -143,16 +181,25 @@ hud_init:
         ; Épée dans le slot X : dynamique selon player_has_sword
         jsr hud_update_sword
 
-        ; Ligne 3 : Ligne de séparation (colonnes 8 à 39)
-        ldx #8
-.sep_line:
-        lda #'-'
+        ; Minimap sur Ligne 1 (colonnes 2 et 3) : 2 caractères 8x8 = 16x8 pixels (1 pixel par salle)
+        lda #HUD_MAP_CHAR_L
+        sta SCREEN_RAM+40+2
+        lda #HUD_MAP_CHAR_R
+        sta SCREEN_RAM+40+3
+        lda #COL_CYAN
+        sta COLOR_RAM+40+2
+        sta COLOR_RAM+40+3
+
+        ; Ligne 3 : Entièrement noire et vide (séparation propre sans aucun trait)
+        ldx #0
+.clr_row3:
+        lda #32
         sta SCREEN_RAM+120,x
         lda #COL_BLACK
         sta COLOR_RAM+120,x
         inx
         cpx #40
-        bne .sep_line
+        bne .clr_row3
 
         jsr hud_render
         rts
@@ -161,6 +208,11 @@ hud_init:
 ; hud_render : met à jour les données dynamiques du HUD
 ; ---------------------------------------------------------------------------
 hud_render:
+        lda #32
+        sta SCREEN_RAM+0
+        lda #COL_BLACK
+        sta COLOR_RAM+0
+
         ; 1. Mise à jour de la position de la carte (16x8)
         ; Marque la salle active comme visitée dans la table appropriée
         ldx current_room_y
@@ -226,7 +278,7 @@ hud_render:
         lda #' '
         sta SCREEN_RAM+7
 
-        lda #COL_LIGHT_GREEN
+        lda #COL_WHITE
         sta COLOR_RAM+1
         sta COLOR_RAM+2
         sta COLOR_RAM+3
@@ -236,261 +288,231 @@ hud_render:
         sta COLOR_RAM+7
 
 .render_map_cells:
+        ; Garantit que les 2 caractères minimap sont en place sur Ligne 1 (cols 2 et 3)
+        lda #HUD_MAP_CHAR_L
+        sta SCREEN_RAM+40+2
+        lda #HUD_MAP_CHAR_R
+        sta SCREEN_RAM+40+3
+        lda #COL_CYAN
+        sta COLOR_RAM+40+2
+        sta COLOR_RAM+40+3
+
+        inc hud_blink_tick
+
         lda current_world_type
         cmp #WORLD_DUNGEON
+        beq .render_uw_minimap
+
+        ; --- OVERWORLD MINIMAP (16x8 salles = 16x8 pixels) ---
+        ldx #15
+        lda #$ff
+-       sta $2358,x
+        dex
+        bpl -
+
+        ; Clignotement de Link (éteint quand bit 3 == 0)
+        lda hud_blink_tick
+        and #%00001000
         bne +
-        jmp .render_dungeon_minimap
-+
-
-        ; --- Overworld : Radar Hyrule GPS (Lignes 1..3, Cols 1..5) ---
-        ; Ligne 1 : "+---+"
-        lda #'+'
-        sta SCREEN_RAM+41
-        sta SCREEN_RAM+45
-        lda #'-'
-        sta SCREEN_RAM+42
-        sta SCREEN_RAM+43
-        sta SCREEN_RAM+44
-        lda #COL_GREY
-        sta COLOR_RAM+41
-        sta COLOR_RAM+42
-        sta COLOR_RAM+43
-        sta COLOR_RAM+44
-        sta COLOR_RAM+45
-
-        ; Ligne 2 : "| . |" avec position proportionnelle de Link
-        lda #'|'
-        sta SCREEN_RAM+81
-        sta SCREEN_RAM+85
-        lda #' '
-        sta SCREEN_RAM+82
-        sta SCREEN_RAM+83
-        sta SCREEN_RAM+84
-        lda #COL_GREY
-        sta COLOR_RAM+81
-        sta COLOR_RAM+82
-        sta COLOR_RAM+83
-        sta COLOR_RAM+84
-        sta COLOR_RAM+85
-
-        ; Colonne du point vert : 82 + (current_room_x * 3) / 16 (82, 83 ou 84)
         lda current_room_x
-        cmp #6
-        bcc .ow_dot_c0
-        cmp #11
-        bcc .ow_dot_c1
-        ldx #84
-        bne .ow_dot_draw
-.ow_dot_c0:
-        ldx #82
-        bne .ow_dot_draw
-.ow_dot_c1:
-        ldx #83
-.ow_dot_draw:
-        lda #HUD_MAP_ACTIVE
-        sta SCREEN_RAM,x
-        lda #COL_LIGHT_GREEN
-        sta COLOR_RAM,x
-
-        ; Ligne 3 : "+---+" et coordonnées de secteur en colonnes 6 et 7
-        lda #'+'
-        sta SCREEN_RAM+121
-        sta SCREEN_RAM+125
-        lda #'-'
-        sta SCREEN_RAM+122
-        sta SCREEN_RAM+123
-        sta SCREEN_RAM+124
-        lda #COL_GREY
-        sta COLOR_RAM+121
-        sta COLOR_RAM+122
-        sta COLOR_RAM+123
-        sta COLOR_RAM+124
-        sta COLOR_RAM+125
-
-        ; Secteur en cols 6-7 : Lettre X (A..P) sur Ligne 2, Chiffre Y (1..8) sur Ligne 3
-        lda #'A'
-        clc
-        adc current_room_x
-        sta SCREEN_RAM+87
-        lda #COL_WHITE
-        sta COLOR_RAM+87
-        lda #'1'
-        clc
-        adc current_room_y
-        sta SCREEN_RAM+127
-        lda #COL_WHITE
-        sta COLOR_RAM+127
-        jmp .counters
-
-.render_dungeon_minimap:
-        ; --- Donjon : Minimap matricielle 5 colonnes x 3 lignes ---
-        ; Fenêtre centrée sur Link :
-        ;   Ligne 1 : ry = current_room_y - 1 (offset 40)
-        ;   Ligne 2 : ry = current_room_y     (offset 80)
-        ;   Ligne 3 : ry = current_room_y + 1 (offset 120)
-        ;   Cols 1..5 : rx = current_room_x - 2 .. current_room_x + 2
-        ; Link est toujours au centre (Col 3, Ligne 2) en jaune brillant !
-
-        ldy #0
-        sty hud_cur_line
-.map_row_loop:
-        ; Calcule ry = current_room_y - 1 + hud_cur_line
+        sta minimap_px
         lda current_room_y
-        sec
-        sbc #1
-        clc
-        adc hud_cur_line
-        sta hud_calc_ry
+        sta minimap_py
+        jsr minimap_clear_pixel
++       jmp .minimap_done
 
-        ; Calcule offset écran de base pour la ligne (40, 80 ou 120)
-        lda hud_cur_line
-        beq .row_off_0
-        cmp #1
-        beq .row_off_1
-        lda #120
-        bne .row_off_set
-.row_off_0:
-        lda #40
-        bne .row_off_set
-.row_off_1:
-        lda #80
-.row_off_set:
-        sta hud_base_off
-
-        ; Boucle sur les 5 colonnes (cols 1..5)
-        ldx #0
-        stx hud_cur_col
-.map_col_loop:
-        ; Calcule rx = current_room_x - 2 + hud_cur_col
-        lda current_room_x
-        sec
-        sbc #2
-        clc
-        adc hud_cur_col
-        sta hud_calc_rx
-
-        ; Calcul adresse écran de la cellule : hud_base_off + 1 + hud_cur_col
-        lda hud_base_off
-        clc
-        adc #1
-        adc hud_cur_col
-        tay                             ; Y = offset écran dans SCREEN_RAM
-
-        ; Vérifie les limites du monde (0 <= rx < 16 et 0 <= ry < 8)
-        lda hud_calc_ry
-        bmi .cell_blank_jmp
-        cmp #8
-        bcs .cell_blank_jmp
-        lda hud_calc_rx
-        bmi .cell_blank_jmp
-        cmp #16
-        bcc .cell_in_bounds
-.cell_blank_jmp:
-        jmp .cell_blank
-.cell_in_bounds:
-
-        ; Index de la salle = ry * 16 + rx
-        tax
-        lda world_row_offset,x
-        clc
-        adc hud_calc_rx
-        tax                             ; X = index salle (0..127)
-
-        ; Si c'est la salle actuelle de Link -> HUD_MAP_ACTIVE en Jaune
-        lda hud_calc_rx
-        cmp current_room_x
-        bne .chk_cell_triforce
-        lda hud_calc_ry
-        cmp current_room_y
-        bne .chk_cell_triforce
-        lda #HUD_MAP_ACTIVE
-        sta SCREEN_RAM,y
-        lda #COL_YELLOW
-        sta COLOR_RAM,y
-        jmp .next_col
-
-.chk_cell_triforce:
-        ; Si joueur a la boussole et c'est la salle de la Triforce -> Rouge
-        lda player_has_compass
-        beq .chk_cell_visited
+        ; ===================================================================
+        ; MINIMAP SOUS-SOL / DONJONS (1 pixel par salle, centré dans 16x8)
+        ; ===================================================================
+.render_uw_minimap:
         lda current_dungeon_level
-        beq .chk_cell_visited
+        bne +
+        lda #1
+        sta current_dungeon_level
++
+        ; Efface les 16 octets de la bitmap ($2358..$2367)
+        ldx #15
+        lda #0
+-       sta $2358,x
+        dex
+        bpl -
+
+        ; Le joueur a-t-il la carte du donjon ?
+        lda player_has_dungeon_map
+        beq .uw_only_visited
+
+        ; Joueur a la carte : copie la silhouette officielle complète du donjon (16 octets)
+        lda current_dungeon_level
         sec
         sbc #1
         cmp #9
-        bcs .chk_cell_visited
-        pha
-        txa
-        pha
-        lda current_dungeon_level
-        sec
-        sbc #1
+        bcc +
+        lda #0
++       asl
+        asl
+        asl
+        asl                             ; index * 16 octets
         tax
-        lda dungeon_triforce_rooms,x
-        sta ZP_TMP
-        pla
-        tax
-        pla
-        cpx ZP_TMP
-        bne .chk_cell_visited
-        lda #HUD_MAP_ACTIVE
-        sta SCREEN_RAM,y
-        lda #COL_LIGHT_RED
-        sta COLOR_RAM,y
-        jmp .next_col
+        ldy #0
+-       lda dungeon_shapes,x
+        sta $2358,y
+        inx
+        iny
+        cpy #16
+        bne -
+        jmp .uw_draw_link_and_tri
 
-.chk_cell_visited:
-        ; Si la salle a été visitée -> HUD_MAP_VISITED en Cyan
+.uw_only_visited:
+        ; Joueur n'a pas la carte : affiche uniquement les salles visitées
+        ldx #0
+.uw_vis_loop:
         lda visited_uw_rooms,x
-        beq .chk_cell_mapped
-        lda #HUD_MAP_VISITED
-        sta SCREEN_RAM,y
-        lda #COL_CYAN
-        sta COLOR_RAM,y
-        jmp .next_col
+        beq .uw_vis_next
 
-.chk_cell_mapped:
-        ; Si joueur a la carte du donjon -> HUD_MAP_EMPTY en Gris foncé
-        lda player_has_dungeon_map
-        beq .cell_blank
-        lda #HUD_MAP_EMPTY
-        sta SCREEN_RAM,y
-        lda #COL_DARK_GREY
-        sta COLOR_RAM,y
-        jmp .next_col
+        stx ZP_SRC
+        txa
+        and #$0f
+        sta ZP_TMP                      ; rx = X & 15
+        txa
+        lsr
+        lsr
+        lsr
+        lsr
+        sta ZP_TMP+1                    ; ry = X >> 4
 
-.cell_blank:
-        lda #' '
-        sta SCREEN_RAM,y
-        lda #COL_BLACK
-        sta COLOR_RAM,y
-
-.next_col:
-        inc hud_cur_col
-        lda hud_cur_col
-        cmp #5
-        bcs +
-        jmp .map_col_loop
-+
-
-        ; Nettoie cols 6 et 7 de cette ligne
-        lda hud_base_off
+        ldy current_dungeon_level
+        dey
+        lda ZP_TMP
         clc
-        adc #6
-        tay
-        lda #' '
-        sta SCREEN_RAM,y
-        sta SCREEN_RAM+1,y
-        lda #COL_BLACK
-        sta COLOR_RAM,y
-        sta COLOR_RAM+1,y
+        adc dung_shift_x,y
+        bmi .uw_vis_skip
+        cmp #16
+        bcs .uw_vis_skip
+        sta minimap_px
 
-        inc hud_cur_line
-        lda hud_cur_line
-        cmp #3
-        bcs +
-        jmp .map_row_loop
+        lda ZP_TMP+1
+        clc
+        adc dung_shift_y,y
+        bmi .uw_vis_skip
+        cmp #8
+        bcs .uw_vis_skip
+        sta minimap_py
+
+        jsr minimap_set_pixel
+
+.uw_vis_skip:
+        ldx ZP_SRC
+.uw_vis_next:
+        inx
+        cpx #128
+        bne .uw_vis_loop
+
+.uw_draw_link_and_tri:
+        ; 1. Position actuelle de Link dans le donjon
+        ldy current_dungeon_level
+        dey
+        lda current_room_x
+        clc
+        adc dung_shift_x,y
+        sta minimap_px
+        lda current_room_y
+        clc
+        adc dung_shift_y,y
+        sta minimap_py
+
+        ; Clignotement de Link (bit 3 == 0 -> pixel éteint)
+        lda hud_blink_tick
+        and #%00001000
+        bne +
+        jsr minimap_clear_pixel
 +
+        ; 2. Salle de la Triforce (si le joueur a trouvé la Boussole)
+        lda player_has_compass
+        beq .minimap_done
+
+        ldy current_dungeon_level
+        dey
+        lda dungeon_tri_px,y
+        sta minimap_px
+        lda dungeon_tri_py,y
+        sta minimap_py
+
+        ; La Triforce clignote en opposition avec Link (éteint quand bit 3 != 0, allumé quand bit 3 == 0)
+        lda hud_blink_tick
+        and #%00001000
+        bne +
+        jsr minimap_set_pixel
+        jmp .minimap_done
++       jsr minimap_clear_pixel
+
+.minimap_done:
+        ; Nettoie colonnes 0..7 sur Ligne 2 (espace noir propre sous la minimap)
+        ldx #0
+-       lda #32
+        sta SCREEN_RAM+80,x
+        lda #COL_BLACK
+        sta COLOR_RAM+80,x
+        inx
+        cpx #8
+        bne -
+
+        jmp .counters
+
+; ---------------------------------------------------------------------------
+; minimap_set_pixel : allume le pixel (minimap_px, minimap_py) dans $2358..$2367
+; ---------------------------------------------------------------------------
+minimap_set_pixel:
+        lda minimap_py
+        cmp #8
+        bcs .set_pix_ret
+        tay                             ; Y = py (0..7)
+        lda minimap_px
+        cmp #16
+        bcs .set_pix_ret
+        cmp #8
+        bcs .set_pix_r
+        tax                             ; X = px (0..7)
+        lda bitmask,x
+        ora $2358,y
+        sta $2358,y
+.set_pix_ret:
+        rts
+.set_pix_r:
+        sec
+        sbc #8
+        tax                             ; X = px - 8 (0..7)
+        lda bitmask,x
+        ora $2360,y
+        sta $2360,y
+        rts
+
+; ---------------------------------------------------------------------------
+; minimap_clear_pixel : éteint le pixel (minimap_px, minimap_py) dans $2358..$2367
+; ---------------------------------------------------------------------------
+minimap_clear_pixel:
+        lda minimap_py
+        cmp #8
+        bcs .clr_pix_ret
+        tay
+        lda minimap_px
+        cmp #16
+        bcs .clr_pix_ret
+        cmp #8
+        bcs .clr_pix_r
+        tax
+        lda bitmask_inv,x
+        and $2358,y
+        sta $2358,y
+.clr_pix_ret:
+        rts
+.clr_pix_r:
+        sec
+        sbc #8
+        tax
+        lda bitmask_inv,x
+        and $2360,y
+        sta $2360,y
+        rts
 
 .counters:
 

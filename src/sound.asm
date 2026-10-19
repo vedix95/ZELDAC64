@@ -76,7 +76,10 @@ music_step:             !byte 0                 ; index de pas dans la partie
 music_delay:            !byte 0                 ; compte à rebours de frames avant le pas suivant
 dual_sid_enabled:       !byte 0                 ; 0 = Single SID (standard), 1 = Dual SID (Stereo)
 sfx_timer:              !byte 0                 ; durée active de l'effet sonore (frames)
-sfx_voice:              !byte 0                 ; voix occupée par le SFX (1 ou 3)
+sfx_voice:              !byte 0                 ; voix occupée par le SFX (1, 2 ou 3)
+cur_music_v1_note:      !byte 0                 ; dernière note programmée Voix 1
+cur_music_v2_note:      !byte 0                 ; dernière note programmée Voix 2
+cur_music_v3_note:      !byte 0                 ; dernière note programmée Voix 3
 
 ; ---------------------------------------------------------------------------
 ; sound_init : Réinitialise les puces SID et prépare le moteur audio
@@ -127,6 +130,9 @@ sound_init:
         sta music_delay
         sta sfx_timer
         sta sfx_voice
+        sta cur_music_v1_note
+        sta cur_music_v2_note
+        sta cur_music_v3_note
         rts
 
 ; ---------------------------------------------------------------------------
@@ -151,6 +157,9 @@ music_play:
         sta music_step
         sta music_delay
         sta sfx_timer
+        sta cur_music_v1_note
+        sta cur_music_v2_note
+        sta cur_music_v3_note
 
         lda current_music
         cmp #MUSIC_OVERWORLD
@@ -300,6 +309,123 @@ music_stop:
         sta SID1_V3_CTRL
         lda #0
         sta sfx_timer
+        sta cur_music_v1_note
+        sta cur_music_v2_note
+        sta cur_music_v3_note
+        rts
+
+; ---------------------------------------------------------------------------
+; restore_music_voice : Rétablit proprement la voix SID occupée par un SFX
+; ---------------------------------------------------------------------------
+restore_music_voice:
+        lda current_music
+        bne +
+        ; Pas de musique active : coupe la voix
+        lda sfx_voice
+        cmp #2
+        beq .kill_v2
+        lda #%00010000                  ; Voice 3 Triangle Gate OFF
+        sta SID1_V3_CTRL
+        rts
+.kill_v2:
+        lda #%00000000                  ; Voice 2 Gate OFF
+        sta SID1_V2_CTRL
+        rts
+
++       lda sfx_voice
+        cmp #2
+        beq .restore_v2
+        ; Sinon par défaut Voice 3
+        ; 1. Rétablir ADSR de la Voix 3
+        lda #$09
+        sta SID1_V3_AD
+        lda #$e2
+        sta SID1_V3_SR
+
+        ; 2. Rétablir la note de basse si une note était active
+        ldx cur_music_v3_note
+        beq .mute_v3
+        cpx #$80
+        beq .mute_v3                    ; Percussion : ne pas relancer
+
+        lda music_note_freq_lo,x
+        sta SID1_V3_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID1_V3_FREQ_HI
+        lda #%00010000                  ; Gate OFF pour réarmer l'ADSR
+        sta SID1_V3_CTRL
+        lda #%00010001                  ; Triangle Gate ON
+        sta SID1_V3_CTRL
+
+        lda dual_sid_enabled
+        beq +
+        lda music_note_freq_lo,x
+        sta SID2_V3_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID2_V3_FREQ_HI
+        lda #%00010000
+        sta SID2_V3_CTRL
+        lda #%00010001
+        sta SID2_V3_CTRL
++       rts
+
+.mute_v3:
+        lda #%00010000                  ; Gate OFF
+        sta SID1_V3_CTRL
+        lda dual_sid_enabled
+        beq +
+        sta SID2_V3_CTRL
++       rts
+
+.restore_v2:
+        lda current_music
+        cmp #MUSIC_DUNGEON
+        beq .res_v2_uw
+        ; Overworld : Sawtooth
+        lda #$07
+        sta SID1_V2_AD
+        lda #$a2
+        sta SID1_V2_SR
+        ldx cur_music_v2_note
+        beq .mute_v2
+        cpx #$fe
+        beq .mute_v2
+        lda music_note_freq_lo,x
+        sta SID1_V2_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID1_V2_FREQ_HI
+        lda #%00100000
+        sta SID1_V2_CTRL
+        lda #%00100001                  ; Sawtooth Gate ON
+        sta SID1_V2_CTRL
+        rts
+
+.res_v2_uw:
+        lda #$00
+        sta SID1_V2_PW_LO
+        lda #$08
+        sta SID1_V2_PW_HI
+        lda #$09
+        sta SID1_V2_AD
+        lda #$c0
+        sta SID1_V2_SR
+        ldx cur_music_v2_note
+        beq .mute_v2
+        cpx #$fe
+        beq .mute_v2
+        lda music_note_freq_lo,x
+        sta SID1_V2_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID1_V2_FREQ_HI
+        lda #%01000000
+        sta SID1_V2_CTRL
+        lda #%01000001                  ; Pulse Gate ON
+        sta SID1_V2_CTRL
+        rts
+
+.mute_v2:
+        lda #%00000000
+        sta SID1_V2_CTRL
         rts
 
 ; ---------------------------------------------------------------------------
@@ -311,16 +437,8 @@ music_update:
         beq .check_delay
         dec sfx_timer
         bne .check_delay
-        ; Fin de l'effet sonore : restaure l'instrument de musique
-        lda sfx_voice
-        cmp #3
-        bne .sfx_v1_restore
-        lda #%00010001
-        sta SID1_V3_CTRL
-        jmp .check_delay
-.sfx_v1_restore:
-        lda #%01000001
-        sta SID1_V1_CTRL
+        ; Fin de l'effet sonore : restaure intégralement la voix de musique
+        jsr restore_music_voice
 
 .check_delay:
         ; 2. Pas de musique active ?
@@ -422,6 +540,11 @@ music_update:
 ; ---------------------------------------------------------------------------
 .apply_music_step:
         ; --- VOIX 1 : Mélodie Principale ---
+        ldx temp_v1
+        cpx #$fe
+        beq +
+        stx cur_music_v1_note
++
         lda sfx_timer
         beq +
         lda sfx_voice
@@ -436,6 +559,25 @@ music_update:
         sta SID1_V1_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V1_FREQ_HI
+
+        lda #$00
+        sta SID1_V1_PW_LO
+        lda #$08
+        sta SID1_V1_PW_HI
+        lda current_music
+        cmp #MUSIC_DUNGEON
+        beq .v1_adsr_uw
+        lda #$08
+        sta SID1_V1_AD
+        lda #$c2
+        sta SID1_V1_SR
+        jmp .v1_adsr_done
+.v1_adsr_uw:
+        lda #$09
+        sta SID1_V1_AD
+        lda #$c0
+        sta SID1_V1_SR
+.v1_adsr_done:
         lda #%01000000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V1_CTRL
         lda #%01000001                  ; Pulse Gate ON
@@ -467,9 +609,31 @@ music_update:
 
         ; --- VOIX 2 : Harmonie / Contre-chant ---
         ldx temp_v2
-        beq .v2_mute
+        cpx #$fe
+        beq +
+        stx cur_music_v2_note
++
+        lda sfx_timer
+        beq +
+        lda sfx_voice
+        cmp #2
+        bne +
+        jmp .skip_v2
++
+        ldx temp_v2
+        bne .v2_play
+        lda #%00000000                  ; Gate OFF
+        sta SID1_V2_CTRL
+        lda dual_sid_enabled
+        beq +
+        sta SID2_V2_CTRL
++       jmp .skip_v2
+
+.v2_play:
         cpx #$fe                        ; $FE = TIE / HOLD (prolonger l'harmonie sans réarmer)
-        beq .skip_v2
+        bne +
+        jmp .skip_v2
++
         lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
@@ -479,6 +643,10 @@ music_update:
         cmp #MUSIC_DUNGEON
         beq .v2_pulse
         ; Overworld : Sawtooth
+        lda #$07
+        sta SID1_V2_AD
+        lda #$a2
+        sta SID1_V2_SR
         lda #%00100000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V2_CTRL
         lda #%00100001                  ; Sawtooth Gate ON
@@ -487,6 +655,14 @@ music_update:
 
 .v2_pulse:
         ; Underworld : Pulse 50%
+        lda #$00
+        sta SID1_V2_PW_LO
+        lda #$08
+        sta SID1_V2_PW_HI
+        lda #$09
+        sta SID1_V2_AD
+        lda #$c0
+        sta SID1_V2_SR
         lda #%01000000                  ; Gate OFF
         sta SID1_V2_CTRL
         lda #%01000001                  ; Pulse Gate ON
@@ -515,17 +691,14 @@ music_update:
         sta SID2_V2_CTRL
         lda #%01000001
         sta SID2_V2_CTRL
-        jmp .skip_v2
-
-.v2_mute:
-        lda #%00000000                  ; Gate OFF
-        sta SID1_V2_CTRL
-        lda dual_sid_enabled
-        beq .skip_v2
-        sta SID2_V2_CTRL
 .skip_v2:
 
         ; --- VOIX 3 : Percussion ou Basse ---
+        lda temp_v3
+        cmp #$fe
+        beq +
+        sta cur_music_v3_note
++
         lda sfx_timer
         beq +
         lda sfx_voice
@@ -545,6 +718,10 @@ music_update:
         sta SID1_V3_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V3_FREQ_HI
+        lda #$09
+        sta SID1_V3_AD
+        lda #$e2
+        sta SID1_V3_SR
         lda #%00010000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V3_CTRL
         lda #%00010001                  ; Triangle Gate ON
@@ -594,201 +771,93 @@ temp_v3:        !byte 0
 ; ===========================================================================
 ; EFFETS SONORES (SFX)
 ; En mode Dual SID, jouent sur SID 2 pour préserver 100% de la musique sur SID 1.
-; En mode Single SID, s'intègrent avec sfx_timer sans casser le flux musical.
+; En mode Single SID, s'intègrent sur Voix 3 avec restauration automatique.
 ; ===========================================================================
 
-; Coup d'épée de Link (Bruit tranchant d'acier)
-sound_sword:
+SFX_SWORD         = 0
+SFX_ENEMY_SHOOT   = 1
+SFX_ENEMY_HIT     = 2
+SFX_ENEMY_DIE     = 3
+SFX_SHIELD_BLOCK  = 4
+SFX_RUPEE         = 5
+SFX_ARROW         = 6
+SFX_BOOMERANG     = 7
+SFX_BOMB_EXPLODE  = 8
+SFX_CANDLE        = 9
+SFX_WAND          = 10
+SFX_FOOD          = 11
+SFX_POTION        = 12
+SFX_LINK_HURT     = 13
+SFX_ITEM_FANFARE  = 14
+SFX_FLUTE         = 15
+SFX_INV_FLIP      = 16
+SFX_INV_SELECT    = 17
+
+sound_sword:        ldx #SFX_SWORD; jmp play_sfx_v3
+sound_enemy_shoot:  ldx #SFX_ENEMY_SHOOT; jmp play_sfx_v3
+sound_enemy_hit:    ldx #SFX_ENEMY_HIT; jmp play_sfx_v3
+sound_enemy_die:    ldx #SFX_ENEMY_DIE; jmp play_sfx_v3
+sound_shield_block: ldx #SFX_SHIELD_BLOCK; jmp play_sfx_v3
+sound_rupee:        ldx #SFX_RUPEE; jmp play_sfx_v3
+sound_arrow:        ldx #SFX_ARROW; jmp play_sfx_v3
+sound_boomerang:    ldx #SFX_BOOMERANG; jmp play_sfx_v3
+sound_bomb_explode: ldx #SFX_BOMB_EXPLODE; jmp play_sfx_v3
+sound_candle:       ldx #SFX_CANDLE; jmp play_sfx_v3
+sound_wand:         ldx #SFX_WAND; jmp play_sfx_v3
+sound_food:         ldx #SFX_FOOD; jmp play_sfx_v3
+sound_potion:       ldx #SFX_POTION; jmp play_sfx_v3
+sound_link_hurt:    ldx #SFX_LINK_HURT; jmp play_sfx_v3
+sound_item_fanfare: ldx #SFX_ITEM_FANFARE; jmp play_sfx_v3
+sound_flute:        ldx #SFX_FLUTE; jmp play_sfx_v3
+sound_inv_flip:     ldx #SFX_INV_FLIP; jmp play_sfx_v3
+sound_inv_select:   ldx #SFX_INV_SELECT; jmp play_sfx_v3
+
+play_sfx_v3:
         lda dual_sid_enabled
-        bne .sfx_dual_sword
-        ; Single SID : priorité Voix 3
+        bne .dual
         lda #3
         sta sfx_voice
-        lda #6                          ; 6 frames
+        lda sfx_timer_tbl,x
         sta sfx_timer
-        lda #$00
+        lda sfx_freq_lo_tbl,x
         sta SID1_V3_FREQ_LO
-        lda #$48
+        lda sfx_freq_hi_tbl,x
         sta SID1_V3_FREQ_HI
-        lda #$09
+        lda sfx_ad_tbl,x
         sta SID1_V3_AD
-        lda #$00
+        lda sfx_sr_tbl,x
         sta SID1_V3_SR
-        lda #%10000001                  ; Noise
+        lda sfx_ctrl_tbl,x
         sta SID1_V3_CTRL
         rts
-.sfx_dual_sword:
-        lda #$00
+.dual:
+        lda sfx_freq_lo_tbl,x
         sta SID2_V3_FREQ_LO
-        lda #$48
+        lda sfx_freq_hi_tbl,x
         sta SID2_V3_FREQ_HI
-        lda #$09
+        lda sfx_ad_tbl,x
         sta SID2_V3_AD
-        lda #$00
+        lda sfx_sr_tbl,x
         sta SID2_V3_SR
-        lda #%10000001
+        lda sfx_ctrl_tbl,x
         sta SID2_V3_CTRL
         rts
 
-; Tir ennemi / rocher craché
-sound_enemy_shoot:
-        lda dual_sid_enabled
-        bne .sfx_dual_shoot
-        lda #3
-        sta sfx_voice
-        lda #5
-        sta sfx_timer
-        lda #$20
-        sta SID1_V3_FREQ_LO
-        lda #$25
-        sta SID1_V3_FREQ_HI
-        lda #$06
-        sta SID1_V3_AD
-        lda #$00
-        sta SID1_V3_SR
-        lda #%00100001                  ; Sawtooth
-        sta SID1_V3_CTRL
-        rts
-.sfx_dual_shoot:
-        lda #$20
-        sta SID2_V3_FREQ_LO
-        lda #$25
-        sta SID2_V3_FREQ_HI
-        lda #$06
-        sta SID2_V3_AD
-        lda #$00
-        sta SID2_V3_SR
-        lda #%00100001
-        sta SID2_V3_CTRL
-        rts
-
-; Impact sur ennemi (Bruit sec)
-sound_enemy_hit:
-        lda dual_sid_enabled
-        bne .sfx_dual_hit
-        lda #3
-        sta sfx_voice
-        lda #6
-        sta sfx_timer
-        lda #$80
-        sta SID1_V3_FREQ_LO
-        lda #$30
-        sta SID1_V3_FREQ_HI
-        lda #$04
-        sta SID1_V3_AD
-        lda #$00
-        sta SID1_V3_SR
-        lda #%10000001                  ; Noise
-        sta SID1_V3_CTRL
-        rts
-.sfx_dual_hit:
-        lda #$80
-        sta SID2_V3_FREQ_LO
-        lda #$30
-        sta SID2_V3_FREQ_HI
-        lda #$04
-        sta SID2_V3_AD
-        lda #$00
-        sta SID2_V3_SR
-        lda #%10000001
-        sta SID2_V3_CTRL
-        rts
-
-; Mort d'ennemi (Nuage de fumée rétro)
-sound_enemy_die:
-        lda dual_sid_enabled
-        bne .sfx_dual_die
-        lda #3
-        sta sfx_voice
-        lda #10
-        sta sfx_timer
-        lda #$00
-        sta SID1_V3_FREQ_LO
-        lda #$18
-        sta SID1_V3_FREQ_HI
-        lda #$0c
-        sta SID1_V3_AD
-        lda #$00
-        sta SID1_V3_SR
-        lda #%10000001                  ; Noise
-        sta SID1_V3_CTRL
-        rts
-.sfx_dual_die:
-        lda #$00
-        sta SID2_V3_FREQ_LO
-        lda #$18
-        sta SID2_V3_FREQ_HI
-        lda #$0c
-        sta SID2_V3_AD
-        lda #$00
-        sta SID2_V3_SR
-        lda #%10000001
-        sta SID2_V3_CTRL
-        rts
-
-; Bouclier bloquant un projectile (Tintement aigu métallique)
-sound_shield_block:
-        lda dual_sid_enabled
-        bne .sfx_dual_shield
-        lda #3
-        sta sfx_voice
-        lda #4
-        sta sfx_timer
-        lda #$00
-        sta SID1_V3_FREQ_LO
-        lda #$70
-        sta SID1_V3_FREQ_HI
-        lda #$02
-        sta SID1_V3_AD
-        lda #$00
-        sta SID1_V3_SR
-        lda #%00010001                  ; Triangle
-        sta SID1_V3_CTRL
-        rts
-.sfx_dual_shield:
-        lda #$00
-        sta SID2_V3_FREQ_LO
-        lda #$70
-        sta SID2_V3_FREQ_HI
-        lda #$02
-        sta SID2_V3_AD
-        lda #$00
-        sta SID2_V3_SR
-        lda #%00010001
-        sta SID2_V3_CTRL
-        rts
-
-; Ramassage de rubis (Jingle mélodieux cristallin)
-sound_rupee:
-        lda dual_sid_enabled
-        bne .sfx_dual_rupee
-        lda #1
-        sta sfx_voice
-        lda #8
-        sta sfx_timer
-        lda #$a0
-        sta SID1_V1_FREQ_LO
-        lda #$65
-        sta SID1_V1_FREQ_HI
-        lda #$05
-        sta SID1_V1_AD
-        lda #$00
-        sta SID1_V1_SR
-        lda #%00010001                  ; Triangle
-        sta SID1_V1_CTRL
-        rts
-.sfx_dual_rupee:
-        lda #$a0
-        sta SID2_V3_FREQ_LO
-        lda #$65
-        sta SID2_V3_FREQ_HI
-        lda #$05
-        sta SID2_V3_AD
-        lda #$00
-        sta SID2_V3_SR
-        lda #%00010001
-        sta SID2_V3_CTRL
-        rts
+sfx_timer_tbl:
+        !byte 6, 5, 6, 10, 4, 8, 5, 4, 14, 6, 8, 6, 8, 8, 20, 25, 3, 4
+sfx_freq_lo_tbl:
+        !byte $00, $20, $80, $00, $00, $a0, $80, $00, $00, $40, $00, $00, $80, $00, $80, $80, $00, $00
+sfx_freq_hi_tbl:
+        !byte $48, $25, $30, $18, $70, $65, $48, $28, $12, $1c, $50, $18, $24, $14, $50, $48, $28, $30
+sfx_ad_tbl:
+        !byte $09, $06, $04, $0c, $02, $05, $02, $04, $00, $08, $02, $04, $04, $08, $09, $09, $02, $04
+sfx_sr_tbl:
+        !byte $00, $00, $00, $00, $00, $00, $00, $00, $0a, $00, $00, $00, $00, $00, $40, $40, $00, $00
+sfx_ctrl_tbl:
+        !byte %10000001, %00100001, %10000001, %10000001, %00010001, %00010001, %10000001, %00010001
+        !byte %10000001, %10000001, %00100001, %10000001, %00010001, %10000001, %00010001, %00010001
+        !byte %00010001, %00010001
 
 ; Données musicales incluses
 !source "src/music_data.inc"
+

@@ -144,6 +144,7 @@ map_bg_col          = $a003
 map_mc1_col         = $a004
 map_mc2_col         = $a005
 map_row_offset      = $a006
+MAP_CHARSET_PTR     = $a00e
 room_tbl_lo         = $a016
 room_tbl_hi         = $a096
 room_zone_palette   = $a116

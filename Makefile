@@ -19,9 +19,10 @@ BLD_DIR := build
 MAIN    := $(SRC_DIR)/main.asm
 PRG_OW_MAP := $(BLD_DIR)/map_ow.dat
 PRG_UW_MAP := $(BLD_DIR)/map_uw.dat
+DUNG_DATS  := $(foreach n,1 2 3 4 5 6 7 8 9,$(BLD_DIR)/dung$(n).dat)
 GEN_MAPS   := $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm
 GEN        := $(SRC_DIR)/sprites.asm $(SRC_DIR)/sprites_enemies.asm $(SRC_DIR)/sprites_extra.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm
-SRCS       := $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN))
+SRCS       := $(filter-out $(SRC_DIR)/dung%.asm, $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN)))
 
 PRG     := $(BLD_DIR)/$(NAME).prg
 PRG_INT := $(BLD_DIR)/intro.prg
@@ -68,6 +69,14 @@ $(PRG_UW_MAP): $(SRC_DIR)/map_underworld.asm $(SRC_DIR)/map_underworld_enemies.i
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
+# Donjons 1 à 9 autonomes générés et compilés individuellement
+$(SRC_DIR)/dung1.asm $(SRC_DIR)/dung2.asm $(SRC_DIR)/dung3.asm $(SRC_DIR)/dung4.asm $(SRC_DIR)/dung5.asm $(SRC_DIR)/dung6.asm $(SRC_DIR)/dung7.asm $(SRC_DIR)/dung8.asm $(SRC_DIR)/dung9.asm &: assets/underworld.txt tools/build_dungeons.py
+	$(PYTHON) tools/build_dungeons.py
+
+$(BLD_DIR)/dung%.dat: $(SRC_DIR)/dung%.asm $(SRC_DIR)/enemy_types.inc | $(BLD_DIR)
+	$(ACME) -f cbm -o $@ $<
+	@echo "OK : $@ ($$(stat -c %s $@) octets)"
+
 # Binaire principal du jeu (Moteur de jeu résident en mémoire)
 $(PRG): $(SRCS) | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ --vicelabels $(LABELS) -r $(REPORT) $(MAIN)
@@ -77,14 +86,22 @@ $(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_musi
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-# Image disquette D64 : contient INTRO, ZELDA (moteur résident), MAP_OW et MAP_UW
-$(D64): $(PRG_INT) $(PRG) $(PRG_OW_MAP) $(PRG_UW_MAP)
+# Image disquette D64 : contient INTRO, ZELDA (moteur résident), MAP_OW et les 9 Donjons autonomes
+$(D64): $(PRG_INT) $(PRG) $(PRG_OW_MAP) $(DUNG_DATS)
 	$(C1541) -format "$(NAME),01" d64 $@ \
 		-write $(PRG_INT) intro \
 		-write $(PRG) zelda \
 		-write $(PRG_OW_MAP) map_ow \
-		-write $(PRG_UW_MAP) map_uw
-	@echo "OK : $@ image disquette D64 prete (INTRO + ZELDA + MAP_OW + MAP_UW) !"
+		-write $(BLD_DIR)/dung1.dat dung1 \
+		-write $(BLD_DIR)/dung2.dat dung2 \
+		-write $(BLD_DIR)/dung3.dat dung3 \
+		-write $(BLD_DIR)/dung4.dat dung4 \
+		-write $(BLD_DIR)/dung5.dat dung5 \
+		-write $(BLD_DIR)/dung6.dat dung6 \
+		-write $(BLD_DIR)/dung7.dat dung7 \
+		-write $(BLD_DIR)/dung8.dat dung8 \
+		-write $(BLD_DIR)/dung9.dat dung9
+	@echo "OK : $@ image disquette D64 prete (INTRO + ZELDA + MAP_OW + 9 DONJONS) !"
 
 
 $(BLD_DIR):
@@ -116,7 +133,7 @@ clean:
 	rm -rf $(BLD_DIR)
 
 distclean: clean
-	rm -f $(GEN) $(GEN_MAPS)
+	rm -f $(GEN) $(GEN_MAPS) $(SRC_DIR)/dung*.asm
 
 check:
 	@./scripts/check-env.sh

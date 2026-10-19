@@ -128,9 +128,7 @@ player_update:
         beq .check_attack_start
         dec player_attacking
         bne .attacking_active
-        ; Fin de l'attaque : couper la porte sonore SID
-        lda #%10000000
-        sta SID_V1_CTRL
+        ; Fin de l'attaque (la voix sonore est gérée par le timer SFX de sound.asm)
 .attacking_active:
         rts                             ; Link reste immobile pendant le coup
 

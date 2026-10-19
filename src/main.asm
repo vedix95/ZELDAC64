@@ -45,11 +45,11 @@ game_init:
         lda #WORLD_OVERWORLD
         sta current_world_type
 } else {
-        jsr disk_load_map_underworld
-        lda #WORLD_DUNGEON
-        sta current_world_type
         lda #1
         sta current_dungeon_level
+        jsr disk_load_dungeon
+        lda #WORLD_DUNGEON
+        sta current_world_type
 !if START_IN_DUNGEON == 1 {
         lda #3
         sta current_room_x
@@ -173,6 +173,7 @@ main_loop:
         jsr player_draw
         jsr items_draw
         jsr enemies_prep_multiplexer
+        jsr hud_render
         jmp main_loop
 
 .in_inventory:
@@ -201,6 +202,7 @@ wait_frame:
 !source "src/player.asm"
 !source "src/tilemap.asm"
 !source "src/gameplay.asm"
+!source "src/debug.asm"
 
 ; Le jeu de caractères est à une adresse fixe : le code et les données
 ; ci-dessus doivent tenir avant ($1000-$1FFF).
@@ -232,9 +234,6 @@ wait_frame:
 
 ; Module de communication disquette 1541 / D64
 !source "src/disk.asm"
-
-; Écran de diagnostic matériel et cartographie mémoire (Touche 'D')
-!source "src/debug.asm"
 
 ; Grotte secrète de l'Épée ("C'est dangereux d'y aller tout seul")
 !source "src/cave.asm"
