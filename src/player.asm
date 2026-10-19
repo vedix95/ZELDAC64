@@ -214,7 +214,7 @@ player_update:
 
         lda player_y
         clc
-        adc #11
+        adc #5
         sta col_y1
         lda player_y
         clc
@@ -294,7 +294,7 @@ player_update:
 
         lda player_y
         clc
-        adc #11
+        adc #5
         sta col_y1
         lda player_y
         clc
@@ -353,10 +353,10 @@ player_update:
         jmp .no_up
 
 .up_not_border:
-        ; Collision tuiles sur le bord haut des pieds : target_y + 11
+        ; Collision tuiles sur le haut du corps : target_y + 5 (évite l'immersion dans les murs et l'eau)
         clc
         lda target_y
-        adc #11
+        adc #5
         sta col_y
 
         clc
@@ -662,12 +662,11 @@ check_point_solid:
         jsr get_tile_at_point
         cmp #$ff
         bne +
-        lda current_world_type
-        cmp #WORLD_DUNGEON
-        bne .free
-        sec                             ; Solide en donjon si hors écran !
+        sec                             ; Toujours SOLIDE si hors écran !
         rts
-+       cmp #TILE_WATER
++       ldx current_world_type
+        bne .not_water
+        cmp #TILE_WATER
         bne .not_water
         lda player_has_stepladder
         bne .free

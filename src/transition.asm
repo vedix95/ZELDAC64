@@ -170,7 +170,11 @@ transition_right:
         ; Fin de transition
         inc current_room_x
         lda #<(PLAYER_X_MIN + 4)
-        sta player_x
+        ldx current_world_type
+        cpx #WORLD_DUNGEON
+        bne +
+        lda #68
++       sta player_x
         lda #0
         sta player_x+1
         jsr load_room
@@ -333,9 +337,14 @@ transition_left:
         ; Fin de transition
         dec current_room_x
         lda #<(PLAYER_X_MAX - 4)
-        sta player_x
-        lda #>(PLAYER_X_MAX - 4)
-        sta player_x+1
+        ldy #>(PLAYER_X_MAX - 4)
+        ldx current_world_type
+        cpx #WORLD_DUNGEON
+        bne +
+        lda #<276
+        ldy #>276
++       sta player_x
+        sty player_x+1
         jsr load_room
         jsr hud_render
         jsr player_draw
@@ -480,7 +489,11 @@ transition_down:
         ; Fin de transition
         inc current_room_y
         lda #(PLAYER_Y_MIN + 4)
-        sta player_y
+        ldx current_world_type
+        cpx #WORLD_DUNGEON
+        bne +
+        lda #102
++       sta player_y
         jsr load_room
         jsr hud_render
         jsr player_draw
@@ -629,7 +642,11 @@ transition_up:
         ; Fin de transition
         dec current_room_y
         lda #(PLAYER_Y_MAX - 4)
-        sta player_y
+        ldx current_world_type
+        cpx #WORLD_DUNGEON
+        bne +
+        lda #204
++       sta player_y
         jsr load_room
         jsr hud_render
         jsr player_draw

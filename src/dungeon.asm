@@ -145,19 +145,13 @@ dungeon_on_enter_room:
         ldx current_room_idx
         lda dungeon_room_state,x
         and #DUNG_ROOM_CLEARED
-        bne .already_cleared
+        bne .no_shutters_here
 
-        ; Pas encore cleared : si des monstres vivants, on ferme les volets !
+        ; Pas encore cleared : si des monstres vivants, les volets sont fermés !
         jsr dungeon_count_alive_enemies
         cpy #0
-        beq .already_cleared
+        beq .no_shutters_here
         lda #1
-        sta dungeon_shutter_closed
-        jsr dungeon_close_shutters
-        rts
-
-.already_cleared:
-        lda #0
         sta dungeon_shutter_closed
         rts
 
@@ -618,25 +612,9 @@ dung_door_tiles_1: !byte 9, 189, 80, 99
 dung_door_tiles_2: !byte 10, 190, 100, 119
 
 ; ---------------------------------------------------------------------------
-; dungeon_close_shutters : ferme visuellement les portes ouvertes de la salle
+; dungeon_close_shutters : les volets débutent déjà fermés dans le fichier de donjon
 ; ---------------------------------------------------------------------------
 dungeon_close_shutters:
-        ldx #3
--       ldy dung_door_tiles_1,x
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_OPEN
-        bne +
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy dung_door_tiles_2,x
-        lda #TILE_DUNG_DOOR_SHUTTER
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-+       dex
-        bpl -
         rts
 
 ; ---------------------------------------------------------------------------
