@@ -391,6 +391,9 @@ enemies_clear:
         sta sort_eff_y,x
         dex
         bpl -
+        lda #0
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
         lda VIC_SPRITE_EN
         and #%00000011                  ; conserve uniquement Link (0) et arme (1)
         sta VIC_SPRITE_EN
@@ -423,9 +426,12 @@ enemies_init:
 enemies_room_init:
         lda #0
         sta en_proj_active              ; réinitialise les projectiles en vol
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
-        ; Index de la salle (0..127) * 24 octets dans world_enemies (adressage 16 bits)
-        lda current_room_idx
+        ; Index de la formation (room_enemy_idx) * 24 octets dans map_enemies
+        ldx current_room_idx
+        lda room_enemy_idx,x
         sta ZP_SRC
         lda #0
         sta ZP_SRC+1
@@ -1342,6 +1348,8 @@ spawn_boss_fireball:
         sta en_proj_x+1
         ldx en_idx
         lda en_y,x
+        clc
+        adc #10
         sta en_proj_y
         jsr sound_enemy_shoot
 +       rts
@@ -2048,6 +2056,12 @@ test_sword_single:
         sbc en_x+1,x
 
 .sw_dx_eval:
+        pha
+        ldx en_idx
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        beq .sw_aqua
+        pla
         cmp #0
         bne +
         lda en_dx
@@ -2069,6 +2083,30 @@ test_sword_single:
         eor #$ff
         adc #1
 +       cmp #16
+        bcs .sw_miss_local
+        jmp .sw_hit_check
+
+.sw_aqua:
+        pla
+        cmp #0
+        bne +
+        lda en_dx
+        cmp #48
+        bcs .sw_miss_local
+        jmp .sw_aqua_y
++       cmp #$ff
+        bne .sw_miss_local
+        lda en_dx
+        cmp #$f4
+        bcc .sw_miss_local
+.sw_aqua_y:
+        sec
+        lda en_tmp_y
+        sbc en_y,x
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #40
         bcs .sw_miss_local
         jmp .sw_hit_check
 
@@ -2218,17 +2256,23 @@ test_item_single:
         sbc en_x+1,y
 
 .it_dx_eval:
+        pha
+        ldx en_idx
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        beq .it_aqua
+        pla
         cmp #0
         bne +
         lda en_dx
         cmp #16
-        bcs .it_miss
+        bcs .it_miss_loc
         jmp .it_chk_y
 +       cmp #$ff
-        bne .it_miss
+        bne .it_miss_loc
         lda en_dx
         cmp #$f0
-        bcc .it_miss
+        bcc .it_miss_loc
 
 .it_chk_y:
         ldx en_idx
@@ -2239,7 +2283,37 @@ test_item_single:
         eor #$ff
         adc #1
 +       cmp #16
-        bcs .it_miss
+        bcs .it_miss_loc
+        jmp .it_hit_exec
+
+.it_aqua:
+        pla
+        cmp #0
+        bne +
+        lda en_dx
+        cmp #48
+        bcs .it_miss_loc
+        jmp .it_aqua_y
++       cmp #$ff
+        bne .it_miss_loc
+        lda en_dx
+        cmp #$f4
+        bcc .it_miss_loc
+.it_aqua_y:
+        sec
+        lda item_y
+        sbc en_y,x
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #40
+        bcs .it_miss_loc
+        jmp .it_hit_exec
+
+.it_miss_loc:
+        rts
+
+.it_hit_exec:
 
         ; --- IMPACT DE L'ARME SECONDAIRE ---
         lda item_active
@@ -2330,17 +2404,23 @@ test_body_single:
         sbc player_x+1
 
 .bd_dx_eval:
+        pha
+        ldx en_idx
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        beq .bd_aqua
+        pla
         cmp #0
         bne +
         lda en_dx
         cmp #12
-        bcs .bd_miss
+        bcs .bd_miss_loc
         jmp .bd_chk_y
 +       cmp #$ff
-        bne .bd_miss
+        bne .bd_miss_loc
         lda en_dx
         cmp #$f4
-        bcc .bd_miss
+        bcc .bd_miss_loc
 
 .bd_chk_y:
         ldx en_idx
@@ -2351,7 +2431,37 @@ test_body_single:
         eor #$ff
         adc #1
 +       cmp #12
-        bcs .bd_miss
+        bcs .bd_miss_loc
+        jmp .bd_contact
+
+.bd_aqua:
+        pla
+        cmp #0
+        bne +
+        lda en_dx
+        cmp #16
+        bcs .bd_miss_loc
+        jmp .bd_aqua_y
++       cmp #$ff
+        bne .bd_miss_loc
+        lda en_dx
+        cmp #$d8                        ; -40
+        bcc .bd_miss_loc
+.bd_aqua_y:
+        sec
+        lda en_y,x
+        sbc player_y
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #36
+        bcs .bd_miss_loc
+        jmp .bd_contact
+
+.bd_miss_loc:
+        rts
+
+.bd_contact:
 
         ; Contact direct : Link est blessé
         ldx en_idx
@@ -2653,6 +2763,13 @@ irq_top:
 .check_playing:
         cmp #STATE_PLAYING
         bne .skip_top
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        lda current_room_idx
+        cmp #$41
+        beq .skip_top
++
 
         lda item_active
         cmp #ITEM_BOMB
@@ -2720,6 +2837,8 @@ irq_bottom:
         lda #> irq_top
         sta $0315
 
+        jsr music_update
+
         asl VIC_IRQ_FLAG
         jmp $ea81
 
@@ -2767,6 +2886,12 @@ draw_virtual_to_spr3:
         lda VIC_SPRITE_EN
         and #%11110111
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_EXP_X
+        and #%11110111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11110111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 .s3_draw:
@@ -2826,6 +2951,23 @@ draw_virtual_to_spr3:
         lda VIC_SPRITE_MC
         ora #%00001000
         sta VIC_SPRITE_MC
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        bne .s3_no_exp
+        lda VIC_SPRITE_EXP_X
+        ora #%00001000
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        ora #%00001000
+        sta VIC_SPRITE_EXP_Y
+        rts
+.s3_no_exp:
+        lda VIC_SPRITE_EXP_X
+        and #%11110111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11110111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 draw_virtual_to_spr4:

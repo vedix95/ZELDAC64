@@ -137,7 +137,7 @@ launch_zelda_game:
         lda #0
         sta VIC_IRQ_ENABLE
         asl VIC_IRQ_FLAG
-        lda #$37                        ; Active ROMs KERNAL et BASIC normales
+        lda #$36                        ; Active KERNAL et I/O, RAM sous BASIC ($A000-$BFFF)
         sta CPU_PORT
 
         jsr $fda3                      ; IOINIT (initialise CIA1 et CIA2)

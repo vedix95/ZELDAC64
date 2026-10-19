@@ -1255,52 +1255,52 @@ b......b
 # 25. AQUAMENTUS (Dragon cornu à crachat triple)
 # ---------------------------------------------------------------------------
 [aquamentus_0] pad 0 0
-b......g.gg.
+b......s.gg.
 b.....bbggg.
-.bbb.bbgggb.
-.bgb.bbgggb.
+.bgg..sggg..
+.bbb.bbggsb.
+.bsb.bbgggb.
+.ggg.ssgggg.
 gggg.bbggggb
-gggg.bbggggb
+sggg.bbggggb
+ggbg.ssgsggb
 gggg.bbgbgg.
 b.b..sbgsgb.
-.......gsgb.
-.......gbg..
+...s..ggsgb.
 ...b..ggggb.
+....ggbsssss
+....gggsssgg
 ....ggggsggg
-....gggggggg
-....gggggggg
-....gggggggg
-....gggggggg
-....gggggggg
-....gbbbbggg
-..g.gbbbbggg
+....gbggsggs
+....gbbbbggs
+..g.gbbbbggs
 ..bggg..gggs
-b.bgg....ss.
+...ggg...sss
 
 
 
 [aquamentus_1] pad 0 0
-b......g.gg.
+b......s.gg.
 b.....bgggg.
-.bbb.bbgggb.
-.bgb.sggggb.
-gggg.bbggggb
-gggg.sgggggb
-gg.g.bggbgg.
+.bgg..sggg..
+.bbb.bbggsb.
+.bsb.ssgggb.
+.ggg.bbgggg.
+ggss.bbggggb
+sgsg.ssggggb
+gsgg.bbgsggb
+gs.g.bggbgg.
 bg....ggsgb.
-.....gggsgb.
-.....gggbg..
+...s..sssgb.
 ...b..ssggb.
-....ggggsggg
-....ggggssgg
-....ggggssss
+....ggbbbbbg
+....gggsssgg
 ....gggggggg
-....gggggggg
-....gggggggg
+....gbggsggg
 ....gbbbgggg
 ..g.bbbbgggg
 ..bgs...ggg.
-b.bgs..gggg.
+...gs..gggg.
 
 
 

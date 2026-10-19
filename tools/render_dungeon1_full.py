@@ -430,7 +430,7 @@ def decode_nes_level1():
     # 0x94, 0xb4: dragon statue -> 6
     # 0x70: stairs -> 7
     # 0xf4: labyrinth wall -> 5
-    # 0x24: black void -> 1
+    # 0x24: black void / room floor -> 0
     T_INNER = {
         0x74: 0,
         0x68: 0,
@@ -439,7 +439,7 @@ def decode_nes_level1():
         0xb4: 6,
         0x70: 7,
         0xf4: 5,
-        0x24: 1,
+        0x24: 0,
     }
 
     def door_code_to_tile(code, is_horizontal=True):
@@ -504,7 +504,10 @@ def decode_nes_level1():
             # Inner 12 columns (cols 4..15)
             for x in range(12):
                 val = inner_cols[x][y]
-                row[4 + x] = T_INNER.get(val, 0)
+                tile_val = T_INNER.get(val, 0)
+                if r == 0x22 and tile_val == 7:
+                    tile_val = 5  # Hide stairs as diamond block until pushed
+                row[4 + x] = tile_val
 
             # Border columns 16..19 (Right wall / door)
             if y in (3, 4) and ed != 1:

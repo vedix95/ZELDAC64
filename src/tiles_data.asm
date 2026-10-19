@@ -97,8 +97,8 @@ tile_row_offset:
 ; Pointeur vers la table de rangées dynamique de la carte active ($A006)
 world_row_offset = map_row_offset
 
-room_buf:        !fill 200, 0            ; Tampon de la salle active decompressee
-target_room_buf: !fill 200, 0            ; Tampon de la salle cible (transition)
+room_buf         = $be00                ; Tampon de la salle active decompressee (200 octets)
+target_room_buf  = $bec8                ; Tampon de la salle cible (transition, 200 octets)
 
 ; ---------------------------------------------------------------------------
 ; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf

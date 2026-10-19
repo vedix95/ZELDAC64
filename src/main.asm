@@ -103,7 +103,6 @@ game_init:
 
 main_loop:
         jsr wait_frame
-        jsr music_update
         jsr read_input
 
         ; Si déjà en mode debug
@@ -157,6 +156,8 @@ main_loop:
         beq .in_inventory
         cmp #STATE_CAVE
         beq .in_cave
+        cmp #STATE_CELLAR
+        beq .in_cellar
 
         ; --- ÉTAT DE JEU NORMAL ---
         ; Bouton B (Manette Xbox Bouton B / Touche 'B') : ouvre l'inventaire
@@ -183,6 +184,11 @@ main_loop:
 .in_cave:
         jsr cave_update
         jsr cave_draw
+        jmp main_loop
+
+.in_cellar:
+        jsr cellar_update
+        jsr cellar_draw
         jmp main_loop
 
 .in_debug:
@@ -242,7 +248,7 @@ wait_frame:
 !source "src/sound.asm"
 
 !if * > MAP_DATA_ADDR {
-        !error "Le programme resident deborde sur la zone des cartes ($A000)"
+        !error "Le programme resident deborde sur la zone des cartes ($C000)"
 }
 
 

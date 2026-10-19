@@ -438,18 +438,50 @@ cave_trigger_moblin:
         jsr sound_rupee
 +       rts
 
-; Gabarit résident de 200 octets pour les 23 grottes de l'Overworld
-cave_room_template:
-        !byte 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 5, 5, 5, 5, 5, 5, 5, 0, 6, 6, 0, 5, 5, 5, 5, 5, 5, 5, 5
+build_cave_room:
+        ldx #199
+        lda #0
+-       sta room_buf,x
+        dex
+        bpl -
+
+        ; Rangée 0 : 20 blocs solides
+        ldx #19
+        lda #5
+-       sta room_buf,x
+        dex
+        bpl -
+
+        ; Murs gauche (col 0) et droite (col 19)
+        ldx #0
+-       lda cave_wall_offsets,x
+        tay
+        lda #5
+        sta room_buf,y
+        inx
+        cpx #16
+        bne -
+
+        ; Escaliers / passage (col 10, rangées 5..8)
+        lda #6
+        sta room_buf+110
+        sta room_buf+130
+        sta room_buf+150
+        sta room_buf+170
+        sta room_buf+189
+        sta room_buf+190
+
+        ; Rangée 9 : murs du bas
+        ldx #7
+        lda #5
+-       sta room_buf+180,x
+        sta room_buf+192,x
+        dex
+        bpl -
+        rts
+
+cave_wall_offsets:
+        !byte 20, 39, 40, 59, 60, 79, 80, 99, 100, 119, 120, 139, 140, 159, 160, 179
 
 ; ---------------------------------------------------------------------------
 ; cave_draw_screen : dessine le décor, le PNJ, le texte et les prix
@@ -464,10 +496,11 @@ cave_draw_screen:
         lda #COL_GREY
         sta VIC_BG_MC2
 
-        ; 1. Décor de la salle de grotte résidente (200 octets)
-        lda #<cave_room_template
+        ; 1. Décor de la salle de grotte résidente
+        jsr build_cave_room
+        lda #<room_buf
         sta ZP_MAP
-        lda #>cave_room_template
+        lda #>room_buf
         sta ZP_MAP+1
         jsr draw_map
 
@@ -1347,44 +1380,44 @@ cave_txt2_hi:
         !byte >txt_shop_s_2, >txt_pot_2, >txt_sword_wh_2, >txt_moblin_2
         !byte >txt_choice_2, >txt_hint1_2, >txt_hint2_2, >txt_hint3_2, >txt_gamble_2
 
-txt_dflt_1:     !text "BIENVENUE DANS MA GROTTE    ", 0
-txt_dflt_2:     !text "REPOSE-TOI UN INSTANT.      ", 0
+txt_dflt_1:     !text "BIENVENUE DANS MA GROTTE", 0
+txt_dflt_2:     !text "REPOSE-TOI UN INSTANT.", 0
 
-txt_sword_w_1:  !text "C'EST DANGEREUX D'Y ALLER   ", 0
-txt_sword_w_2:  !text "TOUT SEUL ! PRENDS CECI.    ", 0
+txt_sword_w_1:  !text "C'EST DANGEREUX D'Y ALLER", 0
+txt_sword_w_2:  !text "TOUT SEUL ! PRENDS CECI.", 0
 
-txt_shop_a_1:   !text "ACHETE DU MATERIEL QUAND    ", 0
-txt_shop_a_2:   !text "TU VEUX. CHOISIS ET PAIE !  ", 0
+txt_shop_a_1:   !text "ACHETE DU MATERIEL QUAND", 0
+txt_shop_a_2:   !text "TU VEUX. CHOISIS ET PAIE !", 0
 
-txt_shop_b_1:   !text "DES ARMES ET DES MUNITIONS  ", 0
-txt_shop_b_2:   !text "POUR TRIOMPHER DU MAL !     ", 0
+txt_shop_b_1:   !text "DES ARMES ET DES MUNITIONS", 0
+txt_shop_b_2:   !text "POUR TRIOMPHER DU MAL !", 0
 
-txt_shop_s_1:   !text "OBJETS SPECIAUX ET RARES    ", 0
-txt_shop_s_2:   !text "REGARDE CE QUE J'AI LA !    ", 0
+txt_shop_s_1:   !text "OBJETS SPECIAUX ET RARES", 0
+txt_shop_s_2:   !text "REGARDE CE QUE J'AI LA !", 0
 
-txt_pot_1:      !text "PRENDS UNE BONNE POTION     ", 0
-txt_pot_2:      !text "POUR RETROUVER TA FORCE.    ", 0
+txt_pot_1:      !text "PRENDS UNE BONNE POTION", 0
+txt_pot_2:      !text "POUR RETROUVER TA FORCE.", 0
 
-txt_sword_wh_1: !text "VOICI UNE LAME TRES FORTE ! ", 0
-txt_sword_wh_2: !text "PRENDS L'EPEE BLANCHE !     ", 0
+txt_sword_wh_1: !text "VOICI UNE LAME TRES FORTE !", 0
+txt_sword_wh_2: !text "PRENDS L'EPEE BLANCHE !", 0
 
-txt_moblin_1:   !text "C'EST UN SECRET POUR        ", 0
-txt_moblin_2:   !text "TOUT LE MONDE. (+30 RUBIS)  ", 0
+txt_moblin_1:   !text "C'EST UN SECRET POUR", 0
+txt_moblin_2:   !text "TOUT LE MONDE. (+30 RUBIS)", 0
 
-txt_choice_1:   !text "GARDE CECI SECRET.          ", 0
-txt_choice_2:   !text "CHOISIS L'UN DES DEUX.      ", 0
+txt_choice_1:   !text "GARDE CECI SECRET.", 0
+txt_choice_2:   !text "CHOISIS L'UN DES DEUX.", 0
 
-txt_hint1_1:    !text "LE MONT DU PERIL RENFERME   ", 0
-txt_hint1_2:    !text "LE REPAIRE DU CRUEL GANON.  ", 0
+txt_hint1_1:    !text "LE MONT DU PERIL RENFERME", 0
+txt_hint1_2:    !text "LE REPAIRE DU CRUEL GANON.", 0
 
-txt_hint2_1:    !text "LES ARBRES VERTS CACHENT    ", 0
-txt_hint2_2:    !text "BIEN DES PASSAGES SECRETS.  ", 0
+txt_hint2_1:    !text "LES ARBRES VERTS CACHENT", 0
+txt_hint2_2:    !text "BIEN DES PASSAGES SECRETS.", 0
 
-txt_hint3_1:    !text "VA VERS L'EST POUR TROUVER  ", 0
-txt_hint3_2:    !text "LA CASCADE ET SES MYSTERES. ", 0
+txt_hint3_1:    !text "VA VERS L'EST POUR TROUVER", 0
+txt_hint3_2:    !text "LA CASCADE ET SES MYSTERES.", 0
 
-txt_gamble_1:   !text "TENTE TA CHANCE ICI !       ", 0
-txt_gamble_2:   !text "CHOISIS UN SAC DE RUBIS.    ", 0
+txt_gamble_1:   !text "TENTE TA CHANCE ICI !", 0
+txt_gamble_2:   !text "CHOISIS UN SAC DE RUBIS.", 0
 
 ; ===========================================================================
 ; TABLE DES 128 SALLES DE L'OVERWORLD VERS LES 23 GROTTES

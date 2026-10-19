@@ -8,13 +8,14 @@
 
 disk_device:    !byte 8                 ; Unité active (8 par défaut)
 
-name_map_ow:    !text "MAP_OW"
-NAME_MAP_OW_LEN = 6
+name_ow_chunk:  !text "OW3"
+NAME_OW_CHUNK_LEN = 3
 
 name_dung_file: !text "DUNG1"
 NAME_DUNG_LEN   = 5
 
 cached_dungeon_level: !byte 0
+cached_ow_chunk:      !byte $ff
 
 name_savedat:   !text "SAVE.DAT"
 NAME_SAVEDAT_LEN   = 8
@@ -192,39 +193,73 @@ disk_save_file:
 .snamelen: !byte 0
 
 ; ---------------------------------------------------------------------------
-; disk_load_map_overworld : Purge la mémoire et charge la carte Overworld
+; disk_ensure_ow_chunk : Vérifie que le chunk Overworld pour current_room_y est en RAM
 ; ---------------------------------------------------------------------------
-disk_load_map_overworld:
-        ; Invalide le cache donjon
+disk_ensure_ow_chunk:
+        lda current_room_y
+        lsr
+        and #3
+        ; Fallthrough vers disk_ensure_ow_chunk_a
+
+; ---------------------------------------------------------------------------
+; disk_ensure_ow_chunk_a : Charge le chunk Overworld A (0..3) s'il n'est pas déjà en RAM
+; ---------------------------------------------------------------------------
+disk_ensure_ow_chunk_a:
+        and #3
+        cmp cached_ow_chunk
+        bne .load_ow_chunk
+        clc
+        rts
+
+.load_ow_chunk:
+        sta cached_ow_chunk
+        ora #$30
+        sta name_ow_chunk + 2
+
         lda #0
         sta cached_dungeon_level
 
-        ; Restaure le pointeur d'ennemis Overworld ($B800)
-        lda #<$b800
-        sta map_enemies_ptr
-        lda #>$b800
-        sta map_enemies_ptr+1
+        jsr clear_map_memory
+        lda #NAME_OW_CHUNK_LEN
+        ldx #<name_ow_chunk
+        ldy #>name_ow_chunk
+        jsr disk_load_file
+        bcs .ow_chunk_err
 
-        ; Masque l'écran pendant le chargement (bus IEC / DMA propre)
+        lda MAP_ENEMIES_PTR
+        sta map_enemies_ptr
+        lda MAP_ENEMIES_PTR+1
+        sta map_enemies_ptr+1
+        clc
+        rts
+
+.ow_chunk_err:
+        lda #$ff
+        sta cached_ow_chunk
+        sec
+        rts
+
+; ---------------------------------------------------------------------------
+; disk_load_map_overworld : Purge la mémoire et charge le chunk Overworld actif
+; ---------------------------------------------------------------------------
+disk_load_map_overworld:
+        ; Force le rechargement du chunk Overworld correspondant à current_room_y
+        lda #0
+        sta cached_dungeon_level
+        lda #$ff
+        sta cached_ow_chunk
+
+        ; Masque l'écran pendant le chargement initial (bus IEC / DMA propre)
         lda VIC_CTRL1
         and #%11101111
         sta VIC_CTRL1
 
-        jsr clear_map_memory
-        lda #NAME_MAP_OW_LEN
-        ldx #<name_map_ow
-        ldy #>name_map_ow
-        jsr disk_load_file
+        jsr disk_ensure_ow_chunk
         bcs .ow_err
 
         ; Restaure le jeu de caractères Overworld ($2000 et $2540)
         jsr copy_map_charset
         jsr set_overworld_tables
-
-        ; Réinitialise le cache de donjon
-        lda #0
-        sta cached_dungeon_level
-
         jsr apply_map_colors
         lda #WORLD_OVERWORLD
         sta current_world_type
@@ -296,6 +331,10 @@ set_overworld_tables:
 ;   - Mise à jour dynamique de map_enemies_ptr et des couleurs
 ; ---------------------------------------------------------------------------
 disk_load_dungeon:
+        ; Invalide le cache de chunk Overworld
+        lda #$ff
+        sta cached_ow_chunk
+
         ; Valider current_dungeon_level (1..9)
         lda current_dungeon_level
         bne +
@@ -323,7 +362,7 @@ disk_load_dungeon:
         ora #$30                ; '1'..'9'
         sta name_dung_file + 4
 
-        ; 3. Purge la mémoire carte dynamique ($A000..$CFFF)
+        ; 3. Purge la mémoire carte dynamique ($C000..$CFFF)
         jsr clear_map_memory
 
         ; 4. Charge le fichier binaire du donjon
@@ -337,10 +376,10 @@ disk_load_dungeon:
         jsr copy_map_charset
         jsr set_dungeon_tables
 
-        ; 5. Extrait le pointeur d'ennemis du donjon depuis l'en-tête ($A116)
-        lda $a116
+        ; 5. Extrait le pointeur d'ennemis du donjon depuis l'en-tête (MAP_ENEMIES_PTR)
+        lda MAP_ENEMIES_PTR
         sta map_enemies_ptr
-        lda $a117
+        lda MAP_ENEMIES_PTR+1
         sta map_enemies_ptr+1
 
         ; 6. Met à jour le cache et le type de monde

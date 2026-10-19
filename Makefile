@@ -17,12 +17,11 @@ PYTHON  ?= python3
 SRC_DIR := src
 BLD_DIR := build
 MAIN    := $(SRC_DIR)/main.asm
-PRG_OW_MAP := $(BLD_DIR)/map_ow.dat
-PRG_UW_MAP := $(BLD_DIR)/map_uw.dat
+OW_DATS    := $(foreach n,0 1 2 3,$(BLD_DIR)/ow$(n).dat)
 DUNG_DATS  := $(foreach n,1 2 3 4 5 6 7 8 9,$(BLD_DIR)/dung$(n).dat)
-GEN_MAPS   := $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm
+GEN_MAPS   := $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm $(SRC_DIR)/ow0.asm $(SRC_DIR)/ow1.asm $(SRC_DIR)/ow2.asm $(SRC_DIR)/ow3.asm
 GEN        := $(SRC_DIR)/sprites.asm $(SRC_DIR)/sprites_enemies.asm $(SRC_DIR)/sprites_extra.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm
-SRCS       := $(filter-out $(SRC_DIR)/dung%.asm, $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN)))
+SRCS       := $(filter-out $(SRC_DIR)/dung%.asm $(SRC_DIR)/ow%.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm, $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN)))
 
 PRG     := $(BLD_DIR)/$(NAME).prg
 PRG_INT := $(BLD_DIR)/intro.prg
@@ -54,22 +53,18 @@ $(SRC_DIR)/music_data.inc: assets/music_data.json tools/generate_game_audio.py
 extract-music: tools/extract_music.py
 	$(PYTHON) tools/extract_music.py
 
-# charset.asm, tiles_data.asm, map_overworld.asm et map_underworld.asm sont générés ensemble
-$(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm &: assets/tiles.txt assets/world.txt assets/underworld.txt tools/tilegen.py
+# charset.asm, tiles_data.asm, ow0..ow3.asm, map_overworld.asm et map_underworld.asm sont générés ensemble
+$(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm $(SRC_DIR)/ow0.asm $(SRC_DIR)/ow1.asm $(SRC_DIR)/ow2.asm $(SRC_DIR)/ow3.asm &: assets/tiles.txt assets/world.txt assets/underworld.txt tools/tilegen.py
 	$(PYTHON) tools/tilegen.py assets/tiles.txt assets/world.txt \
 		--charset $(SRC_DIR)/charset.asm --tiles-out $(SRC_DIR)/tiles_data.asm --map-out $(SRC_DIR)/map_overworld.asm \
 		--underworld assets/underworld.txt --underworld-out $(SRC_DIR)/map_underworld.asm
 
-# Cartes Overworld et Donjons compilées sous forme de fichiers binaires séparés à charger à $A000
-$(PRG_OW_MAP): $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_overworld_enemies.inc | $(BLD_DIR)
+# Chunks Overworld (OW0..OW3) compilés sous forme de fichiers binaires séparés à charger à $C000
+$(BLD_DIR)/ow%.dat: $(SRC_DIR)/ow%.asm $(SRC_DIR)/enemy_types.inc | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-$(PRG_UW_MAP): $(SRC_DIR)/map_underworld.asm $(SRC_DIR)/map_underworld_enemies.inc | $(BLD_DIR)
-	$(ACME) -f cbm -o $@ $<
-	@echo "OK : $@ ($$(stat -c %s $@) octets)"
-
-# Donjons 1 à 9 autonomes générés et compilés individuellement
+# Donjons 1 à 9 autonomes générés et compilés individuellement à $C000
 $(SRC_DIR)/dung1.asm $(SRC_DIR)/dung2.asm $(SRC_DIR)/dung3.asm $(SRC_DIR)/dung4.asm $(SRC_DIR)/dung5.asm $(SRC_DIR)/dung6.asm $(SRC_DIR)/dung7.asm $(SRC_DIR)/dung8.asm $(SRC_DIR)/dung9.asm &: assets/underworld.txt tools/build_dungeons.py
 	$(PYTHON) tools/build_dungeons.py
 
@@ -86,12 +81,15 @@ $(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_musi
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-# Image disquette D64 : contient INTRO, ZELDA (moteur résident), MAP_OW et les 9 Donjons autonomes
-$(D64): $(PRG_INT) $(PRG) $(PRG_OW_MAP) $(DUNG_DATS)
+# Image disquette D64 : contient INTRO, ZELDA (moteur résident), OW0..OW3 (chunks Overworld) et les 9 Donjons
+$(D64): $(PRG_INT) $(PRG) $(OW_DATS) $(DUNG_DATS)
 	$(C1541) -format "$(NAME),01" d64 $@ \
 		-write $(PRG_INT) intro \
 		-write $(PRG) zelda \
-		-write $(PRG_OW_MAP) map_ow \
+		-write $(BLD_DIR)/ow0.dat ow0 \
+		-write $(BLD_DIR)/ow1.dat ow1 \
+		-write $(BLD_DIR)/ow2.dat ow2 \
+		-write $(BLD_DIR)/ow3.dat ow3 \
 		-write $(BLD_DIR)/dung1.dat dung1 \
 		-write $(BLD_DIR)/dung2.dat dung2 \
 		-write $(BLD_DIR)/dung3.dat dung3 \
@@ -101,7 +99,7 @@ $(D64): $(PRG_INT) $(PRG) $(PRG_OW_MAP) $(DUNG_DATS)
 		-write $(BLD_DIR)/dung7.dat dung7 \
 		-write $(BLD_DIR)/dung8.dat dung8 \
 		-write $(BLD_DIR)/dung9.dat dung9
-	@echo "OK : $@ image disquette D64 prete (INTRO + ZELDA + MAP_OW + 9 DONJONS) !"
+	@echo "OK : $@ image disquette D64 prete (INTRO + ZELDA + 4 CHUNKS OVERWORLD + 9 DONJONS) !"
 
 
 $(BLD_DIR):

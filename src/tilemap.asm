@@ -72,7 +72,10 @@ clear_screen:
 
 ; Charge et dessine la salle désignée par current_room_x / current_room_y
 load_room:
-        ldx current_room_y
+        lda current_world_type
+        bne +
+        jsr disk_ensure_ow_chunk
++       ldx current_room_y
         lda world_row_offset,x
         clc
         adc current_room_x
@@ -386,15 +389,15 @@ exit_dungeon:
         sta item_active
         sta player_attacking
 
-        ; 2. Vider l'écran et recharger la carte Overworld
-        jsr clear_screen
-        jsr disk_load_map_overworld
-
-        ; 3. Restaurer la salle et la position Overworld de Link
+        ; 2. Restaurer la salle et la position Overworld de Link avant chargement du chunk
         lda saved_ow_room_x
         sta current_room_x
         lda saved_ow_room_y
         sta current_room_y
+
+        ; 3. Vider l'écran et recharger le chunk Overworld actif
+        jsr clear_screen
+        jsr disk_load_map_overworld
 
         lda saved_ow_player_x
         sta player_x

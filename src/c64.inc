@@ -135,21 +135,22 @@ ZP_DST          = $0e           ; pointeur destination 16 bits ($0e-$0f)
 ZP_SCR          = $fb           ; pointeur 16 bits écran ($fb-$fc)
 ZP_COL          = $fd           ; pointeur 16 bits couleur ($fd-$fe)
 
-; --- Zone Mémoire Dynamique Cartes ($A000..$CFFF - 12 Ko) ---
-MAP_DATA_ADDR       = $a000
-map_rooms_w         = $a000
-map_rooms_h         = $a001
-map_rooms_cnt       = $a002
-map_bg_col          = $a003
-map_mc1_col         = $a004
-map_mc2_col         = $a005
-map_row_offset      = $a006
-MAP_CHARSET_PTR     = $a00e
-room_tbl_lo         = $a016
-room_tbl_hi         = $a096
-room_zone_palette   = $a116
-MAP_DATA_MAX_PAGES  = 48        ; 48 pages x 256 octets = 12 Ko ($A000..$CFFF)
-MAP_ENEMIES_ADDR    = $b800
+; --- Zone Mémoire Dynamique Cartes ($C000..$CFFF - 4 Ko) ---
+MAP_DATA_ADDR       = $c000
+map_rooms_w         = $c000
+map_rooms_h         = $c001
+map_rooms_cnt       = $c002
+map_bg_col          = $c003
+map_mc1_col         = $c004
+map_mc2_col         = $c005
+map_row_offset      = $c006
+MAP_CHARSET_PTR     = $c00e
+MAP_ENEMIES_PTR     = $c010
+room_tbl_lo         = $c016
+room_tbl_hi         = $c096
+room_zone_palette   = $c116
+room_enemy_idx      = $c196
+MAP_DATA_MAX_PAGES  = 16        ; 16 pages x 256 octets = 4 Ko ($C000..$CFFF)
 
 WORLD_OVERWORLD     = 0
 WORLD_DUNGEON       = 1

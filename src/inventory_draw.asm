@@ -38,9 +38,9 @@ cursor_y_coords:
         !byte 106, 106, 106, 106        ; rangée 1
         !byte 134, 134, 134, 134        ; rangée 2
 
-
 flash_colors:
         !byte COL_YELLOW, COL_LIGHT_RED, COL_WHITE, COL_ORANGE
+
 
 map_row_scr_lo:
         !byte $18, $40, $68, $90, $b8, $e0, $08, $30
@@ -100,43 +100,23 @@ clear_inv_area:
 ; draw_tab_header : trace l'en-tête commun à onglets sur les lignes 4 et 5
 ; ---------------------------------------------------------------------------
 draw_tab_header:
-        ; Sélectionne le texte de l'en-tête selon inv_page
-        lda inv_page
-        cmp #0
-        bne +
-        lda #<txt_tabs_p0
-        sta ZP_SRC
-        lda #>txt_tabs_p0
-        sta ZP_SRC+1
-        jmp .put_tabs
-+       cmp #1
-        bne +
-        lda #<txt_tabs_p1
-        sta ZP_SRC
-        lda #>txt_tabs_p1
-        sta ZP_SRC+1
-        jmp .put_tabs
-+       cmp #2
-        bne +
-        lda #<txt_tabs_p2
-        sta ZP_SRC
-        lda #>txt_tabs_p2
-        sta ZP_SRC+1
-        jmp .put_tabs
-+       lda #<txt_tabs_p3
-        sta ZP_SRC
-        lda #>txt_tabs_p3
-        sta ZP_SRC+1
-
-.put_tabs:
-        ldy #0
--       lda (ZP_SRC),y
-        sta SCREEN_RAM+160,y
+        ldx #39
+-       lda txt_tabs_base,x
+        sta SCREEN_RAM+160,x
         lda #COL_CYAN
-        sta COLOR_RAM+160,y
-        iny
-        cpy #40
-        bne -
+        sta COLOR_RAM+160,x
+        dex
+        bpl -
+
+        lda inv_page
+        asl
+        tax
+        ldy tab_bracket_pos,x
+        lda #'['
+        sta SCREEN_RAM+160,y
+        ldy tab_bracket_pos+1,x
+        lda #']'
+        sta SCREEN_RAM+160,y
 
         ; Colorie l'onglet actif en jaune étincelant
         jsr highlight_active_tab
@@ -163,43 +143,13 @@ draw_tab_header:
         rts
 
 highlight_active_tab:
-        lda inv_page
-        cmp #0
-        bne +
-        ; Tab 0 : cols 0..9 ([1:OBJETS])
-        ldx #0
+        ldy inv_page
+        ldx tab_start,y
 -       lda #COL_YELLOW
         sta COLOR_RAM+160,x
         inx
-        cpx #10
-        bne -
-        rts
-+       cmp #1
-        bne +
-        ; Tab 1 : cols 10..21 ([2:TRIFORCE])
-        ldx #10
--       lda #COL_YELLOW
-        sta COLOR_RAM+160,x
-        inx
-        cpx #22
-        bne -
-        rts
-+       cmp #2
-        bne +
-        ; Tab 2 : cols 22..30 ([3:EQUIP])
-        ldx #22
--       lda #COL_YELLOW
-        sta COLOR_RAM+160,x
-        inx
-        cpx #31
-        bne -
-        rts
-+       ; Tab 3 : cols 31..39 ([4:CARTE])
-        ldx #31
--       lda #COL_YELLOW
-        sta COLOR_RAM+160,x
-        inx
-        cpx #40
+        txa
+        cmp tab_end,y
         bne -
         rts
 
@@ -428,6 +378,7 @@ irq_p0_row2:
         jmp $ea81
 
 
+
 inv_update_cursor:
         ldx hud_selected_b
         ; Met à jour l'arme équipée (Sprite 0)
@@ -541,36 +492,50 @@ draw_page_1_triforce:
         rts
 
 draw_triforce_triangle:
-        ldx #0
--       lda txt_tri_l8,x
-        sta SCREEN_RAM+320+8,x
-        lda txt_tri_l9,x
-        sta SCREEN_RAM+360+8,x
-        lda txt_tri_l10,x
-        sta SCREEN_RAM+400+8,x
-        lda txt_tri_l11,x
-        sta SCREEN_RAM+440+8,x
-        lda txt_tri_l12,x
-        sta SCREEN_RAM+480+8,x
-        lda txt_tri_l13,x
-        sta SCREEN_RAM+520+8,x
-        lda txt_tri_l14,x
-        sta SCREEN_RAM+560+8,x
-        lda txt_tri_l15,x
-        sta SCREEN_RAM+600+8,x
+        lda #<txt_tri_all
+        sta ZP_SRC
+        lda #>txt_tri_all
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM+328)
+        sta ZP_DST
+        lda #>(SCREEN_RAM+328)
+        sta ZP_DST+1
 
+        ldx #8
+.tri_row:
+        lda ZP_DST
+        sta ZP_COL
+        lda ZP_DST+1
+        clc
+        adc #($d8 - $04)
+        sta ZP_COL+1
+
+        ldy #23
+-       lda (ZP_SRC),y
+        sta (ZP_DST),y
         lda #COL_YELLOW
-        sta COLOR_RAM+320+8,x
-        sta COLOR_RAM+360+8,x
-        sta COLOR_RAM+400+8,x
-        sta COLOR_RAM+440+8,x
-        sta COLOR_RAM+480+8,x
-        sta COLOR_RAM+520+8,x
-        sta COLOR_RAM+560+8,x
-        sta COLOR_RAM+600+8,x
-        inx
-        cpx #24
-        bne -
+        sta (ZP_COL),y
+        dey
+        bpl -
+
+        clc
+        lda ZP_SRC
+        adc #24
+        sta ZP_SRC
+        lda ZP_SRC+1
+        adc #0
+        sta ZP_SRC+1
+
+        clc
+        lda ZP_DST
+        adc #40
+        sta ZP_DST
+        lda ZP_DST+1
+        adc #0
+        sta ZP_DST+1
+
+        dex
+        bne .tri_row
         rts
 
 draw_p1_counter:
@@ -872,95 +837,79 @@ draw_page_2_equipment:
         cpx #36
         bne -
         rts
+p2_sword_lo:    !byte <txt_p2_sword_0, <txt_p2_sword_1, <txt_p2_sword_2, <txt_p2_sword_3
+p2_sword_hi:    !byte >txt_p2_sword_0, >txt_p2_sword_1, >txt_p2_sword_2, >txt_p2_sword_3
+p2_sword_col:   !byte COL_DARK_GREY, COL_BROWN, COL_WHITE, COL_CYAN
+
+p2_shield_lo:   !byte <txt_p2_shield_1, <txt_p2_shield_2
+p2_shield_hi:   !byte >txt_p2_shield_1, >txt_p2_shield_2
+p2_shield_col:  !byte COL_BROWN, COL_LIGHT_RED
+
+p2_ring_lo:     !byte <txt_p2_ring_0, <txt_p2_ring_1
+p2_ring_hi:     !byte >txt_p2_ring_0, >txt_p2_ring_1
+p2_ring_col:    !byte COL_GREEN, COL_CYAN
 
 draw_p2_sword_val:
-        lda player_has_sword
-        bne +
-        ldx #0
--       lda txt_p2_sword_0,x
-        sta SCREEN_RAM+360+6,x
-        lda #COL_DARK_GREY
-        sta COLOR_RAM+360+6,x
-        inx
-        cpx #15
-        bne -
-        rts
-+       cmp #1
-        bne +
-        ldx #0
--       lda txt_p2_sword_1,x
-        sta SCREEN_RAM+360+6,x
-        lda #COL_BROWN
-        sta COLOR_RAM+360+6,x
-        inx
-        cpx #15
-        bne -
-        rts
-+       cmp #2
-        bne +
-        ldx #0
--       lda txt_p2_sword_2,x
-        sta SCREEN_RAM+360+6,x
-        lda #COL_WHITE
-        sta COLOR_RAM+360+6,x
-        inx
-        cpx #15
-        bne -
-        rts
-+       ldx #0
--       lda txt_p2_sword_3,x
-        sta SCREEN_RAM+360+6,x
-        lda #COL_CYAN
-        sta COLOR_RAM+360+6,x
-        inx
-        cpx #15
+        ldx player_has_sword
+        cpx #4
+        bcc +
+        ldx #3
++       lda p2_sword_lo,x
+        sta ZP_SRC
+        lda p2_sword_hi,x
+        sta ZP_SRC+1
+        lda p2_sword_col,x
+        sta ZP_TMP
+        ldy #0
+-       lda (ZP_SRC),y
+        sta SCREEN_RAM+360+6,y
+        lda ZP_TMP
+        sta COLOR_RAM+360+6,y
+        iny
+        cpy #15
         bne -
         rts
 
 draw_p2_shield_val:
+        ldx #0
         lda player_has_shield
         cmp #2
-        bcs .mag_shield
-        ldx #0
--       lda txt_p2_shield_1,x
-        sta SCREEN_RAM+480+6,x
-        lda #COL_BROWN
-        sta COLOR_RAM+480+6,x
+        bcc +
         inx
-        cpx #15
-        bne -
-        rts
-.mag_shield:
-        ldx #0
--       lda txt_p2_shield_2,x
-        sta SCREEN_RAM+480+6,x
-        lda #COL_LIGHT_RED
-        sta COLOR_RAM+480+6,x
-        inx
-        cpx #15
++       lda p2_shield_lo,x
+        sta ZP_SRC
+        lda p2_shield_hi,x
+        sta ZP_SRC+1
+        lda p2_shield_col,x
+        sta ZP_TMP
+        ldy #0
+-       lda (ZP_SRC),y
+        sta SCREEN_RAM+480+6,y
+        lda ZP_TMP
+        sta COLOR_RAM+480+6,y
+        iny
+        cpy #15
         bne -
         rts
 
 draw_p2_ring_val:
+        ldx #0
         lda player_has_blue_ring
-        bne .blue_ring
-        ldx #0
--       lda txt_p2_ring_0,x
-        sta SCREEN_RAM+600+6,x
-        lda #COL_GREEN
-        sta COLOR_RAM+600+6,x
+        beq +
         inx
-        cpx #15
-        bne -
-        rts
-.blue_ring:
-        ldx #0
--       lda txt_p2_ring_1,x
-        sta SCREEN_RAM+600+6,x
-        lda #COL_CYAN
-        sta COLOR_RAM+600+6,x
-        inx
-        cpx #15
++       lda p2_ring_lo,x
+        sta ZP_SRC
+        lda p2_ring_hi,x
+        sta ZP_SRC+1
+        lda p2_ring_col,x
+        sta ZP_TMP
+        ldy #0
+-       lda (ZP_SRC),y
+        sta SCREEN_RAM+600+6,y
+        lda ZP_TMP
+        sta COLOR_RAM+600+6,y
+        iny
+        cpy #15
         bne -
         rts
 
@@ -1277,11 +1226,11 @@ calc_visited_count:
 ; TEXTES DU MENU D'INVENTAIRE EN 4 PAGES
 ; ===========================================================================
 
-; En-têtes d'onglets (exactement 40 caractères chacun)
-txt_tabs_p0:        !text "[1:OBJETS] 2:TRIFORCE  3:EQUIP  4:CARTE "
-txt_tabs_p1:        !text " 1:OBJETS [2:TRIFORCE] 3:EQUIP  4:CARTE "
-txt_tabs_p2:        !text " 1:OBJETS  2:TRIFORCE [3:EQUIP] 4:CARTE "
-txt_tabs_p3:        !text " 1:OBJETS  2:TRIFORCE  3:EQUIP [4:CARTE]"
+; En-tête d'onglets unique et tables d'encadrement
+txt_tabs_base:      !text " 1:OBJETS  2:TRIFORCE  3:EQUIP  4:CARTE "
+tab_bracket_pos:    !byte 0, 9,  10, 21,  21, 30,  30, 39
+tab_start:          !byte 0, 10, 22, 31
+tab_end:            !byte 10, 22, 31, 40
 
 txt_footer_help:    !text " [JOY] CHOIX   [1-4] ONGLET   [B] RETOUR "
 
@@ -1290,8 +1239,6 @@ txt_box_small:      !text "+------+"
 txt_box_p0_grid:    !text "+----------------------+"
 txt_p0_active:      !text "OBJET  B"
 txt_p0_slot_b:      !text "EQUIPE  "
-txt_p0_items_r1:    !text "BOOM    BOMB    ARC "
-txt_p0_items_r2:    !text "BOUG    VIAN    POTI"
 txt_p0_stock_line:  !text "RUBIS:      CLEFS:      BOMBES:     "
 txt_p0_tip:         !text "[GAUCHE/DROITE] CHOISIR  [A] EQUIPER"
 
@@ -1301,26 +1248,26 @@ p0_desc_lo:
 p0_desc_hi:
         !byte >desc_boom, >desc_bomb, >desc_bow, >desc_cand, >desc_food, >desc_potion, >desc_whistle, >desc_wand
 
-desc_boom:          !text "BOOMERANG (ETOURDIT LES ENNEMIS)    ", 0
-desc_bomb:          !text "BOMBES (EXPLOSIONS ET DEBRIS)       ", 0
-desc_bow:           !text "ARC ET FLECHES (ATTAQUE A DISTANCE) ", 0
-desc_cand:          !text "BOUGIE BLEUE (FLAMMES ET SECRETS)   ", 0
-desc_food:          !text "APPAT (ATTRACTEUR POUR MONSTRES)    ", 0
-desc_potion:        !text "POTION DE VIE (RESTAURE LES COEURS) ", 0
-desc_whistle:       !text "FLUTE (REVELE SECRETS ET WARPS)     ", 0
-desc_wand:          !text "BAGUETTE MAGIQUE (ONDES DE CHOC)    ", 0
-
+desc_boom:          !text "BOOMERANG (ETOURDISSANT)", 0
+desc_bomb:          !text "BOMBES (EXPLOSIF PUISSANT)", 0
+desc_bow:           !text "ARC ET FLECHES (A DISTANCE)", 0
+desc_cand:          !text "BOUGIE (FLAMME ET SECRETS)", 0
+desc_food:          !text "APPAT (APPATE LES ENNEMIS)", 0
+desc_potion:        !text "POTION (SOIGNE LES COEURS)", 0
+desc_whistle:       !text "FLUTE (REVELE LES SECRETS)", 0
+desc_wand:          !text "BAGUETTE (ATTAQUE MAGIQUE)", 0
 
 ; Textes Page 1 (Triforce)
 txt_p1_title:       !text "  LA TRIFORCE DE LA SAGESSE   "
-txt_tri_l8:         !text "           /\\           "
-txt_tri_l9:         !text "          /  \\          "
-txt_tri_l10:        !text "         / 12 \\         "
-txt_tri_l11:        !text "        /------\\        "
-txt_tri_l12:        !text "       /\\ 3  4 /\\       "
-txt_tri_l13:        !text "      / 5\\ /\\ /6 \\      "
-txt_tri_l14:        !text "     / 7 \\/--\\/ 8 \\     "
-txt_tri_l15:        !text "    /--------------\\    "
+txt_tri_all:
+        !text "           /\\           "
+        !text "          /  \\          "
+        !text "         / 12 \\         "
+        !text "        /------\\        "
+        !text "       /\\ 3  4 /\\       "
+        !text "      / 5\\ /\\ /6 \\      "
+        !text "     / 7 \\/--\\/ 8 \\     "
+        !text "    /--------------\\    "
 txt_p1_counter:     !text "FRAGMENTS RECUPERES : 0 / 8 "
 txt_p1_dungeons_line: !text "DONJONS: [1][2][3][4][5][6][7][8] "
 txt_p1_msg_seek:    !text "CHERCHE LES FRAGMENTS DANS LES DONJ."

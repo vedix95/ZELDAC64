@@ -522,8 +522,8 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("\n; Pointeur vers la table de rangées dynamique de la carte active ($A006)\n")
         f.write("world_row_offset = map_row_offset\n")
 
-        f.write("\nroom_buf:        !fill 200, 0            ; Tampon de la salle active decompressee\n")
-        f.write("target_room_buf: !fill 200, 0            ; Tampon de la salle cible (transition)\n\n")
+        f.write("\nroom_buf         = $be00                ; Tampon de la salle active decompressee (200 octets)\n")
+        f.write("target_room_buf  = $bec8                ; Tampon de la salle cible (transition, 200 octets)\n\n")
 
         f.write("; ---------------------------------------------------------------------------\n")
         f.write("; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf\n")
@@ -549,11 +549,26 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("        cpx #200\n        bcc .drt_loop\n.drt_done:\n        rts\n\n")
 
 
-def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, overlay_mode=False):
+def write_ow_chunk(path, chunk_id, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, enemy_lines):
     room_zones = get_room_zones(len(rooms))
+    r_start = chunk_id * 32
+    r_end = min(r_start + 32, len(rooms))
+
+    # Deduplicate enemy formations for this chunk
+    empty_line = "!byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0"
+    uniq_formations = [empty_line]
+    formation_map = {empty_line: 0}
+    enemy_indices = [0] * 128
+    for r in range(r_start, r_end):
+        line = enemy_lines[r] if r < len(enemy_lines) else empty_line
+        if line not in formation_map:
+            formation_map[line] = len(uniq_formations)
+            uniq_formations.append(line)
+        enemy_indices[r] = formation_map[line]
+
     with open(path, "w", encoding="utf-8") as f:
-        f.write(f"; GENERE par tools/tilegen.py depuis {src_tiles} et {src_world}\n")
-        f.write("!cpu 6510\n* = $a000\n\n")
+        f.write(f"; GENERE par tools/tilegen.py - Chunk Overworld {chunk_id} (Salles {r_start}..{r_end-1})\n")
+        f.write("!cpu 6510\n!source \"src/enemy_types.inc\"\n* = $c000\n\n")
         f.write(f"map_rooms_w:    !byte {rooms_x}\n")
         f.write(f"map_rooms_h:    !byte {rooms_y}\n")
         f.write(f"map_rooms_cnt:  !byte {len(rooms)}\n")
@@ -561,37 +576,37 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
         f.write(f"map_mc1_col:    !byte {cfg['mc1']}\n")
         f.write(f"map_mc2_col:    !byte {cfg['mc2']}\n\n")
 
-        # Table des offsets ry * rooms_x alignée sur 16 octets fixes ($A006..$A015)
         row_offsets = [ry * rooms_x for ry in range(rooms_y)]
         while len(row_offsets) < 8:
             row_offsets.append(0)
-        f.write("; Table des offsets ry * map_rooms_w (8 octets : $A006..$A00D)\nmap_row_offset:\n        !byte ")
+        f.write("; Table des offsets ry * map_rooms_w (8 octets : $C006..$C00D)\nmap_row_offset:\n        !byte ")
         f.write(", ".join(str(v) for v in row_offsets[:8]) + "\n")
-        f.write("; Pointeur vers le jeu de caracteres de la carte ($A00E..$A00F)\nmap_charset_ptr:\n        !word overworld_charset\n        !fill 6, 0\n\n")
+        f.write("; Pointeur vers le jeu de caracteres de la carte ($C00E..$C00F)\nmap_charset_ptr:\n        !word overworld_charset\n")
+        f.write("; Pointeur vers la table des ennemis ($C010..$C011)\nmap_enemies_ptr_hdr:\n        !word map_enemies\n        !fill 4, 0\n\n")
 
-        # Tables des pointeurs paddées à 128 entrées ($A016..$A095 et $A096..$A115)
-        f.write("; Tables des pointeurs (128 octets LO : $A016..$A095 / 128 octets HI : $A096..$A115)\n")
-        f.write("room_tbl_lo:\n        !byte ")
-        f.write(", ".join(f"<room_{i:02d}" for i in range(len(rooms))))
-        if len(rooms) < 128:
-            f.write("\n        !fill " + str(128 - len(rooms)) + ", 0\n")
-        else:
-            f.write("\n")
+        f.write("; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)\n")
+        lo_ptrs = [f"<room_{i:02d}" if r_start <= i < r_end else f"<room_{r_start:02d}" for i in range(128)]
+        hi_ptrs = [f">room_{i:02d}" if r_start <= i < r_end else f">room_{r_start:02d}" for i in range(128)]
+        f.write("room_tbl_lo:\n")
+        for i in range(0, 128, 16):
+            f.write("        !byte " + ", ".join(lo_ptrs[i:i+16]) + "\n")
+        f.write("room_tbl_hi:\n")
+        for i in range(0, 128, 16):
+            f.write("        !byte " + ", ".join(hi_ptrs[i:i+16]) + "\n")
+        f.write("\n")
 
-        f.write("room_tbl_hi:\n        !byte ")
-        f.write(", ".join(f">room_{i:02d}" for i in range(len(rooms))))
-        if len(rooms) < 128:
-            f.write("\n        !fill " + str(128 - len(rooms)) + ", 0\n\n")
-        else:
-            f.write("\n\n")
-
-        # Table des zones par salle ($A116..$A195 - 128 octets)
-        f.write("; Table des zones régionales par salle (128 octets : $A116..$A195)\nroom_zone_palette:\n        !byte ")
         while len(room_zones) < 128:
             room_zones.append(0)
+        f.write("; Table des zones régionales par salle (128 octets : $C116..$C195)\nroom_zone_palette:\n        !byte ")
         f.write(", ".join(str(z) for z in room_zones[:128]) + "\n\n")
 
-        for i, room in enumerate(rooms):
+        f.write("; Index de formation d'ennemis par salle (128 octets : $C196..$C215)\nroom_enemy_idx:\n")
+        for i in range(0, 128, 16):
+            f.write("        !byte " + ", ".join(str(v) for v in enemy_indices[i:i+16]) + "\n")
+        f.write("\n")
+
+        for i in range(r_start, r_end):
+            room = rooms[i]
             rx = i % rooms_x
             ry = i // rooms_x
             rle = compress_room_rle(room)
@@ -600,26 +615,41 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
                 chunk = rle[chunk_start:chunk_start + 16]
                 f.write("        !byte " + ", ".join(str(v) for v in chunk) + "\n")
 
-        if overlay_mode:
-            f.write("\n; 512 octets de caracteres Overworld pour restauration apres donjon\noverworld_charset:\n")
-            chars = {i: [0] * 8 for i in range(256)}
-            for i, t in enumerate(tiles):
-                base = TILE_CHAR_BASES[i]
-                for q, (label, c0, r0) in enumerate((("HG", 0, 0), ("HD", 4, 0),
-                                                     ("BG", 0, 8), ("BD", 4, 8))):
-                    chars[base + q] = char_bytes(t["rows"], c0, r0)
+        f.write("\n; 512 octets de caracteres Overworld\noverworld_charset:\n")
+        chars = {i: [0] * 8 for i in range(256)}
+        for i, t in enumerate(tiles):
+            base = TILE_CHAR_BASES[i]
+            for q, (label, c0, r0) in enumerate((("HG", 0, 0), ("HD", 4, 0),
+                                                 ("BG", 0, 8), ("BD", 4, 8))):
+                chars[base + q] = char_bytes(t["rows"], c0, r0)
 
-            # Chars 0..31
-            f.write("; Chars 0..31 (Tuiles 0..7 : 256 octets)\n")
-            for c in range(32):
-                f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
+        f.write("; Chars 0..31 (Tuiles 0..7 : 256 octets)\n")
+        for c in range(32):
+            f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
 
-            # Chars 168..199
-            f.write("; Chars 168..199 (Tuiles 8..15 : 256 octets)\n")
-            for c in range(168, 200):
-                f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
+        f.write("; Chars 168..199 (Tuiles 8..15 : 256 octets)\n")
+        for c in range(168, 200):
+            f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
 
-            f.write("\n* = $b800\n!source \"src/map_overworld_enemies.inc\"\n")
+        f.write(f"\n; Formations d'ennemis dédupliquées ({len(uniq_formations)} formations x 24 octets)\nmap_enemies:\n")
+        for idx, line in enumerate(uniq_formations):
+            f.write(f"        ; Formation {idx}\n        {line}\n")
+
+
+def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, overlay_mode=False):
+    enemy_lines = []
+    en_inc_path = os.path.join(os.path.dirname(path), "map_overworld_enemies.inc")
+    if os.path.exists(en_inc_path):
+        with open(en_inc_path, encoding="utf-8") as ef:
+            enemy_lines = [l.strip() for l in ef if l.strip().startswith("!byte")]
+    if overlay_mode:
+        out_dir = os.path.dirname(path)
+        for chunk_id in range(4):
+            chunk_path = os.path.join(out_dir, f"ow{chunk_id}.asm")
+            write_ow_chunk(chunk_path, chunk_id, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, enemy_lines)
+        write_ow_chunk(path, 3, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, enemy_lines)
+        return
+    write_ow_chunk(path, 3, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, enemy_lines)
 
 
 

@@ -283,6 +283,19 @@ def build_dungeon_asm(lvl):
                 slots[1] = f"{'TYPE_KEESE_RED':<18}, 12,  3"
             enemies_table[r] = slots
 
+    # Deduplicate enemy formations
+    empty_slot = "TYPE_NONE         ,  0,  0"
+    empty_tuple = tuple([empty_slot] * 8)
+    uniq_formations = [empty_tuple]
+    formation_map = {empty_tuple: 0}
+    enemy_indices = [0] * 128
+    for r in range(128):
+        t = tuple(enemies_table[r])
+        if t not in formation_map:
+            formation_map[t] = len(uniq_formations)
+            uniq_formations.append(t)
+        enemy_indices[r] = formation_map[t]
+
     lines = []
     lines.append("; ===========================================================================")
     lines.append(f"; dung{lvl}.asm - Donjon Niveau {lvl} : {meta['name']} pour Zelda C64")
@@ -291,9 +304,9 @@ def build_dungeon_asm(lvl):
     lines.append("; ===========================================================================")
     lines.append("!cpu 6510")
     lines.append("!source \"src/enemy_types.inc\"")
-    lines.append("* = $a000\n")
+    lines.append("* = $c000\n")
 
-    lines.append("; En-tête Donjon (6 octets : $A000..$A005)")
+    lines.append("; En-tête Donjon (6 octets : $C000..$C005)")
     lines.append("map_rooms_w:        !byte 16")
     lines.append("map_rooms_h:        !byte 8")
     lines.append(f"map_rooms_cnt:      !byte {len(dungeon_rooms)}")
@@ -301,20 +314,23 @@ def build_dungeon_asm(lvl):
     lines.append(f"map_mc1_col:        !byte {meta['mc1']}")
     lines.append("map_mc2_col:        !byte 14  ; bleu clair\n")
 
-    # Table des offsets ry * 16 (8 octets : $A006..$A00D)
+    # Table des offsets ry * 16 (8 octets : $C006..$C00D)
     row_offsets = [ry * 16 for ry in range(8)]
-    lines.append("; Table des offsets ry * map_rooms_w (8 octets : $A006..$A00D)")
+    lines.append("; Table des offsets ry * map_rooms_w (8 octets : $C006..$C00D)")
     lines.append("map_row_offset:")
     lines.append("        !byte " + ", ".join(str(v) for v in row_offsets))
 
-    # Pointeur vers le jeu de caractères du donjon ($A00E..$A00F)
-    lines.append("; Pointeur vers le jeu de caracteres du donjon ($A00E..$A00F)")
+    # Pointeur vers le jeu de caractères du donjon ($C00E..$C00F)
+    lines.append("; Pointeur vers le jeu de caracteres du donjon ($C00E..$C00F)")
     lines.append("map_charset_ptr:")
     lines.append("        !word dungeon_charset")
-    lines.append("        !fill 6, 0                          ; Alignement à $A015\n")
+    lines.append("; Pointeur vers la table des ennemis ($C010..$C011)")
+    lines.append("map_enemies_ptr_hdr:")
+    lines.append("        !word map_enemies")
+    lines.append("        !fill 4, 0                          ; Alignement à $C015\n")
 
     # Tables des pointeurs LO / HI
-    lines.append("; Tables des pointeurs (128 octets LO : $A016..$A095 / 128 octets HI : $A096..$A115)")
+    lines.append("; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)")
     lines.append("room_tbl_lo:")
     lo_ptrs = []
     hi_ptrs = []
@@ -333,19 +349,26 @@ def build_dungeon_asm(lvl):
         lines.append("        !byte " + ", ".join(hi_ptrs[i:i+16]))
     lines.append("")
 
-    # Métadonnées Donjon & Palette (128 octets : $A116..$A195)
-    lines.append("; Métadonnées Donjon & Palette (128 octets : $A116..$A195)")
+    # Métadonnées Donjon & Palette (128 octets : $C116..$C195)
+    lines.append("; Métadonnées Donjon & Palette (128 octets : $C116..$C195)")
     lines.append("room_zone_palette:")
-    lines.append("dungeon_enemies_ptr:    !word map_enemies   ; $A116 ($A116..$A117)")
-    lines.append(f"dungeon_boss_room:      !byte ${boss:02x}    ; $A118")
-    lines.append(f"dungeon_tri_room:       !byte ${tri:02x}     ; $A119")
-    lines.append(f"dungeon_boss_type:      !byte {meta['boss_type']} ; $A11A")
-    lines.append(f"dungeon_boss_hp:        !byte {meta['boss_hp']}   ; $A11B")
-    lines.append(f"dungeon_level:          !byte {lvl}         ; $A11C")
-    lines.append(f"dungeon_wall_col:       !byte {meta['wall']} ; $A11D")
-    lines.append(f"dungeon_start_rx:       !byte {start_rx}    ; $A11E")
-    lines.append(f"dungeon_start_ry:       !byte {start_ry}    ; $A11F")
-    lines.append("        !fill 128 - 10, 0                   ; Reste des 128 octets ($A120..$A195)\n")
+    lines.append("dungeon_enemies_ptr:    !word map_enemies   ; $C116 ($C116..$C117)")
+    lines.append(f"dungeon_boss_room:      !byte ${boss:02x}    ; $C118")
+    lines.append(f"dungeon_tri_room:       !byte ${tri:02x}     ; $C119")
+    lines.append(f"dungeon_boss_type:      !byte {meta['boss_type']} ; $C11A")
+    lines.append(f"dungeon_boss_hp:        !byte {meta['boss_hp']}   ; $C11B")
+    lines.append(f"dungeon_level:          !byte {lvl}         ; $C11C")
+    lines.append(f"dungeon_wall_col:       !byte {meta['wall']} ; $C11D")
+    lines.append(f"dungeon_start_rx:       !byte {start_rx}    ; $C11E")
+    lines.append(f"dungeon_start_ry:       !byte {start_ry}    ; $C11F")
+    lines.append("        !fill 128 - 10, 0                   ; Reste des 128 octets ($C120..$C195)\n")
+
+    # Index de formation d'ennemis par salle (128 octets : $C196..$C215)
+    lines.append("; Index de formation d'ennemis par salle (128 octets : $C196..$C215)")
+    lines.append("room_enemy_idx:")
+    for i in range(0, 128, 16):
+        lines.append("        !byte " + ", ".join(str(v) for v in enemy_indices[i:i+16]))
+    lines.append("")
 
     # RLE des salles du donjon
     for r in sorted(list(dungeon_rooms)):
@@ -365,13 +388,11 @@ def build_dungeon_asm(lvl):
     lines.append("dummy_sealed_room:")
     lines.append("        !byte " + ", ".join(str(v) for v in dummy_rle) + "\n")
 
-    # Table des ennemis
-    lines.append("; Table d'apparition des monstres pour ce donjon")
+    # Table des ennemis dédupliquée
+    lines.append(f"; Table d'apparition des monstres dédupliquée ({len(uniq_formations)} formations x 24 octets)")
     lines.append("map_enemies:")
-    for r in range(128):
-        rx, ry = r % 16, r // 16
-        slots = enemies_table[r]
-        lines.append(f"        ; Salle ${r:02x} ({rx:>2}, {ry:>2})")
+    for idx, slots in enumerate(uniq_formations):
+        lines.append(f"        ; Formation {idx}")
         lines.append("        !byte " + ",   ".join(slots))
 
     # Charset de 512 octets authentique du donjon

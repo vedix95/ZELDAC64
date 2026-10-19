@@ -323,7 +323,7 @@ dbg_t3: !text "ITEMS     : KEYS=$__  BOMBS=$__", 0
 dbg_t4: !text "WORLD MAP : TYPE=$__  ROOM=$__ LEVEL=$__", 0
 dbg_t5: !text "AUDIO     : DUAL_SID=$__ (TOUCHE 3)", 0
 dbg_t6: !text "ENEMIES   : EN0=$__   EN1=$__", 0
-dbg_t7: !text "MEMORY    : PRG<$A000 OVERLAY=$A000..$CFFF", 0
+dbg_t7: !text "MEMORY    : PRG<$C000 OVERLAY=$C000..$CFFF", 0
 
 dbg_row_tbl_lo:
         !byte <(SCREEN_RAM + 40 * 3 + 2)

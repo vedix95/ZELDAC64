@@ -1,6 +1,7 @@
-; GENERE par tools/tilegen.py depuis assets/tiles.txt et assets/world.txt
+; GENERE par tools/tilegen.py - Chunk Overworld 3 (Salles 96..127)
 !cpu 6510
-* = $a000
+!source "src/enemy_types.inc"
+* = $c000
 
 map_rooms_w:    !byte 16
 map_rooms_h:    !byte 8
@@ -9,490 +10,52 @@ map_bg_col:     !byte 13
 map_mc1_col:    !byte 8
 map_mc2_col:    !byte 1
 
-; Table des offsets ry * map_rooms_w (8 octets : $A006..$A00D)
+; Table des offsets ry * map_rooms_w (8 octets : $C006..$C00D)
 map_row_offset:
         !byte 0, 16, 32, 48, 64, 80, 96, 112
-; Pointeur vers le jeu de caracteres de la carte ($A00E..$A00F)
+; Pointeur vers le jeu de caracteres de la carte ($C00E..$C00F)
 map_charset_ptr:
         !word overworld_charset
-        !fill 6, 0
+; Pointeur vers la table des ennemis ($C010..$C011)
+map_enemies_ptr_hdr:
+        !word map_enemies
+        !fill 4, 0
 
-; Tables des pointeurs (128 octets LO : $A016..$A095 / 128 octets HI : $A096..$A115)
+; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)
 room_tbl_lo:
-        !byte <room_00, <room_01, <room_02, <room_03, <room_04, <room_05, <room_06, <room_07, <room_08, <room_09, <room_10, <room_11, <room_12, <room_13, <room_14, <room_15, <room_16, <room_17, <room_18, <room_19, <room_20, <room_21, <room_22, <room_23, <room_24, <room_25, <room_26, <room_27, <room_28, <room_29, <room_30, <room_31, <room_32, <room_33, <room_34, <room_35, <room_36, <room_37, <room_38, <room_39, <room_40, <room_41, <room_42, <room_43, <room_44, <room_45, <room_46, <room_47, <room_48, <room_49, <room_50, <room_51, <room_52, <room_53, <room_54, <room_55, <room_56, <room_57, <room_58, <room_59, <room_60, <room_61, <room_62, <room_63, <room_64, <room_65, <room_66, <room_67, <room_68, <room_69, <room_70, <room_71, <room_72, <room_73, <room_74, <room_75, <room_76, <room_77, <room_78, <room_79, <room_80, <room_81, <room_82, <room_83, <room_84, <room_85, <room_86, <room_87, <room_88, <room_89, <room_90, <room_91, <room_92, <room_93, <room_94, <room_95, <room_96, <room_97, <room_98, <room_99, <room_100, <room_101, <room_102, <room_103, <room_104, <room_105, <room_106, <room_107, <room_108, <room_109, <room_110, <room_111, <room_112, <room_113, <room_114, <room_115, <room_116, <room_117, <room_118, <room_119, <room_120, <room_121, <room_122, <room_123, <room_124, <room_125, <room_126, <room_127
+        !byte <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96
+        !byte <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96
+        !byte <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96
+        !byte <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96
+        !byte <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96
+        !byte <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96, <room_96
+        !byte <room_96, <room_97, <room_98, <room_99, <room_100, <room_101, <room_102, <room_103, <room_104, <room_105, <room_106, <room_107, <room_108, <room_109, <room_110, <room_111
+        !byte <room_112, <room_113, <room_114, <room_115, <room_116, <room_117, <room_118, <room_119, <room_120, <room_121, <room_122, <room_123, <room_124, <room_125, <room_126, <room_127
 room_tbl_hi:
-        !byte >room_00, >room_01, >room_02, >room_03, >room_04, >room_05, >room_06, >room_07, >room_08, >room_09, >room_10, >room_11, >room_12, >room_13, >room_14, >room_15, >room_16, >room_17, >room_18, >room_19, >room_20, >room_21, >room_22, >room_23, >room_24, >room_25, >room_26, >room_27, >room_28, >room_29, >room_30, >room_31, >room_32, >room_33, >room_34, >room_35, >room_36, >room_37, >room_38, >room_39, >room_40, >room_41, >room_42, >room_43, >room_44, >room_45, >room_46, >room_47, >room_48, >room_49, >room_50, >room_51, >room_52, >room_53, >room_54, >room_55, >room_56, >room_57, >room_58, >room_59, >room_60, >room_61, >room_62, >room_63, >room_64, >room_65, >room_66, >room_67, >room_68, >room_69, >room_70, >room_71, >room_72, >room_73, >room_74, >room_75, >room_76, >room_77, >room_78, >room_79, >room_80, >room_81, >room_82, >room_83, >room_84, >room_85, >room_86, >room_87, >room_88, >room_89, >room_90, >room_91, >room_92, >room_93, >room_94, >room_95, >room_96, >room_97, >room_98, >room_99, >room_100, >room_101, >room_102, >room_103, >room_104, >room_105, >room_106, >room_107, >room_108, >room_109, >room_110, >room_111, >room_112, >room_113, >room_114, >room_115, >room_116, >room_117, >room_118, >room_119, >room_120, >room_121, >room_122, >room_123, >room_124, >room_125, >room_126, >room_127
+        !byte >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96
+        !byte >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96
+        !byte >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96
+        !byte >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96
+        !byte >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96
+        !byte >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96, >room_96
+        !byte >room_96, >room_97, >room_98, >room_99, >room_100, >room_101, >room_102, >room_103, >room_104, >room_105, >room_106, >room_107, >room_108, >room_109, >room_110, >room_111
+        !byte >room_112, >room_113, >room_114, >room_115, >room_116, >room_117, >room_118, >room_119, >room_120, >room_121, >room_122, >room_123, >room_124, >room_125, >room_126, >room_127
 
-; Table des zones régionales par salle (128 octets : $A116..$A195)
+; Table des zones régionales par salle (128 octets : $C116..$C195)
 room_zone_palette:
         !byte 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3, 0, 0, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 0, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3
 
-; Salle (0, 0) - RLE compact (23 octets)
-room_00:
-        !byte 229, 229, 229, 229, 229, 213, 160, 133, 0, 147, 133, 0, 229, 53, 0, 229
-        !byte 53, 0, 229, 53, 0, 149, 255
-; Salle (1, 0) - RLE compact (33 octets)
-room_01:
-        !byte 229, 229, 181, 16, 117, 80, 37, 32, 117, 96, 5, 224, 64, 3, 224, 32
-        !byte 3, 5, 3, 224, 0, 3, 37, 224, 0, 53, 99, 0, 115, 165, 0, 149
-        !byte 255
-; Salle (2, 0) - RLE compact (32 octets)
-room_02:
-        !byte 229, 229, 229, 117, 32, 229, 21, 48, 37, 224, 64, 51, 0, 115, 96, 53
-        !byte 0, 117, 96, 53, 0, 117, 3, 80, 53, 0, 133, 83, 53, 0, 229, 255
-; Salle (3, 0) - RLE compact (32 octets)
-room_03:
-        !byte 229, 229, 165, 48, 229, 5, 64, 213, 208, 85, 80, 99, 0, 85, 64, 3
-        !byte 101, 0, 85, 48, 3, 117, 0, 85, 51, 133, 0, 229, 53, 0, 85, 255
-; Salle (4, 0) - RLE compact (32 octets)
-room_04:
-        !byte 229, 229, 85, 7, 229, 5, 96, 181, 112, 21, 80, 21, 144, 5, 224, 48
-        !byte 5, 224, 48, 5, 3, 80, 19, 128, 3, 21, 83, 21, 131, 229, 85, 255
-; Salle (5, 0) - RLE compact (42 octets)
-room_05:
-        !byte 229, 229, 149, 64, 35, 64, 35, 32, 5, 48, 3, 5, 12, 5, 3, 32
-        !byte 3, 37, 3, 16, 5, 48, 69, 32, 69, 96, 69, 32, 69, 16, 3, 224
-        !byte 48, 5, 51, 208, 3, 69, 211, 229, 101, 255
-; Salle (6, 0) - RLE compact (25 octets)
-room_06:
-        !byte 229, 229, 229, 112, 165, 128, 101, 224, 64, 51, 128, 99, 53, 3, 112, 181
-        !byte 51, 32, 3, 229, 5, 35, 229, 197, 255
-; Salle (7, 0) - RLE compact (28 octets)
-room_07:
-        !byte 229, 229, 229, 229, 133, 32, 117, 224, 64, 67, 0, 35, 32, 115, 69, 0
-        !byte 37, 35, 197, 0, 229, 53, 0, 229, 53, 0, 213, 255
-; Salle (8, 0) - RLE compact (25 octets)
-room_08:
-        !byte 229, 229, 229, 112, 165, 128, 101, 224, 64, 51, 128, 99, 53, 3, 112, 181
-        !byte 51, 32, 3, 229, 5, 35, 229, 197, 255
-; Salle (9, 0) - RLE compact (41 octets)
-room_09:
-        !byte 229, 229, 165, 96, 5, 128, 37, 64, 21, 160, 5, 64, 5, 16, 5, 0
-        !byte 21, 0, 5, 16, 5, 16, 5, 3, 64, 21, 160, 21, 96, 5, 128, 3
-        !byte 21, 51, 176, 3, 101, 179, 229, 117, 255
-; Salle (10, 0) - RLE compact (43 octets)
-room_10:
-        !byte 229, 101, 7, 229, 37, 32, 180, 32, 21, 32, 180, 32, 21, 32, 180, 32
-        !byte 21, 32, 180, 32, 21, 64, 25, 4, 9, 128, 21, 3, 80, 4, 128, 3
-        !byte 37, 83, 4, 115, 0, 149, 4, 117, 0, 21, 255
-; Salle (11, 0) - RLE compact (45 octets)
-room_11:
-        !byte 229, 229, 181, 80, 51, 96, 21, 32, 5, 0, 37, 7, 37, 0, 21, 32
-        !byte 21, 224, 32, 21, 32, 5, 0, 21, 48, 5, 0, 21, 32, 21, 3, 224
-        !byte 16, 37, 19, 208, 3, 69, 67, 0, 115, 165, 0, 149, 255
-; Salle (12, 0) - RLE compact (40 octets)
-room_12:
-        !byte 229, 229, 7, 229, 37, 96, 21, 16, 133, 160, 85, 208, 85, 16, 3, 160
-        !byte 85, 16, 5, 96, 19, 16, 85, 16, 5, 3, 80, 21, 3, 0, 85, 16
-        !byte 21, 83, 37, 3, 85, 16, 181, 255
-; Salle (13, 0) - RLE compact (36 octets)
-room_13:
-        !byte 229, 229, 149, 48, 21, 112, 85, 224, 0, 53, 224, 32, 21, 224, 48, 5
-        !byte 48, 19, 192, 5, 16, 19, 21, 19, 144, 3, 5, 19, 85, 131, 0, 229
-        !byte 53, 0, 21, 255
-; Salle (14, 0) - RLE compact (34 octets)
-room_14:
-        !byte 228, 228, 148, 197, 100, 85, 7, 85, 100, 85, 16, 69, 100, 85, 16, 69
-        !byte 100, 85, 16, 69, 100, 85, 16, 69, 100, 85, 16, 69, 100, 85, 16, 69
-        !byte 100, 255
-; Salle (15, 0) - RLE compact (61 octets)
-room_15:
-        !byte 4, 229, 37, 20, 229, 37, 20, 5, 32, 35, 0, 3, 21, 3, 0, 35
-        !byte 0, 5, 20, 5, 32, 37, 0, 5, 7, 21, 0, 37, 0, 5, 20, 5
-        !byte 224, 0, 5, 20, 5, 224, 0, 5, 20, 5, 224, 0, 5, 20, 5, 224
-        !byte 0, 5, 20, 5, 115, 16, 83, 5, 20, 229, 37, 4, 255
-; Salle (0, 1) - RLE compact (48 octets)
-room_16:
-        !byte 133, 0, 229, 53, 0, 181, 32, 5, 112, 33, 16, 1, 5, 96, 5, 64
-        !byte 35, 16, 3, 5, 48, 5, 48, 21, 112, 5, 96, 5, 96, 17, 16, 5
-        !byte 3, 32, 5, 144, 19, 16, 21, 19, 224, 0, 53, 227, 3, 229, 69, 255
-; Salle (1, 1) - RLE compact (47 octets)
-room_17:
-        !byte 133, 0, 229, 53, 0, 149, 1, 32, 17, 144, 5, 16, 5, 3, 32, 19
-        !byte 96, 5, 64, 5, 144, 21, 48, 5, 16, 5, 16, 33, 112, 5, 64, 5
-        !byte 16, 35, 160, 5, 16, 5, 224, 32, 3, 5, 227, 35, 229, 101, 255
-; Salle (2, 1) - RLE compact (49 octets)
-room_18:
-        !byte 53, 0, 229, 53, 0, 229, 53, 0, 53, 32, 17, 16, 17, 0, 1, 53
-        !byte 0, 37, 48, 19, 16, 19, 0, 3, 21, 224, 32, 5, 176, 33, 0, 17
-        !byte 0, 5, 176, 35, 0, 19, 0, 5, 3, 224, 32, 21, 227, 35, 229, 69
-        !byte 255
-; Salle (3, 1) - RLE compact (28 octets)
-room_19:
-        !byte 197, 0, 229, 53, 0, 85, 1, 48, 117, 0, 53, 16, 3, 64, 101, 0
-        !byte 37, 224, 224, 224, 224, 224, 112, 227, 67, 229, 69, 255
-; Salle (4, 1) - RLE compact (35 octets)
-room_20:
-        !byte 229, 229, 149, 224, 48, 5, 48, 5, 32, 5, 32, 5, 48, 5, 0, 5
-        !byte 224, 128, 5, 32, 5, 32, 5, 48, 5, 224, 224, 176, 195, 0, 83, 197
-        !byte 0, 85, 255
-; Salle (5, 1) - RLE compact (35 octets)
-room_21:
-        !byte 229, 229, 229, 69, 144, 149, 160, 37, 16, 37, 224, 224, 224, 96, 35, 16
-        !byte 35, 48, 35, 16, 35, 37, 0, 3, 37, 51, 37, 3, 0, 85, 0, 181
-        !byte 0, 21, 255
-; Salle (6, 1) - RLE compact (32 octets)
-room_22:
-        !byte 229, 229, 149, 144, 117, 176, 101, 224, 224, 96, 35, 224, 16, 37, 3, 16
-        !byte 19, 32, 35, 80, 53, 3, 0, 21, 35, 37, 83, 69, 3, 229, 69, 255
-; Salle (7, 1) - RLE compact (36 octets)
-room_23:
-        !byte 69, 0, 229, 53, 0, 213, 48, 5, 0, 213, 48, 5, 0, 21, 180, 112
-        !byte 4, 224, 48, 4, 224, 48, 4, 224, 48, 4, 160, 115, 4, 64, 83, 117
-        !byte 4, 64, 85, 255
-; Salle (8, 1) - RLE compact (17 octets)
-room_24:
-        !byte 229, 229, 229, 229, 228, 68, 224, 224, 224, 64, 147, 144, 149, 147, 229, 229
-        !byte 255
-; Salle (9, 1) - RLE compact (16 octets)
-room_25:
-        !byte 229, 229, 229, 229, 228, 68, 224, 224, 144, 227, 67, 229, 229, 229, 229, 255
-; Salle (10, 1) - RLE compact (29 octets)
-room_26:
-        !byte 117, 4, 117, 0, 149, 4, 117, 0, 149, 4, 117, 0, 21, 116, 133, 0
-        !byte 21, 224, 224, 128, 147, 144, 149, 144, 149, 147, 229, 85, 255
-; Salle (11, 1) - RLE compact (47 octets)
-room_27:
-        !byte 133, 0, 229, 53, 0, 181, 48, 21, 144, 53, 16, 5, 64, 21, 0, 5
-        !byte 48, 21, 80, 21, 112, 5, 32, 19, 16, 5, 64, 21, 0, 5, 48, 19
-        !byte 21, 48, 21, 144, 53, 19, 192, 3, 85, 67, 0, 99, 229, 117, 255
-; Salle (12, 1) - RLE compact (44 octets)
-room_28:
-        !byte 85, 16, 229, 37, 16, 197, 224, 48, 5, 112, 5, 16, 5, 0, 21, 0
-        !byte 5, 224, 96, 3, 112, 5, 16, 5, 0, 21, 0, 5, 16, 5, 224, 48
-        !byte 5, 3, 224, 32, 21, 19, 0, 227, 53, 0, 229, 255
-; Salle (13, 1) - RLE compact (44 octets)
-room_29:
-        !byte 229, 21, 0, 229, 53, 0, 21, 80, 165, 0, 21, 80, 101, 160, 5, 0
-        !byte 37, 224, 16, 21, 48, 116, 80, 21, 48, 116, 64, 3, 21, 3, 32, 116
-        !byte 19, 16, 3, 53, 32, 116, 21, 16, 69, 32, 116, 255
-; Salle (14, 1) - RLE compact (29 octets)
-room_30:
-        !byte 85, 16, 229, 37, 16, 229, 37, 16, 53, 224, 16, 37, 224, 192, 132, 35
-        !byte 112, 132, 37, 112, 132, 37, 112, 132, 37, 115, 132, 165, 255
-; Salle (15, 1) - RLE compact (60 octets)
-room_31:
-        !byte 229, 53, 4, 229, 53, 4, 16, 37, 0, 53, 32, 37, 16, 5, 4, 16
-        !byte 35, 0, 19, 7, 3, 32, 35, 16, 5, 4, 224, 32, 5, 4, 64, 37
-        !byte 16, 37, 0, 37, 0, 5, 4, 64, 35, 16, 35, 0, 35, 0, 5, 4
-        !byte 224, 32, 5, 4, 227, 35, 5, 4, 229, 53, 4, 255
-; Salle (0, 2) - RLE compact (49 octets)
-room_32:
-        !byte 229, 229, 181, 16, 8, 32, 8, 32, 8, 32, 8, 32, 21, 224, 32, 21
-        !byte 16, 8, 32, 8, 32, 8, 32, 8, 32, 21, 224, 32, 21, 16, 8, 32
-        !byte 8, 32, 8, 32, 8, 32, 21, 224, 32, 21, 224, 0, 53, 224, 0, 21
-        !byte 255
-; Salle (1, 2) - RLE compact (49 octets)
-room_33:
-        !byte 229, 229, 149, 48, 8, 32, 8, 32, 8, 32, 8, 0, 21, 224, 32, 21
-        !byte 48, 8, 32, 8, 32, 8, 32, 8, 0, 21, 224, 32, 21, 48, 8, 32
-        !byte 8, 32, 8, 32, 8, 0, 21, 224, 32, 53, 224, 0, 53, 224, 0, 21
-        !byte 255
-; Salle (2, 2) - RLE compact (37 octets)
-room_34:
-        !byte 229, 229, 181, 86, 69, 70, 53, 22, 51, 21, 7, 21, 51, 6, 53, 230
-        !byte 6, 53, 22, 51, 70, 51, 6, 53, 230, 6, 53, 230, 6, 53, 99, 0
-        !byte 115, 165, 0, 149, 255
-; Salle (3, 2) - RLE compact (50 octets)
-room_35:
-        !byte 229, 229, 165, 128, 37, 96, 5, 48, 5, 48, 37, 96, 5, 32, 5, 0
-        !byte 21, 16, 37, 96, 5, 48, 5, 48, 37, 96, 5, 128, 37, 96, 5, 3
-        !byte 96, 3, 37, 3, 80, 21, 83, 0, 69, 35, 0, 19, 117, 0, 117, 0
-        !byte 21, 255
-; Salle (4, 2) - RLE compact (38 octets)
-room_36:
-        !byte 197, 0, 229, 53, 0, 85, 224, 96, 21, 16, 21, 16, 21, 16, 21, 16
-        !byte 5, 224, 112, 21, 16, 21, 16, 21, 16, 21, 16, 5, 224, 144, 19, 208
-        !byte 51, 21, 211, 229, 69, 255
-; Salle (5, 2) - RLE compact (51 octets)
-room_37:
-        !byte 53, 0, 181, 0, 85, 0, 117, 7, 37, 0, 21, 224, 48, 5, 16, 21
-        !byte 16, 21, 16, 21, 16, 21, 32, 5, 224, 48, 5, 16, 21, 16, 21, 16
-        !byte 21, 16, 21, 32, 5, 224, 48, 5, 224, 32, 3, 5, 67, 0, 179, 101
-        !byte 0, 213, 255
-; Salle (6, 2) - RLE compact (37 octets)
-room_38:
-        !byte 229, 229, 165, 96, 21, 32, 117, 224, 48, 5, 224, 48, 5, 160, 116, 5
-        !byte 96, 19, 16, 116, 5, 3, 48, 19, 21, 19, 116, 21, 32, 3, 85, 116
-        !byte 21, 32, 101, 116, 255
-; Salle (7, 2) - RLE compact (25 octets)
-room_39:
-        !byte 117, 4, 64, 213, 4, 64, 213, 4, 64, 53, 144, 4, 224, 48, 4, 9
-        !byte 144, 228, 228, 228, 228, 228, 228, 148, 255
-; Salle (8, 2) - RLE compact (34 octets)
-room_40:
-        !byte 227, 227, 147, 208, 19, 224, 80, 3, 224, 0, 19, 48, 20, 101, 112, 3
-        !byte 16, 20, 99, 64, 19, 48, 20, 99, 128, 3, 0, 132, 32, 115, 132, 32
-        !byte 115, 255
-; Salle (9, 2) - RLE compact (16 octets)
-room_41:
-        !byte 229, 229, 149, 230, 230, 230, 230, 230, 230, 230, 230, 227, 67, 229, 69, 255
-; Salle (10, 2) - RLE compact (20 octets)
-room_42:
-        !byte 229, 229, 149, 230, 230, 230, 230, 230, 230, 230, 230, 19, 230, 22, 3, 21
-        !byte 230, 22, 5, 255
-; Salle (11, 2) - RLE compact (20 octets)
-room_43:
-        !byte 229, 229, 149, 230, 230, 230, 230, 230, 230, 230, 230, 3, 230, 22, 19, 5
-        !byte 230, 22, 21, 255
-; Salle (12, 2) - RLE compact (31 octets)
-room_44:
-        !byte 53, 0, 229, 53, 0, 229, 112, 3, 37, 3, 32, 53, 80, 19, 69, 3
-        !byte 16, 53, 80, 117, 176, 117, 224, 224, 224, 0, 227, 67, 229, 69, 255
-; Salle (13, 2) - RLE compact (33 octets)
-room_45:
-        !byte 21, 16, 69, 32, 116, 21, 16, 69, 32, 116, 21, 16, 5, 96, 116, 21
-        !byte 16, 5, 96, 116, 224, 224, 224, 224, 224, 64, 131, 32, 115, 133, 32, 117
-        !byte 255
-; Salle (14, 2) - RLE compact (22 octets)
-room_46:
-        !byte 228, 228, 228, 228, 228, 68, 144, 25, 116, 176, 116, 176, 116, 176, 116, 19
-        !byte 144, 116, 21, 144, 116, 255
-; Salle (15, 2) - RLE compact (41 octets)
-room_47:
-        !byte 229, 229, 165, 6, 37, 6, 21, 4, 5, 22, 21, 38, 53, 6, 37, 6
-        !byte 21, 7, 5, 22, 21, 38, 53, 230, 6, 53, 230, 6, 53, 230, 6, 53
-        !byte 230, 6, 165, 3, 229, 53, 3, 165, 255
-; Salle (0, 3) - RLE compact (54 octets)
-room_48:
-        !byte 21, 224, 0, 53, 224, 0, 53, 16, 8, 32, 8, 32, 8, 32, 8, 32
-        !byte 21, 224, 32, 21, 16, 8, 32, 8, 32, 8, 32, 8, 32, 21, 224, 32
-        !byte 21, 16, 8, 32, 8, 32, 8, 32, 8, 32, 21, 224, 32, 21, 224, 0
-        !byte 3, 37, 224, 0, 21, 255
-; Salle (1, 3) - RLE compact (47 octets)
-room_49:
-        !byte 21, 224, 0, 53, 224, 0, 21, 48, 8, 32, 8, 32, 8, 32, 8, 0
-        !byte 21, 224, 128, 8, 32, 8, 32, 8, 32, 8, 224, 176, 8, 32, 8, 32
-        !byte 8, 32, 8, 0, 21, 224, 32, 53, 224, 0, 53, 224, 0, 21, 255
-; Salle (2, 3) - RLE compact (31 octets)
-room_50:
-        !byte 133, 0, 229, 53, 0, 181, 32, 53, 0, 21, 48, 53, 80, 37, 0, 21
-        !byte 64, 37, 224, 224, 96, 67, 224, 69, 19, 192, 101, 195, 229, 117, 255
-; Salle (3, 3) - RLE compact (52 octets)
-room_51:
-        !byte 117, 0, 117, 0, 149, 0, 117, 0, 53, 230, 6, 53, 22, 3, 6, 19
-        !byte 6, 3, 22, 3, 6, 19, 22, 21, 16, 230, 6, 21, 19, 22, 3, 6
-        !byte 19, 6, 3, 22, 3, 6, 19, 22, 53, 230, 6, 53, 230, 6, 53, 227
-        !byte 3, 229, 101, 255
-; Salle (4, 3) - RLE compact (40 octets)
-room_52:
-        !byte 229, 229, 165, 224, 16, 37, 0, 21, 0, 5, 16, 5, 144, 21, 224, 32
-        !byte 21, 0, 21, 0, 5, 16, 5, 32, 116, 5, 160, 116, 5, 3, 144, 116
-        !byte 21, 115, 16, 116, 149, 16, 116, 255
-; Salle (5, 3) - RLE compact (21 octets)
-room_53:
-        !byte 69, 0, 229, 53, 0, 229, 53, 0, 229, 53, 224, 69, 224, 228, 228, 228
-        !byte 228, 228, 228, 148, 255
-; Salle (6, 3) - RLE compact (24 octets)
-room_54:
-        !byte 21, 32, 101, 116, 21, 32, 101, 116, 21, 32, 101, 116, 176, 116, 176, 228
-        !byte 228, 228, 228, 228, 228, 228, 36, 255
-; Salle (7, 3) - RLE compact (64 octets)
-room_55:
-        !byte 4, 229, 37, 20, 229, 37, 20, 5, 16, 17, 16, 49, 0, 33, 16, 5
-        !byte 20, 5, 16, 19, 16, 3, 7, 19, 0, 35, 16, 5, 20, 5, 224, 16
-        !byte 9, 4, 5, 32, 33, 48, 17, 48, 3, 20, 5, 32, 35, 48, 19, 48
-        !byte 5, 20, 5, 224, 0, 5, 20, 5, 227, 3, 5, 20, 229, 37, 4, 255
-; Salle (8, 3) - RLE compact (37 octets)
-room_56:
-        !byte 132, 32, 115, 132, 32, 115, 132, 144, 3, 132, 96, 3, 16, 3, 137, 144
-        !byte 3, 132, 96, 3, 16, 3, 132, 144, 3, 132, 48, 3, 64, 3, 132, 32
-        !byte 115, 132, 32, 115, 255
-; Salle (9, 3) - RLE compact (42 octets)
-room_57:
-        !byte 229, 229, 165, 64, 117, 64, 21, 32, 3, 0, 115, 16, 3, 16, 21, 64
-        !byte 115, 64, 21, 32, 3, 0, 115, 16, 3, 16, 21, 224, 32, 21, 3, 224
-        !byte 0, 3, 37, 99, 32, 83, 165, 32, 117, 255
-; Salle (10, 3) - RLE compact (32 octets)
-room_58:
-        !byte 21, 230, 22, 37, 230, 22, 37, 230, 38, 21, 230, 38, 21, 230, 38, 21
-        !byte 230, 38, 21, 230, 38, 21, 230, 38, 21, 99, 38, 115, 133, 38, 117, 255
-; Salle (11, 3) - RLE compact (33 octets)
-room_59:
-        !byte 5, 230, 22, 37, 230, 22, 21, 230, 38, 21, 230, 38, 21, 230, 38, 21
-        !byte 230, 38, 21, 230, 38, 21, 230, 38, 21, 227, 3, 22, 229, 37, 22, 21
-        !byte 255
-; Salle (12, 3) - RLE compact (45 octets)
-room_60:
-        !byte 229, 229, 181, 80, 51, 96, 21, 32, 3, 0, 19, 5, 7, 21, 3, 0
-        !byte 19, 32, 21, 224, 32, 21, 32, 3, 0, 19, 48, 3, 0, 19, 32, 21
-        !byte 3, 224, 16, 37, 19, 208, 3, 69, 211, 165, 3, 149, 255
-; Salle (13, 3) - RLE compact (75 octets)
-room_61:
-        !byte 131, 32, 227, 19, 32, 131, 0, 19, 0, 3, 112, 19, 32, 19, 96, 3
-        !byte 32, 3, 48, 3, 0, 19, 0, 19, 0, 3, 112, 19, 32, 19, 224, 0
-        !byte 3, 0, 19, 0, 19, 0, 3, 112, 19, 32, 19, 224, 32, 19, 0, 19
-        !byte 0, 3, 16, 3, 32, 3, 0, 19, 0, 3, 0, 19, 0, 19, 0, 3
-        !byte 16, 3, 32, 3, 0, 19, 0, 3, 0, 3, 255
-; Salle (14, 3) - RLE compact (31 octets)
-room_62:
-        !byte 21, 144, 116, 21, 144, 116, 21, 144, 116, 21, 144, 116, 21, 224, 32, 21
-        !byte 224, 32, 21, 224, 32, 21, 19, 224, 0, 53, 227, 3, 229, 69, 255
-; Salle (15, 3) - RLE compact (23 octets)
-room_63:
-        !byte 228, 228, 228, 228, 116, 9, 164, 144, 25, 116, 176, 116, 176, 116, 176, 116
-        !byte 83, 80, 116, 85, 80, 116, 255
-; Salle (0, 4) - RLE compact (53 octets)
-room_64:
-        !byte 21, 224, 0, 53, 224, 0, 53, 16, 8, 32, 8, 32, 8, 32, 8, 32
-        !byte 21, 224, 32, 21, 16, 8, 32, 8, 32, 8, 32, 8, 32, 21, 224, 32
-        !byte 21, 16, 8, 32, 8, 32, 8, 32, 8, 32, 53, 224, 0, 229, 37, 3
-        !byte 229, 53, 3, 5, 255
-; Salle (1, 4) - RLE compact (49 octets)
-room_65:
-        !byte 21, 224, 0, 53, 224, 0, 21, 48, 8, 32, 8, 32, 8, 32, 8, 0
-        !byte 21, 224, 32, 21, 48, 8, 32, 8, 32, 8, 32, 8, 0, 21, 224, 32
-        !byte 21, 48, 8, 32, 8, 32, 8, 32, 8, 0, 21, 224, 32, 229, 229, 181
-        !byte 255
-; Salle (2, 4) - RLE compact (42 octets)
-room_66:
-        !byte 229, 229, 165, 64, 116, 64, 21, 32, 3, 0, 116, 16, 3, 16, 21, 64
-        !byte 116, 64, 21, 32, 3, 0, 116, 16, 3, 16, 21, 224, 32, 21, 3, 224
-        !byte 0, 3, 37, 99, 32, 83, 165, 32, 117, 255
-; Salle (3, 4) - RLE compact (42 octets)
-room_67:
-        !byte 229, 229, 165, 64, 117, 64, 21, 32, 3, 0, 115, 16, 3, 16, 21, 64
-        !byte 115, 64, 21, 32, 3, 0, 115, 16, 3, 16, 21, 224, 32, 21, 3, 224
-        !byte 0, 3, 37, 99, 32, 83, 165, 32, 117, 255
-; Salle (4, 4) - RLE compact (49 octets)
-room_68:
-        !byte 149, 16, 116, 69, 7, 53, 16, 116, 5, 160, 83, 20, 5, 32, 3, 0
-        !byte 19, 48, 83, 20, 5, 160, 83, 20, 5, 32, 3, 0, 19, 48, 83, 20
-        !byte 5, 160, 83, 20, 5, 3, 144, 83, 20, 21, 99, 32, 116, 133, 32, 116
-        !byte 255
-; Salle (5, 4) - RLE compact (60 octets)
-room_69:
-        !byte 4, 229, 37, 20, 229, 37, 20, 5, 32, 35, 0, 51, 0, 35, 0, 5
-        !byte 20, 5, 32, 37, 0, 5, 7, 21, 0, 37, 0, 5, 20, 5, 224, 0
-        !byte 5, 20, 5, 224, 0, 5, 20, 5, 224, 0, 5, 20, 5, 224, 0, 5
-        !byte 20, 5, 115, 16, 83, 5, 20, 133, 19, 101, 4, 255
-; Salle (6, 4) - RLE compact (23 octets)
-room_70:
-        !byte 227, 227, 227, 227, 227, 211, 10, 144, 131, 160, 131, 32, 227, 19, 32, 227
-        !byte 19, 32, 227, 19, 32, 115, 255
-; Salle (7, 4) - RLE compact (16 octets)
-room_71:
-        !byte 227, 227, 227, 227, 227, 67, 224, 224, 144, 227, 227, 227, 227, 227, 67, 255
-; Salle (8, 4) - RLE compact (27 octets)
-room_72:
-        !byte 131, 32, 227, 19, 32, 227, 19, 112, 179, 112, 35, 224, 16, 35, 224, 16
-        !byte 99, 192, 99, 192, 179, 32, 227, 19, 32, 115, 255
-; Salle (9, 4) - RLE compact (35 octets)
-room_73:
-        !byte 131, 32, 227, 19, 32, 147, 48, 35, 32, 147, 224, 32, 19, 16, 1, 224
-        !byte 19, 224, 32, 19, 48, 35, 32, 147, 48, 35, 32, 227, 19, 32, 227, 19
-        !byte 32, 115, 255
-; Salle (10, 4) - RLE compact (35 octets)
-room_74:
-        !byte 133, 32, 229, 21, 32, 21, 7, 101, 224, 0, 21, 80, 19, 64, 3, 224
-        !byte 224, 16, 19, 64, 3, 80, 19, 224, 0, 19, 21, 19, 192, 3, 85, 195
-        !byte 229, 117, 255
-; Salle (11, 4) - RLE compact (64 octets)
-room_75:
-        !byte 227, 3, 16, 227, 35, 16, 35, 96, 3, 48, 35, 16, 19, 144, 19, 0
-        !byte 35, 16, 19, 16, 19, 48, 3, 48, 35, 16, 19, 144, 19, 0, 35, 16
-        !byte 35, 96, 3, 48, 35, 16, 35, 176, 35, 16, 35, 0, 19, 48, 3, 0
-        !byte 19, 0, 35, 16, 35, 0, 19, 48, 3, 0, 19, 0, 35, 16, 19, 255
-; Salle (12, 4) - RLE compact (34 octets)
-room_76:
-        !byte 133, 3, 229, 53, 3, 181, 80, 5, 3, 53, 32, 53, 96, 5, 3, 53
-        !byte 32, 53, 224, 48, 5, 224, 0, 35, 5, 3, 224, 69, 224, 69, 227, 229
-        !byte 117, 255
-; Salle (13, 4) - RLE compact (78 octets)
-room_77:
-        !byte 3, 0, 19, 0, 3, 16, 3, 32, 3, 0, 19, 0, 3, 0, 19, 0
-        !byte 19, 0, 3, 16, 3, 32, 3, 0, 19, 0, 3, 0, 19, 96, 3, 64
-        !byte 19, 32, 3, 5, 0, 19, 0, 3, 80, 3, 48, 3, 144, 3, 64, 19
-        !byte 48, 3, 0, 19, 0, 3, 80, 3, 48, 3, 16, 3, 96, 3, 64, 19
-        !byte 32, 19, 224, 32, 67, 0, 163, 0, 99, 0, 163, 0, 35, 255
-; Salle (14, 4) - RLE compact (27 octets)
-room_78:
-        !byte 227, 227, 163, 224, 32, 3, 80, 19, 64, 3, 64, 3, 224, 48, 3, 224
-        !byte 48, 19, 224, 32, 35, 224, 0, 227, 227, 179, 255
-; Salle (15, 4) - RLE compact (37 octets)
-room_79:
-        !byte 85, 80, 116, 85, 80, 116, 69, 96, 116, 69, 96, 116, 53, 112, 4, 9
-        !byte 20, 9, 36, 21, 144, 116, 21, 144, 116, 21, 19, 112, 116, 53, 19, 80
-        !byte 116, 85, 80, 116, 255
-; Salle (0, 5) - RLE compact (32 octets)
-room_80:
-        !byte 229, 37, 3, 229, 53, 3, 229, 53, 3, 229, 53, 3, 37, 224, 16, 37
-        !byte 224, 16, 37, 224, 16, 37, 224, 16, 37, 224, 0, 53, 224, 0, 21, 255
-; Salle (1, 5) - RLE compact (39 octets)
-room_81:
-        !byte 227, 227, 163, 224, 67, 32, 3, 0, 19, 0, 3, 16, 3, 96, 3, 224
-        !byte 48, 3, 32, 3, 0, 19, 0, 3, 16, 3, 96, 3, 224, 83, 208, 227
-        !byte 19, 32, 227, 19, 32, 51, 255
-; Salle (2, 5) - RLE compact (30 octets)
-room_82:
-        !byte 131, 32, 227, 19, 32, 147, 32, 227, 64, 227, 64, 227, 64, 227, 19, 32
-        !byte 227, 19, 224, 32, 83, 32, 35, 80, 115, 32, 35, 80, 19, 255
-; Salle (3, 5) - RLE compact (44 octets)
-room_83:
-        !byte 131, 32, 227, 19, 32, 147, 224, 16, 35, 80, 3, 160, 19, 160, 3, 80
-        !byte 19, 80, 3, 160, 19, 224, 16, 3, 224, 32, 99, 32, 3, 48, 3, 16
-        !byte 3, 0, 99, 32, 3, 48, 3, 16, 3, 0, 19, 255
-; Salle (4, 5) - RLE compact (40 octets)
-room_84:
-        !byte 131, 32, 227, 19, 32, 147, 48, 19, 48, 115, 176, 115, 80, 19, 224, 224
-        !byte 51, 48, 19, 144, 21, 19, 224, 0, 21, 51, 16, 83, 16, 35, 0, 21
-        !byte 51, 16, 83, 16, 35, 0, 21, 255
-; Salle (5, 5) - RLE compact (43 octets)
-room_85:
-        !byte 227, 227, 227, 227, 147, 26, 115, 64, 10, 35, 10, 144, 19, 48, 35, 128
-        !byte 19, 21, 48, 35, 128, 53, 48, 35, 128, 53, 48, 35, 48, 3, 16, 3
-        !byte 0, 53, 48, 35, 48, 5, 16, 5, 0, 21, 255
-; Salle (6, 5) - RLE compact (34 octets)
-room_86:
-        !byte 131, 32, 227, 19, 32, 227, 19, 160, 131, 48, 3, 16, 19, 224, 96, 51
-        !byte 128, 3, 16, 19, 16, 53, 224, 0, 53, 224, 0, 53, 227, 3, 53, 227
-        !byte 3, 255
-; Salle (7, 5) - RLE compact (41 octets)
-room_87:
-        !byte 227, 227, 147, 128, 3, 16, 3, 48, 3, 0, 3, 224, 128, 3, 0, 19
-        !byte 0, 3, 16, 3, 0, 19, 0, 3, 0, 3, 224, 208, 3, 16, 3, 48
-        !byte 3, 0, 3, 224, 64, 227, 227, 147, 255
-; Salle (8, 5) - RLE compact (72 octets)
-room_88:
-        !byte 131, 32, 227, 19, 32, 131, 0, 19, 48, 3, 32, 3, 0, 19, 32, 3
-        !byte 224, 64, 3, 0, 19, 0, 3, 16, 3, 32, 3, 0, 19, 0, 3, 224
-        !byte 96, 3, 0, 19, 48, 3, 32, 3, 0, 19, 32, 3, 224, 48, 67, 0
-        !byte 3, 16, 3, 32, 3, 0, 19, 0, 3, 0, 67, 0, 3, 16, 3, 32
-        !byte 3, 0, 19, 0, 3, 0, 3, 255
-; Salle (9, 5) - RLE compact (27 octets)
-room_89:
-        !byte 131, 32, 227, 19, 32, 227, 19, 32, 115, 224, 224, 224, 96, 117, 131, 32
-        !byte 227, 19, 32, 227, 19, 32, 227, 19, 32, 115, 255
-; Salle (10, 5) - RLE compact (27 octets)
-room_90:
-        !byte 227, 227, 211, 224, 224, 32, 3, 224, 96, 133, 112, 3, 16, 131, 160, 131
-        !byte 160, 131, 64, 51, 0, 147, 64, 51, 0, 3, 255
-; Salle (11, 5) - RLE compact (73 octets)
-room_91:
-        !byte 3, 0, 19, 48, 3, 0, 19, 0, 35, 16, 35, 0, 19, 48, 3, 0
-        !byte 19, 0, 35, 16, 19, 192, 3, 64, 3, 16, 19, 48, 3, 0, 19, 96
-        !byte 3, 192, 3, 64, 3, 16, 19, 48, 3, 0, 19, 96, 3, 192, 3, 64
-        !byte 3, 224, 64, 3, 0, 19, 48, 3, 0, 19, 0, 35, 0, 51, 0, 19
-        !byte 48, 3, 0, 19, 0, 35, 0, 35, 255
-; Salle (12, 5) - RLE compact (31 octets)
-room_92:
-        !byte 227, 227, 227, 163, 0, 227, 51, 48, 227, 3, 48, 227, 3, 48, 227, 3
-        !byte 0, 35, 80, 147, 0, 115, 0, 147, 0, 115, 0, 147, 0, 35, 255
-; Salle (13, 5) - RLE compact (35 octets)
-room_93:
-        !byte 51, 0, 163, 0, 99, 0, 163, 0, 99, 0, 163, 0, 35, 224, 224, 224
-        !byte 224, 51, 0, 163, 0, 99, 0, 163, 0, 99, 0, 163, 0, 99, 0, 163
-        !byte 0, 35, 255
-; Salle (14, 5) - RLE compact (42 octets)
-room_94:
-        !byte 229, 213, 7, 165, 160, 21, 64, 5, 64, 3, 144, 3, 16, 5, 224, 48
-        !byte 5, 64, 3, 144, 3, 16, 5, 3, 160, 19, 64, 21, 3, 112, 19, 21
-        !byte 19, 16, 3, 37, 115, 85, 19, 229, 101, 255
-; Salle (15, 5) - RLE compact (37 octets)
-room_95:
-        !byte 85, 80, 116, 85, 80, 116, 69, 96, 116, 69, 96, 116, 53, 112, 4, 9
-        !byte 20, 9, 36, 21, 144, 116, 21, 144, 116, 21, 19, 112, 116, 53, 19, 80
-        !byte 116, 85, 80, 116, 255
+; Index de formation d'ennemis par salle (128 octets : $C196..$C215)
+room_enemy_idx:
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 4, 10, 11, 12, 13
+        !byte 14, 15, 16, 17, 18, 19, 20, 0, 8, 21, 22, 23, 24, 25, 26, 27
+
 ; Salle (0, 6) - RLE compact (28 octets)
 room_96:
         !byte 19, 224, 0, 51, 224, 0, 51, 224, 16, 35, 224, 32, 19, 224, 32, 19
@@ -643,7 +206,7 @@ room_127:
         !byte 85, 80, 116, 85, 80, 116, 85, 80, 116, 176, 116, 144, 25, 228, 228, 228
         !byte 228, 228, 228, 228, 36, 255
 
-; 512 octets de caracteres Overworld pour restauration apres donjon
+; 512 octets de caracteres Overworld
 overworld_charset:
 ; Chars 0..31 (Tuiles 0..7 : 256 octets)
         !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 0
@@ -712,5 +275,61 @@ overworld_charset:
         !byte 215, 215, 149, 153, 111, 109, 191, 110   ; char 198
         !byte 173, 237, 109, 109, 109, 109, 85, 153   ; char 199
 
-* = $b800
-!source "src/map_overworld_enemies.inc"
+; Formations d'ennemis dédupliquées (28 formations x 24 octets)
+map_enemies:
+        ; Formation 0
+        !byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 1
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,   5,  2,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_LYNEL_BLUE ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 2
+        !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_MOBLIN_BLUE,   3,  3,   TYPE_MOBLIN_BLUE,  16,  3,   TYPE_MOBLIN_BLUE,  14,  7,   TYPE_MOBLIN_BLUE,   6,  5,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 3
+        !byte TYPE_MOBLIN_BLUE,   9,  4,   TYPE_MOBLIN_BLUE,  16,  2,   TYPE_MOBLIN_BLUE,   3,  3,   TYPE_MOBLIN_BLUE,  13,  5,   TYPE_MOBLIN_BLUE,  12,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 4
+        !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_OCTO_RED   ,   3,  7,   TYPE_MOBLIN_RED ,  16,  7,   TYPE_OCTO_RED   ,   5,  2,   TYPE_MOBLIN_RED ,  15,  2,   TYPE_MOBLIN_RED ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 5
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  2,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  7,   TYPE_OCTO_RED   ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 6
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  2,   TYPE_ZORA       ,   8,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 7
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 8
+        !byte TYPE_OCTO_BLUE  ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_BLUE  ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 9
+        !byte TYPE_OCTO_BLUE  ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_BLUE  ,  16,  7,   TYPE_OCTO_BLUE  ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 10
+        !byte TYPE_MOBLIN_RED ,  10,  4,   TYPE_MOBLIN_RED ,   3,  3,   TYPE_MOBLIN_RED ,  16,  7,   TYPE_MOBLIN_RED ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 11
+        !byte TYPE_MOBLIN_RED ,   4,  4,   TYPE_MOBLIN_RED ,  16,  2,   TYPE_MOBLIN_RED ,   3,  7,   TYPE_MOBLIN_RED ,  16,  5,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 12
+        !byte TYPE_MOBLIN_BLUE,  10,  3,   TYPE_OCTO_RED   ,   3,  7,   TYPE_MOBLIN_RED ,  16,  7,   TYPE_OCTO_RED   ,  15,  2,   TYPE_MOBLIN_RED ,   3,  2,   TYPE_MOBLIN_RED ,   8,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 13
+        !byte TYPE_OCTO_BLUE  ,  10,  4,   TYPE_OCTO_RED   ,   3,  7,   TYPE_OCTO_RED   ,   5,  2,   TYPE_OCTO_RED   ,   7,  7,   TYPE_OCTO_RED   ,  11,  7,   TYPE_ZORA       ,  12,  4,   TYPE_ZORA       ,  17,  7,   TYPE_NONE       ,   0,  0
+        ; Formation 14
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  3,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 15
+        !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   5,  2,   TYPE_MOBLIN_BLUE,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 16
+        !byte TYPE_MOBLIN_BLUE,   7,  4,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_RED ,  11,  7,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 17
+        !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 18
+        !byte TYPE_TEKTITE_RED,   9,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 19
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 20
+        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 21
+        !byte TYPE_TEKTITE_BLUE,  10,  3,   TYPE_TEKTITE_BLUE,   3,  7,   TYPE_TEKTITE_BLUE,  16,  6,   TYPE_TEKTITE_BLUE,   8,  7,   TYPE_TEKTITE_BLUE,  14,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 22
+        !byte TYPE_TEKTITE_BLUE,  10,  4,   TYPE_TEKTITE_BLUE,   3,  4,   TYPE_TEKTITE_BLUE,  16,  4,   TYPE_TEKTITE_BLUE,   7,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 23
+        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_LEEVER_RED ,   3,  4,   TYPE_LEEVER_RED ,  16,  2,   TYPE_LEEVER_RED ,   7,  3,   TYPE_LEEVER_RED ,  13,  3,   TYPE_LEEVER_RED ,   8,  6,   TYPE_ZORA       ,  10,  5,   TYPE_ZORA       ,  17,  7
+        ; Formation 24
+        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_LEEVER_RED ,   3,  2,   TYPE_LEEVER_RED ,  16,  2,   TYPE_LEEVER_RED ,   7,  2,   TYPE_LEEVER_RED ,  13,  3,   TYPE_LEEVER_RED ,   5,  4,   TYPE_ZORA       ,  10,  5,   TYPE_ZORA       ,   2,  7
+        ; Formation 25
+        !byte TYPE_OCTO_BLUE  ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  2,   TYPE_OCTO_BLUE  ,  16,  2,   TYPE_OCTO_BLUE  ,   7,  2,   TYPE_ZORA       ,  10,  5,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 26
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_RED   ,   3,  3,   TYPE_OCTO_RED   ,  16,  3,   TYPE_OCTO_RED   ,   7,  3,   TYPE_ZORA       ,  10,  5,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        ; Formation 27
+        !byte TYPE_OCTO_BLUE  ,  10,  3,   TYPE_ZORA       ,  10,  4,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0

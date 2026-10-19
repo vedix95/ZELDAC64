@@ -26,6 +26,43 @@ col_row_hi:
 ; ---------------------------------------------------------------------------
 !zone transition_right
 
+trans_setup_target:
+        stx target_room_idx
+        lda current_world_type
+        bne .tst_chunk_ok
+        lda target_room_idx
+        lsr
+        lsr
+        lsr
+        lsr
+        lsr
+        jsr disk_ensure_ow_chunk_a
+        ldx target_room_idx
+.tst_chunk_ok:
+        lda room_tbl_lo,x
+        sta ZP_SRC
+        lda room_tbl_hi,x
+        sta ZP_SRC+1
+        jsr decompress_room_target
+        jsr dungeon_apply_room_state_target
+        lda #<target_room_buf
+        sta ZP_TGT
+        lda #>target_room_buf
+        sta ZP_TGT+1
+        lda #0
+        sta ZP_STEP
+        rts
+
+trans_finish:
+        jsr load_room
+        jsr hud_render
+        jsr player_draw
+        jsr enemies_room_init
+        jsr dungeon_on_enter_room
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
 transition_right:
         lda #STATE_TRANSITION
         sta game_state
@@ -38,20 +75,7 @@ transition_right:
         clc
         adc #1
         tax
-        stx target_room_idx
-        lda room_tbl_lo,x
-        sta ZP_SRC
-        lda room_tbl_hi,x
-        sta ZP_SRC+1
-        jsr decompress_room_target
-        jsr dungeon_apply_room_state_target
-        lda #<target_room_buf
-        sta ZP_TGT
-        lda #>target_room_buf
-        sta ZP_TGT+1
-
-        lda #0
-        sta ZP_STEP
+        jsr trans_setup_target
 .tr_step:
         jsr wait_frame
         jsr wait_frame
@@ -177,14 +201,7 @@ transition_right:
 +       sta player_x
         lda #0
         sta player_x+1
-        jsr load_room
-        jsr hud_render
-        jsr player_draw
-        jsr enemies_room_init
-        jsr dungeon_on_enter_room
-        lda #STATE_PLAYING
-        sta game_state
-        rts
+        jmp trans_finish
 
 ; ---------------------------------------------------------------------------
 ; Transition vers la GAUCHE (Ouest) : l'écran défile vers la droite
@@ -203,20 +220,7 @@ transition_left:
         sec
         sbc #1
         tax
-        stx target_room_idx
-        lda room_tbl_lo,x
-        sta ZP_SRC
-        lda room_tbl_hi,x
-        sta ZP_SRC+1
-        jsr decompress_room_target
-        jsr dungeon_apply_room_state_target
-        lda #<target_room_buf
-        sta ZP_TGT
-        lda #>target_room_buf
-        sta ZP_TGT+1
-
-        lda #0
-        sta ZP_STEP
+        jsr trans_setup_target
 .tl_step:
         jsr wait_frame
         jsr wait_frame
@@ -345,14 +349,7 @@ transition_left:
         ldy #>276
 +       sta player_x
         sty player_x+1
-        jsr load_room
-        jsr hud_render
-        jsr player_draw
-        jsr enemies_room_init
-        jsr dungeon_on_enter_room
-        lda #STATE_PLAYING
-        sta game_state
-        rts
+        jmp trans_finish
 
 ; ---------------------------------------------------------------------------
 ; Transition vers le BAS (Sud) : l'écran défile vers le haut (2 rangées par étape)
@@ -370,20 +367,7 @@ transition_down:
         clc
         adc current_room_x
         tax
-        stx target_room_idx
-        lda room_tbl_lo,x
-        sta ZP_SRC
-        lda room_tbl_hi,x
-        sta ZP_SRC+1
-        jsr decompress_room_target
-        jsr dungeon_apply_room_state_target
-        lda #<target_room_buf
-        sta ZP_TGT
-        lda #>target_room_buf
-        sta ZP_TGT+1
-
-        lda #0
-        sta ZP_STEP
+        jsr trans_setup_target
 .td_step:
         jsr wait_frame
         jsr wait_frame
@@ -494,14 +478,7 @@ transition_down:
         bne +
         lda #102
 +       sta player_y
-        jsr load_room
-        jsr hud_render
-        jsr player_draw
-        jsr enemies_room_init
-        jsr dungeon_on_enter_room
-        lda #STATE_PLAYING
-        sta game_state
-        rts
+        jmp trans_finish
 
 ; ---------------------------------------------------------------------------
 ; Transition vers le HAUT (Nord) : l'écran défile vers le bas (2 rangées par étape)
@@ -519,20 +496,7 @@ transition_up:
         clc
         adc current_room_x
         tax
-        stx target_room_idx
-        lda room_tbl_lo,x
-        sta ZP_SRC
-        lda room_tbl_hi,x
-        sta ZP_SRC+1
-        jsr decompress_room_target
-        jsr dungeon_apply_room_state_target
-        lda #<target_room_buf
-        sta ZP_TGT
-        lda #>target_room_buf
-        sta ZP_TGT+1
-
-        lda #0
-        sta ZP_STEP
+        jsr trans_setup_target
 .tu_step:
         jsr wait_frame
         jsr wait_frame
@@ -647,11 +611,4 @@ transition_up:
         bne +
         lda #204
 +       sta player_y
-        jsr load_room
-        jsr hud_render
-        jsr player_draw
-        jsr enemies_room_init
-        jsr dungeon_on_enter_room
-        lda #STATE_PLAYING
-        sta game_state
-        rts
+        jmp trans_finish
