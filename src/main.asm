@@ -168,13 +168,20 @@ main_loop:
 
 .play_frame:
         jsr player_update
+        lda game_state
+        cmp #STATE_PLAYING
+        bne .skip_play_draw
         jsr items_update
         jsr enemies_update
         jsr dungeon_update
+        lda game_state
+        cmp #STATE_PLAYING
+        bne .skip_play_draw
         jsr player_draw
         jsr items_draw
         jsr enemies_prep_multiplexer
         jsr hud_render
+.skip_play_draw:
         jmp main_loop
 
 .in_inventory:

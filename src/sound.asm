@@ -848,24 +848,82 @@ SFX_ITEM_FANFARE  = 14
 SFX_FLUTE         = 15
 SFX_INV_FLIP      = 16
 SFX_INV_SELECT    = 17
+SFX_BOSS_ROAR     = 18
 
-sound_sword:        ldx #SFX_SWORD; jmp play_sfx_v3
-sound_enemy_shoot:  ldx #SFX_ENEMY_SHOOT; jmp play_sfx_v3
-sound_enemy_hit:    ldx #SFX_ENEMY_HIT; jmp play_sfx_v3
-sound_enemy_die:    ldx #SFX_ENEMY_DIE; jmp play_sfx_v3
-sound_shield_block: ldx #SFX_SHIELD_BLOCK; jmp play_sfx_v3
-sound_rupee:        ldx #SFX_RUPEE; jmp play_sfx_v3
-sound_arrow:        ldx #SFX_ARROW; jmp play_sfx_v3
-sound_boomerang:    ldx #SFX_BOOMERANG; jmp play_sfx_v3
-sound_bomb_explode: ldx #SFX_BOMB_EXPLODE; jmp play_sfx_v3
-sound_candle:       ldx #SFX_CANDLE; jmp play_sfx_v3
-sound_wand:         ldx #SFX_WAND; jmp play_sfx_v3
-sound_food:         ldx #SFX_FOOD; jmp play_sfx_v3
-sound_potion:       ldx #SFX_POTION; jmp play_sfx_v3
-sound_link_hurt:    ldx #SFX_LINK_HURT; jmp play_sfx_v3
-sound_flute:        ldx #SFX_FLUTE; jmp play_sfx_v3
-sound_inv_flip:     ldx #SFX_INV_FLIP; jmp play_sfx_v3
-sound_inv_select:   ldx #SFX_INV_SELECT; jmp play_sfx_v3
+sfx_saved_x:      !byte 0
+
+sound_sword:
+        stx sfx_saved_x
+        ldx #SFX_SWORD
+        jmp play_sfx_v3
+sound_enemy_shoot:
+        stx sfx_saved_x
+        ldx #SFX_ENEMY_SHOOT
+        jmp play_sfx_v3
+sound_enemy_hit:
+        stx sfx_saved_x
+        ldx #SFX_ENEMY_HIT
+        jmp play_sfx_v3
+sound_enemy_die:
+        stx sfx_saved_x
+        ldx #SFX_ENEMY_DIE
+        jmp play_sfx_v3
+sound_shield_block:
+        stx sfx_saved_x
+        ldx #SFX_SHIELD_BLOCK
+        jmp play_sfx_v3
+sound_rupee:
+        stx sfx_saved_x
+        ldx #SFX_RUPEE
+        jmp play_sfx_v3
+sound_arrow:
+        stx sfx_saved_x
+        ldx #SFX_ARROW
+        jmp play_sfx_v3
+sound_boomerang:
+        stx sfx_saved_x
+        ldx #SFX_BOOMERANG
+        jmp play_sfx_v3
+sound_bomb_explode:
+        stx sfx_saved_x
+        ldx #SFX_BOMB_EXPLODE
+        jmp play_sfx_v3
+sound_candle:
+        stx sfx_saved_x
+        ldx #SFX_CANDLE
+        jmp play_sfx_v3
+sound_wand:
+        stx sfx_saved_x
+        ldx #SFX_WAND
+        jmp play_sfx_v3
+sound_food:
+        stx sfx_saved_x
+        ldx #SFX_FOOD
+        jmp play_sfx_v3
+sound_potion:
+        stx sfx_saved_x
+        ldx #SFX_POTION
+        jmp play_sfx_v3
+sound_link_hurt:
+        stx sfx_saved_x
+        ldx #SFX_LINK_HURT
+        jmp play_sfx_v3
+sound_flute:
+        stx sfx_saved_x
+        ldx #SFX_FLUTE
+        jmp play_sfx_v3
+sound_inv_flip:
+        stx sfx_saved_x
+        ldx #SFX_INV_FLIP
+        jmp play_sfx_v3
+sound_inv_select:
+        stx sfx_saved_x
+        ldx #SFX_INV_SELECT
+        jmp play_sfx_v3
+sound_boss_roar:
+        stx sfx_saved_x
+        ldx #SFX_BOSS_ROAR
+        jmp play_sfx_v3
 
 sound_item_fanfare:
         lda current_music
@@ -901,8 +959,11 @@ play_sfx_v3:
         sta SID1_V3_AD
         lda sfx_sr_tbl,x
         sta SID1_V3_SR
+        lda #0
+        sta SID1_V3_CTRL
         lda sfx_ctrl_tbl,x
         sta SID1_V3_CTRL
+        ldx sfx_saved_x
         rts
 .dual:
         lda sfx_freq_lo_tbl,x
@@ -913,25 +974,29 @@ play_sfx_v3:
         sta SID2_V3_AD
         lda sfx_sr_tbl,x
         sta SID2_V3_SR
+        lda #0
+        sta SID2_V3_CTRL
         lda sfx_ctrl_tbl,x
         sta SID2_V3_CTRL
+        ldx sfx_saved_x
         rts
 
 sfx_timer_tbl:
-        !byte 6, 5, 6, 10, 4, 8, 5, 4, 14, 6, 8, 6, 8, 8, 20, 25, 3, 4
+        !byte 6, 5, 6, 10, 4, 8, 5, 4, 14, 6, 8, 6, 8, 8, 20, 25, 3, 4, 26
 sfx_freq_lo_tbl:
-        !byte $00, $20, $80, $00, $00, $a0, $80, $00, $00, $40, $00, $00, $80, $00, $80, $80, $00, $00
+        !byte $00, $20, $80, $00, $00, $a0, $80, $00, $00, $40, $00, $00, $80, $00, $80, $80, $00, $00, $60
 sfx_freq_hi_tbl:
-        !byte $48, $25, $30, $18, $70, $65, $48, $28, $12, $1c, $50, $18, $24, $14, $50, $48, $28, $30
+        !byte $48, $25, $30, $18, $70, $65, $48, $28, $12, $1c, $50, $18, $24, $14, $50, $48, $28, $30, $04
 sfx_ad_tbl:
-        !byte $09, $06, $04, $0c, $02, $05, $02, $04, $00, $08, $02, $04, $04, $08, $09, $09, $02, $04
+        !byte $09, $06, $04, $0c, $02, $05, $02, $04, $00, $08, $02, $04, $04, $08, $09, $09, $02, $04, $39
 sfx_sr_tbl:
-        !byte $00, $00, $00, $00, $00, $00, $00, $00, $0a, $00, $00, $00, $00, $00, $40, $40, $00, $00
+        !byte $00, $00, $00, $00, $00, $00, $00, $00, $0a, $00, $00, $00, $00, $00, $40, $40, $00, $00, $64
 sfx_ctrl_tbl:
         !byte %10000001, %00100001, %10000001, %10000001, %00010001, %00010001, %10000001, %00010001
         !byte %10000001, %10000001, %00100001, %10000001, %00010001, %10000001, %00010001, %00010001
-        !byte %00010001, %00010001
+        !byte %00010001, %00010001, %10000001
 
 ; Données musicales incluses
 !source "src/music_data.inc"
+
 

@@ -12,11 +12,11 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.8.8)
+## 💾 Téléchargement Direct & Releases (v0.8.9)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.8.8 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- 🎮 **[Télécharger l'image disquette v0.8.9 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
 - ⚙️ **Distribution tout-en-un 1541 avec Streaming par Chunks** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES cadencées sous interruption raster 50 Hz (sans aucune saccade lors des transitions d'écran), l'Overworld découpé en 4 chunks disque (`OW0` à `OW3`), et les 9 Donjons (`DUNG1` à `DUNG9`) chargés à la volée dans une fenêtre mémoire compacte de 4 Ko (`$C000`–`$CFFF`).
 - ⚠️ **État d'avancement des Donjons** : **Pour le moment, seul le Donjon 1 (Niveau 1 — L'Aigle) est implémenté partiellement** (architecture complète des salles, énigmes de poussée de blocs, salle de l'ermite, cave souterraine 2D vue de côté pour récupérer l'Arc, et combat contre le boss géant Aquamentus). Les Donjons 2 à 9 disposent déjà de leur structure disque mais restent à implémenter.
 - 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
@@ -68,8 +68,13 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
 
 ---
 
-## Points forts & Fonctionnalités (Nouveautés v0.8.8)
+## Points forts & Fonctionnalités (Nouveautés v0.8.9)
 
+- **Correctifs Cave Souterraine, SFX Épée, Escalier Donjon & Rugissement du Boss (v0.8.9)** :
+  - **Rendu complet de la Cave Souterraine (`STATE_CELLAR`, salle `0x22`)** : Correction de la boucle de remplissage des 200 tuiles de briques (`cpx #200` au lieu de `bpl` signé sur `199`), correction de la colonne d'échelle avec motif 2D authentique à barreaux (`cellar_ladder_char_l` / `r`) et piédestal central en briques.
+  - **Correction du bruitage d'épée et des SFX (`sound.asm`)** : Séparation des instructions `jmp play_sfx_v3` (qui étaient interprétées comme commentaires après `;` par ACME et tombaient dans `sound_item_fanfare`), restituant le vrai bruitage de coup d'épée (`SFX_SWORD`) et tous les effets sonores.
+  - **Escalier secret au centre du diamant (`0x22`) & Tuile d'escalier descendant** : En poussant le bloc gauche du losange (`offset 88` -> `68`), la case `88` devient du sol (`TILE_DUNG_FLOOR`) pour laisser Link entrer au cœur du diamant où se trouve l'unique escalier (`offset 90`), doté d'un nouveau graphisme 3D de marches descendantes (`TILE_DUNG_STAIRS`).
+  - **Respiration / Rugissement du Boss (`SFX_BOSS_ROAR`)** : Ajout de l'effet sonore périodique de respiration/rugissement grave d'Aquamentus (`sound_boss_roar`) pendant le combat.
 - **Correctifs Gameplay, Audio & Donjon 1 (v0.8.8)** :
   - **Collisions d'eau Overworld corrigées** : L'eau de l'Overworld (`TILE_WATER`) bloque désormais strictement Link tant qu'il ne possède pas l'Échelle (`Stepladder`).
   - **Sprite & Célébration de la Triforce (`0x36`)** : Ajout du véritable sprite triangulaire doré scintillant de la Triforce (`sprite_link_item_triforce`) sur le piédestal et brandi au-dessus des mains de Link pendant la célébration.

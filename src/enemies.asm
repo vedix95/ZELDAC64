@@ -1148,6 +1148,13 @@ spawn_enemy_magic_proj:
 ; IA : AI_BOSS (Aquamentus, Dodongo, Manhandla, Gleeok, Digdogger, Gohma, etc.)
 ; ===========================================================================
 .exec_ai_boss:
+        lda en_global_frame
+        and #63
+        bne .boss_dispatch
+        lda sfx_timer
+        bne .boss_dispatch
+        jsr sound_boss_roar
+.boss_dispatch:
         ldy en_type,x
         cpy #TYPE_AQUAMENTUS
         bne +

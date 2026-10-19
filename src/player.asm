@@ -218,11 +218,11 @@ player_update:
 
         lda player_y
         clc
-        adc #5
+        adc #10
         sta col_y1
         lda player_y
         clc
-        adc #16
+        adc #15
         sta col_y2
 
         jsr check_v_edge
@@ -298,11 +298,11 @@ player_update:
 
         lda player_y
         clc
-        adc #5
+        adc #10
         sta col_y1
         lda player_y
         clc
-        adc #16
+        adc #15
         sta col_y2
 
         jsr check_v_edge

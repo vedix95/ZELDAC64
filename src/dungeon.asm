@@ -680,7 +680,7 @@ dungeon_do_push_block:
         ora #DUNG_SECRET_REVEALED
         sta dungeon_room_state,x
 
-        ; Salle 0x22 : Déplace le bloc (88 -> 68) et révèle l'accès à l'escalier (88 & 90)
+        ; Salle 0x22 : Déplace le bloc (88 -> 68) et libère l'entrée (88) vers l'escalier central (90)
         ldy #68
         lda #TILE_DUNG_BLOCK
         sta (ZP_MAP),y
@@ -688,7 +688,7 @@ dungeon_do_push_block:
         jsr redraw_single_tile
 
         ldy #88
-        lda #TILE_DUNG_STAIRS
+        lda #TILE_DUNG_FLOOR
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
@@ -983,6 +983,9 @@ dungeon_apply_room_state_internal:
         lda #TILE_DUNG_BLOCK
         sta (ZP_DST),y
         ldy #88
+        lda #TILE_DUNG_FLOOR
+        sta (ZP_DST),y
+        ldy #90
         lda #TILE_DUNG_STAIRS
         sta (ZP_DST),y
 
@@ -1335,13 +1338,22 @@ txt_hint_d1_2:  !text "EST LE SECRET."
 ; Fidèle à la salle souterraine de briques NES (Cellar1 : fond noir, murs de
 ; briques grises/blanches, échelle à gauche et piédestal central de l'Arc).
 ; ===========================================================================
+; Caractères 2D de l'échelle souterraine (tuile 7 : $20E0..$20FF en mode STATE_CELLAR)
+cellar_ladder_char_l:
+        !byte %00100100, %00101010, %00100101, %00100100
+        !byte %00100100, %00101010, %00100101, %00100100
+cellar_ladder_char_r:
+        !byte %00100100, %10101000, %01010100, %00100100
+        !byte %00100100, %10101000, %01010100, %00100100
+
 build_cellar_room:
-        ; 1. Remplit tout le tampon de briques (tuile 1 = TILE_DUNG_WALL_TOP)
-        ldx #199
+        ; 1. Remplit tout le tampon de 200 tuiles de briques (tuile 1 = TILE_DUNG_WALL_TOP)
+        ldx #0
         lda #TILE_DUNG_WALL_TOP
 -       sta room_buf,x
-        dex
-        bpl -
+        inx
+        cpx #200
+        bcc -
 
         ; 2. Évide la chambre souterraine centrale (rangées 2..7, colonnes 3..16)
         ;    en fond noir uni (tuile 12 = TILE_DUNG_DOOR_OPEN)
@@ -1367,23 +1379,26 @@ build_cellar_room:
         cpy #160                        ; jusqu'à la fin de la rangée 7 (8 * 20)
         bcc .cellar_row_loop
 
-        ; 3. Piliers de briques supérieurs (rangée 2, cols 6..8 et 12..14)
+        ; 3. Piliers de briques supérieurs (rangée 2, cols 6..8 et 11..13)
         lda #TILE_DUNG_WALL_TOP
         sta room_buf+46
         sta room_buf+47
+        sta room_buf+48
+        sta room_buf+51
         sta room_buf+52
         sta room_buf+53
 
-        ; 4. Piédestal central de l'Arc (rangée 7, cols 10..11 = offsets 150, 151)
-        lda #TILE_DUNG_BLOCK
+        ; 4. Piédestal central en briques de l'Arc (rangée 7, cols 9..11 = offsets 149..151)
+        lda #TILE_DUNG_WALL_TOP
+        sta room_buf+149
         sta room_buf+150
         sta room_buf+151
 
         ; 5. Échelle de descente en colonne 4 (rangées 0..7)
         ldy #4
         ldx #8
-        lda #TILE_DUNG_DOOR_SHUTTER
--       sta room_buf,y
+-       lda #TILE_DUNG_STAIRS
+        sta room_buf,y
         tya
         clc
         adc #20
@@ -1408,6 +1423,17 @@ enter_cellar:
         ldx #7
         lda #0
 -       sta en_state,x
+        dex
+        bpl -
+
+        ; Charge le motif d'échelle 2D dans la tuile 7 ($20E0..$20FF)
+        ldx #7
+-       lda cellar_ladder_char_l,x
+        sta $20e0,x
+        sta $20f0,x
+        lda cellar_ladder_char_r,x
+        sta $20e8,x
+        sta $20f8,x
         dex
         bpl -
 
@@ -1441,7 +1467,8 @@ enter_cellar:
         lda #>room_buf
         sta ZP_MAP+1
         jsr draw_map
-        jmp hud_render
+        jsr hud_render
+        jmp cellar_draw
 
 cellar_update:
         lda cellar_pickup_timer
@@ -1658,12 +1685,14 @@ exit_cellar:
         sta player_x
         lda #0
         sta player_x+1
-        lda #172
+        lda #143
         sta player_y
-        lda #DIR_DOWN
+        lda #DIR_LEFT
         sta player_dir
+        jsr copy_map_charset
         jsr load_room
         jsr dungeon_apply_room_state_active
         jsr enemies_room_init
         jmp hud_render
+
 
