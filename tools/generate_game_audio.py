@@ -132,12 +132,12 @@ def build_audio_data():
         cur_t += p_len
 
     # -----------------------------------------------------------------------
-    # 2. Décodage Underworld
+    # 2. Décodage Underworld & Fanfares (Item Taken / Triforce EndLevel)
     # -----------------------------------------------------------------------
-    def decode_uw_track(script_bytes, start, end, is_trg=False):
+    def decode_nes_track(script_bytes, start, end, durs, is_trg=False):
         p = start
         t = 0
-        cur_dur = uw_durs[0]
+        cur_dur = durs[0]
         evs = []
         while p < end:
             b = script_bytes[p]
@@ -148,7 +148,7 @@ def build_audio_data():
                 evs.append((t, cur_dur, nes_note_to_sid(b, is_trg)))
                 t += cur_dur
             else:
-                cur_dur = uw_durs[b & 0x07]
+                cur_dur = durs[b & 0x07]
                 if p >= end:
                     break
                 b2 = script_bytes[p]
@@ -157,24 +157,40 @@ def build_audio_data():
                     break
                 evs.append((t, cur_dur, nes_note_to_sid(b2, is_trg)))
                 t += cur_dur
-        return evs
+        return evs, t
 
     uw_p1 = uw_scripts["P1"]
     uw_p1_bytes = uw_p1["bytes"]
-    uw_p1_c1 = decode_uw_track(uw_p1_bytes, 0, uw_p1["sq0_off"], is_trg=False)
-    uw_p1_c2 = decode_uw_track(uw_p1_bytes, uw_p1["sq0_off"], uw_p1["trg_off"], is_trg=False)
-    uw_p1_c3 = decode_uw_track(uw_p1_bytes, uw_p1["trg_off"], uw_p1["end_off"], is_trg=True)
+    uw_p1_c1, _ = decode_nes_track(uw_p1_bytes, 0, uw_p1["sq0_off"], uw_durs, is_trg=False)
+    uw_p1_c2, _ = decode_nes_track(uw_p1_bytes, uw_p1["sq0_off"], uw_p1["trg_off"], uw_durs, is_trg=False)
+    uw_p1_c3, _ = decode_nes_track(uw_p1_bytes, uw_p1["trg_off"], uw_p1["end_off"], uw_durs, is_trg=True)
 
     uw_p2 = uw_scripts["P2"]
     uw_p2_bytes = uw_p2["bytes"]
-    uw_p2_c1 = decode_uw_track(uw_p2_bytes, 0, uw_p2["sq0_off"], is_trg=False)
-    uw_p2_c2 = decode_uw_track(uw_p2_bytes, uw_p2["sq0_off"], uw_p2["trg_off"], is_trg=False)
-    uw_p2_c3 = decode_uw_track(uw_p2_bytes, uw_p2["trg_off"], uw_p2["end_off"], is_trg=True)
+    uw_p2_c1, _ = decode_nes_track(uw_p2_bytes, 0, uw_p2["sq0_off"], uw_durs, is_trg=False)
+    uw_p2_c2, _ = decode_nes_track(uw_p2_bytes, uw_p2["sq0_off"], uw_p2["trg_off"], uw_durs, is_trg=False)
+    uw_p2_c3, _ = decode_nes_track(uw_p2_bytes, uw_p2["trg_off"], uw_p2["end_off"], uw_durs, is_trg=True)
 
     uw_c1 = uw_p1_c1 + [(640 + t, d, s) for t, d, s in uw_p2_c1]
     uw_c2 = uw_p1_c2 + [(640 + t, d, s) for t, d, s in uw_p2_c2]
     uw_c3 = uw_p1_c3 + [(640 + t, d, s) for t, d, s in uw_p2_c3]
     uw_total_ticks = 1160
+
+    # Décodage Fanfare Objet (SongScriptItemTaken0)
+    it_sc = data["item_fanfare"]
+    it_bytes = it_sc["bytes"]
+    it_c1, it_t1 = decode_nes_track(it_bytes, 0, it_sc["sq0_off"], ow_durs, is_trg=False)
+    it_c2, it_t2 = decode_nes_track(it_bytes, it_sc["sq0_off"], it_sc["trg_off"], ow_durs, is_trg=False)
+    it_c3, it_t3 = decode_nes_track(it_bytes, it_sc["trg_off"], it_sc["end_off"], ow_durs, is_trg=True)
+    it_total_ticks = max(it_t1, it_t2, it_t3)
+
+    # Décodage Fanfare Triforce / Fin de Niveau (SongScriptEndLevel0)
+    tr_sc = data["triforce_fanfare"]
+    tr_bytes = tr_sc["bytes"]
+    tr_c1, tr_t1 = decode_nes_track(tr_bytes, 0, tr_sc["sq0_off"], ow_durs, is_trg=False)
+    tr_c2, tr_t2 = decode_nes_track(tr_bytes, tr_sc["sq0_off"], tr_sc["trg_off"], ow_durs, is_trg=False)
+    tr_c3, tr_t3 = decode_nes_track(tr_bytes, tr_sc["trg_off"], tr_sc["end_off"], ow_durs, is_trg=True)
+    tr_total_ticks = max(tr_t1, tr_t2, tr_t3)
 
     # -----------------------------------------------------------------------
     # Compilation chronologique en pas discrets PAL
@@ -228,12 +244,14 @@ def build_audio_data():
     ow_p2 = ow_steps[split_ow:]
 
     uw_steps = compile_timeline(uw_c1, uw_c2, uw_c3, uw_total_ticks)
+    item_steps = compile_timeline(it_c1, it_c2, it_c3, it_total_ticks)
+    triforce_steps = compile_timeline(tr_c1, tr_c2, tr_c3, tr_total_ticks)
 
     # -----------------------------------------------------------------------
     # Indexation de toutes les fréquences SID uniques
     # -----------------------------------------------------------------------
     freqs = set()
-    for _, f1, f2, f3 in ow_p1 + ow_p2 + uw_steps:
+    for _, f1, f2, f3 in ow_p1 + ow_p2 + uw_steps + item_steps + triforce_steps:
         if f1 not in (0, 0xFE): freqs.add(f1)
         if f2 not in (0, 0xFE): freqs.add(f2)
         if f3 not in (0, 0xFE): freqs.add(f3)
@@ -250,6 +268,8 @@ def build_audio_data():
     print(f"Overworld Partie 1    : {len(ow_p1)} pas")
     print(f"Overworld Partie 2    : {len(ow_p2)} pas")
     print(f"Underworld (Dungeon)  : {len(uw_steps)} pas")
+    print(f"Fanfare Objet         : {len(item_steps)} pas")
+    print(f"Fanfare Triforce      : {len(triforce_steps)} pas")
 
     # -----------------------------------------------------------------------
     # Génération de src/music_data.inc
@@ -260,10 +280,12 @@ def build_audio_data():
     lines.append("; GENERE AUTOMATIQUEMENT par tools/generate_game_audio.py - NE PAS MODIFIER")
     lines.append("; ===========================================================================")
     lines.append("")
-    lines.append(f"MUSIC_NOTE_COUNT = {len(sorted_freqs)}")
-    lines.append(f"MUSIC_OW_P1_LEN  = {len(ow_p1)}")
-    lines.append(f"MUSIC_OW_P2_LEN  = {len(ow_p2)}")
-    lines.append(f"MUSIC_UW_LEN     = {len(uw_steps)}")
+    lines.append(f"MUSIC_NOTE_COUNT    = {len(sorted_freqs)}")
+    lines.append(f"MUSIC_OW_P1_LEN     = {len(ow_p1)}")
+    lines.append(f"MUSIC_OW_P2_LEN     = {len(ow_p2)}")
+    lines.append(f"MUSIC_UW_LEN        = {len(uw_steps)}")
+    lines.append(f"MUSIC_ITEM_LEN      = {len(item_steps)}")
+    lines.append(f"MUSIC_TRIFORCE_LEN  = {len(triforce_steps)}")
     lines.append("")
 
     lo_bytes = [0] + [f & 0xFF for f in sorted_freqs]
@@ -302,6 +324,8 @@ def build_audio_data():
     write_dataset("music_ow_p1", ow_p1)
     write_dataset("music_ow_p2", ow_p2)
     write_dataset("music_uw", uw_steps)
+    write_dataset("music_item_fanfare", item_steps)
+    write_dataset("music_triforce", triforce_steps)
 
     with open(OUT_INC_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")

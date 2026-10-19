@@ -80,6 +80,26 @@ def extract_music_data(rom_path=DEFAULT_ROM):
             'bytes': list(b0[off : off + end])
         }
 
+    # 5. Fanfare d'obtention d'objet (SongScriptItemTaken0 à $8E5D)
+    item_off = 0x8E5D - 0x8000
+    item_fanfare = {
+        'addr': 0x8E5D,
+        'sq0_off': 0x07,
+        'trg_off': 0x0D,
+        'end_off': 0x13,
+        'bytes': list(b0[item_off : item_off + 0x13])
+    }
+
+    # 6. Fanfare de la Triforce / Fin de niveau (SongScriptEndLevel0 à $91A4)
+    tri_off = 0x91A4 - 0x8000
+    triforce_fanfare = {
+        'addr': 0x91A4,
+        'sq0_off': 0x22,
+        'trg_off': 0x46,
+        'end_off': 0x59,
+        'bytes': list(b0[tri_off : tri_off + 0x59])
+    }
+
     data = {
         "_description": "Partitions musicales authentiques de The Legend of Zelda (NES, Banque 0)",
         "_generator": "tools/extract_music.py",
@@ -87,7 +107,9 @@ def extract_music_data(rom_path=DEFAULT_ROM):
         "note_len_table": note_len_table,
         "ow_phrase_order": ['P2', 'P3', 'P5', 'P2', 'P4', 'P5'],
         "ow_scripts": ow_scripts,
-        "uw_scripts": uw_scripts
+        "uw_scripts": uw_scripts,
+        "item_fanfare": item_fanfare,
+        "triforce_fanfare": triforce_fanfare
     }
 
     return data
@@ -111,6 +133,8 @@ def main():
         print(f"    - Table durées notes   : {len(music_data['note_len_table'])} entrées")
         print(f"    - Phrases Overworld    : {list(music_data['ow_scripts'].keys())}")
         print(f"    - Phrases Underworld   : {list(music_data['uw_scripts'].keys())}")
+        print(f"    - Fanfare Objet        : {len(music_data['item_fanfare']['bytes'])} octets")
+        print(f"    - Fanfare Triforce     : {len(music_data['triforce_fanfare']['bytes'])} octets")
     except Exception as e:
         sys.exit(f"Erreur lors de l'extraction : {e}")
 

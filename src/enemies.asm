@@ -2198,18 +2198,30 @@ test_sword_single:
         cpy #TYPE_ZOL
         bne +
         jsr split_zol_to_gels
+        lda #EN_STATE_HURT
+        sta en_state,x
+        lda #10
+        sta en_hurt_timer,x
+        jmp sound_enemy_hit
 +       cpy #TYPE_VIRE
         bne +
         jsr split_vire_to_keese
-+       lda en_ai_type,y
-        cmp #AI_BOSS
-        bne +
-        jsr dungeon_spawn_boss_heart
-+       lda #EN_STATE_DYING
+        lda #EN_STATE_HURT
+        sta en_state,x
+        lda #10
+        sta en_hurt_timer,x
+        jmp sound_enemy_hit
++       lda #0
+        sta en_hp,x
+        lda #EN_STATE_DYING
         sta en_state,x
         lda #16                         ; durée du nuage de fumée
         sta en_timer,x
-        jsr sound_enemy_die
+        lda en_ai_type,y
+        cmp #AI_BOSS
+        bne +
+        jsr dungeon_spawn_boss_heart
++       jsr sound_enemy_die
 .sw_miss:
         rts
 

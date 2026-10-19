@@ -505,8 +505,6 @@ def decode_nes_level1():
             for x in range(12):
                 val = inner_cols[x][y]
                 tile_val = T_INNER.get(val, 0)
-                if r == 0x22 and tile_val == 7:
-                    tile_val = 5  # Hide stairs as diamond block until pushed
                 row[4 + x] = tile_val
 
             # Border columns 16..19 (Right wall / door)

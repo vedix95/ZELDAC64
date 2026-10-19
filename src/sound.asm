@@ -8,6 +8,8 @@
 MUSIC_NONE              = 0
 MUSIC_OVERWORLD         = 1
 MUSIC_DUNGEON           = 2
+MUSIC_ITEM_FANFARE      = 3
+MUSIC_TRIFORCE          = 4
 
 SID1_BASE               = $d400
 SID2_BASE               = $d420                 ; Adresse standard Stereo SID
@@ -71,6 +73,7 @@ SID2_VOLUME             = SID2_BASE + 24
 
 ; --- Variables Mémoire Audio ---
 current_music:          !byte MUSIC_NONE
+saved_bg_music:         !byte MUSIC_NONE
 music_part:             !byte 0                 ; 0 = Part 1, 1 = Part 2
 music_step:             !byte 0                 ; index de pas dans la partie
 music_delay:            !byte 0                 ; compte à rebours de frames avant le pas suivant
@@ -165,8 +168,8 @@ music_play:
         cmp #MUSIC_OVERWORLD
         beq .init_overworld_inst
         cmp #MUSIC_DUNGEON
-        beq .init_dungeon_inst
-        rts
+        bcc .already_playing
+        jmp .init_dungeon_inst
 
 .already_playing:
         rts
@@ -456,10 +459,63 @@ music_update:
         ; Dispatch selon le morceau actif
         lda current_music
         cmp #MUSIC_OVERWORLD
-        beq .step_overworld
-        cmp #MUSIC_DUNGEON
-        beq .step_dungeon
+        bne +
+        jmp .step_overworld
++       cmp #MUSIC_DUNGEON
+        bne +
+        jmp .step_dungeon
++       cmp #MUSIC_ITEM_FANFARE
+        beq .step_item_fanfare
+        cmp #MUSIC_TRIFORCE
+        beq .step_triforce
         rts
+
+; ---------------------------------------------------------------------------
+; Déroulement Fanfare Objet (SongScriptItemTaken0 - 4 pas, reprise auto BGM)
+; ---------------------------------------------------------------------------
+.step_item_fanfare:
+        ldx music_step
+        cpx #MUSIC_ITEM_LEN
+        bcc .item_read
+        ; Fin de la fanfare d'objet : reprend la musique de fond sauvegardée
+        lda #MUSIC_NONE
+        sta current_music
+        lda saved_bg_music
+        beq .stop_fanfare
+        jmp music_play
+.stop_fanfare:
+        jmp music_stop
+.item_read:
+        lda music_item_fanfare_dur,x
+        sta music_delay
+        lda music_item_fanfare_v1,x
+        sta temp_v1
+        lda music_item_fanfare_v2,x
+        sta temp_v2
+        lda music_item_fanfare_v3,x
+        sta temp_v3
+        inc music_step
+        jmp .apply_music_step
+
+; ---------------------------------------------------------------------------
+; Déroulement Fanfare Triforce / Victoire (SongScriptEndLevel0 - 41 pas)
+; ---------------------------------------------------------------------------
+.step_triforce:
+        ldx music_step
+        cpx #MUSIC_TRIFORCE_LEN
+        bcc .tri_read
+        jmp music_stop
+.tri_read:
+        lda music_triforce_dur,x
+        sta music_delay
+        lda music_triforce_v1,x
+        sta temp_v1
+        lda music_triforce_v2,x
+        sta temp_v2
+        lda music_triforce_v3,x
+        sta temp_v3
+        inc music_step
+        jmp .apply_music_step
 
 ; ---------------------------------------------------------------------------
 ; Déroulement Overworld (Partie 1 & Partie 2)
@@ -566,7 +622,7 @@ music_update:
         sta SID1_V1_PW_HI
         lda current_music
         cmp #MUSIC_DUNGEON
-        beq .v1_adsr_uw
+        bcs .v1_adsr_uw
         lda #$08
         sta SID1_V1_AD
         lda #$c2
@@ -641,7 +697,7 @@ music_update:
 
         lda current_music
         cmp #MUSIC_DUNGEON
-        beq .v2_pulse
+        bcs .v2_pulse
         ; Overworld : Sawtooth
         lda #$07
         sta SID1_V2_AD
@@ -654,7 +710,7 @@ music_update:
         jmp .v2_dual_sid
 
 .v2_pulse:
-        ; Underworld : Pulse 50%
+        ; Underworld / Fanfares : Pulse 50%
         lda #$00
         sta SID1_V2_PW_LO
         lda #$08
@@ -680,7 +736,7 @@ music_update:
         sta SID2_V2_FREQ_HI
         lda current_music
         cmp #MUSIC_DUNGEON
-        beq .v2_dual_pulse
+        bcs .v2_dual_pulse
         lda #%00100000
         sta SID2_V2_CTRL
         lda #%00100001
@@ -807,10 +863,28 @@ sound_wand:         ldx #SFX_WAND; jmp play_sfx_v3
 sound_food:         ldx #SFX_FOOD; jmp play_sfx_v3
 sound_potion:       ldx #SFX_POTION; jmp play_sfx_v3
 sound_link_hurt:    ldx #SFX_LINK_HURT; jmp play_sfx_v3
-sound_item_fanfare: ldx #SFX_ITEM_FANFARE; jmp play_sfx_v3
 sound_flute:        ldx #SFX_FLUTE; jmp play_sfx_v3
 sound_inv_flip:     ldx #SFX_INV_FLIP; jmp play_sfx_v3
 sound_inv_select:   ldx #SFX_INV_SELECT; jmp play_sfx_v3
+
+sound_item_fanfare:
+        lda current_music
+        cmp #MUSIC_ITEM_FANFARE
+        beq +
+        cmp #MUSIC_TRIFORCE
+        beq +
+        sta saved_bg_music
++       lda #MUSIC_NONE
+        sta current_music
+        lda #MUSIC_ITEM_FANFARE
+        jmp music_play
+
+sound_triforce_fanfare:
+        lda #MUSIC_NONE
+        sta saved_bg_music
+        sta current_music
+        lda #MUSIC_TRIFORCE
+        jmp music_play
 
 play_sfx_v3:
         lda dual_sid_enabled

@@ -792,6 +792,33 @@ update_wand:
 ; items_draw : configure et affiche les sprites pour l'arme active
 ; ---------------------------------------------------------------------------
 items_draw:
+        ; Célébration de la Triforce : affiche le fragment doré brandi par Link sur Sprite 2
+        lda triforce_fanfare_timer
+        beq .not_triforce_hold
+        lda player_x
+        sta VIC_SPRITE_X2
+        lda player_y
+        sec
+        sbc #16
+        sta VIC_SPRITE_Y2
+        lda VIC_SPRITE_MSB
+        and #%11111011
+        ldx player_x+1
+        beq +
+        ora #%00000100
++       sta VIC_SPRITE_MSB
+        lda #< (sprite_link_item_triforce / 64)
+        sta SPRITE_PTR2
+        lda triforce_fanfare_timer
+        and #4
+        bne +
+        lda #COL_YELLOW
+        jmp ++
++       lda #COL_ORANGE
+++      sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.not_triforce_hold:
         lda item_active
         beq +
         jmp .draw_item
@@ -831,9 +858,17 @@ items_draw:
         jmp .enable_spr2
 +       cmp #DROP_TRIFORCE
         bne +
-        lda #< (sprite_link_item_get / 64)
+        lda #< (sprite_link_item_triforce / 64)
         sta SPRITE_PTR2
+        inc dungeon_torch_tick
+        lda dungeon_torch_tick
+        and #8
+        bne .tri_orange
         lda #COL_YELLOW
+        jmp .tri_col_set
+.tri_orange:
+        lda #COL_ORANGE
+.tri_col_set:
         sta VIC_SPRITE_COL2
         jmp .enable_spr2
 +       cmp #DROP_COMPASS

@@ -657,7 +657,6 @@ cave_update:
         lda cave_pickup_timer
         beq .normal_cave_controls
         dec cave_pickup_timer
-        jsr cave_play_jingle
         rts
 
 .normal_cave_controls:
@@ -1068,51 +1067,9 @@ cave_grant_item:
         rts
 
 cave_start_celebration:
-        lda #90                         ; durée de célébration
+        lda #75                         ; durée de célébration (~1.5s)
         sta cave_pickup_timer
-        lda #0
-        sta cave_jingle_tick
-        sta cave_jingle_idx
-        jsr cave_play_note
-        rts
-
-; ---------------------------------------------------------------------------
-; Fanfare triomphale SID
-; ---------------------------------------------------------------------------
-cave_play_jingle:
-        inc cave_jingle_tick
-        lda cave_jingle_tick
-        cmp #8
-        bcc .jingle_hold
-        lda #0
-        sta cave_jingle_tick
-        lda cave_jingle_idx
-        cmp #7
-        bcs .jingle_hold
-        inc cave_jingle_idx
-        jsr cave_play_note
-.jingle_hold:
-        lda cave_pickup_timer
-        cmp #1
-        bne +
-        lda #%00010000
-        sta SID_V1_CTRL
-+       rts
-
-cave_play_note:
-        ldx cave_jingle_idx
-        lda cave_fanfare_lo,x
-        sta SID_V1_FREQ_LO
-        lda cave_fanfare_hi,x
-        sta SID_V1_FREQ_HI
-        lda #15
-        sta SID_VOL
-        lda #$13
-        sta SID_V1_AD
-        lda #$c4
-        sta SID_V1_SR
-        lda #%00010001
-        sta SID_V1_CTRL
+        jsr sound_item_fanfare
         rts
 
 ; ---------------------------------------------------------------------------

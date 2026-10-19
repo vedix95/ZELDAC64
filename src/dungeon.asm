@@ -24,6 +24,7 @@ dungeon_drop_active:    !byte 0
 dungeon_drop_type:      !byte 0         ; 1=Key, 2=Heart Container, 3=Compass, 4=Map, 5=Triforce
 dungeon_drop_x:         !word 180
 dungeon_drop_y:         !byte 148
+dungeon_drop_cooldown:  !byte 0
 triforce_fanfare_timer: !byte 0
 cellar_pickup_timer:    !byte 0
 dungeon_torch_tick:     !byte 0
@@ -64,6 +65,7 @@ dungeon_init:
         sta dungeon_push_timer
         sta dungeon_drop_active
         sta dungeon_drop_type
+        sta dungeon_drop_cooldown
         sta triforce_fanfare_timer
         lda current_dungeon_level
         sta dungeon_active_level
@@ -88,6 +90,7 @@ dungeon_on_enter_room:
         sta dungeon_push_timer
         sta dungeon_drop_active
         sta dungeon_drop_type
+        sta dungeon_drop_cooldown
 
         ldx current_room_idx
 
@@ -401,9 +404,15 @@ dungeon_update:
         ; 1. Gestion de la fanfare de la Triforce en cours
         lda triforce_fanfare_timer
         beq .check_room_objectives
-        dec triforce_fanfare_timer
-        bne .hold_triforce
+        inc triforce_fanfare_timer
+        bne +
+        inc triforce_fanfare_timer
++       lda current_music
+        cmp #MUSIC_TRIFORCE
+        beq .hold_triforce
         ; Fin de la célébration : retour à l'extérieur dans l'overworld !
+        lda #0
+        sta triforce_fanfare_timer
         jsr exit_dungeon
         rts
 
@@ -472,7 +481,11 @@ dungeon_update:
         ; 4. Collision de Link avec l'objet au sol (Clef, Cœur, Triforce)
         lda dungeon_drop_active
         beq .check_locked_door
-
+        lda dungeon_drop_cooldown
+        beq +
+        dec dungeon_drop_cooldown
+        jmp .check_locked_door
++
         ; Distance X
         sec
         lda player_x
@@ -568,41 +581,19 @@ check_link_pushing_block:
         rts
 
 .chk_push_22:
-        cmp #$22                        ; Salle 0x22 (Bow room)
+        cmp #$22                        ; Salle 0x22 (Bow room : bloc gauche 88 du losange)
         bne .check_generic_block
-        ldx #$22
-        lda dungeon_room_state,x
-        and #DUNG_ROOM_CLEARED
-        beq .no_block
-        lda player_dir
-        cmp #DIR_UP
-        beq .chk_22_up
-        cmp #DIR_LEFT
-        beq .chk_22_left
+        lda player_x+1
         bne .no_block
-.chk_22_up:
-        lda player_y
-        cmp #155
-        bcc .no_block
-        cmp #174
-        bcs .no_block
         lda player_x
-        cmp #142
+        cmp #126
         bcc .no_block
-        cmp #174
-        bcs .no_block
-        sec
-        rts
-.chk_22_left:
-        lda player_x
-        cmp #162
-        bcc .no_block
-        cmp #180
+        cmp #184
         bcs .no_block
         lda player_y
-        cmp #140
+        cmp #124
         bcc .no_block
-        cmp #164
+        cmp #178
         bcs .no_block
         sec
         rts
@@ -689,7 +680,7 @@ dungeon_do_push_block:
         ora #DUNG_SECRET_REVEALED
         sta dungeon_room_state,x
 
-        ; Salle 0x22 : Déplace le bloc (88 -> 68) et révèle l'escalier (88)
+        ; Salle 0x22 : Déplace le bloc (88 -> 68) et révèle l'accès à l'escalier (88 & 90)
         ldy #68
         lda #TILE_DUNG_BLOCK
         sta (ZP_MAP),y
@@ -697,6 +688,12 @@ dungeon_do_push_block:
         jsr redraw_single_tile
 
         ldy #88
+        lda #TILE_DUNG_STAIRS
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+
+        ldy #90
         lda #TILE_DUNG_STAIRS
         sta (ZP_MAP),y
         sta room_buf,y
@@ -748,11 +745,13 @@ dungeon_open_shutters:
         rts
 
 ; ---------------------------------------------------------------------------
-; dungeon_spawn_room_drop : fait apparaître un butin mérité au centre de la salle
+; dungeon_spawn_room_drop : fait apparaître un butin mérité dans la salle
 ; ---------------------------------------------------------------------------
 dungeon_spawn_boss_heart = dungeon_spawn_room_drop
 
 dungeon_spawn_room_drop:
+        lda dungeon_drop_active
+        bne .no_drop
         ldx current_room_idx
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
@@ -765,6 +764,22 @@ dungeon_spawn_room_drop:
         sta dungeon_drop_type
         lda #1
         sta dungeon_drop_active
+        lda #25
+        sta dungeon_drop_cooldown
+
+        lda dungeon_drop_type
+        cmp #DROP_HEART_CONTAINER
+        bne .default_drop_pos
+        ; Conteneur de Cœur du Boss : devant la porte Est (X=240, Y=148)
+        lda #240
+        sta dungeon_drop_x
+        lda #0
+        sta dungeon_drop_x+1
+        lda #148
+        sta dungeon_drop_y
+        rts
+
+.default_drop_pos:
         lda #180
         sta dungeon_drop_x
         lda #0
@@ -854,9 +869,9 @@ dungeon_collect_drop:
         sta hud_cur_hearts
         jsr hud_render
 
-        lda #150
+        lda #1
         sta triforce_fanfare_timer
-        jsr sound_item_fanfare
+        jsr sound_triforce_fanfare
         lda #0
         sta dungeon_drop_active
         rts
@@ -1316,49 +1331,65 @@ txt_hint_d1_1:  !text "LA PENINSULE TOUT A L'EST"
 txt_hint_d1_2:  !text "EST LE SECRET."
 
 ; ===========================================================================
-; PASSAGE SOUS-TERRAIN VU DE CÔTÉ (STATE_CELLAR - Trésor de l'Arc)
+; PASSAGE SOUS-TERRAIN VU DE CÔTÉ (STATE_CELLAR - Trésor de l'Arc du Donjon 1)
+; Fidèle à la salle souterraine de briques NES (Cellar1 : fond noir, murs de
+; briques grises/blanches, échelle à gauche et piédestal central de l'Arc).
 ; ===========================================================================
 build_cellar_room:
+        ; 1. Remplit tout le tampon de briques (tuile 1 = TILE_DUNG_WALL_TOP)
         ldx #199
-        lda #0
+        lda #TILE_DUNG_WALL_TOP
 -       sta room_buf,x
         dex
         bpl -
 
-        ; Rangée 0 : plafond de briques (tuile 1)
-        ldx #19
-        lda #1
--       sta room_buf,x
-        dex
-        bpl -
+        ; 2. Évide la chambre souterraine centrale (rangées 2..7, colonnes 3..16)
+        ;    en fond noir uni (tuile 12 = TILE_DUNG_DOOR_OPEN)
+        ldy #40                         ; début rangée 2 (2 * 20)
+.cellar_row_loop:
+        tya
+        clc
+        adc #3
+        tax                             ; X = offset col 3
+        lda #14                         ; 14 colonnes (cols 3..16)
+        sta ZP_TMP
+        lda #TILE_DUNG_DOOR_OPEN
+.cellar_col_loop:
+        sta room_buf,x
+        inx
+        dec ZP_TMP
+        bne .cellar_col_loop
 
-        ; Murs latéraux et échelle (rangées 1..8)
-        ldy #20
--       lda #3
-        sta room_buf,y
-        sta room_buf+1,y
-        lda #7
-        sta room_buf+4,y                ; échelle en col 4
-        lda #4
-        sta room_buf+18,y
-        sta room_buf+19,y
         tya
         clc
         adc #20
         tay
-        cpy #180
-        bcc -
+        cpy #160                        ; jusqu'à la fin de la rangée 7 (8 * 20)
+        bcc .cellar_row_loop
 
-        ; Piédestal de l'Arc (rangée 8, col 14 = offset 174)
-        lda #5
-        sta room_buf+174
+        ; 3. Piliers de briques supérieurs (rangée 2, cols 6..8 et 12..14)
+        lda #TILE_DUNG_WALL_TOP
+        sta room_buf+46
+        sta room_buf+47
+        sta room_buf+52
+        sta room_buf+53
 
-        ; Rangée 9 : sol de briques (tuile 2)
-        ldx #19
-        lda #2
--       sta room_buf+180,x
+        ; 4. Piédestal central de l'Arc (rangée 7, cols 10..11 = offsets 150, 151)
+        lda #TILE_DUNG_BLOCK
+        sta room_buf+150
+        sta room_buf+151
+
+        ; 5. Échelle de descente en colonne 4 (rangées 0..7)
+        ldy #4
+        ldx #8
+        lda #TILE_DUNG_DOOR_SHUTTER
+-       sta room_buf,y
+        tya
+        clc
+        adc #20
+        tay
         dex
-        bpl -
+        bne -
         rts
 
 enter_cellar:
@@ -1366,27 +1397,51 @@ enter_cellar:
         sta game_state
         lda #0
         sta cellar_pickup_timer
+        sta player_attacking
+        sta item_active
+        sta en_proj_active
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
         sta VIC_SPRITE_MSB
 
-        ; Link apparaît en haut de l'échelle (col 4 : X=88, Y=76)
+        ; Désactive les ennemis de la salle supérieure
+        ldx #7
+        lda #0
+-       sta en_state,x
+        dex
+        bpl -
+
+        ; Palette de briques souterraines NES (Noir / Gris / Blanc)
+        lda #COL_BLACK
+        sta active_bg_color
+        sta VIC_BACKGROUND
+        lda #COL_GREY
+        sta VIC_BG_MC1
+        lda #COL_WHITE
+        sta VIC_BG_MC2
+        lda #9                          ; Multicolore (8) + Blanc (1)
+        ldy #15
+-       sta active_tile_color,y
+        dey
+        bpl -
+
+        ; Link apparaît en haut de l'échelle (col 4 : X=88, Y=84)
         lda #88
         sta player_x
         lda #0
         sta player_x+1
-        lda #76
+        lda #84
         sta player_y
         lda #DIR_DOWN
         sta player_dir
 
-        jsr clear_screen
         jsr build_cellar_room
         lda #<room_buf
         sta ZP_MAP
         lda #>room_buf
         sta ZP_MAP+1
-        jmp draw_map
+        jsr draw_map
+        jmp hud_render
 
 cellar_update:
         lda cellar_pickup_timer
@@ -1399,15 +1454,16 @@ cellar_update:
         cmp #93
         bcs .on_cellar_floor
 
-        ; --- SUR L'ÉCHELLE ---
+        ; --- SUR L'ÉCHELLE (X = 88) ---
         lda joy
         and #JOY_UP
         beq +
         lda #DIR_UP
         sta player_dir
         dec player_y
+        dec player_y
         lda player_y
-        cmp #66
+        cmp #74
         bcc .do_exit_cellar
         jmp .cellar_anim
 .do_exit_cellar:
@@ -1419,10 +1475,11 @@ cellar_update:
         lda #DIR_DOWN
         sta player_dir
         inc player_y
+        inc player_y
         lda player_y
-        cmp #172
+        cmp #188
         bcc .jmp_cellar_anim
-        lda #172
+        lda #188
         sta player_y
 .jmp_cellar_anim:
         jmp .cellar_anim
@@ -1431,18 +1488,19 @@ cellar_update:
         and #JOY_RIGHT
         beq .jmp_cellar_anim
         lda player_y
-        cmp #170
+        cmp #180
         bcc .jmp_cellar_anim
-        lda #172
+        lda #188
         sta player_y
+        inc player_x
         inc player_x
         lda #DIR_RIGHT
         sta player_dir
         jmp .cellar_anim
 
 .on_cellar_floor:
-        ; --- SUR LE SOL ---
-        lda #172
+        ; --- SUR LE SOL DE BRIQUES (Y = 188) ---
+        lda #188
         sta player_y
 
         lda joy
@@ -1451,6 +1509,13 @@ cellar_update:
         lda #DIR_LEFT
         sta player_dir
         dec player_x
+        dec player_x
+        lda player_x
+        cmp #88
+        bcs .cellar_walk_l
+        lda #88
+        sta player_x
+.cellar_walk_l:
         jmp .cellar_anim
 
 +       lda joy
@@ -1459,17 +1524,22 @@ cellar_update:
         lda #DIR_RIGHT
         sta player_dir
         lda player_x
-        cmp #236
+        cmp #248
         bcs .chk_bow_pickup
+        inc player_x
         inc player_x
         jsr .cellar_anim
 
 .chk_bow_pickup:
-        lda player_has_bow
+        ldx #$22
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
         bne +
         lda player_x
-        cmp #220
+        cmp #172
         bcc +
+        cmp #208
+        bcs +
         lda #1
         sta player_has_bow
         sta player_has_arrows
@@ -1477,7 +1547,7 @@ cellar_update:
         lda dungeon_room_state,x
         ora #DUNG_ITEM_COLLECTED
         sta dungeon_room_state,x
-        lda #90
+        lda #80
         sta cellar_pickup_timer
         jsr sound_item_fanfare
         jsr hud_render
@@ -1527,13 +1597,13 @@ cellar_draw:
         ; Sprite 1 : Arc brandi au-dessus de la tête
         lda #(sprite_link_item_bow / 64)
         sta SPRITE_PTR1
-        lda #COL_WHITE
+        lda #COL_GREEN
         sta VIC_SPRITE_COL1
         lda player_x
         sta VIC_SPRITE_X1
         lda player_y
         sec
-        sbc #14
+        sbc #16
         sta VIC_SPRITE_Y1
         lda #%00000011
         sta VIC_SPRITE_EN
@@ -1558,15 +1628,17 @@ cellar_draw:
         sta SPRITE_PTR0
 
 .draw_bow_pedestal:
-        lda player_has_bow
+        ldx #$22
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
         bne .no_bow_pedestal
         lda #(sprite_link_item_bow / 64)
         sta SPRITE_PTR1
-        lda #COL_WHITE
+        lda #COL_GREEN
         sta VIC_SPRITE_COL1
-        lda #248
+        lda #188
         sta VIC_SPRITE_X1
-        lda #146
+        lda #174
         sta VIC_SPRITE_Y1
         lda #%00000011
         sta VIC_SPRITE_EN

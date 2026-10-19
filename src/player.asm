@@ -123,6 +123,10 @@ player_init:
         rts
 
 player_update:
+        lda triforce_fanfare_timer
+        beq +
+        rts
++
         ; --- Gestion du coup d'épée ---
         lda player_attacking
         beq .check_attack_start
@@ -668,7 +672,7 @@ check_point_solid:
         bne .not_water
         cmp #TILE_WATER
         bne .not_water
-        lda player_has_stepladder
+        ldx player_has_stepladder
         bne .free
 .not_water:
         tax
@@ -858,8 +862,13 @@ player_draw:
         lda ZP_TMP
         sta VIC_SPRITE_EN
 
-        ; Pointeur Sprite 0 : base + (player_dir << 1) + player_walk_anim
-        lda player_dir
+        ; Pointeur Sprite 0 : pose celebration Triforce ou marche normale
+        lda triforce_fanfare_timer
+        beq +
+        lda #(sprite_link_item_get >> 6)
+        sta SPRITE_PTR0
+        rts
++       lda player_dir
         asl
         ora player_walk_anim
         clc
