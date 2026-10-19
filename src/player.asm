@@ -162,8 +162,9 @@ player_update:
         ; ===================================================================
         lda joy
         and #JOY_LEFT
-        beq .no_left
-        lda #DIR_LEFT
+        bne +
+        jmp .no_left
++       lda #DIR_LEFT
         sta player_dir
 
         sec
@@ -182,7 +183,19 @@ player_update:
         bcs .left_not_border
         lda current_room_x
         beq .clamp_left
-        jsr transition_left
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        lda player_y
+        cmp #125
+        bcc .clamp_left
+        cmp #180
+        bcs .clamp_left
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne .clamp_left
++       jsr transition_left
         jmp .no_left
 .clamp_left:
         lda #PLAYER_X_MIN
@@ -223,8 +236,9 @@ player_update:
         ; ===================================================================
         lda joy
         and #JOY_RIGHT
-        beq .no_right
-        lda #DIR_RIGHT
+        bne +
+        jmp .no_right
++       lda #DIR_RIGHT
         sta player_dir
 
         clc
@@ -247,7 +261,19 @@ player_update:
         cmp current_room_x
         beq .clamp_right
         bcc .clamp_right
-        jsr transition_right
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        lda player_y
+        cmp #125
+        bcc .clamp_right
+        cmp #180
+        bcs .clamp_right
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne .clamp_right
++       jsr transition_right
         jmp .no_right
 .clamp_right:
         lda #<PLAYER_X_MAX
@@ -290,8 +316,9 @@ player_update:
         ; ===================================================================
         lda joy
         and #JOY_UP
-        beq .no_up
-        lda #DIR_UP
+        bne +
+        jmp .no_up
++       lda #DIR_UP
         sta player_dir
 
         sec
@@ -304,7 +331,21 @@ player_update:
         bcs .up_not_border
         lda current_room_y
         beq .clamp_up
-        jsr transition_up
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        lda player_x+1
+        bne .clamp_up
+        lda player_x
+        cmp #145
+        bcc .clamp_up
+        cmp #215
+        bcs .clamp_up
+        ldy #9
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne .clamp_up
++       jsr transition_up
         jmp .no_up
 .clamp_up:
         lda #PLAYER_Y_MIN
@@ -371,6 +412,13 @@ player_update:
         lda current_room_y
         cmp dungeon_entrance_room_y
         bne .check_down_trans
+        lda player_x+1
+        bne .clamp_down
+        lda player_x
+        cmp #145
+        bcc .clamp_down
+        cmp #215
+        bcs .clamp_down
         jsr exit_dungeon
         jmp .no_down
 
@@ -381,7 +429,21 @@ player_update:
         cmp current_room_y
         beq .clamp_down
         bcc .clamp_down
-        jsr transition_down
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne +
+        lda player_x+1
+        bne .clamp_down
+        lda player_x
+        cmp #145
+        bcc .clamp_down
+        cmp #215
+        bcs .clamp_down
+        ldy #189
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_OPEN
+        bne .clamp_down
++       jsr transition_down
         jmp .no_down
 .clamp_down:
         lda #PLAYER_Y_MAX
@@ -599,8 +661,13 @@ get_tile_at_point:
 check_point_solid:
         jsr get_tile_at_point
         cmp #$ff
-        beq .free
-        cmp #TILE_WATER
+        bne +
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .free
+        sec                             ; Solide en donjon si hors écran !
+        rts
++       cmp #TILE_WATER
         bne .not_water
         lda player_has_stepladder
         bne .free

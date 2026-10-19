@@ -723,16 +723,16 @@ dungeon_check_key_door:
         rts
 
 .has_key:
-        ; 1. Porte Nord (y <= 88, x ~ 160..200)
+        ; 1. Porte Nord (y <= 98, x ~ 145..215)
         lda player_y
-        cmp #88
+        cmp #98
         bcs .chk_south
         lda player_x+1
         bne .chk_south
         lda player_x
-        cmp #160
+        cmp #145
         bcc .chk_south
-        cmp #200
+        cmp #215
         bcs .chk_south
 
         ldy #9
@@ -756,16 +756,16 @@ dungeon_check_key_door:
         rts
 
 .chk_south:
-        ; 2. Porte Sud (y >= 218, x ~ 160..200)
+        ; 2. Porte Sud (y >= 195, x ~ 145..215)
         lda player_y
-        cmp #218
+        cmp #195
         bcc .chk_west
         lda player_x+1
         bne .chk_west
         lda player_x
-        cmp #160
+        cmp #145
         bcc .chk_west
-        cmp #200
+        cmp #215
         bcs .chk_west
 
         ldy #189
@@ -789,16 +789,16 @@ dungeon_check_key_door:
         rts
 
 .chk_west:
-        ; 3. Porte Ouest (x <= 36, y ~ 130..170)
+        ; 3. Porte Ouest (x <= 48, y ~ 125..180)
         lda player_x+1
         bne .chk_east
         lda player_x
-        cmp #36
+        cmp #48
         bcs .chk_east
         lda player_y
-        cmp #130
+        cmp #125
         bcc .chk_east
-        cmp #170
+        cmp #180
         bcs .chk_east
 
         ldy #80
@@ -822,16 +822,16 @@ dungeon_check_key_door:
         rts
 
 .chk_east:
-        ; 4. Porte Est (x >= 284, y ~ 130..170)
+        ; 4. Porte Est (x >= 280, y ~ 125..180)
         lda player_x+1
         beq .done_doors
         lda player_x
-        cmp #<284
+        cmp #<280
         bcc .done_doors
         lda player_y
-        cmp #130
+        cmp #125
         bcc .done_doors
-        cmp #170
+        cmp #180
         bcs .done_doors
 
         ldy #99
