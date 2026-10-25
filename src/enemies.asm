@@ -2333,25 +2333,75 @@ test_item_single:
         rts
 
 .it_hit_exec:
-
-        ; --- IMPACT DE L'ARME SECONDAIRE ---
         lda item_active
         cmp #ITEM_BOW
-        beq .arrow_hit
-        cmp #ITEM_BOOMERANG
-        beq .boom_hit
-        cmp #ITEM_BOMB
-        beq .bomb_blast_hit
-        rts
+        bne +
+        jmp .arrow_hit
++       cmp #ITEM_BOOMERANG
+        bne +
+        jmp .boom_hit
++       cmp #ITEM_BOMB
+        bne +
+        jmp .bomb_blast_hit
++       rts
 
 .arrow_hit:
-        ; Flèche mortelle
         lda #ITEM_NONE
         sta item_active
         ldx en_idx
+        lda en_type,x
+        cmp #TYPE_GOHMA_RED
+        beq .arrow_gohma
+        cmp #TYPE_GOHMA_BLUE
+        beq .arrow_gohma
+        cmp #TYPE_GANON
+        beq .arrow_ganon
         lda #EN_STATE_DYING
         sta en_state,x
         lda #16
+        sta en_timer,x
+        jsr sound_enemy_die
+        rts
+
+.arrow_gohma:
+        ; Gohma ne prend des degats que si son oeil est ouvert (en_anim == 1)
+        lda en_anim,x
+        beq .arrow_gohma_deflect
+        dec en_hp,x
+        beq .gohma_killed
+        lda #EN_STATE_HURT
+        sta en_state,x
+        lda #20
+        sta en_hurt_timer,x
+        jsr sound_enemy_hit
+        rts
+.gohma_killed:
+        lda #EN_STATE_DYING
+        sta en_state,x
+        lda #20
+        sta en_timer,x
+        jsr sound_enemy_die
+        rts
+.arrow_gohma_deflect:
+        jsr sound_shield_block
+        rts
+
+.arrow_ganon:
+        ; Ganon : terrasse par fleche d'argent ou affaibli
+        lda player_has_arrows
+        cmp #2
+        bcs .ganon_killed
+        lda en_hp,x
+        cmp #5
+        bcc .ganon_killed
+        jsr sound_shield_block
+        rts
+.ganon_killed:
+        lda #0
+        sta en_hp,x
+        lda #EN_STATE_DYING
+        sta en_state,x
+        lda #30
         sta en_timer,x
         jsr sound_enemy_die
         rts

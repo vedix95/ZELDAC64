@@ -21,17 +21,20 @@ OW_DATS    := $(foreach n,0 1 2 3,$(BLD_DIR)/ow$(n).dat)
 DUNG_DATS  := $(foreach n,1 2 3 4 5 6 7 8 9,$(BLD_DIR)/dung$(n).dat)
 GEN_MAPS   := $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm $(SRC_DIR)/ow0.asm $(SRC_DIR)/ow1.asm $(SRC_DIR)/ow2.asm $(SRC_DIR)/ow3.asm
 GEN        := $(SRC_DIR)/sprites.asm $(SRC_DIR)/sprites_enemies.asm $(SRC_DIR)/sprites_extra.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/tiles_data.asm
-SRCS       := $(filter-out $(SRC_DIR)/dung%.asm $(SRC_DIR)/ow%.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm, $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN)))
+DUNG_ASMS  := $(foreach n,1 2 3 4 5 6 7 8 9,$(SRC_DIR)/dung$(n).asm)
+SRCS       := $(filter-out $(DUNG_ASMS) $(SRC_DIR)/ow%.asm $(SRC_DIR)/map_overworld.asm $(SRC_DIR)/map_underworld.asm, $(sort $(wildcard $(SRC_DIR)/*.asm $(SRC_DIR)/*.inc) $(GEN)))
 
 PRG     := $(BLD_DIR)/$(NAME).prg
 PRG_INT := $(BLD_DIR)/intro.prg
 D64     := $(BLD_DIR)/$(NAME).d64
+D64_DISK1 := $(BLD_DIR)/$(NAME)_disk1.d64
+D64_DISK2 := $(BLD_DIR)/$(NAME)_disk2.d64
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
 .PHONY: all run run-game debug d64 clean distclean check preview editor extract-music
 
-all: $(D64)
+all: $(D64) $(D64_DISK1) $(D64_DISK2)
 
 # sprites.asm est généré depuis l'ASCII art (assets/link.txt)
 $(SRC_DIR)/sprites.asm: assets/link.txt tools/sprgen.py
@@ -81,7 +84,7 @@ $(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_musi
 	$(ACME) -f cbm -o $@ $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-# Image disquette D64 : contient INTRO, ZELDA (moteur résident), OW0..OW3 (chunks Overworld) et les 9 Donjons
+# Image disquette D64 unifiée : contient INTRO, ZELDA (moteur résident), OW0..OW3 (chunks Overworld) et les 9 Donjons
 $(D64): $(PRG_INT) $(PRG) $(OW_DATS) $(DUNG_DATS)
 	$(C1541) -format "$(NAME),01" d64 $@ \
 		-write $(PRG_INT) intro \
@@ -100,6 +103,31 @@ $(D64): $(PRG_INT) $(PRG) $(OW_DATS) $(DUNG_DATS)
 		-write $(BLD_DIR)/dung8.dat dung8 \
 		-write $(BLD_DIR)/dung9.dat dung9
 	@echo "OK : $@ image disquette D64 prete (INTRO + ZELDA + 4 CHUNKS OVERWORLD + 9 DONJONS) !"
+
+# Disquette 1 (Face A - Overworld & Moteur principal)
+$(D64_DISK1): $(PRG_INT) $(PRG) $(OW_DATS)
+	$(C1541) -format "zelda1,01" d64 $@ \
+		-write $(PRG_INT) intro \
+		-write $(PRG) zelda \
+		-write $(BLD_DIR)/ow0.dat ow0 \
+		-write $(BLD_DIR)/ow1.dat ow1 \
+		-write $(BLD_DIR)/ow2.dat ow2 \
+		-write $(BLD_DIR)/ow3.dat ow3
+	@echo "OK : $@ Disquette 1 prete (Face Overworld) !"
+
+# Disquette 2 (Face B - Monde Souterrain & 9 Donjons)
+$(D64_DISK2): $(DUNG_DATS)
+	$(C1541) -format "zelda2,02" d64 $@ \
+		-write $(BLD_DIR)/dung1.dat dung1 \
+		-write $(BLD_DIR)/dung2.dat dung2 \
+		-write $(BLD_DIR)/dung3.dat dung3 \
+		-write $(BLD_DIR)/dung4.dat dung4 \
+		-write $(BLD_DIR)/dung5.dat dung5 \
+		-write $(BLD_DIR)/dung6.dat dung6 \
+		-write $(BLD_DIR)/dung7.dat dung7 \
+		-write $(BLD_DIR)/dung8.dat dung8 \
+		-write $(BLD_DIR)/dung9.dat dung9
+	@echo "OK : $@ Disquette 2 prete (Face Donjons) !"
 
 
 $(BLD_DIR):

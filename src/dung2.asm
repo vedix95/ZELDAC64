@@ -1,7 +1,7 @@
 ; ===========================================================================
 ; dung2.asm - Donjon Niveau 2 : Moon (Lune) pour Zelda C64
 ; GENERE AUTOMATIQUEMENT par tools/build_dungeons.py - NE PAS MODIFIER
-; Salles étanches : 17 salles
+; Salles étanches : 16 salles
 ; ===========================================================================
 !cpu 6510
 !source "src/enemy_types.inc"
@@ -10,7 +10,7 @@
 ; En-tête Donjon (6 octets : $C000..$C005)
 map_rooms_w:        !byte 16
 map_rooms_h:        !byte 8
-map_rooms_cnt:      !byte 17
+map_rooms_cnt:      !byte 16
 map_bg_col:         !byte 0   ; noir
 map_mc1_col:        !byte 6
 map_mc2_col:        !byte 14  ; bleu clair
@@ -28,7 +28,7 @@ map_enemies_ptr_hdr:
 
 ; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)
 room_tbl_lo:
-        !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_0d, <u_room_0e, <u_room_0f
+        !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_0d, <u_room_0e, <dummy_sealed_room
         !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_1e, <u_room_1f
         !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_2e, <u_room_2f
         !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_3e, <u_room_3f
@@ -37,7 +37,7 @@ room_tbl_lo:
         !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_6d, <u_room_6e, <u_room_6f
         !byte <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <u_room_7d, <dummy_sealed_room, <dummy_sealed_room
 room_tbl_hi:
-        !byte >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >u_room_0d, >u_room_0e, >u_room_0f
+        !byte >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >u_room_0d, >u_room_0e, >dummy_sealed_room
         !byte >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >u_room_1e, >u_room_1f
         !byte >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >u_room_2e, >u_room_2f
         !byte >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >u_room_3e, >u_room_3f
@@ -61,113 +61,139 @@ dungeon_start_ry:       !byte 7    ; $C11F
 
 ; Index de formation d'ennemis par salle (128 octets : $C196..$C215)
 room_enemy_idx:
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 8
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 10
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 11, 12
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-; Salle ($0d : rx=13, ry=0) - RLE compact (43 octets)
+; Salle ($0d : rx=13, ry=0) - RLE compact (63 octets)
 u_room_0d:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($0e : rx=14, ry=0) - RLE compact (43 octets)
+        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 32, 149, 32, 20, 19, 32, 5
+        !byte 16, 6, 16, 6, 16, 5, 32, 20, 19, 32, 5, 0, 6, 48, 6, 0
+        !byte 5, 48, 12, 19, 32, 5, 112, 5, 48, 12, 19, 32, 53, 16, 53, 32
+        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
+; Salle ($0e : rx=14, ry=0) - RLE compact (42 octets)
 u_room_0e:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($0f : rx=15, ry=0) - RLE compact (43 octets)
-u_room_0f:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($1e : rx=14, ry=1) - RLE compact (43 octets)
+        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 14, 224, 16, 20, 14, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+; Salle ($1e : rx=14, ry=1) - RLE compact (70 octets)
 u_room_1e:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($1f : rx=15, ry=1) - RLE compact (43 octets)
+        !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 32, 5, 0, 5, 0, 21
+        !byte 0, 5, 0, 5, 32, 20, 19, 224, 0, 20, 19, 32, 5, 0, 5, 0
+        !byte 21, 0, 5, 0, 5, 48, 15, 19, 224, 16, 15, 19, 32, 5, 0, 5
+        !byte 0, 21, 0, 5, 0, 5, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 10, 114, 30, 114, 11, 255
+; Salle ($1f : rx=15, ry=1) - RLE compact (42 octets)
 u_room_1f:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($2e : rx=14, ry=2) - RLE compact (43 octets)
+        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 15, 224, 16, 20, 15, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+; Salle ($2e : rx=14, ry=2) - RLE compact (52 octets)
 u_room_2e:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+        !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 48, 21
+        !byte 48, 21, 48, 20, 19, 48, 21, 48, 21, 64, 13, 19, 48, 21, 48, 21
+        !byte 64, 13, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114
+        !byte 28, 114, 11, 255
 ; Salle ($2f : rx=15, ry=2) - RLE compact (43 octets)
 u_room_2f:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+        !byte 20, 13, 224, 16, 20, 13, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 19, 224, 0, 20, 10, 114, 31, 114, 11, 255
 ; Salle ($3e : rx=14, ry=3) - RLE compact (43 octets)
 u_room_3e:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 19, 224, 16, 12, 19, 224, 16, 12, 19, 224, 0, 20, 19, 224, 0
         !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
 ; Salle ($3f : rx=15, ry=3) - RLE compact (43 octets)
 u_room_3f:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($4e : rx=14, ry=4) - RLE compact (43 octets)
+        !byte 8, 113, 31, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 12, 224, 16, 20, 12, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 19, 224, 0, 20, 10, 114, 31, 114, 11, 255
+; Salle ($4e : rx=14, ry=4) - RLE compact (49 octets)
 u_room_4e:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($4f : rx=15, ry=4) - RLE compact (43 octets)
+        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 48, 5
+        !byte 80, 5, 48, 20, 19, 224, 16, 12, 19, 48, 5, 80, 5, 64, 12, 19
+        !byte 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 30, 114, 11
+        !byte 255
+; Salle ($4f : rx=15, ry=4) - RLE compact (49 octets)
 u_room_4f:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($5e : rx=14, ry=5) - RLE compact (43 octets)
+        !byte 8, 113, 31, 113, 9, 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20
+        !byte 19, 224, 0, 20, 12, 224, 16, 20, 12, 224, 16, 20, 19, 224, 0, 20
+        !byte 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20, 10, 114, 31, 114, 11
+        !byte 255
+; Salle ($5e : rx=14, ry=5) - RLE compact (50 octets)
 u_room_5e:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($5f : rx=15, ry=5) - RLE compact (43 octets)
+        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 21, 80, 21, 32, 20
+        !byte 19, 224, 0, 20, 19, 96, 21, 112, 13, 19, 224, 16, 13, 19, 32, 21
+        !byte 80, 21, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114
+        !byte 11, 255
+; Salle ($5f : rx=15, ry=5) - RLE compact (49 octets)
 u_room_5f:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($6d : rx=13, ry=6) - RLE compact (43 octets)
+        !byte 8, 113, 31, 113, 9, 19, 224, 0, 20, 19, 48, 5, 80, 5, 48, 20
+        !byte 19, 224, 0, 20, 13, 224, 16, 20, 13, 224, 16, 20, 19, 48, 5, 80
+        !byte 5, 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 31, 114, 11
+        !byte 255
+; Salle ($6d : rx=13, ry=6) - RLE compact (48 octets)
 u_room_6d:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($6e : rx=14, ry=6) - RLE compact (43 octets)
+        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 48, 5, 80, 5, 48, 20, 19
+        !byte 224, 0, 20, 19, 224, 16, 12, 19, 224, 16, 12, 19, 48, 5, 80, 5
+        !byte 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+; Salle ($6e : rx=14, ry=6) - RLE compact (70 octets)
 u_room_6e:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($6f : rx=15, ry=6) - RLE compact (43 octets)
+        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 5, 0, 5, 0, 21
+        !byte 0, 5, 0, 5, 32, 20, 19, 224, 0, 20, 12, 48, 5, 0, 5, 0
+        !byte 21, 0, 5, 0, 5, 48, 13, 12, 224, 32, 13, 19, 32, 5, 0, 5
+        !byte 0, 21, 0, 5, 0, 5, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 10, 114, 17, 114, 11, 255
+; Salle ($6f : rx=15, ry=6) - RLE compact (46 octets)
 u_room_6f:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($7d : rx=13, ry=7) - RLE compact (43 octets)
+        !byte 8, 113, 31, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 96, 21
+        !byte 96, 20, 13, 112, 21, 96, 20, 13, 112, 21, 96, 20, 19, 224, 0, 20
+        !byte 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
+; Salle ($7d : rx=13, ry=7) - RLE compact (64 octets)
 u_room_7d:
-        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+        !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 6, 16, 6, 16, 6
+        !byte 16, 6, 32, 20, 19, 224, 0, 20, 19, 32, 6, 16, 6, 16, 6, 16
+        !byte 6, 32, 20, 19, 224, 0, 20, 19, 32, 6, 16, 6, 16, 6, 16, 6
+        !byte 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
 
 ; Salle scellée étanche pour toutes les coordonnées hors-donjon
 dummy_sealed_room:
         !byte 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 65, 255
 
-; Table d'apparition des monstres dédupliquée (3 formations x 24 octets)
+; Table d'apparition des monstres dédupliquée (13 formations x 24 octets)
 map_enemies:
         ; Formation 0
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 1
         !byte TYPE_DODONGO      , 14,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 2
-        !byte TYPE_STALFOS      ,  8,  4,   TYPE_KEESE_RED    , 12,  3,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 3
+        !byte TYPE_GORIYA_RED   ,  8,  3,   TYPE_GORIYA_RED   , 12,  3,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 4
+        !byte TYPE_ROPE         ,  6,  3,   TYPE_ROPE         , 14,  3,   TYPE_ROPE         ,  8,  5,   TYPE_ROPE         , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 5
+        !byte TYPE_GEL          ,  8,  3,   TYPE_GEL          , 12,  3,   TYPE_GEL          , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 6
+        !byte TYPE_KEESE_BLUE   ,  6,  2,   TYPE_KEESE_BLUE   , 14,  2,   TYPE_KEESE_BLUE   ,  6,  6,   TYPE_KEESE_BLUE   , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 7
+        !byte TYPE_ROPE         ,  6,  3,   TYPE_ROPE         , 14,  3,   TYPE_ROPE         , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 8
+        !byte TYPE_GORIYA_BLUE  ,  8,  3,   TYPE_GORIYA_BLUE  , 12,  3,   TYPE_GORIYA_BLUE  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 9
+        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      , 10,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 10
+        !byte TYPE_GEL          ,  7,  3,   TYPE_GEL          , 13,  3,   TYPE_GEL          , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 11
+        !byte TYPE_ROPE         ,  7,  3,   TYPE_ROPE         , 13,  3,   TYPE_ROPE         , 10,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 12
+        !byte TYPE_GEL          ,  8,  3,   TYPE_GEL          , 12,  3,   TYPE_GEL          , 10,  5,   TYPE_GEL          ,  8,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
 
 ; ===========================================================================
 ; Jeu de caracteres authentique du donjon (512 octets)

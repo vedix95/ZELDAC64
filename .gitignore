@@ -24,6 +24,7 @@ tools/extract_overworld_enemies.py
 *.out
 *.log
 monitor.log
+screenshots/
 
 # Sauvegardes et temporaires
 *.bak

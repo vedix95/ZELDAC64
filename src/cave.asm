@@ -30,6 +30,9 @@ CAVE_TYPE_HINT_1       = 9      ; Indice Mont du Péril
 CAVE_TYPE_HINT_2       = 10     ; Salle 15 (Arbres secrets)
 CAVE_TYPE_HINT_3       = 11     ; Cascade de l'Est
 CAVE_TYPE_GAMBLE       = 12     ; Salle 112 (Jeu de hasard)
+CAVE_TYPE_FAIRY        = 13     ; Fontaine des Fées (Soin complet de Link)
+CAVE_TYPE_HEART_GIFT   = 14     ; Grotte secrète Conteneur de Cœur gratuit
+CAVE_TYPE_SWORD_MAGIC  = 15     ; Salle 34 (Épée Magique si max_hearts >= 12)
 
 ; Types d'objets en vente/au sol
 ITEM_ID_NONE            = 0
@@ -46,6 +49,7 @@ ITEM_ID_HEART           = 10
 ITEM_ID_HEART_CONTAINER = 11
 ITEM_ID_POTION_BLUE     = 12
 ITEM_ID_POTION_RED      = 13
+ITEM_ID_SWORD_MAGIC     = 14
 
 ; Variables du moteur des grottes
 saved_overworld_x:      !word 0
@@ -383,9 +387,61 @@ cave_setup_room_items:
 .sw_wh_ret:
         rts
 
++       cmp #CAVE_TYPE_SWORD_MAGIC
+        bne +
+        ; Épée Magique : requiert 12 cœurs
+        lda player_has_sword
+        cmp #3
+        bcs .sw_mg_ret
+        lda hud_max_hearts
+        cmp #12
+        bcc .sw_mg_ret
+        lda #1
+        sta cave_slot2_active
+        lda #ITEM_ID_SWORD_MAGIC
+        sta cave_slot2_type
+        lda #0
+        sta cave_slot2_price
+        lda #(sprite_link_sword_up / 64)
+        sta cave_slot2_ptr
+        lda #COL_LIGHT_RED              ; Lame magique rougeoyante
+        sta cave_slot2_col
+.sw_mg_ret:
+        rts
+
 +       cmp #CAVE_TYPE_HEART_CHOICE
         beq .do_choice
+        cmp #CAVE_TYPE_FAIRY
+        beq .do_fairy
+        cmp #CAVE_TYPE_HEART_GIFT
+        beq .do_gift
         rts
+
+.do_fairy:
+        ; Fontaine des Fées : soigne Link immédiatement à l'entrée !
+        lda hud_max_hearts
+        sta hud_cur_hearts
+        jsr hud_render
+        jsr sound_item_fanfare
+        rts
+
+.do_gift:
+        ; Conteneur de Cœur gratuit au centre (Slot 2)
+        lda ZP_TMP
+        and #2
+        bne +
+        lda #1
+        sta cave_slot2_active
+        lda #ITEM_ID_HEART_CONTAINER
+        sta cave_slot2_type
+        lda #0
+        sta cave_slot2_price
+        lda #(sprite_link_item_heart / 64)
+        sta cave_slot2_ptr
+        lda #COL_RED
+        sta cave_slot2_col
++       rts
+
 .do_choice:
         ; Choix Vital : Conteneur de Cœur (Slot 1) ou Potion Rouge (Slot 3)
         lda ZP_TMP
@@ -957,6 +1013,16 @@ cave_grant_item:
         lda #COL_WHITE
         sta cave_held_item_col
         rts
++       cmp #ITEM_ID_SWORD_MAGIC
+        bne +
+        lda #3
+        sta player_has_sword
+        jsr hud_update_sword
+        lda #(sprite_link_sword_up / 64)
+        sta cave_held_item_ptr
+        lda #COL_LIGHT_RED
+        sta cave_held_item_col
+        rts
 +       cmp #ITEM_ID_SHIELD
         bne +
         lda #2
@@ -1241,6 +1307,8 @@ setup_pnj_sprite:
         beq .set_merchant
         cmp #CAVE_TYPE_POTION_SHOP
         beq .set_old_woman
+        cmp #CAVE_TYPE_FAIRY
+        beq .set_fairy
         cmp #CAVE_TYPE_MOBLIN
         beq .set_moblin
 
@@ -1248,6 +1316,13 @@ setup_pnj_sprite:
         lda #(sprite_link_old_man / 64)
         sta SPRITE_PTR1
         lda #COL_RED
+        sta VIC_SPRITE_COL1
+        rts
+
+.set_fairy:
+        lda #(sprite_link_old_woman / 64)
+        sta SPRITE_PTR1
+        lda #COL_WHITE
         sta VIC_SPRITE_COL1
         rts
 
@@ -1321,21 +1396,25 @@ cave_txt1_lo:
         !byte <txt_dflt_1, <txt_sword_w_1, <txt_shop_a_1, <txt_shop_b_1
         !byte <txt_shop_s_1, <txt_pot_1, <txt_sword_wh_1, <txt_moblin_1
         !byte <txt_choice_1, <txt_hint1_1, <txt_hint2_1, <txt_hint3_1, <txt_gamble_1
+        !byte <txt_fairy_1, <txt_gift_1, <txt_sword_mg_1
 
 cave_txt1_hi:
         !byte >txt_dflt_1, >txt_sword_w_1, >txt_shop_a_1, >txt_shop_b_1
         !byte >txt_shop_s_1, >txt_pot_1, >txt_sword_wh_1, >txt_moblin_1
         !byte >txt_choice_1, >txt_hint1_1, >txt_hint2_1, >txt_hint3_1, >txt_gamble_1
+        !byte >txt_fairy_1, >txt_gift_1, >txt_sword_mg_1
 
 cave_txt2_lo:
         !byte <txt_dflt_2, <txt_sword_w_2, <txt_shop_a_2, <txt_shop_b_2
         !byte <txt_shop_s_2, <txt_pot_2, <txt_sword_wh_2, <txt_moblin_2
         !byte <txt_choice_2, <txt_hint1_2, <txt_hint2_2, <txt_hint3_2, <txt_gamble_2
+        !byte <txt_fairy_2, <txt_gift_2, <txt_sword_mg_2
 
 cave_txt2_hi:
         !byte >txt_dflt_2, >txt_sword_w_2, >txt_shop_a_2, >txt_shop_b_2
         !byte >txt_shop_s_2, >txt_pot_2, >txt_sword_wh_2, >txt_moblin_2
         !byte >txt_choice_2, >txt_hint1_2, >txt_hint2_2, >txt_hint3_2, >txt_gamble_2
+        !byte >txt_fairy_2, >txt_gift_2, >txt_sword_mg_2
 
 txt_dflt_1:     !text "BIENVENUE DANS MA GROTTE", 0
 txt_dflt_2:     !text "REPOSE-TOI UN INSTANT.", 0
@@ -1358,6 +1437,9 @@ txt_pot_2:      !text "POUR RETROUVER TA FORCE.", 0
 txt_sword_wh_1: !text "VOICI UNE LAME TRES FORTE !", 0
 txt_sword_wh_2: !text "PRENDS L'EPEE BLANCHE !", 0
 
+txt_sword_mg_1: !text "VOICI L'EPEE MAGIQUE !", 0
+txt_sword_mg_2: !text "LIBERE HYRULE DE GANON !", 0
+
 txt_moblin_1:   !text "C'EST UN SECRET POUR", 0
 txt_moblin_2:   !text "TOUT LE MONDE. (+30 RUBIS)", 0
 
@@ -1376,23 +1458,29 @@ txt_hint3_2:    !text "LA CASCADE ET SES MYSTERES.", 0
 txt_gamble_1:   !text "TENTE TA CHANCE ICI !", 0
 txt_gamble_2:   !text "CHOISIS UN SAC DE RUBIS.", 0
 
+txt_fairy_1:    !text "JE VAIS TE SOIGNER !", 0
+txt_fairy_2:    !text "TA FORCE EST RESTAUREE.", 0
+
+txt_gift_1:     !text "PRENDS CECI C'EST POUR TOI.", 0
+txt_gift_2:     !text "GARDE LE SECRET !", 0
+
 ; ===========================================================================
 ; TABLE DES 128 SALLES DE L'OVERWORLD VERS LES 23 GROTTES
 ; ===========================================================================
 room_cave_types:
-        ; Rangée 0 (0..15 : A-1 .. P-1)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
+        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 10: Épée Blanche
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, 0, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
         ; Rangée 1 (16..31 : A-2 .. P-2)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_A
-        ; Rangée 2 (32..47 : A-3 .. P-3)
-        !byte 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_SHOP_A
+        ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 33: Épée Magique (B-3), Salle 43: Choix Cœur, Salle 44/47: Cœurs
+        !byte 0, CAVE_TYPE_SWORD_MAGIC, 0, 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_HEART_GIFT, 0, 0, CAVE_TYPE_HEART_GIFT
         ; Rangée 3 (48..63 : A-4 .. P-4)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_FAIRY, 0, 0, 0, 0, 0, 0
         ; Rangée 4 (64..79 : A-5 .. P-5)
-        !byte 0, 0, 0, 0, 0, CAVE_TYPE_POTION_SHOP, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, CAVE_TYPE_FAIRY, 0, CAVE_TYPE_POTION_SHOP, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
         ; Rangée 5 (80..95 : A-6 .. P-6)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_A, 0
+        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, 0, 0, CAVE_TYPE_SHOP_A, CAVE_TYPE_HEART_GIFT
         ; Rangée 6 (96..111 : A-7 .. P-7)
-        !byte 0, 0, 0, 0, CAVE_TYPE_SHOP_SECRET, 0, CAVE_TYPE_SHOP_A, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SHOP_B
+        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SHOP_SECRET, 0, CAVE_TYPE_SHOP_A, 0, 0, 0, 0, CAVE_TYPE_HEART_GIFT, 0, 0, 0, CAVE_TYPE_SHOP_B
         ; Rangée 7 (112..127 : A-8 .. P-8)
-        !byte CAVE_TYPE_GAMBLE, 0, 0, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SWORD_WOOD, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte CAVE_TYPE_GAMBLE, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SWORD_WOOD, 0, 0, 0, 0, 0, 0, 0, 0

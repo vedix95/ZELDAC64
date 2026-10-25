@@ -12,14 +12,14 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.8.9)
+## 💾 Téléchargement Direct & Releases (v0.9.0)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.8.9 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- ⚙️ **Distribution tout-en-un 1541 avec Streaming par Chunks** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES cadencées sous interruption raster 50 Hz (sans aucune saccade lors des transitions d'écran), l'Overworld découpé en 4 chunks disque (`OW0` à `OW3`), et les 9 Donjons (`DUNG1` à `DUNG9`) chargés à la volée dans une fenêtre mémoire compacte de 4 Ko (`$C000`–`$CFFF`).
-- ⚠️ **État d'avancement des Donjons** : **Pour le moment, seul le Donjon 1 (Niveau 1 — L'Aigle) est implémenté partiellement** (architecture complète des salles, énigmes de poussée de blocs, salle de l'ermite, cave souterraine 2D vue de côté pour récupérer l'Arc, et combat contre le boss géant Aquamentus). Les Donjons 2 à 9 disposent déjà de leur structure disque mais restent à implémenter.
-- 🚀 **Prêt à l'emploi** : La release ne propose que l'image disquette `.d64` standard, garantissant un démarrage direct et sans configuration.
+- 🎮 **[Télécharger l'image disquette v0.9.0 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚙️ **Distribution tout-en-un 1541 avec Streaming par Chunks** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES cadencées sous interruption raster 50 Hz (sans aucune saccade lors des transitions d'écran), l'Overworld découpé en 4 chunks disque (`OW0` à `OW3`), et les 9 Donjons complets (`DUNG1` à `DUNG9`) chargés à la volée dans une fenêtre mémoire compacte de 4 Ko (`$C000`–`$CFFF`).
+- 🏰 **Intégration Complète des 9 Donjons & Tous les Boss NES** : Tous les donjons de Zelda 1 (Niveaux 1 à 9) sont intégrés avec leurs énigmes, volets, portes à clés, salles de la Triforce et l'ensemble de leurs Boss (Aquamentus, Dodongos, Manhandla, Gleeok, Digdogger, Gohma et l'antre de Ganon au Donjon 9).
+- 🚀 **Prêt à l'emploi** : La release propose l'image disquette `.d64` standard tout-en-un ainsi que le jeu en double-disquette (`zelda_disk1.d64` pour l'Overworld et `zelda_disk2.d64` pour les Donjons).
 
 Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
 ```sh
@@ -68,8 +68,23 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
 
 ---
 
-## Points forts & Fonctionnalités (Nouveautés v0.8.9)
+## Points forts & Fonctionnalités (Nouveautés v0.9.0)
 
+- **Intégration Complète des 9 Donjons & de tous les Boss NES (v0.9.0)** :
+  - **9 Donjons 100% Fonctionnels (`DUNG1` à `DUNG9`)** : Architecture complète des salles étanches, portes verrouillées à clés, portes à volets automatiques, énigmes de blocs mobiles, pièges, salles de la Triforce et trésors.
+  - **Tous les Boss de Zelda 1 Implémentés** : Combats contre Aquamentus (N1 & N7), Dodongos (N2 & N8), Manhandla à 4 têtes (N3), Gleeok le dragon bicéphale (N4), Digdogger (N5), Gohma à l'œil unique (N6) et l'antre suprême de Ganon (N9).
+  - **Distribution Disquette Double Face / 2 Disquettes** : Création automatique des images disquettes séparées `zelda_disk1.d64` (Overworld) et `zelda_disk2.d64` (Donjons) pour une compatibilité matérielle optimale 1541, en plus de l'image disquette tout-en-un `zelda.d64`.
+- **Refonte Complète du Menu d'Inventaire (4 Onglets Haute Résolution)** :
+  - **Onglet 1 (Objets B)** : Grille de sélection des 8 armes secondaires avec cadre bleu, boîte d'équipement active, descriptifs détaillés et compteurs de rubis, clés et bombes sans aucun chevauchement.
+  - **Onglet 2 (Triforce)** : Grand triangle doré de la Triforce avec mise en surbrillance des fragments récupérés et compteurs de donjons complétés.
+  - **Onglet 3 (Arsenal & Reliques Passives)** : Présentation claire des 8 reliques héroïques permanentes (Épée, Bouclier avec véritable sprite d'écu royal, Anneau, Bracelet, Radeau, Échelle, Clé magique et Livre de sorts).
+  - **Onglet 4 (Carte Dynamique)** : Affichage automatique de la carte d'Hyrule (16×8) en Overworld ou du plan cartographié du donjon actif avec position de Link, boussole, salle du boss et nom du donjon.
+  - **Éradication de la corruption CIA1** : Tracé haute résolution direct sans écrasement des registres de la puce d'E/S CIA1 et bordures nettes en graphismes 164.
+- **Menu Debug Multifonctions 3 Pages Entièrement Fiabilisé** :
+  - **Page 0 (Téléportation)** : Accès instantané aux 9 Donjons et à n'importe quelle salle de l'Overworld (A-1 à P-8 / 0 à 127). La sortie du donjon ramène Link exactement à l'entrée Overworld officielle du donjon.
+  - **Page 1 (Arsenal & Triche)** : Full gear, soin instantané, ajustement des cœurs max, modification des épées, boucliers, anneaux, clés (+5), bombes (+4), rubis (+50) et pièces de Triforce (+1).
+  - **Page 2 (Diagnostic & Hardware)** : Coordonnées subpixel de Link, orientation, ID de salle, types d'ennemis actifs, état de la mémoire et bascule Dual SID en temps réel.
+  - **Correction du Défilement Intempestif** : Suppression de l'inversion de polarité joystick dans le menu debug (`beq` vs `bne`), temporisation anti-rebond unifiée et affichage propre sans duplication de lignes.
 - **Correctifs Cave Souterraine, SFX Épée, Escalier Donjon & Rugissement du Boss (v0.8.9)** :
   - **Rendu complet de la Cave Souterraine (`STATE_CELLAR`, salle `0x22`)** : Correction de la boucle de remplissage des 200 tuiles de briques (`cpx #200` au lieu de `bpl` signé sur `199`), correction de la colonne d'échelle avec motif 2D authentique à barreaux (`cellar_ladder_char_l` / `r`) et piédestal central en briques.
   - **Correction du bruitage d'épée et des SFX (`sound.asm`)** : Séparation des instructions `jmp play_sfx_v3` (qui étaient interprétées comme commentaires après `;` par ACME et tombaient dans `sound_item_fanfare`), restituant le vrai bruitage de coup d'épée (`SFX_SWORD`) et tous les effets sonores.

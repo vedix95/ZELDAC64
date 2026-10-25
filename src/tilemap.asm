@@ -88,7 +88,7 @@ load_room:
         jsr decompress_room_main
         jsr dungeon_apply_room_state_active
 
-        ; Restauration des grottes secrètes déjà ouvertes à la bombe
+        ; Restauration des grottes secrètes déjà ouvertes à la bombe ou à la flûte
         lda current_world_type
         bne +
         ldx current_room_idx
@@ -104,6 +104,47 @@ load_room:
         and overworld_secrets_opened,x
         beq +
 
+        ; Si Salle 66 (C-5) : étang asséché du Donjon 7
+        lda current_room_idx
+        cmp #66
+        bne +
+        ldy #199
+-       lda room_buf,y
+        cmp #TILE_WATER
+        bne ++
+        lda #TILE_GRASS
+        sta room_buf,y
+++      dey
+        bpl -
+        lda #TILE_CAVE
+        sta room_buf+90
+        sta room_buf+70
+        jmp +
+
++       cmp #33
+        bne +
+        lda #TILE_CAVE
+        sta room_buf+92
+        jmp .check_std_sec
+
++       cmp #109
+        bne +
+        lda #TILE_CAVE
+        sta room_buf+109
+        jmp .check_std_sec
+
++       cmp #107
+        bne +
+        lda #TILE_CAVE
+        sta room_buf+70
+        jmp .check_std_sec
+
++       cmp #82
+        bne .check_std_sec
+        lda #TILE_CAVE
+        sta room_buf+65
+
+.check_std_sec:
         ldy #199
 -       lda room_buf,y
         cmp #TILE_WALL_BOMB
@@ -275,22 +316,22 @@ apply_dungeon_colors:
 ; 0 = pas de donjon
 ; ===========================================================================
 dungeon_room_levels:
-        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 4: N9, Salle 10: N5
-        !byte 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0
-        ; Rangée 1 (16..31 : A-2 .. P-2) - Salle 20: N6
-        !byte 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 34: N4
-        !byte 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        ; Rangée 3 (48..63 : A-4 .. P-4) - Salle 51: N7, Salle 55: N1, Salle 60: N2, Salle 62: N8
-        !byte 0, 0, 0, 7, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 8, 0
-        ; Rangée 4 (64..79 : A-5 .. P-5) - Salle 68: N3
-        !byte 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 5: N9 (F-1), Salle 11: N5 (L-1)
+        !byte 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0
+        ; Rangée 1 (16..31 : A-2 .. P-2)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 34: N6 (C-3)
+        !byte 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 3 (48..63 : A-4 .. P-4) - Salle 55: N1 (H-4), Salle 60: N2 (M-4)
+        !byte 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0
+        ; Rangée 4 (64..79 : A-5 .. P-5) - Salle 66: N7 (C-5), Salle 69: N4 (F-5)
+        !byte 0, 0, 7, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ; Rangée 5 (80..95 : A-6 .. P-6)
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        ; Rangée 6 (96..111 : A-7 .. P-7)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        ; Rangée 7 (112..127 : A-8 .. P-8)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ; Rangée 6 (96..111 : A-7 .. P-7) - Salle 109: N8 (N-7)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0
+        ; Rangée 7 (112..127 : A-8 .. P-8) - Salle 116: N3 (E-8)
+        !byte 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 dungeon_start_rx:
         !byte 3, 13, 12, 1, 6, 9, 9, 14, 6

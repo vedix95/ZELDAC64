@@ -82,6 +82,10 @@ disk_prepare_kernal_io:
         lda #$ea
         sta $0315
 
+        ; Désactive le curseur KERNAL pour protéger la RAM écran
+        lda #1
+        sta CURSOR_FLAG
+
         ; Réactive le timer CIA1 pour le bus série KERNAL IEC
         lda #$81
         sta CIA1_ICR
@@ -107,6 +111,95 @@ disk_restore_game_io:
         rts
 
 ; ---------------------------------------------------------------------------
+; Indicateur visuel de chargement disquette en bas à droite (Ligne 24, cols 26..39)
+; ---------------------------------------------------------------------------
+disk_loading_frame: !byte 0
+disk_loading_tick:  !byte 0
+
+disk_show_loading:
+        ; S'assure que l'écran est visible pour afficher l'indicateur
+        lda VIC_CTRL1
+        ora #%00010000
+        sta VIC_CTRL1
+
+        ; Écrit "[DISK] LOADING... [TRI]" en ligne 24 (colonnes 26..39)
+        ldx #0
+-       lda .loading_text,x
+        sta $07da,x
+        lda .loading_cols,x
+        sta $dbda,x
+        inx
+        cpx #14
+        bne -
+        lda #0
+        sta disk_loading_frame
+        sta disk_loading_tick
+        rts
+
+.loading_text:
+        !byte 120, 32, 76, 79, 65, 68, 73, 78, 71, 46, 46, 46, 32, 116
+        ; [DISK], ' ', 'L', 'O', 'A', 'D', 'I', 'N', 'G', '.', '.', '.', ' ', [TRIFORCE]
+
+.loading_cols:
+        !byte COL_YELLOW, COL_BLACK, COL_WHITE, COL_WHITE, COL_WHITE, COL_WHITE, COL_WHITE, COL_WHITE, COL_WHITE, COL_YELLOW, COL_YELLOW, COL_YELLOW, COL_BLACK, COL_YELLOW
+
+disk_loading_irq:
+        inc disk_loading_tick
+        lda disk_loading_tick
+        and #$07                        ; Anime toutes les 8 interruptions CIA (~7.5 Hz)
+        bne +
+        jsr disk_loading_animate
++       jmp $ea31                       ; Poursuit l'IRQ système KERNAL
+
+disk_loading_animate:
+        inc disk_loading_frame
+        lda disk_loading_frame
+
+        ; Clignotement de l'icône disquette (col 26) et de la Triforce (col 39)
+        and #$02
+        bne +
+        lda #COL_YELLOW
+        sta $dbda
+        lda #COL_ORANGE
+        sta $dbe7
+        jmp ++
++       lda #COL_WHITE
+        sta $dbda
+        lda #COL_YELLOW
+        sta $dbe7
+++
+        ; Animation cyclique des 3 points "..." (cols 35..37)
+        lda disk_loading_frame
+        lsr
+        and #$03
+        tax
+        lda .dot_pat0,x
+        sta $07e3
+        lda .dot_pat1,x
+        sta $07e4
+        lda .dot_pat2,x
+        sta $07e5
+        rts
+
+.dot_pat0: !byte 46, 46, 46, 32
+.dot_pat1: !byte 32, 46, 46, 32
+.dot_pat2: !byte 32, 32, 46, 32
+
+disk_hide_loading:
+        ; Efface l'indicateur de chargement en ligne 24 (colonnes 26..39)
+        lda #32                         ; Espace
+        ldx #13
+-       sta $07da,x
+        dex
+        bpl -
+        lda #COL_BLACK
+        ldx #13
+-       sta $dbda,x
+        dex
+        bpl -
+        rts
+
+; ---------------------------------------------------------------------------
 ; disk_load_file : Charge un fichier binaire à son adresse d'origine (Sec=1)
 ; Entrée :
 ;   A = longueur du nom de fichier
@@ -121,7 +214,17 @@ disk_load_file:
         stx ZP_SRC
         sty ZP_SRC+1
 
+        jsr disk_show_loading
+
         jsr disk_prepare_kernal_io
+
+        ; Redirige l'interruption vers notre animation de chargement
+        sei
+        lda #<disk_loading_irq
+        sta $0314
+        lda #>disk_loading_irq
+        sta $0315
+        cli
 
         ; SETNAM
         lda .namelen
@@ -142,6 +245,7 @@ disk_load_file:
         php                             ; préserve le code de statut (Carry)
         tax
         jsr disk_restore_game_io
+        jsr disk_hide_loading
         txa
         plp                             ; restaure Carry (0=ok, 1=erreur)
         rts
@@ -226,6 +330,10 @@ disk_ensure_ow_chunk_a:
         jsr disk_load_file
         bcs .ow_chunk_err
 
+        ; Restaure le jeu de caractères Overworld ($2000 et $2540) et tables
+        jsr copy_map_charset
+        jsr set_overworld_tables
+
         lda MAP_ENEMIES_PTR
         sta map_enemies_ptr
         lda MAP_ENEMIES_PTR+1
@@ -249,11 +357,6 @@ disk_load_map_overworld:
         lda #$ff
         sta cached_ow_chunk
 
-        ; Masque l'écran pendant le chargement initial (bus IEC / DMA propre)
-        lda VIC_CTRL1
-        and #%11101111
-        sta VIC_CTRL1
-
         jsr disk_ensure_ow_chunk
         bcs .ow_err
 
@@ -263,17 +366,10 @@ disk_load_map_overworld:
         jsr apply_map_colors
         lda #WORLD_OVERWORLD
         sta current_world_type
-
-        lda VIC_CTRL1
-        ora #%00010000
-        sta VIC_CTRL1
         clc
         rts
 
 .ow_err:
-        lda VIC_CTRL1
-        ora #%00010000
-        sta VIC_CTRL1
         sec
         rts
 
@@ -352,20 +448,15 @@ disk_load_dungeon:
         rts
 
 .load_from_disk:
-        ; 1. Masquer l'écran pour un accès DMA / bus IEC silencieux et propre
-        lda VIC_CTRL1
-        and #%11101111          ; Bit 4 = 0 (écran masqué)
-        sta VIC_CTRL1
-
-        ; 2. Prépare le nom de fichier "DUNG1" .. "DUNG9"
+        ; 1. Prépare le nom de fichier "DUNG1" .. "DUNG9"
         lda current_dungeon_level
         ora #$30                ; '1'..'9'
         sta name_dung_file + 4
 
-        ; 3. Purge la mémoire carte dynamique ($C000..$CFFF)
+        ; 2. Purge la mémoire carte dynamique ($C000..$CFFF)
         jsr clear_map_memory
 
-        ; 4. Charge le fichier binaire du donjon
+        ; 3. Charge le fichier binaire du donjon
         lda #NAME_DUNG_LEN
         ldx #<name_dung_file
         ldy #>name_dung_file
@@ -376,33 +467,26 @@ disk_load_dungeon:
         jsr copy_map_charset
         jsr set_dungeon_tables
 
-        ; 5. Extrait le pointeur d'ennemis du donjon depuis l'en-tête (MAP_ENEMIES_PTR)
+        ; 4. Extrait le pointeur d'ennemis du donjon depuis l'en-tête (MAP_ENEMIES_PTR)
         lda MAP_ENEMIES_PTR
         sta map_enemies_ptr
         lda MAP_ENEMIES_PTR+1
         sta map_enemies_ptr+1
 
-        ; 6. Met à jour le cache et le type de monde
+        ; 5. Met à jour le cache et le type de monde
         lda current_dungeon_level
         sta cached_dungeon_level
         lda #WORLD_DUNGEON
         sta current_world_type
 
-        ; 7. Applique les couleurs authentiques du donjon
+        ; 6. Applique les couleurs authentiques du donjon
         jsr apply_dungeon_colors
-
-        ; 8. Réactive l'affichage écran
-        lda VIC_CTRL1
-        ora #%00010000          ; Bit 4 = 1 (écran visible)
-        sta VIC_CTRL1
         clc
         rts
 
 .dung_err:
-        lda VIC_CTRL1
-        ora #%00010000
-        sta VIC_CTRL1
         sec
+        rts
         rts
 
 ; Alias de compatibilité

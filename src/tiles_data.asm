@@ -94,11 +94,10 @@ tile_flags:
 tile_row_offset:
         !byte 0, 20, 40, 60, 80, 100, 120, 140, 160, 180
 
-; Pointeur vers la table de rangées dynamique de la carte active ($A006)
+; Pointeur vers la table de rangées dynamique de la carte active ($C006)
 world_row_offset = map_row_offset
 
-room_buf         = $be00                ; Tampon de la salle active decompressee (200 octets)
-target_room_buf  = $bec8                ; Tampon de la salle cible (transition, 200 octets)
+; Les tampons room_buf et target_room_buf sont alloués proprement en BSS résident dans main.asm
 
 ; ---------------------------------------------------------------------------
 ; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf

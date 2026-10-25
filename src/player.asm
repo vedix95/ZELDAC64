@@ -57,6 +57,7 @@ player_has_wand:       !byte 1          ; 1 = baguette magique
 
 player_has_compass:     !byte 0          ; 1 = boussole du donjon actif
 player_has_dungeon_map:  !byte 0          ; 1 = plan du donjon actif
+player_has_book:         !byte 0          ; 1 = livre magique (flammes de la baguette)
 
 ; Triforce de la Sagesse (8 fragments numérotés 1 à 8)
 player_triforce_pieces: !byte %00000000 ; masque 8 bits
@@ -505,7 +506,7 @@ player_update:
         sta player_walk_tick
         sta player_walk_anim            ; retour posture neutre à l'arrêt
 .anim_done:
-        ; Test si Link marche sur une entrée de grotte (TILE_CAVE)
+        ; 1. Test si Link marche sur une entrée de grotte (TILE_CAVE)
         lda player_y
         clc
         adc #12                         ; niveau des pieds de Link
@@ -521,7 +522,103 @@ player_update:
         cmp #TILE_CAVE
         bne +
         jsr check_room_entrance
-+       rts
+        rts
++
+        ; 2. Mécaniques spéciales Overworld (Fontaine de Fée, Cœur du ponton, etc.)
+        lda current_world_type
+        beq .chk_ow_special
+        rts
+
+.chk_ow_special:
+        ; --- Fontaine des Fées (Bassin) en salle 57 (J-4) et salle 67 (D-5) ---
+        lda current_room_idx
+        cmp #57
+        beq .in_fairy_pond
+        cmp #67
+        bne .chk_dock_heart
+
+.in_fairy_pond:
+        lda player_y
+        cmp #100
+        bcc .chk_dock_heart
+        cmp #160
+        bcs .chk_dock_heart
+        lda player_x
+        cmp #120
+        bcc .chk_dock_heart
+        cmp #184
+        bcs .chk_dock_heart
+        ; Link est dans le bassin de la Fée : soin complet de sa vie !
+        lda hud_cur_hearts
+        cmp hud_max_hearts
+        bcs .chk_dock_heart
+        lda hud_max_hearts
+        sta hud_cur_hearts
+        jsr hud_render
+        jsr sound_item_fanfare
+        jsr sound_secret
+        rts
+
+.chk_dock_heart:
+        ; --- Conteneur de Cœur sur le ponton marin en salle 95 (P-6) ---
+        lda current_room_idx
+        cmp #95
+        bne .chk_grave_push
+        lda player_has_stepladder
+        beq .chk_grave_push
+        lda player_x
+        cmp #200
+        bcc .chk_grave_push
+        lda player_y
+        cmp #120
+        bcc .chk_grave_push
+        cmp #160
+        bcs .chk_grave_push
+        ; Vérifie si le cœur de la salle 95 a déjà été pris
+        ldx #95
+        lda cave_room_cleared,x
+        and #1
+        bne .chk_grave_push
+        lda #1
+        ora cave_room_cleared,x
+        sta cave_room_cleared,x
+        inc hud_max_hearts
+        lda hud_max_hearts
+        sta hud_cur_hearts
+        jsr hud_render
+        jsr sound_item_fanfare
+        rts
+
+.chk_grave_push:
+        ; --- Pousser la tombe en salle 33 (B-3) vers l'Épée Magique ---
+        lda current_room_idx
+        cmp #33
+        bne .ow_special_done
+        lda player_dir
+        cmp #DIR_UP
+        bne .ow_special_done
+        lda player_x
+        cmp #200
+        bcc .ow_special_done
+        cmp #232
+        bcs .ow_special_done
+        lda player_y
+        cmp #148
+        bcc .ow_special_done
+        cmp #172
+        bcs .ow_special_done
+        ; Si la tombe n'a pas encore été révélée
+        lda room_buf+92
+        cmp #TILE_CAVE
+        beq .ow_special_done
+        lda #TILE_CAVE
+        sta room_buf+92
+        ldy #92
+        jsr redraw_single_tile
+        jsr sound_secret
+        jsr record_room_secret_opened
+.ow_special_done:
+        rts
 
 ; ---------------------------------------------------------------------------
 ; check_room_entrance : Gère l'entrée dans les donjons ou les grottes
@@ -669,11 +766,27 @@ check_point_solid:
         sec                             ; Toujours SOLIDE si hors écran !
         rts
 +       ldx current_world_type
-        bne .not_water
+        bne .dung_collision
         cmp #TILE_WATER
         bne .not_water
-        ldx player_has_stepladder
+        ; Sur l'Overworld : l'échelle permet de franchir le goulet d'eau vers le ponton en salle 95
+        lda current_room_idx
+        cmp #95
+        bne .water_solid
+        lda player_has_stepladder
         bne .free
+.water_solid:
+        sec
+        rts
+
+.dung_collision:
+        cmp #TILE_WATER
+        bne .not_water
+        lda player_has_stepladder
+        bne .free
+        sec
+        rts
+
 .not_water:
         tax
         lda tile_flags,x

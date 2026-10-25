@@ -140,11 +140,42 @@ use_whistle:
         cpx #MAX_ENEMIES
         bcc .chk_dig
 
-        ; Si dans l'Overworld : téléporte vers l'entrée du donjon !
         lda current_world_type
         cmp #WORLD_OVERWORLD
         bne .whistle_end
-        lda #55                         ; Entrée Niveau 1
+
+        ; --- Sur l'Overworld ---
+        lda current_room_idx
+        cmp #66                         ; Salle 66 (C-5) : Assèche l'étang du Donjon 7 !
+        bne .whistle_warp
+
+        ; Remplacement des tuiles d'eau par de l'herbe et apparition de la grotte du Donjon 7
+        ldy #199
+-       lda room_buf,y
+        cmp #TILE_WATER
+        bne +
+        lda #TILE_GRASS
+        sta room_buf,y
++       dey
+        bpl -
+
+        ; Place l'entrée du Donjon 7 au centre de l'ancien étang (ligne 4, col 10 -> index 90)
+        lda #TILE_CAVE
+        sta room_buf+90
+        sta room_buf+70
+
+        lda #<room_buf
+        sta ZP_MAP
+        lda #>room_buf
+        sta ZP_MAP+1
+        jsr draw_map
+        jsr sound_secret_chime
+        jsr record_room_secret_opened
+        rts
+
+.whistle_warp:
+        ; Téléportation magique par la tornade vers l'entrée d'un donjon !
+        lda #55                         ; Entrée Niveau 1 (H-4)
         sta current_room_idx
         lda #7
         sta current_room_x
@@ -195,7 +226,14 @@ spawn_boomerang:
         sta item_dir
         lda #0
         sta item_state                  ; phase 0 = aller
+        lda player_has_boomerang
+        cmp #2
+        beq .magic_boom
         lda #28                         ; ~84 pixels de portée aller
+        bne .set_boom_timer
+.magic_boom:
+        lda #70                         ; portée magique (traverse l'écran)
+.set_boom_timer:
         sta item_timer
 
         jsr set_spawn_coords
@@ -721,11 +759,46 @@ update_candle:
 
 .candle_burn:
         ; --- PHASE 1 : BRÛLE SUR PLACE ---
-        dec item_timer
+        lda current_world_type
+        bne +
+        ; Tester si la flamme brûle un arbre secret
+        lda item_x
+        sta col_x
+        lda item_x+1
+        sta col_x+1
+        lda item_y
+        sta col_y
+        jsr get_tile_at_point           ; A = tile_id, Y = offset dans room_buf
+        cmp #TILE_TREE
+        bne +
+        lda current_room_idx
+        cmp #107                        ; Salle 107 (L-7) : Cœur dans l'arbre !
+        beq .burn_tree_secret
+        cmp #15                         ; Salle 15 (P-1) : Grotte indice
+        beq .burn_tree_secret
+        cmp #108                        ; Salle 108 (M-7) : Arbre Donjon 8
+        beq .burn_tree_secret
+        cmp #109                        ; Salle 109 (N-7) : Arbre Donjon 8
+        beq .burn_tree_secret
+        cmp #82                         ; Salle 82 (C-6) : Moblin secret
+        beq .burn_tree_secret
+        cmp #111                        ; Salle 111 (P-7) : Boutique
+        beq .burn_tree_secret
++       dec item_timer
         bne .burn_done
         lda #ITEM_NONE
         sta item_active
 .burn_done:
+        rts
+
+.burn_tree_secret:
+        lda #TILE_CAVE
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret
+        jsr record_room_secret_opened
+        lda #ITEM_NONE
+        sta item_active
         rts
 
 ; ---------------------------------------------------------------------------
@@ -889,6 +962,34 @@ items_draw:
         bne +
         lda #< (sprite_link_item_boomerang / 64)
         sta SPRITE_PTR2
+        lda current_dungeon_level
+        cmp #2
+        beq .boom_blue
+        lda #COL_YELLOW
+        jmp .boom_col_set
+.boom_blue:
+        lda #COL_LIGHT_BLUE
+.boom_col_set:
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_RAFT
+        bne +
+        lda #< (sprite_link_item_food / 64)
+        sta SPRITE_PTR2
+        lda #COL_BROWN
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_LADDER
+        bne +
+        lda #< (sprite_link_item_shield / 64)
+        sta SPRITE_PTR2
+        lda #COL_CYAN
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_WHISTLE
+        bne +
+        lda #< (sprite_link_item_whistle / 64)
+        sta SPRITE_PTR2
         lda #COL_YELLOW
         sta VIC_SPRITE_COL2
         jmp .enable_spr2
@@ -938,7 +1039,14 @@ items_draw:
         tax
         lda boom_ptrs,x
         sta SPRITE_PTR2
+        lda player_has_boomerang
+        cmp #2
+        beq .blue_b
+        lda #COL_YELLOW
+        bne .set_b_col
+.blue_b:
         lda #COL_LIGHT_BLUE
+.set_b_col:
         sta VIC_SPRITE_COL2
         jmp .enable_spr2
 
@@ -1194,10 +1302,49 @@ bomb_check_secret_wall:
 .test_bomb_point:
         jsr get_tile_at_point           ; A = tile_id, Y = offset tuile dans room_buf
         cmp #TILE_WALL_BOMB
-        bne +
-        sec                             ; Carry = 1 : trouvé !
+        beq .found_b_sec
+        ; Sur l'Overworld : autoriser l'explosion des rochers/murs fissurés des grottes secrètes
+        lda current_world_type
+        bne .not_b_sec
+        lda current_room_idx
+        cmp #5                          ; Salle 5 (F-1, Spectacle Rock, Entrée Donjon 9 !)
+        beq .is_b_room
+        cmp #44                         ; Salle 44 (M-3, Cœur dans rocher)
+        beq .is_b_room
+        cmp #91                         ; Salle 91 (L-6, Cœur choix falaise)
+        beq .is_b_room
+        cmp #36                         ; Salle 36 (E-3, Moblin +30)
+        beq .is_b_room
+        cmp #49                         ; Salle 49 (B-4, Moblin +100)
+        beq .is_b_room
+        cmp #86                         ; Salle 86 (G-6, Moblin +30)
+        beq .is_b_room
+        cmp #98                         ; Salle 98 (C-7, Moblin +30)
+        beq .is_b_room
+        cmp #100                        ; Salle 100 (E-7, Anneau Bleu secret)
+        beq .is_b_room
+        cmp #114                        ; Salle 114 (C-8, Moblin +30)
+        beq .is_b_room
+        cmp #2                          ; Salle 2 (C-1, Door repair)
+        beq .is_b_room
+        cmp #12                         ; Salle 12 (M-1, Door repair)
+        beq .is_b_room
+        cmp #39                         ; Salle 39 (H-3, Door repair)
+        beq .is_b_room
+        cmp #69                         ; Salle 69 (F-5, Door repair)
+        beq .is_b_room
+        cmp #89                         ; Salle 89 (J-6, Door repair)
+        beq .is_b_room
+.not_b_sec:
+        clc
         rts
-+       clc
+
+.is_b_room:
+        lda room_buf,y
+        cmp #TILE_WALL                  ; Mur ou rocher
+        bne .not_b_sec
+.found_b_sec:
+        sec
         rts
 
 .found_secret:

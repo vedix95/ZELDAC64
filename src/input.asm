@@ -159,14 +159,30 @@ read_input:
         cli
 
         ; -------------------------------------------------------------------
-        ; 3. TRAITEMENT BOUTON B (INVENTAIRE / MENU / TOUCHE 'B')
+        ; 3. TRAITEMENT BOUTON B (INVENTAIRE / MENU / TOUCHE 'B' / MANETTE)
         ; -------------------------------------------------------------------
         lda #0
         sta btn_b
 
+        ; Test a : Touche 'B' (Ligne 3, Colonne 4 -> bit 4 de col_row3)
         lda col_row3
         and #%00010000                  ; Bit 4 = 0 si 'B' enfoncé
-        bne .done_btn_b
+        beq .got_btn_b
+
+        ; Test b : Manette Bouton 2 / Port 1 Fire (col_idle bit 4 = 0)
+        lda joy
+        and #JOY_RIGHT
+        bne .check_potx
+        lda col_idle
+        and #%00010000
+        beq .got_btn_b
+
+.check_potx:
+        ; Test c : SID POT X (Pin 9 du Port 2, manette C64GS bouton 2)
+        lda SID_POTX
+        bmi .done_btn_b
+
+.got_btn_b:
         lda #1
         sta btn_b
 

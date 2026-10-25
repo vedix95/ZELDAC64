@@ -39,6 +39,10 @@ game_init:
         lda #$36
         sta CPU_PORT
 
+        ; Configure immédiatement le VIC-II vers SCREEN_RAM ($0400) et CHARSET_ADDR ($2000)
+        lda #MEMSETUP_VALUE
+        sta VIC_MEMSETUP
+
         jsr disk_init
 !if START_IN_DUNGEON == 0 {
         jsr disk_load_map_overworld
@@ -105,14 +109,28 @@ main_loop:
         jsr wait_frame
         jsr read_input
 
-        ; Si déjà en mode debug
+        ; Auto-warp debug hook (activable par mémoire ou moniteur)
+        lda debug_hook_cmd
+        beq +
+        jsr debug_exec_hook_cmd
++
+        ; Dispatch selon l'état de jeu
         lda game_state
         cmp #STATE_DEBUG
         bne +
         jmp .in_debug
++       cmp #STATE_INVENTORY
+        bne +
+        jmp .in_inventory
++       cmp #STATE_CAVE
+        bne +
+        jmp .in_cave
++       cmp #STATE_CELLAR
+        bne +
+        jmp .in_cellar
 +
 
-        ; Touche D : ouvre l'écran de debug depuis n'importe où
+        ; Touche D : ouvre l'écran de debug depuis le jeu normal
         lda key_d_pressed
         beq +
         jsr open_debug
@@ -150,14 +168,6 @@ main_loop:
         lda #0
         sta SID2_VOLUME
 +
-        ; Dispatch selon l'état de jeu
-        lda game_state
-        cmp #STATE_INVENTORY
-        beq .in_inventory
-        cmp #STATE_CAVE
-        beq .in_cave
-        cmp #STATE_CELLAR
-        beq .in_cellar
 
         ; --- ÉTAT DE JEU NORMAL ---
         ; Bouton B (Manette Xbox Bouton B / Touche 'B') : ouvre l'inventaire
@@ -215,12 +225,15 @@ wait_frame:
 !source "src/player.asm"
 !source "src/tilemap.asm"
 !source "src/gameplay.asm"
-!source "src/debug.asm"
 
-; Le jeu de caractères est à une adresse fixe : le code et les données
-; ci-dessus doivent tenir avant ($1000-$1FFF).
+; Buffers de travail résidents non volatils en RAM Zone 1 ($1DAC..$1FBC, 528 octets)
+dungeon_room_state:  !fill 128, 0     ; États des 128 salles donjon (portes, clés, boss, trésors)
+room_buf:            !fill 200, 0     ; Tampon de la salle active décompressée (20x10 tuiles)
+target_room_buf:     !fill 200, 0     ; Tampon de la salle cible pour transition (20x10 tuiles)
+
+; Le jeu de caractères est à une adresse fixe ($2000)
 !if * > CHARSET_ADDR {
-        !error "Le code deborde sur le jeu de caracteres ($2000)"
+        !error "Le code et les buffers debordent sur le jeu de caracteres ($2000)"
 }
 * = CHARSET_ADDR
 !source "src/charset.asm"
@@ -244,6 +257,7 @@ wait_frame:
 !source "src/hud.asm"
 !source "src/inventory.asm"
 !source "src/inventory_draw.asm"
+!source "src/debug.asm"
 
 ; Module de communication disquette 1541 / D64
 !source "src/disk.asm"

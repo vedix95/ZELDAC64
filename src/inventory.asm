@@ -40,17 +40,25 @@ open_inventory:
         lda #0
         sta btn_b_pressed
         sta btn_x_pressed
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
         jsr items_init
 
-        ; Marque la salle active comme visitée
+        ; Marque la salle active comme visitée selon le monde
         ldx current_room_y
         lda world_row_offset,x
         clc
         adc current_room_x
         tax
         lda #1
+        ldy current_world_type
+        bne +
+        sta visited_ow_rooms,x
         sta visited_rooms,x
+        jmp ++
++       sta visited_uw_rooms,x
+++
 
         ; Bip sonore d'ouverture
         jsr sound_inv_flip
@@ -89,6 +97,8 @@ close_inventory:
         lda #0
         sta VIC_SPRITE_EN
         sta VIC_SPRITE_MSB
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
         ; Restaure la couleur de Link selon l'Anneau Bleu
         lda player_has_blue_ring
