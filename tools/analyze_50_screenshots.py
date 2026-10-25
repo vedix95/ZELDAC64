@@ -70,9 +70,9 @@ def main():
         if data["distinct_colors"] < 4:
             issues_found.append((fn, f"Too few distinct colors ({data['distinct_colors']}) - ممکن glitch"))
 
-        # 2. Check for solid single color screen
+        # 2. Check for solid single color screen (allow up to 97% for black C64 border + text screens)
         top_color_count = max(data["colors"].values()) if data["colors"] else 0
-        if top_color_count > 0.95 * data["total_pixels"]:
+        if top_color_count > 0.97 * data["total_pixels"]:
             issues_found.append((fn, f"Blank or almost solid screen ({top_color_count}/{data['total_pixels']} pixels)"))
 
         print(f"[{data['file']}] {data['distinct_colors']} colors, size {os.path.getsize(path)} bytes")

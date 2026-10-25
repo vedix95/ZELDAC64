@@ -35,8 +35,11 @@ jobs:
       - name: Build D64 Disk Image
         run: make
 
-      - name: Upload playable D64 disk image
+      - name: Upload playable D64 disk images
         uses: actions/upload-artifact@v4
         with:
           name: zelda-c64-d64
-          path: build/zelda.d64
+          path: |
+            build/zelda.d64
+            build/zelda_disk1.d64
+            build/zelda_disk2.d64

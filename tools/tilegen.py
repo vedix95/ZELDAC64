@@ -522,8 +522,7 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("\n; Pointeur vers la table de rangées dynamique de la carte active ($A006)\n")
         f.write("world_row_offset = map_row_offset\n")
 
-        f.write("\nroom_buf         = $be00                ; Tampon de la salle active decompressee (200 octets)\n")
-        f.write("target_room_buf  = $bec8                ; Tampon de la salle cible (transition, 200 octets)\n\n")
+        f.write("\n; Les tampons room_buf et target_room_buf sont alloues en BSS resident dans main.asm\n\n")
 
         f.write("; ---------------------------------------------------------------------------\n")
         f.write("; Decompression RLE compact (1-octet) de la salle pointee par ZP_SRC dans room_buf\n")

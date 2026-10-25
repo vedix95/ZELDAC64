@@ -12,14 +12,15 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.9.0)
+## 💾 Téléchargement Direct & Releases (v0.9.1)
 
 L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger l'image disquette v0.9.0 (`zelda.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- 🎮 **[Télécharger les images disquettes v0.9.1 (`zelda.d64`, `zelda_disk1.d64`, `zelda_disk2.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
 - ⚙️ **Distribution tout-en-un 1541 avec Streaming par Chunks** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES cadencées sous interruption raster 50 Hz (sans aucune saccade lors des transitions d'écran), l'Overworld découpé en 4 chunks disque (`OW0` à `OW3`), et les 9 Donjons complets (`DUNG1` à `DUNG9`) chargés à la volée dans une fenêtre mémoire compacte de 4 Ko (`$C000`–`$CFFF`).
 - 🏰 **Intégration Complète des 9 Donjons & Tous les Boss NES** : Tous les donjons de Zelda 1 (Niveaux 1 à 9) sont intégrés avec leurs énigmes, volets, portes à clés, salles de la Triforce et l'ensemble de leurs Boss (Aquamentus, Dodongos, Manhandla, Gleeok, Digdogger, Gohma et l'antre de Ganon au Donjon 9).
 - 🚀 **Prêt à l'emploi** : La release propose l'image disquette `.d64` standard tout-en-un ainsi que le jeu en double-disquette (`zelda_disk1.d64` pour l'Overworld et `zelda_disk2.d64` pour les Donjons).
+- 🛠️ **Nouveautés v0.9.1** : Correction du pipeline d'intégration continue GitHub Actions (conflit de symboles résolu dans `tools/tilegen.py`), stabilisation du menu Debug (élimination des déplacements automatiques et duplication du curseur), affichage corrigé du menu Inventaire et validation automatique des 50 scénarios de jeu par capture d'écran.
 
 Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
 ```sh

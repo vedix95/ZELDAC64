@@ -41,6 +41,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         with:
-          files: build/zelda.d64
+          files: |
+            build/zelda.d64
+            build/zelda_disk1.d64
+            build/zelda_disk2.d64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
