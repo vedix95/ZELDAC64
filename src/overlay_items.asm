@@ -156,32 +156,51 @@ ovl_item_candle_exec:
 ; 3. BRACELET DE FORCE (Power Bracelet)
 ; ===========================================================================
 ovl_item_bracelet_exec:
-        lda current_room_idx
-        cmp #51                         ; Salle 51 (D-4) : Rocher escargot menant au passage
+        lda current_world_type
         bne .ow_special_done
         lda player_has_bracelet
         beq .ow_special_done
         lda player_dir
         cmp #DIR_UP
         bne .ow_special_done
-        lda player_x+1
-        bne .ow_special_done
+
+        ; Teste si Link pousse vers le haut contre un rocher (TILE_ROCK)
         lda player_x
-        cmp #120
-        bcc .ow_special_done
-        cmp #144
-        bcs .ow_special_done
+        clc
+        adc #12                         ; Centre horizontal de Link
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
         lda player_y
-        cmp #148
-        bcc .ow_special_done
-        cmp #168
-        bcs .ow_special_done
-        lda room_buf+88
+        sec
+        sbc #4                          ; Point de contact juste au-dessus de Link
+        sta col_y
+        jsr get_tile_at_point           ; Y = index dans room_buf (0..199), A = tile_id
+        cmp #TILE_ROCK
+        bne .ow_special_done
+
+        ; Salles overworld avec secret de rocher poussable :
+        ; 51 (D-4), 35 (D-3), 73 (J-5), 121 (J-8), 29 (N-2)
+        lda current_room_idx
+        cmp #51
+        beq .push_rock_found
+        cmp #35
+        beq .push_rock_found
+        cmp #73
+        beq .push_rock_found
+        cmp #121
+        beq .push_rock_found
+        cmp #29
+        beq .push_rock_found
+        rts
+
+.push_rock_found:
+        lda room_buf,y
         cmp #TILE_CAVE
         beq .ow_special_done
         lda #TILE_CAVE
-        sta room_buf+88
-        ldy #88
+        sta room_buf,y
         jsr redraw_single_tile
         jsr sound_secret
         jsr record_room_secret_opened

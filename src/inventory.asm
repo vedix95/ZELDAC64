@@ -129,18 +129,26 @@ ovl_inventory_update:
         ; 2. Accès direct par les touches 1, 2, 3, 4
         lda key_1_pressed
         beq +
+        lda #0
+        sta key_1_pressed
         lda #INV_PAGE_ITEMS
         jmp .set_page
 +       lda key_2_pressed
         beq +
+        lda #0
+        sta key_2_pressed
         lda #INV_PAGE_TRIFORCE
         jmp .set_page
 +       lda key_3_pressed
         beq +
+        lda #0
+        sta key_3_pressed
         lda #INV_PAGE_EQUIPMENT
         jmp .set_page
 +       lda key_4_pressed
         beq +
+        lda #0
+        sta key_4_pressed
         lda #INV_PAGE_MAP
         jmp .set_page
 +       jmp .check_joy_page

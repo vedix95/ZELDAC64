@@ -43,6 +43,10 @@ cave_torch_tick:        !byte 0
 cave_pickup_timer:      !byte 0
 cave_jingle_tick:       !byte 0
 cave_jingle_idx:        !byte 0
+cave_price_col_cur:     !byte 0
+cave_p_c:               !byte 0
+cave_p_d:               !byte 0
+cave_p_u:               !byte 0
 
 ; État des 3 emplacements de la salle active
 cave_slot1_active:      !byte 0
@@ -84,13 +88,25 @@ ovl_cave_enter:
         lda player_y
         sta saved_overworld_y
 
-        ; 2. Désactive les ennemis et projectiles extérieurs
+        ; 2. Désactive TOUS les ennemis (0..7) et projectiles extérieurs
+        ldx #7
         lda #0
-        sta en_type
-        sta en_type+1
+-       sta en_type,x
+        sta en_state,x
+        dex
+        bpl -
         sta en_proj_active
         sta item_active
         sta player_attacking
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        sta VIC_SPRITE_MSB
+
+        ; 2b. Nettoie complètement l'écran et réinitialise le HUD
+        jsr clear_screen
+        jsr hud_init
+        jsr hud_render
 
         ; 3. Initialise l'état de la grotte et charge les sprites PNJ
         jsr cart_load_sprites_npc
@@ -505,15 +521,6 @@ build_cave_room:
         cpx #16
         bne -
 
-        ; Escaliers / passage (col 10, rangées 5..8)
-        lda #6
-        sta room_buf+110
-        sta room_buf+130
-        sta room_buf+150
-        sta room_buf+170
-        sta room_buf+189
-        sta room_buf+190
-
         ; Rangée 9 : murs du bas
         ldx #7
         lda #5
@@ -539,6 +546,12 @@ ovl_cave_draw_screen:
         lda #COL_GREY
         sta VIC_BG_MC2
 
+        ; Initialise la palette de tuiles de la grotte (sol noir, murs bleu clair)
+        lda #COL_BLACK
+        sta active_tile_color+0
+        lda #14                         ; 8 + 6 (Multicolore + Bleu Clair)
+        sta active_tile_color+5
+
         ; 1. Décor de la salle de grotte résidente
         jsr build_cave_room
         lda #<room_buf
@@ -561,16 +574,27 @@ cave_render_texts:
         lda cave_txt1_hi,x
         sta ZP_SRC+1
 
-        ; Ligne 6 : 28 caractères
+        ; Ligne 6 : 28 caractères (colonnes 6..33)
         ldy #0
 -       lda (ZP_SRC),y
-        beq +
+        beq .pad_txt1
         sta SCREEN_RAM+240+6,y
         lda #COL_WHITE
         sta COLOR_RAM+240+6,y
         iny
         cpy #28
         bne -
+        jmp +
+
+.pad_txt1:
+        cpy #28
+        bcs +
+        lda #' '
+        sta SCREEN_RAM+240+6,y
+        lda #COL_BLACK
+        sta COLOR_RAM+240+6,y
+        iny
+        bne .pad_txt1
 +
         ldx current_cave_type
         cpx #CAVE_TYPE_MOBLIN
@@ -591,17 +615,28 @@ cave_render_texts:
         sta ZP_SRC+1
 
 .draw_txt2_chars:
-        ; Ligne 8 : 28 caractères
+        ; Ligne 8 : 28 caractères (colonnes 6..33)
         ldy #0
 -       lda (ZP_SRC),y
-        beq +
+        beq .pad_txt2
         sta SCREEN_RAM+320+6,y
         lda #COL_WHITE
         sta COLOR_RAM+320+6,y
         iny
         cpy #28
         bne -
-+       rts
+        rts
+
+.pad_txt2:
+        cpy #28
+        bcs ++
+        lda #' '
+        sta SCREEN_RAM+320+6,y
+        lda #COL_BLACK
+        sta COLOR_RAM+320+6,y
+        iny
+        bne .pad_txt2
+++      rts
 
 cave_render_prices:
         ; Efface la ligne 16 (colonnes 12..30)
@@ -627,6 +662,7 @@ cave_render_prices:
         beq .psp_done
         pha
         lda cave_price_cols,x
+        sta cave_price_col_cur
         tay
         lda #HUD_CHAR_RUPEE
         sta SCREEN_RAM+640,y
@@ -634,17 +670,25 @@ cave_render_prices:
         sta COLOR_RAM+640,y
         pla
         jsr cave_print_price
+        sta cave_p_c
+        stx cave_p_d
+        sty cave_p_u
+
+        ldy cave_price_col_cur
         iny
+        lda cave_p_c
         sta SCREEN_RAM+640,y
         lda #COL_YELLOW
         sta COLOR_RAM+640,y
+
         iny
-        txa
+        lda cave_p_d
         sta SCREEN_RAM+640,y
         lda #COL_YELLOW
         sta COLOR_RAM+640,y
+
         iny
-        tya
+        lda cave_p_u
         sta SCREEN_RAM+640,y
         lda #COL_YELLOW
         sta COLOR_RAM+640,y
@@ -1293,6 +1337,15 @@ cave_exit:
         lda #STATE_PLAYING
         sta game_state
 
+        ; Clear sprites before returning to OW/Dungeon
+        lda #0
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        sta VIC_SPRITE_MSB
+
+        jsr clear_screen
+
         ; Rétablit les sprites selon le monde actif (Overworld ou Donjon)
         lda current_world_type
         bne +
@@ -1331,9 +1384,15 @@ cave_exit:
 
         jsr load_room
         jsr hud_init
+        jsr hud_render
         jsr enemies_room_init
+
+        lda current_world_type
+        bne +
         lda #MUSIC_OVERWORLD
-        jsr music_play
+        bne ++
++       lda #MUSIC_DUNGEON
+++      jsr music_play
         rts
 
 ; ===========================================================================

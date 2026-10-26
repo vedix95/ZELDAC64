@@ -391,8 +391,6 @@ restore_music_voice:
         sta SID1_V2_SR
         ldx cur_music_v2_note
         beq .mute_v2
-        cpx #$fe
-        beq .mute_v2
         lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
@@ -413,8 +411,6 @@ restore_music_voice:
         lda #$c0
         sta SID1_V2_SR
         ldx cur_music_v2_note
-        beq .mute_v2
-        cpx #$fe
         beq .mute_v2
         lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
@@ -664,6 +660,12 @@ music_update:
 .skip_v1:
 
         ; --- VOIX 2 : Harmonie / Contre-chant ---
+        ; Si le carillon secret est actif, ignorer totalement la mise à jour de la Voix 2
+        lda secret_chime_active
+        beq +
+        jmp .skip_v2
++
+
         ldx temp_v2
         cpx #$fe
         beq +
@@ -687,9 +689,20 @@ music_update:
 
 .v2_play:
         cpx #$fe                        ; $FE = TIE / HOLD (prolonger l'harmonie sans réarmer)
-        bne +
+        bne .v2_new_note
+        ; Sur un HOLD ($FE), s'assurer que le Gate est bien ON si la voix devait jouer !
+        lda current_music
+        cmp #MUSIC_DUNGEON
+        bcs .v2_hold_uw
+        lda #%00100001                  ; Sawtooth Gate ON
+        sta SID1_V2_CTRL
         jmp .skip_v2
-+
+.v2_hold_uw:
+        lda #%01000001                  ; Pulse Gate ON
+        sta SID1_V2_CTRL
+        jmp .skip_v2
+
+.v2_new_note:
         lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
@@ -759,12 +772,24 @@ music_update:
         beq +
         lda sfx_voice
         cmp #3
-        beq .skip_v3                    ; Voix 3 occupée par un SFX
+        bne +
+        jmp .skip_v3                    ; Voix 3 occupée par un SFX
 +
         lda temp_v3
         beq .v3_mute
         cmp #$fe                        ; $FE = TIE / HOLD
-        beq .skip_v3
+        bne .v3_not_hold
+        ; Sur un HOLD ($FE), s'assurer que le Gate de basse est bien ON si une note de basse était active
+        ldx cur_music_v3_note
+        beq .to_skip_v3
+        cpx #$80
+        beq .to_skip_v3                 ; Percussion n'est pas maintenue
+        lda #%00010001                  ; Triangle Gate ON
+        sta SID1_V3_CTRL
+.to_skip_v3:
+        jmp .skip_v3
+
+.v3_not_hold:
         cmp #$80
         beq .v3_percussion
 

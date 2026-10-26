@@ -1192,6 +1192,9 @@ update_secret_chime:
         sta SID_V2_CTRL
         lda #0
         sta secret_chime_active
+        ; Ne pas écraser sfx_voice si un SFX tourne sur Voice 3
+        lda sfx_timer
+        bne .chime_done
         lda #2
         sta sfx_voice
         jsr restore_music_voice

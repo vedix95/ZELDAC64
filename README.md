@@ -31,7 +31,7 @@ x64sc -cartcrt zelda.crt
 
 ## Captures d'écran
 
-### En jeu (Overworld, Donjons, Monstres & Boss)
+### En jeu (Overworld, Donjons, Grottes, Monstres & Boss)
 
 | Overworld & Radar GPS | Entrée du Donjon 1 (L'Aigle) |
 | :---: | :---: |
@@ -40,6 +40,14 @@ x64sc -cartcrt zelda.crt
 | Combat contre le Boss Aquamentus | Salle des Monstres Stalfos (Donjon 1) |
 | :---: | :---: |
 | ![Boss Aquamentus](docs/images/shot_boss_aquamentus.png) | ![Monstres Stalfos](docs/images/shot_dungeon_enemies.png) |
+
+| Écran D-4 (10 Rochers Escargot Authentiques) | Poussée du Rocher au Bracelet de Force |
+| :---: | :---: |
+| ![Rochers Escargot D-4](docs/images/shot_d4_snail_rocks.png) | ![Rocher Poussé & Escalier](docs/images/shot_d4_rock_pushed.png) |
+
+| Grotte de l'Épée de Bois (Vieil Homme) | Célébration Fanfare Récupération Épée |
+| :---: | :---: |
+| ![Grotte Vieil Homme](docs/images/shot_cave_inside.png) | ![Récupération Épée](docs/images/shot_sword_pickup.png) |
 
 | Salle de départ & Grotte de l'Épée | Cimetière avec Ghinis | Désert avec Peahats |
 | :---: | :---: | :---: |
@@ -69,7 +77,25 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
 
 ---
 
-## Points forts & Fonctionnalités (Nouveautés v0.9.0)
+## Points forts & Fonctionnalités (Nouveautés v0.11.2 — Fidélité 1:1 NES Overworld, Rochers Escargot & Audio Résilient)
+
+- **Conversion 1:1 Authentique Tuile par Tuile de l'Overworld NES (`assets/world.txt`)** :
+  - **Grille exacte 1:1 sans aucune perte** : Mappage direct des 16 colonnes NES (0..15) sur les colonnes 2..17 du C64 et des 8 lignes intérieures NES (1..8) sur les lignes 1..8 du C64. Éradication complète des duplications de colonnes et des suppressions de rangées qui déformaient la carte et décalaient les événements.
+  - **Intégration de la totalité des 90 tuiles NES extraites de `zelda.nes`** : Restitution de tous les rochers en spirale/escargot (`22` / `TILE_ROCK`), rochers poussables (`01`), statues Armos (`16`), 72 pierres tombales (`21` / `TILE_GRAVE`), 24 entrées de grottes (`12`, `9c` / `TILE_CAVE`), ponts horizontaux/verticaux et rivières.
+  - **Repères exacts de tous les secrets officiels** : Murs fissurés aux bombes (dont l'œil gauche de Spectacle Rock menant au Donjon 9), passage secret traversable P-1/P-2, assèchement du lac au sifflet pour le Donjon 7 et arbres calcinables à la bougie.
+- **Mécanique des Rochers Escargot & Bracelet de Force Authentique (`D-4`, `D-3`, `J-5`, `J-8`, `N-2`)** :
+  - Restitution des **10 rochers escargot** en écran D-4 (salle 51) et dans l'écran C-3 (salle 34).
+  - Poussée vers le haut (`DIR_UP`) du rocher central avec le **Bracelet de Force** pour révéler le passage/escalier secret (`TILE_CAVE`), avec déclenchement de la fanfare secrète et mémorisation persistante dans l'état de sauvegarde.
+- **Résolution Définitive des Glitches de Grottes (`src/cave.asm`)** :
+  - Éradication de toute persistance d'éléments de l'écran précédent lors de l'entrée dans une caverne : purge complète des 8 slots d'ennemis, extinction et désactivation de tous les sprites VIC-II, effacement total de l'écran (`clear_screen`), réinitialisation de la palette à fond noir et padding complet des lignes de texte sur 28 caractères.
+  - Sortie de grotte propre restituant Link à l'extérieur avec réinitialisation du HUD, rechargement des banques de sprites et reprise sans saccade de la bande-sonore.
+- **Résilience Audio SID à 3 Canaux (`src/sound.asm`)** :
+  - Correction définitive du bug où la musique ne laissait qu'un seul canal actif.
+  - Sécurisation des prolongations de notes ($FE / HOLD) avec maintien actif de la porte Gate ON sur les voix 2 et 3, suppression des coupures intempestives de la Voix 2, protection contre l'écrasement des pas musicaux lors des jingles secrets, et sécurisation de la touche de bascule Dual SID.
+
+---
+
+## Points forts & Fonctionnalités (Versions Précédentes)
 
 - **Intégration Complète des 9 Donjons & de tous les Boss NES (v0.9.0)** :
   - **9 Donjons 100% Fonctionnels (`DUNG1` à `DUNG9`)** : Architecture complète des salles étanches, portes verrouillées à clés, portes à volets automatiques, énigmes de blocs mobiles, pièges, salles de la Triforce et trésors.

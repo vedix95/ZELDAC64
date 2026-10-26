@@ -107,50 +107,26 @@ load_room:
         beq .no_secret_restored
 
         ; Si Salle 66 (C-5) : étang asséché du Donjon 7
-        lda current_room_idx
-        cmp #66
-        bne +
-        ldy #199
--       lda room_buf,y
-        cmp #TILE_WATER
-        bne ++
-        lda #TILE_GRASS
-        sta room_buf,y
-++      dey
-        bpl -
-        lda #TILE_CAVE
-        sta room_buf+90
-        jmp .check_std_sec
-
-+       lda current_room_idx
-        cmp #33
-        bne +
-        lda #TILE_CAVE
-        sta room_buf+92
-        jmp .check_std_sec
-
-+       cmp #51
-        bne +
-        lda #TILE_CAVE
-        sta room_buf+88
-        jmp .check_std_sec
-
-+       cmp #109
-        bne +
-        lda #TILE_CAVE
-        sta room_buf+109
-        jmp .check_std_sec
-
-+       cmp #107
-        bne +
-        lda #TILE_CAVE
-        sta room_buf+70
-        jmp .check_std_sec
-
-+       cmp #82
+        ; Restauration des secrets permanents ouverts
+        lda current_world_type
         bne .check_std_sec
+
+        ldx #9
+-       lda .sec_rooms,x
+        cmp current_room_idx
+        bne +
+        ldy .sec_tiles,x
         lda #TILE_CAVE
-        sta room_buf+65
+        sta room_buf,y
+        jmp .check_std_sec
++       dex
+        bpl -
+        jmp .check_std_sec
+
+.sec_rooms:
+        !byte 33, 51, 35, 73, 121, 29, 109, 107, 82, 66
+.sec_tiles:
+        !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90
 
 .check_std_sec:
         ldy #199

@@ -610,7 +610,6 @@ player_update:
         sta hud_cur_hearts
         jsr hud_render
         jsr sound_item_fanfare
-        jsr sound_secret
         rts
 
 .chk_dock_heart:
@@ -655,32 +654,33 @@ player_update:
         cmp #DIR_UP
         bne .chk_rock_push
         lda player_x
-        cmp #200
-        bcc .chk_rock_push
-        cmp #232
-        bcs .chk_rock_push
+        clc
+        adc #12
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
         lda player_y
-        cmp #148
-        bcc .chk_rock_push
-        cmp #172
-        bcs .chk_rock_push
-        ; Si la tombe n'a pas encore été révélée
-        lda room_buf+92
+        sec
+        sbc #4
+        sta col_y
+        jsr get_tile_at_point
+        cmp #TILE_GRAVE
+        bne .chk_rock_push
+        lda room_buf,y
         cmp #TILE_CAVE
         beq .chk_rock_push
         lda #TILE_CAVE
-        sta room_buf+92
-        ldy #92
+        sta room_buf,y
         jsr redraw_single_tile
         jsr sound_secret
         jsr record_room_secret_opened
         rts
 
 .chk_rock_push:
-        ; --- Pousser le rocher escargot en salle 51 (D-4) avec le Bracelet de Force ---
-        lda current_room_idx
-        cmp #51
-        bne .ow_special_done
+        ; --- Pousser les rochers secrets avec le Bracelet de Force ---
+        lda player_has_bracelet
+        beq .ow_special_done
         lda #CART_BANK_OVL_ITEMS
         ldx #4
         jsr cart_load_overlay

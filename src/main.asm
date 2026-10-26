@@ -179,8 +179,13 @@ main_loop:
         jmp main_loop
 +
         ; Touche 3 : Bascule Dual SID (Mono 1 SID / Stéréo 2 SIDs $D420)
+        lda game_state
+        cmp #STATE_PLAYING
+        bne +
         lda key_3_pressed
         beq +
+        lda #0
+        sta key_3_pressed
         lda dual_sid_enabled
         eor #1
         sta dual_sid_enabled
