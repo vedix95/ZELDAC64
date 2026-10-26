@@ -51,8 +51,6 @@ def main():
     cmd_acme = [
         "acme",
         "-f", "plain",
-        f"-D", f"CART_PRESENT_ADDR=${cart_present_addr:04x}",
-        f"-D", f"START_ADDR=${start_addr:04x}",
         "-o", boot_bin,
         boot_asm
     ]
