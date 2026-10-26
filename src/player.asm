@@ -43,6 +43,7 @@ player_has_bracelet:   !byte 0          ; 1 = bracelet de force
 player_has_raft:       !byte 0          ; 1 = radeau
 player_has_stepladder: !byte 0          ; 1 = échelle
 ladder_tile_idx:       !byte $ff        ; $ff = inactive, 0..199 = tuile d'eau où l'échelle est posée
+ladder_stepped_on:     !byte 0          ; 0 = posée mais pas encore dessus, 1 = Link est monté dessus
 player_has_magic_key:  !byte 0          ; 1 = clef magique
 
 ; Objets d'inventaire Slot B
@@ -180,18 +181,31 @@ player_update:
         sta col_x+1
         jsr get_tile_at_point
         cmp #TILE_BRIDGE_H
-        beq .ladder_check_done
+        beq .on_ladder
         cmp #TILE_BRIDGE_V
-        beq .ladder_check_done
+        beq .on_ladder
         cmp #TILE_WATER
+        beq .on_ladder
+
+        ; Link n'est pas sur la tuile de l'échelle.
+        ; S'il n'est pas encore monté dessus, on la laisse en place !
+        lda ladder_stepped_on
         beq .ladder_check_done
-        ; Link est sur la terre ferme : on retire l'échelle et rétablit l'eau
+
+        ; Link est monté dessus et vient de poser le pied sur la rive : ranger l'échelle !
         ldy ladder_tile_idx
         lda #TILE_WATER
         sta room_buf,y
         jsr redraw_single_tile
         lda #$ff
         sta ladder_tile_idx
+        lda #0
+        sta ladder_stepped_on
+        beq .ladder_check_done
+
+.on_ladder:
+        lda #1
+        sta ladder_stepped_on
 .ladder_check_done:
 
         ldx #0                          ; X = indicateur de mouvement (1 = marche)
@@ -667,32 +681,10 @@ player_update:
         lda current_room_idx
         cmp #51
         bne .ow_special_done
-        lda player_has_bracelet
-        beq .ow_special_done
-        lda player_dir
-        cmp #DIR_UP
-        bne .ow_special_done
-        lda player_x+1
-        bne .ow_special_done
-        lda player_x
-        cmp #120
-        bcc .ow_special_done
-        cmp #144
-        bcs .ow_special_done
-        lda player_y
-        cmp #148
-        bcc .ow_special_done
-        cmp #168
-        bcs .ow_special_done
-        lda room_buf+88
-        cmp #TILE_CAVE
-        beq .ow_special_done
-        lda #TILE_CAVE
-        sta room_buf+88
-        ldy #88
-        jsr redraw_single_tile
-        jsr sound_secret
-        jsr record_room_secret_opened
+        lda #CART_BANK_OVL_ITEMS
+        ldx #4
+        jsr cart_load_overlay
+        jsr $a006                      ; ovl_item_bracelet_exec
 .ow_special_done:
         rts
 
@@ -880,6 +872,8 @@ check_point_solid:
         bne .water_solid
 .deploy_ladder:
         sty ladder_tile_idx
+        lda #0
+        sta ladder_stepped_on           ; Link est encore sur la berge
         lda player_dir
         cmp #DIR_LEFT
         beq .hl
@@ -1098,7 +1092,7 @@ player_draw:
         ; Pointeur Sprite 0 : pose celebration Triforce ou marche normale
         lda triforce_fanfare_timer
         beq +
-        lda #(sprite_link_item_get >> 6)
+        lda #SPR_COMMON_ITEM_GET
         sta SPRITE_PTR0
         rts
 +       lda player_dir

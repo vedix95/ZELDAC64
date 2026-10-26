@@ -17,22 +17,7 @@
 !zone cave_module
 
 ; Types de grottes
-CAVE_TYPE_NONE         = 0
-CAVE_TYPE_SWORD_WOOD   = 1      ; Salle 119 (H-8, Départ)
-CAVE_TYPE_SHOP_A       = 2      ; Salles 12, 31, 94, 102 (Bouclier 160, Clé 100, Bougie 60)
-CAVE_TYPE_SHOP_B       = 3      ; Salles 37, 74, 111 (Bouclier 130, Bombes 20, Flèches 80)
-CAVE_TYPE_SHOP_SECRET  = 4      ; Salle 100 (Anneau Bleu 250, Viande 60, Cœur 10)
-CAVE_TYPE_POTION_SHOP  = 5      ; Salles 14, 69, 116 (Vieille Femme: Potion Bleue 40, Rouge 68)
-CAVE_TYPE_SWORD_WHITE  = 6      ; Salle 10 (Épée Blanche si max_hearts >= 5)
-CAVE_TYPE_MOBLIN       = 7      ; Salle 117 (Moblin secret +30 rubis)
-CAVE_TYPE_HEART_CHOICE = 8      ; Salles 11, 47 (Choix Cœur vs Potion)
-CAVE_TYPE_HINT_1       = 9      ; Indice Mont du Péril
-CAVE_TYPE_HINT_2       = 10     ; Salle 15 (Arbres secrets)
-CAVE_TYPE_HINT_3       = 11     ; Cascade de l'Est
-CAVE_TYPE_GAMBLE       = 12     ; Salle 112 (Jeu de hasard)
-CAVE_TYPE_FAIRY        = 13     ; Fontaine des Fées (Soin complet de Link)
-CAVE_TYPE_HEART_GIFT   = 14     ; Grotte secrète Conteneur de Cœur gratuit
-CAVE_TYPE_SWORD_MAGIC  = 15     ; Salle 34 (Épée Magique si max_hearts >= 12)
+!source "src/cave_defs.inc"
 
 ; Types d'objets en vente/au sol
 ITEM_ID_NONE            = 0
@@ -54,7 +39,6 @@ ITEM_ID_SWORD_MAGIC     = 14
 ; Variables du moteur des grottes
 saved_overworld_x:      !word 0
 saved_overworld_y:      !byte 0
-current_cave_type:      !byte 0
 cave_torch_tick:        !byte 0
 cave_pickup_timer:      !byte 0
 cave_jingle_tick:       !byte 0
@@ -82,9 +66,6 @@ cave_slot3_col:         !byte 0
 cave_held_item_ptr:     !byte 0
 cave_held_item_col:     !byte 0
 
-; Persistance des 128 salles (bits 0, 1, 2 = slots 1..3 pris ; bit 7 = événement fait)
-cave_room_cleared:      !fill 128, 0
-
 ; Fanfare triomphale SID pour l'obtention d'un objet (8 notes arpégées)
 cave_fanfare_lo:
         !byte $26, $9E, $B8, $4C, $3C, $70, $98, $78
@@ -94,7 +75,7 @@ cave_fanfare_hi:
 ; ---------------------------------------------------------------------------
 ; cave_enter : appelé lorsque Link entre dans une grotte
 ; ---------------------------------------------------------------------------
-cave_enter:
+ovl_cave_enter:
         ; 1. Sauvegarde la position de Link dans l'overworld
         lda player_x
         sta saved_overworld_x
@@ -111,7 +92,8 @@ cave_enter:
         sta item_active
         sta player_attacking
 
-        ; 3. Initialise l'état de la grotte
+        ; 3. Initialise l'état de la grotte et charge les sprites PNJ
+        jsr cart_load_sprites_npc
         lda #STATE_CAVE
         sta game_state
 
@@ -547,7 +529,7 @@ cave_wall_offsets:
 ; ---------------------------------------------------------------------------
 ; cave_draw_screen : dessine le décor, le PNJ, le texte et les prix
 ; ---------------------------------------------------------------------------
-cave_draw_screen:
+ovl_cave_draw_screen:
         lda #COL_BLACK
         sta active_bg_color
         sta VIC_BACKGROUND
@@ -708,7 +690,7 @@ cave_print_price:
 ; ---------------------------------------------------------------------------
 ; cave_update : déplacement de Link et interaction avec les objets
 ; ---------------------------------------------------------------------------
-cave_update:
+ovl_cave_update:
         inc cave_torch_tick
 
         ; Si Link est en train de célébrer l'obtention d'un objet
@@ -1098,7 +1080,7 @@ cave_start_celebration:
 ; ---------------------------------------------------------------------------
 ; cave_draw : configure et positionne tous les sprites de la grotte (0..7)
 ; ---------------------------------------------------------------------------
-cave_draw:
+ovl_cave_draw:
         lda #PLAYER_SKIN
         sta VIC_SPRITE_MC1
         lda #PLAYER_BROWN
@@ -1132,7 +1114,7 @@ cave_draw:
         beq .normal_link_spr
 
         ; Pose "Item Get"
-        lda #(sprite_link_item_get >> 6)
+        lda #SPR_COMMON_ITEM_GET
         sta SPRITE_PTR0
 
         ; Sprite 7 : Objet levé au-dessus de la tête
@@ -1311,6 +1293,14 @@ cave_exit:
         lda #STATE_PLAYING
         sta game_state
 
+        ; Rétablit les sprites selon le monde actif (Overworld ou Donjon)
+        lda current_world_type
+        bne +
+        jsr cart_load_sprites_ow
+        jmp ++
++       jsr cart_load_sprites_dung
+++
+
         lda saved_overworld_x
         sta player_x
         lda saved_overworld_x+1
@@ -1422,23 +1412,4 @@ txt_fairy_2:    !text "FORCE RESTAUREE.", 0
 txt_gift_1:     !text "PRENDS CECI.", 0
 txt_gift_2:     !text "GARDE LE SECRET !", 0
 
-; ===========================================================================
-; TABLE DES 128 SALLES DE L'OVERWORLD VERS LES 23 GROTTES
-; ===========================================================================
-room_cave_types:
-        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 10: Épée Blanche, Salle 15: Moblin secret (+100 rubis)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, 0, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_MOBLIN
-        ; Rangée 1 (16..31 : A-2 .. P-2)
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_SHOP_A
-        ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 33: Épée Magique (B-3), Salle 43: Choix Cœur, Salle 44/47: Cœurs
-        !byte 0, CAVE_TYPE_SWORD_MAGIC, 0, 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_HEART_GIFT, 0, 0, CAVE_TYPE_HEART_GIFT
-        ; Rangée 3 (48..63 : A-4 .. P-4)
-        !byte 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, 0, CAVE_TYPE_FAIRY, 0, 0, 0, 0, 0, 0
-        ; Rangée 4 (64..79 : A-5 .. P-5)
-        !byte 0, 0, 0, CAVE_TYPE_FAIRY, 0, CAVE_TYPE_POTION_SHOP, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
-        ; Rangée 5 (80..95 : A-6 .. P-6)
-        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, 0, 0, CAVE_TYPE_SHOP_A, CAVE_TYPE_HEART_GIFT
-        ; Rangée 6 (96..111 : A-7 .. P-7)
-        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SHOP_SECRET, 0, CAVE_TYPE_SHOP_A, 0, 0, 0, 0, CAVE_TYPE_HEART_GIFT, 0, 0, 0, CAVE_TYPE_SHOP_B
-        ; Rangée 7 (112..127 : A-8 .. P-8)
-        !byte CAVE_TYPE_GAMBLE, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SWORD_WOOD, 0, 0, 0, 0, 0, 0, 0, 0
+

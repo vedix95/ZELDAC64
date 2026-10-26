@@ -5,6 +5,8 @@
 ; ---------------------------------------------------------------------------
 !cpu 6510
 !source "src/c64.inc"
+!source "src/cart_defs.inc"
+!source "build/sprite_ptrs.inc"
 
 ; --- Stub BASIC : 10 SYS 2061 -------------------------------------------
 * = $0801
@@ -48,12 +50,14 @@ game_init:
 
 !if START_IN_DUNGEON == 0 {
         jsr disk_load_map_overworld
+        jsr cart_load_sprites_ow
         lda #WORLD_OVERWORLD
         sta current_world_type
 } else {
         lda #1
         sta current_dungeon_level
         jsr disk_load_dungeon
+        jsr cart_load_sprites_dung
         lda #WORLD_DUNGEON
         sta current_world_type
 !if START_IN_DUNGEON == 1 {
@@ -231,11 +235,65 @@ wait_frame:
         beq .wait
         rts
 
+!source "src/tiles_data.asm"
+!source "src/input.asm"
+!source "src/player.asm"
+!source "src/tilemap.asm"
+
+; Buffers de travail résidents non volatils
+dungeon_room_state   = $033c           ; 128 octets en tampon cassette ($033c..$03bb)
+room_buf             = $cd00           ; 200 octets en zone haute ($cd00..$cdc7)
+target_room_buf      = $ce00           ; 200 octets en zone haute dynamique ($ce00..$cec7)
+
+; Le jeu de caractères est à une adresse fixe ($2000)
+!if * > CHARSET_ADDR {
+        !error "Le code et les buffers debordent sur le jeu de caracteres ($2000)"
+}
+* = CHARSET_ADDR
+!source "src/charset.asm"
+
+; Zone des sprites dynamiques ($2800..$3FFF = 6 Ko en VIC Banque 0)
+; Remplie à la volée par streaming cartouche (cart_load_sprites_ow, dung, boss, npc)
+; Pas de données statiques ici dans le PRG résident.
+
+; Code CPU au-delà de la banque VIC 0 ($4000..$CFFF)
+; $4000..$7FFF est toujours 100% RAM en modes CPU_PORT $36 et $37.
+* = $4000
+
 ; ---------------------------------------------------------------------------
-; cart_copy_to_c000 : Situé en Zone 1 ($1000..$1FFF) pour pouvoir basculer
-; CPU_PORT=$37 (LORAM=1 pour lire la ROM cartouche à $8000) sans écraser le
-; code exécutable par la ROM BASIC ($A000..$BFFF).
+; cart_stream_copy : Copie rapide de pages ROM ($8000..) vers ZP_DST en RAM
+; Entrée : A = Banque cartouche, X = Nombre de pages (256 o), ZP_DST = Adresse RAM cible
 ; ---------------------------------------------------------------------------
+cart_stream_copy:
+        sta CART_REG            ; Sélectionne la banque cartouche à $DE00
+        php
+        sei
+        lda #$37
+        sta CPU_PORT            ; Active LORAM=1 pour lire la ROM cartouche à $8000
+
+        lda #<$8000
+        sta ZP_SRC
+        lda #>$8000
+        sta ZP_SRC+1
+
+        ldy #0
+-       lda (ZP_SRC),y
+        sta (ZP_DST),y
+        iny
+        bne -
+        inc ZP_SRC+1
+        inc ZP_DST+1
+        dex
+        bne -
+
+        lda #$36
+        sta CPU_PORT            ; Rétablit le mode RAM de jeu sous BASIC
+        lda #CART_DISABLE
+        sta CART_REG            ; Déconnecte la cartouche
+        plp
+        rts
+
+; cart_copy_to_c000 : Rétro-compatibilité pour les chunks et donjons
 cart_copy_to_c000:
         php
         sei
@@ -266,49 +324,64 @@ cart_copy_to_c000:
         plp
         rts
 
+; Helpers de streaming contextuel de sprites
+cart_load_sprites_ow:
+        lda #<SPRITE_BUF_ADDR
+        sta ZP_DST
+        lda #>SPRITE_BUF_ADDR
+        sta ZP_DST+1
+        ldx #24                 ; 24 pages = 6144 octets ($2800..$3FFF)
+        lda #CART_BANK_SPR_OW
+        jmp cart_stream_copy
 
-!source "src/tiles_data.asm"
-!source "src/input.asm"
-!source "src/player.asm"
-!source "src/tilemap.asm"
+cart_load_sprites_dung:
+        lda #<SPRITE_BUF_ADDR
+        sta ZP_DST
+        lda #>SPRITE_BUF_ADDR
+        sta ZP_DST+1
+        ldx #24
+        lda #CART_BANK_SPR_DUNG
+        jmp cart_stream_copy
 
-; Buffers de travail résidents non volatils
-dungeon_room_state   = $033c           ; 128 octets en tampon cassette ($033c..$03bb)
-room_buf             = $cd00           ; 200 octets en zone haute ($cd00..$cdc7)
-target_room_buf      = $ce00           ; 200 octets en zone haute dynamique ($ce00..$cec7)
+cart_load_sprites_npc:
+        lda #<SPRITE_BUF_ADDR
+        sta ZP_DST
+        lda #>SPRITE_BUF_ADDR
+        sta ZP_DST+1
+        ldx #24
+        lda #CART_BANK_SPR_NPC
+        jmp cart_stream_copy
 
-; Le jeu de caractères est à une adresse fixe ($2000)
-!if * > CHARSET_ADDR {
-        !error "Le code et les buffers debordent sur le jeu de caracteres ($2000)"
-}
-* = CHARSET_ADDR
-!source "src/charset.asm"
+cart_load_sprites_boss:
+        lda #<$3400
+        sta ZP_DST
+        lda #>$3400
+        sta ZP_DST+1
+        ldx #12                 ; 12 pages = 3072 octets ($3400..$3FFF)
+        lda #CART_BANK_SPR_BOSS
+        jmp cart_stream_copy
 
-; Sprites des ennemis, PNJs et boss alignés à 64 octets dans Bank 0 (RAM $2800..$3FFF)
-* = $2800
-!source "src/sprites_enemies.asm"
-!source "src/sprites_extra.asm"
+; cart_load_overlay : Charge un overlay dans $A000 (A = Banque, X = nb pages)
+cart_load_overlay:
+        pha
+        lda #<OVERLAY_RAM_ADDR
+        sta ZP_DST
+        lda #>OVERLAY_RAM_ADDR
+        sta ZP_DST+1
+        pla
+        jmp cart_stream_copy
 
-!if * > $4000 {
-        !error "Les sprites debordent de la banque VIC 0 ($3FFF)"
-}
-
-; Code CPU au-delà de la banque VIC 0 ($4000..$CFFF)
-* = $4000
 !source "src/transition.asm"
 !source "src/items.asm"
 !source "src/enemies.asm"
 !source "src/dungeon.asm"
 !source "src/hud.asm"
-!source "src/inventory.asm"
-!source "src/inventory_draw.asm"
-!source "src/debug.asm"
+; Trampolines et persistance des Overlays Cartouche ($A000..$BFFF)
+; Les modules Inventaire, Cavernes et Debug sont streamés à la demande.
+!source "src/overlay_trampolines.asm"
 
-; Module de communication disquette 1541 / D64
+; Moteur de Streaming Cartouche pour les cartes ($C000..$CCFF)
 !source "src/disk.asm"
-
-; Grotte secrète de l'Épée ("C'est dangereux d'y aller tout seul")
-!source "src/cave.asm"
 
 ; Moteur Audio et partitions (Single SID + Dual SID)
 !source "src/sound.asm"

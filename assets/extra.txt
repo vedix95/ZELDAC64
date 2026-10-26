@@ -262,3 +262,49 @@ gssssssg
 .gssggggssg.
 gggggggggggg
 bbbbbbbbbbbb
+
+# ===========================================================================
+# RADEAU DE TRANSPORT (Raft - transport marin sur l'eau)
+#   g = bois clair des rondins
+#   b = contours et cordages marron foncé
+#   s = reflets du bois / fixation
+# ===========================================================================
+[item_raft] pad 0 0
+bbbbbbbbbbbb
+bggsggsggsgb
+bgsggggsggsb
+bbbbbbbbbbbb
+bggsggsggsgb
+bgsggggsggsb
+bbbbbbbbbbbb
+bggsggsggsgb
+bgsggggsggsb
+bbbbbbbbbbbb
+bggsggsggsgb
+bgsggggsggsb
+bbbbbbbbbbbb
+
+# ===========================================================================
+# ECHELLE PORTATIVE (Stepladder - franchissement de l'eau)
+#   b = montants en bois latéraux
+#   g = barreaux de l'échelle
+#   s = reflets des échelons
+# ===========================================================================
+[item_stepladder] pad 0 0
+b..........b
+b.gggggggg.b
+b.gssssssg.b
+b..........b
+b..........b
+b.gggggggg.b
+b.gssssssg.b
+b..........b
+b..........b
+b.gggggggg.b
+b.gssssssg.b
+b..........b
+b..........b
+b.gggggggg.b
+b.gssssssg.b
+b..........b
+

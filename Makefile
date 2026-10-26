@@ -73,7 +73,7 @@ $(BLD_DIR)/dung%.dat: $(SRC_DIR)/dung%.asm $(SRC_DIR)/enemy_types.inc | $(BLD_DI
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
 # Binaire principal du jeu (Moteur de jeu résident en mémoire)
-$(PRG): $(SRCS) | $(BLD_DIR)
+$(PRG): $(SRCS) $(BLD_DIR)/sprite_ptrs.inc | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ --vicelabels $(LABELS) -r $(REPORT) $(MAIN)
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
@@ -81,8 +81,29 @@ $(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_musi
 	$(ACME) -f cbm -o $@ --vicelabels $(BLD_DIR)/intro.vs $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-# Image cartouche Magic Desk CRT (256 Ko) avec banques mémoires et streaming instantané
-$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(PRG_INT) tools/cartgen.py src/cart_boot.asm
+SPR_BINS   := $(BLD_DIR)/sprites_ow.bin $(BLD_DIR)/sprites_dung.bin $(BLD_DIR)/sprites_boss.bin $(BLD_DIR)/sprites_npc.bin
+OVL_DATS   := $(BLD_DIR)/ovl_inv.dat $(BLD_DIR)/ovl_cave.dat $(BLD_DIR)/ovl_items.dat $(BLD_DIR)/ovl_debug.dat
+
+$(BLD_DIR)/sprite_ptrs.inc $(SPR_BINS) &: assets/enemies.txt assets/extra.txt tools/build_sprite_banks.py | $(BLD_DIR)
+	$(PYTHON) tools/build_sprite_banks.py
+
+$(BLD_DIR)/resident_symbols.inc: $(PRG) tools/vs2inc.py | $(BLD_DIR)
+	$(PYTHON) tools/vs2inc.py $(LABELS) $@
+
+$(BLD_DIR)/ovl_inv.dat: $(SRC_DIR)/overlay_inventory.asm $(SRC_DIR)/inventory.asm $(SRC_DIR)/inventory_draw.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
+	$(ACME) -f plain -o $@ $<
+
+$(BLD_DIR)/ovl_cave.dat: $(SRC_DIR)/overlay_cave.asm $(SRC_DIR)/cave.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
+	$(ACME) -f plain -o $@ $<
+
+$(BLD_DIR)/ovl_items.dat: $(SRC_DIR)/overlay_items.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
+	$(ACME) -f plain -o $@ $<
+
+$(BLD_DIR)/ovl_debug.dat: $(SRC_DIR)/overlay_debug.asm $(SRC_DIR)/debug.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
+	$(ACME) -f plain -o $@ $<
+
+# Image cartouche Magic Desk CRT (512 Ko) avec 64 banques mémoires et streaming instantané
+$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(SPR_BINS) $(OVL_DATS) $(PRG_INT) tools/cartgen.py src/cart_boot.asm
 	$(PYTHON) tools/cartgen.py
 
 crt: $(CRT)

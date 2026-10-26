@@ -21,7 +21,7 @@ BLD_DIR = os.path.join(BASE_DIR, "build")
 SRC_DIR = os.path.join(BASE_DIR, "src")
 
 BANK_SIZE = 8192
-TOTAL_BANKS = 32
+TOTAL_BANKS = 64
 
 def parse_labels(vs_path):
     labels = {}
@@ -109,7 +109,25 @@ def main():
         banks.append(chunk)
         print(f"  [+] Banque {b:02d} : zelda.prg RAM ${start_ram:04X}..${end_ram-1:04X}")
 
-    # Banques 10..13 : Chunks Overworld OW0..OW3
+    # Banques 10..13 : Banques de Sprites dédiées (streaming vers $2800)
+    sprite_files = [
+        ("sprites_ow.bin", "Sprites Ennemis Overworld"),
+        ("sprites_dung.bin", "Sprites Ennemis Donjons"),
+        ("sprites_boss.bin", "Sprites Boss Donjons"),
+        ("sprites_npc.bin", "Sprites PNJs, Grottes & Objets"),
+    ]
+    for fn, desc in sprite_files:
+        p = os.path.join(BLD_DIR, fn)
+        if not os.path.exists(p):
+            subprocess.run([sys.executable, os.path.join(TOOLS_DIR, "build_sprite_banks.py")], check=True)
+        with open(p, "rb") as f:
+            b_data = f.read()
+        b_spr = bytearray(BANK_SIZE)
+        b_spr[:len(b_data)] = b_data[:BANK_SIZE]
+        banks.append(b_spr)
+        print(f"  [+] Banque {len(banks)-1:02d} : {desc} ({len(b_data)} octets)")
+
+    # Banques 14..17 : Chunks Overworld OW0..OW3 (streaming vers $C000)
     for i in range(4):
         ow_path = os.path.join(BLD_DIR, f"ow{i}.dat")
         with open(ow_path, "rb") as f:
@@ -120,7 +138,7 @@ def main():
         banks.append(b_ow)
         print(f"  [+] Banque {len(banks)-1:02d} : Overworld Chunk {i} ({len(ow_data)} octets)")
 
-    # Banques 14..22 : Donjons 1..9
+    # Banques 18..26 : Donjons 1..9 (streaming vers $C000)
     for i in range(1, 10):
         dung_path = os.path.join(BLD_DIR, f"dung{i}.dat")
         with open(dung_path, "rb") as f:
@@ -130,6 +148,25 @@ def main():
         b_dung[:len(dung_data)] = dung_data
         banks.append(b_dung)
         print(f"  [+] Banque {len(banks)-1:02d} : Donjon {i} ({len(dung_data)} octets)")
+
+    # Banques 27..30 : Overlays de Code ($A000..$BFFF)
+    overlays = [
+        ("ovl_inv.dat", "Overlay Inventaire & Minimap"),
+        ("ovl_cave.dat", "Overlay Cavernes & Échoppes"),
+        ("ovl_items.dat", "Overlay Logiques d'Objets Spéciaux"),
+        ("ovl_debug.dat", "Overlay Menu Debug"),
+    ]
+    for fn, desc in overlays:
+        p = os.path.join(BLD_DIR, fn)
+        b_ovl = bytearray(BANK_SIZE)
+        if os.path.exists(p):
+            with open(p, "rb") as f:
+                ovl_data = f.read()
+            b_ovl[:len(ovl_data)] = ovl_data[:BANK_SIZE]
+            print(f"  [+] Banque {len(banks):02d} : {desc} ({len(ovl_data)} octets)")
+        else:
+            print(f"  [!] Banque {len(banks):02d} : {desc} (non trouvé, initialisé vide)")
+        banks.append(b_ovl)
 
     # Remplir jusqu'à TOTAL_BANKS (32 banques = 256 Ko)
     while len(banks) < TOTAL_BANKS:

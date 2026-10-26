@@ -9,10 +9,7 @@
 cached_dungeon_level:   !byte 0
 cached_ow_chunk:        !byte $ff
 
-CART_REG                = $de00
-CART_DISABLE            = $80
-CART_BANK_OW0           = 10
-CART_BANK_DUNG_BASE     = 13
+; Les constantes CART_REG, CART_DISABLE, CART_BANK_* sont définies dans src/cart_defs.inc
 
 ; ---------------------------------------------------------------------------
 ; disk_ensure_ow_chunk : Vérifie que le chunk Overworld pour current_room_y est en RAM

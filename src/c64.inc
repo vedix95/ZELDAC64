@@ -155,6 +155,46 @@ MAP_DATA_MAX_PAGES  = 16        ; 16 pages x 256 octets = 4 Ko ($C000..$CFFF)
 WORLD_OVERWORLD     = 0
 WORLD_DUNGEON       = 1
 
+; États globaux du moteur de jeu
+STATE_PLAYING       = 0
+STATE_INVENTORY     = 1
+STATE_DEBUG         = 2
+STATE_CAVE          = 3
+STATE_INTRO         = 4
+STATE_TRANSITION    = 5
+STATE_CELLAR        = 6
+STATE_RAFT          = 7
+
+; Pages de l'inventaire
+INV_PAGE_ITEMS      = 0
+INV_PAGE_TRIFORCE   = 1
+INV_PAGE_EQUIPMENT  = 2
+INV_PAGE_MAP        = 3
+INV_PAGE_MAX        = 3
+
+!source "src/enemy_types.inc"
+
+; Constantes des tuiles Overworld
+TILE_GRASS          = 0
+TILE_TUFTS          = 1
+TILE_FLOWERS        = 2
+TILE_TREE           = 3
+TILE_WATER          = 4
+TILE_WALL           = 5
+TILE_SAND           = 6
+TILE_CAVE           = 7
+TILE_GRAVE          = 8
+TILE_BRIDGE_H       = 9
+TILE_BRIDGE_V       = 10
+TILE_WALL_PASS      = 11
+TILE_WALL_BOMB      = 12
+TILE_ROCK           = 13
+TILE_WALL_SECRET_B  = 14
+
+; Constantes d'ennemis
+EN_STATE_DEAD       = 0
+AI_ROAM             = 0
+
 ; --- KERNAL ---
 CHROUT          = $ffd2
 GETIN           = $ffe4

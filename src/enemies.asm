@@ -16,7 +16,7 @@
 
 MAX_ENEMIES             = 8
 
-MAX_ENEMIES             = 8
+!source "build/sprite_ptrs.inc"
 
 !source "src/enemy_types.inc"
 
@@ -127,202 +127,202 @@ sword_cursed_timer:     !byte 0
 
 ; --- Tables des pointeurs de sprites (8 octets par ennemi : 4 dir x 2 anim) ---
 octo_ptrs:
-        !byte < (sprite_enemies_octo_down_0 / 64), < (sprite_enemies_octo_down_1 / 64)
-        !byte < (sprite_enemies_octo_up_0 / 64), < (sprite_enemies_octo_up_1 / 64)
-        !byte < (sprite_enemies_octo_left_0 / 64), < (sprite_enemies_octo_left_1 / 64)
-        !byte < (sprite_enemies_octo_right_0 / 64), < (sprite_enemies_octo_right_1 / 64)
+        !byte SPR_OW_OCTO_DOWN_0, SPR_OW_OCTO_DOWN_1
+        !byte SPR_OW_OCTO_UP_0, SPR_OW_OCTO_UP_1
+        !byte SPR_OW_OCTO_LEFT_0, SPR_OW_OCTO_LEFT_1
+        !byte SPR_OW_OCTO_RIGHT_0, SPR_OW_OCTO_RIGHT_1
 
 moblin_ptrs:
-        !byte < (sprite_enemies_moblin_down_0 / 64), < (sprite_enemies_moblin_down_1 / 64)
-        !byte < (sprite_enemies_moblin_up_0 / 64), < (sprite_enemies_moblin_up_1 / 64)
-        !byte < (sprite_enemies_moblin_left_0 / 64), < (sprite_enemies_moblin_left_1 / 64)
-        !byte < (sprite_enemies_moblin_right_0 / 64), < (sprite_enemies_moblin_right_1 / 64)
+        !byte SPR_OW_MOBLIN_DOWN_0, SPR_OW_MOBLIN_DOWN_1
+        !byte SPR_OW_MOBLIN_UP_0, SPR_OW_MOBLIN_UP_1
+        !byte SPR_OW_MOBLIN_LEFT_0, SPR_OW_MOBLIN_LEFT_1
+        !byte SPR_OW_MOBLIN_RIGHT_0, SPR_OW_MOBLIN_RIGHT_1
 
 tektite_ptrs:
-        !byte < (sprite_enemies_tektite_0 / 64), < (sprite_enemies_tektite_1 / 64)
-        !byte < (sprite_enemies_tektite_0 / 64), < (sprite_enemies_tektite_1 / 64)
-        !byte < (sprite_enemies_tektite_0 / 64), < (sprite_enemies_tektite_1 / 64)
-        !byte < (sprite_enemies_tektite_0 / 64), < (sprite_enemies_tektite_1 / 64)
+        !byte SPR_OW_TEKTITE_0, SPR_OW_TEKTITE_1
+        !byte SPR_OW_TEKTITE_0, SPR_OW_TEKTITE_1
+        !byte SPR_OW_TEKTITE_0, SPR_OW_TEKTITE_1
+        !byte SPR_OW_TEKTITE_0, SPR_OW_TEKTITE_1
 
 leever_ptrs:
-        !byte < (sprite_enemies_leever_0 / 64), < (sprite_enemies_leever_1 / 64)
-        !byte < (sprite_enemies_leever_0 / 64), < (sprite_enemies_leever_1 / 64)
-        !byte < (sprite_enemies_leever_0 / 64), < (sprite_enemies_leever_1 / 64)
-        !byte < (sprite_enemies_leever_0 / 64), < (sprite_enemies_leever_1 / 64)
+        !byte SPR_OW_LEEVER_0, SPR_OW_LEEVER_1
+        !byte SPR_OW_LEEVER_0, SPR_OW_LEEVER_1
+        !byte SPR_OW_LEEVER_0, SPR_OW_LEEVER_1
+        !byte SPR_OW_LEEVER_0, SPR_OW_LEEVER_1
 
 peahat_ptrs:
-        !byte < (sprite_enemies_peahat_0 / 64), < (sprite_enemies_peahat_1 / 64)
-        !byte < (sprite_enemies_peahat_0 / 64), < (sprite_enemies_peahat_1 / 64)
-        !byte < (sprite_enemies_peahat_0 / 64), < (sprite_enemies_peahat_1 / 64)
-        !byte < (sprite_enemies_peahat_0 / 64), < (sprite_enemies_peahat_1 / 64)
+        !byte SPR_OW_PEAHAT_0, SPR_OW_PEAHAT_1
+        !byte SPR_OW_PEAHAT_0, SPR_OW_PEAHAT_1
+        !byte SPR_OW_PEAHAT_0, SPR_OW_PEAHAT_1
+        !byte SPR_OW_PEAHAT_0, SPR_OW_PEAHAT_1
 
 armos_ptrs:
-        !byte < (sprite_enemies_armos_0 / 64), < (sprite_enemies_armos_1 / 64)
-        !byte < (sprite_enemies_armos_0 / 64), < (sprite_enemies_armos_1 / 64)
-        !byte < (sprite_enemies_armos_0 / 64), < (sprite_enemies_armos_1 / 64)
-        !byte < (sprite_enemies_armos_0 / 64), < (sprite_enemies_armos_1 / 64)
+        !byte SPR_OW_ARMOS_0, SPR_OW_ARMOS_1
+        !byte SPR_OW_ARMOS_0, SPR_OW_ARMOS_1
+        !byte SPR_OW_ARMOS_0, SPR_OW_ARMOS_1
+        !byte SPR_OW_ARMOS_0, SPR_OW_ARMOS_1
 
 ghini_ptrs:
-        !byte < (sprite_enemies_ghini_0 / 64), < (sprite_enemies_ghini_1 / 64)
-        !byte < (sprite_enemies_ghini_0 / 64), < (sprite_enemies_ghini_1 / 64)
-        !byte < (sprite_enemies_ghini_0 / 64), < (sprite_enemies_ghini_1 / 64)
-        !byte < (sprite_enemies_ghini_0 / 64), < (sprite_enemies_ghini_1 / 64)
+        !byte SPR_OW_GHINI_0, SPR_OW_GHINI_1
+        !byte SPR_OW_GHINI_0, SPR_OW_GHINI_1
+        !byte SPR_OW_GHINI_0, SPR_OW_GHINI_1
+        !byte SPR_OW_GHINI_0, SPR_OW_GHINI_1
 
 zora_ptrs:
-        !byte < (sprite_enemies_zora_0 / 64), < (sprite_enemies_zora_1 / 64)
-        !byte < (sprite_enemies_zora_0 / 64), < (sprite_enemies_zora_1 / 64)
-        !byte < (sprite_enemies_zora_0 / 64), < (sprite_enemies_zora_1 / 64)
-        !byte < (sprite_enemies_zora_0 / 64), < (sprite_enemies_zora_1 / 64)
+        !byte SPR_OW_ZORA_0, SPR_OW_ZORA_1
+        !byte SPR_OW_ZORA_0, SPR_OW_ZORA_1
+        !byte SPR_OW_ZORA_0, SPR_OW_ZORA_1
+        !byte SPR_OW_ZORA_0, SPR_OW_ZORA_1
 
 lynel_ptrs:
-        !byte < (sprite_enemies_lynel_0 / 64), < (sprite_enemies_lynel_1 / 64)
-        !byte < (sprite_enemies_lynel_0 / 64), < (sprite_enemies_lynel_1 / 64)
-        !byte < (sprite_enemies_lynel_0 / 64), < (sprite_enemies_lynel_1 / 64)
-        !byte < (sprite_enemies_lynel_0 / 64), < (sprite_enemies_lynel_1 / 64)
+        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
+        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
+        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
+        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
 
 keese_ptrs:
-        !byte < (sprite_enemies_keese_0 / 64), < (sprite_enemies_keese_1 / 64)
-        !byte < (sprite_enemies_keese_0 / 64), < (sprite_enemies_keese_1 / 64)
-        !byte < (sprite_enemies_keese_0 / 64), < (sprite_enemies_keese_1 / 64)
-        !byte < (sprite_enemies_keese_0 / 64), < (sprite_enemies_keese_1 / 64)
+        !byte SPR_DUNG_KEESE_0, SPR_DUNG_KEESE_1
+        !byte SPR_DUNG_KEESE_0, SPR_DUNG_KEESE_1
+        !byte SPR_DUNG_KEESE_0, SPR_DUNG_KEESE_1
+        !byte SPR_DUNG_KEESE_0, SPR_DUNG_KEESE_1
 
 zol_ptrs:
-        !byte < (sprite_enemies_zol_0 / 64), < (sprite_enemies_zol_1 / 64)
-        !byte < (sprite_enemies_zol_0 / 64), < (sprite_enemies_zol_1 / 64)
-        !byte < (sprite_enemies_zol_0 / 64), < (sprite_enemies_zol_1 / 64)
-        !byte < (sprite_enemies_zol_0 / 64), < (sprite_enemies_zol_1 / 64)
+        !byte SPR_DUNG_ZOL_0, SPR_DUNG_ZOL_1
+        !byte SPR_DUNG_ZOL_0, SPR_DUNG_ZOL_1
+        !byte SPR_DUNG_ZOL_0, SPR_DUNG_ZOL_1
+        !byte SPR_DUNG_ZOL_0, SPR_DUNG_ZOL_1
 
 gel_ptrs:
-        !byte < (sprite_enemies_gel / 64), < (sprite_enemies_gel / 64)
-        !byte < (sprite_enemies_gel / 64), < (sprite_enemies_gel / 64)
-        !byte < (sprite_enemies_gel / 64), < (sprite_enemies_gel / 64)
-        !byte < (sprite_enemies_gel / 64), < (sprite_enemies_gel / 64)
+        !byte SPR_DUNG_GEL, SPR_DUNG_GEL
+        !byte SPR_DUNG_GEL, SPR_DUNG_GEL
+        !byte SPR_DUNG_GEL, SPR_DUNG_GEL
+        !byte SPR_DUNG_GEL, SPR_DUNG_GEL
 
 rope_ptrs:
-        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_0 / 64)
-        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_0 / 64)
-        !byte < (sprite_enemies_rope_1 / 64), < (sprite_enemies_rope_1 / 64)
-        !byte < (sprite_enemies_rope_1 / 64), < (sprite_enemies_rope_1 / 64)
+        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_0
+        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_0
+        !byte SPR_DUNG_ROPE_1, SPR_DUNG_ROPE_1
+        !byte SPR_DUNG_ROPE_1, SPR_DUNG_ROPE_1
 
 stalfos_ptrs:
-        !byte < (sprite_enemies_stalfos_0 / 64), < (sprite_enemies_stalfos_1 / 64)
-        !byte < (sprite_enemies_stalfos_0 / 64), < (sprite_enemies_stalfos_1 / 64)
-        !byte < (sprite_enemies_stalfos_0 / 64), < (sprite_enemies_stalfos_1 / 64)
-        !byte < (sprite_enemies_stalfos_0 / 64), < (sprite_enemies_stalfos_1 / 64)
+        !byte SPR_DUNG_STALFOS_0, SPR_DUNG_STALFOS_1
+        !byte SPR_DUNG_STALFOS_0, SPR_DUNG_STALFOS_1
+        !byte SPR_DUNG_STALFOS_0, SPR_DUNG_STALFOS_1
+        !byte SPR_DUNG_STALFOS_0, SPR_DUNG_STALFOS_1
 
 goriya_ptrs:
-        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_0 / 64)
-        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_0 / 64)
-        !byte < (sprite_enemies_goriya_1 / 64), < (sprite_enemies_goriya_1 / 64)
-        !byte < (sprite_enemies_goriya_1 / 64), < (sprite_enemies_goriya_1 / 64)
+        !byte SPR_DUNG_GORIYA_0, SPR_DUNG_GORIYA_0
+        !byte SPR_DUNG_GORIYA_0, SPR_DUNG_GORIYA_0
+        !byte SPR_DUNG_GORIYA_1, SPR_DUNG_GORIYA_1
+        !byte SPR_DUNG_GORIYA_1, SPR_DUNG_GORIYA_1
 
 darknut_ptrs:
-        !byte < (sprite_enemies_darknut_1 / 64), < (sprite_enemies_darknut_1 / 64)
-        !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_0 / 64)
-        !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_1 / 64)
-        !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_1 / 64)
+        !byte SPR_DUNG_DARKNUT_1, SPR_DUNG_DARKNUT_1
+        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_0
+        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
+        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
 
 wizzrobe_ptrs:
-        !byte < (sprite_enemies_wizzrobe_0 / 64), < (sprite_enemies_wizzrobe_1 / 64)
-        !byte < (sprite_enemies_wizzrobe_0 / 64), < (sprite_enemies_wizzrobe_1 / 64)
-        !byte < (sprite_enemies_wizzrobe_0 / 64), < (sprite_enemies_wizzrobe_1 / 64)
-        !byte < (sprite_enemies_wizzrobe_0 / 64), < (sprite_enemies_wizzrobe_1 / 64)
+        !byte SPR_DUNG_WIZZROBE_0, SPR_DUNG_WIZZROBE_1
+        !byte SPR_DUNG_WIZZROBE_0, SPR_DUNG_WIZZROBE_1
+        !byte SPR_DUNG_WIZZROBE_0, SPR_DUNG_WIZZROBE_1
+        !byte SPR_DUNG_WIZZROBE_0, SPR_DUNG_WIZZROBE_1
 
 wallmaster_ptrs:
-        !byte < (sprite_enemies_wallmaster_0 / 64), < (sprite_enemies_wallmaster_1 / 64)
-        !byte < (sprite_enemies_wallmaster_0 / 64), < (sprite_enemies_wallmaster_1 / 64)
-        !byte < (sprite_enemies_wallmaster_0 / 64), < (sprite_enemies_wallmaster_1 / 64)
-        !byte < (sprite_enemies_wallmaster_0 / 64), < (sprite_enemies_wallmaster_1 / 64)
+        !byte SPR_DUNG_WALLMASTER_0, SPR_DUNG_WALLMASTER_1
+        !byte SPR_DUNG_WALLMASTER_0, SPR_DUNG_WALLMASTER_1
+        !byte SPR_DUNG_WALLMASTER_0, SPR_DUNG_WALLMASTER_1
+        !byte SPR_DUNG_WALLMASTER_0, SPR_DUNG_WALLMASTER_1
 
 likelike_ptrs:
-        !byte < (sprite_enemies_likelike_0 / 64), < (sprite_enemies_likelike_1 / 64)
-        !byte < (sprite_enemies_likelike_0 / 64), < (sprite_enemies_likelike_1 / 64)
-        !byte < (sprite_enemies_likelike_0 / 64), < (sprite_enemies_likelike_1 / 64)
-        !byte < (sprite_enemies_likelike_0 / 64), < (sprite_enemies_likelike_1 / 64)
+        !byte SPR_DUNG_LIKELIKE_0, SPR_DUNG_LIKELIKE_1
+        !byte SPR_DUNG_LIKELIKE_0, SPR_DUNG_LIKELIKE_1
+        !byte SPR_DUNG_LIKELIKE_0, SPR_DUNG_LIKELIKE_1
+        !byte SPR_DUNG_LIKELIKE_0, SPR_DUNG_LIKELIKE_1
 
 polsvoice_ptrs:
-        !byte < (sprite_enemies_polsvoice_0 / 64), < (sprite_enemies_polsvoice_1 / 64)
-        !byte < (sprite_enemies_polsvoice_0 / 64), < (sprite_enemies_polsvoice_1 / 64)
-        !byte < (sprite_enemies_polsvoice_0 / 64), < (sprite_enemies_polsvoice_1 / 64)
-        !byte < (sprite_enemies_polsvoice_0 / 64), < (sprite_enemies_polsvoice_1 / 64)
+        !byte SPR_DUNG_POLSVOICE_0, SPR_DUNG_POLSVOICE_1
+        !byte SPR_DUNG_POLSVOICE_0, SPR_DUNG_POLSVOICE_1
+        !byte SPR_DUNG_POLSVOICE_0, SPR_DUNG_POLSVOICE_1
+        !byte SPR_DUNG_POLSVOICE_0, SPR_DUNG_POLSVOICE_1
 
 gibdo_ptrs:
-        !byte < (sprite_enemies_gibdo_0 / 64), < (sprite_enemies_gibdo_1 / 64)
-        !byte < (sprite_enemies_gibdo_0 / 64), < (sprite_enemies_gibdo_1 / 64)
-        !byte < (sprite_enemies_gibdo_0 / 64), < (sprite_enemies_gibdo_1 / 64)
-        !byte < (sprite_enemies_gibdo_0 / 64), < (sprite_enemies_gibdo_1 / 64)
+        !byte SPR_DUNG_GIBDO_0, SPR_DUNG_GIBDO_1
+        !byte SPR_DUNG_GIBDO_0, SPR_DUNG_GIBDO_1
+        !byte SPR_DUNG_GIBDO_0, SPR_DUNG_GIBDO_1
+        !byte SPR_DUNG_GIBDO_0, SPR_DUNG_GIBDO_1
 
 vire_ptrs:
-        !byte < (sprite_enemies_vire_0 / 64), < (sprite_enemies_vire_1 / 64)
-        !byte < (sprite_enemies_vire_0 / 64), < (sprite_enemies_vire_1 / 64)
-        !byte < (sprite_enemies_vire_0 / 64), < (sprite_enemies_vire_1 / 64)
-        !byte < (sprite_enemies_vire_0 / 64), < (sprite_enemies_vire_1 / 64)
+        !byte SPR_DUNG_VIRE_0, SPR_DUNG_VIRE_1
+        !byte SPR_DUNG_VIRE_0, SPR_DUNG_VIRE_1
+        !byte SPR_DUNG_VIRE_0, SPR_DUNG_VIRE_1
+        !byte SPR_DUNG_VIRE_0, SPR_DUNG_VIRE_1
 
 bubble_ptrs:
-        !byte < (sprite_enemies_bubble_0 / 64), < (sprite_enemies_bubble_1 / 64)
-        !byte < (sprite_enemies_bubble_0 / 64), < (sprite_enemies_bubble_1 / 64)
-        !byte < (sprite_enemies_bubble_0 / 64), < (sprite_enemies_bubble_1 / 64)
-        !byte < (sprite_enemies_bubble_0 / 64), < (sprite_enemies_bubble_1 / 64)
+        !byte SPR_DUNG_BUBBLE_0, SPR_DUNG_BUBBLE_1
+        !byte SPR_DUNG_BUBBLE_0, SPR_DUNG_BUBBLE_1
+        !byte SPR_DUNG_BUBBLE_0, SPR_DUNG_BUBBLE_1
+        !byte SPR_DUNG_BUBBLE_0, SPR_DUNG_BUBBLE_1
 
 trap_ptrs:
-        !byte < (sprite_enemies_trap / 64), < (sprite_enemies_trap / 64)
-        !byte < (sprite_enemies_trap / 64), < (sprite_enemies_trap / 64)
-        !byte < (sprite_enemies_trap / 64), < (sprite_enemies_trap / 64)
-        !byte < (sprite_enemies_trap / 64), < (sprite_enemies_trap / 64)
+        !byte SPR_DUNG_TRAP, SPR_DUNG_TRAP
+        !byte SPR_DUNG_TRAP, SPR_DUNG_TRAP
+        !byte SPR_DUNG_TRAP, SPR_DUNG_TRAP
+        !byte SPR_DUNG_TRAP, SPR_DUNG_TRAP
 
 lanmola_ptrs:
-        !byte < (sprite_enemies_lanmola_head / 64), < (sprite_enemies_lanmola_body / 64)
-        !byte < (sprite_enemies_lanmola_head / 64), < (sprite_enemies_lanmola_body / 64)
-        !byte < (sprite_enemies_lanmola_head / 64), < (sprite_enemies_lanmola_body / 64)
-        !byte < (sprite_enemies_lanmola_head / 64), < (sprite_enemies_lanmola_body / 64)
+        !byte SPR_DUNG_LANMOLA_HEAD, SPR_DUNG_LANMOLA_BODY
+        !byte SPR_DUNG_LANMOLA_HEAD, SPR_DUNG_LANMOLA_BODY
+        !byte SPR_DUNG_LANMOLA_HEAD, SPR_DUNG_LANMOLA_BODY
+        !byte SPR_DUNG_LANMOLA_HEAD, SPR_DUNG_LANMOLA_BODY
 
 aquamentus_ptrs:
-        !byte < (sprite_enemies_aquamentus_0 / 64), < (sprite_enemies_aquamentus_1 / 64)
-        !byte < (sprite_enemies_aquamentus_0 / 64), < (sprite_enemies_aquamentus_1 / 64)
-        !byte < (sprite_enemies_aquamentus_0 / 64), < (sprite_enemies_aquamentus_1 / 64)
-        !byte < (sprite_enemies_aquamentus_0 / 64), < (sprite_enemies_aquamentus_1 / 64)
+        !byte SPR_DUNG_AQUAMENTUS_0, SPR_DUNG_AQUAMENTUS_1
+        !byte SPR_DUNG_AQUAMENTUS_0, SPR_DUNG_AQUAMENTUS_1
+        !byte SPR_DUNG_AQUAMENTUS_0, SPR_DUNG_AQUAMENTUS_1
+        !byte SPR_DUNG_AQUAMENTUS_0, SPR_DUNG_AQUAMENTUS_1
 
 dodongo_ptrs:
-        !byte < (sprite_enemies_dodongo_0 / 64), < (sprite_enemies_dodongo_1 / 64)
-        !byte < (sprite_enemies_dodongo_0 / 64), < (sprite_enemies_dodongo_1 / 64)
-        !byte < (sprite_enemies_dodongo_0 / 64), < (sprite_enemies_dodongo_1 / 64)
-        !byte < (sprite_enemies_dodongo_0 / 64), < (sprite_enemies_dodongo_1 / 64)
+        !byte SPR_DUNG_DODONGO_0, SPR_DUNG_DODONGO_1
+        !byte SPR_DUNG_DODONGO_0, SPR_DUNG_DODONGO_1
+        !byte SPR_DUNG_DODONGO_0, SPR_DUNG_DODONGO_1
+        !byte SPR_DUNG_DODONGO_0, SPR_DUNG_DODONGO_1
 
 manhandla_ptrs:
-        !byte < (sprite_enemies_manhandla_core / 64), < (sprite_enemies_manhandla_jaw / 64)
-        !byte < (sprite_enemies_manhandla_core / 64), < (sprite_enemies_manhandla_jaw / 64)
-        !byte < (sprite_enemies_manhandla_core / 64), < (sprite_enemies_manhandla_jaw / 64)
-        !byte < (sprite_enemies_manhandla_core / 64), < (sprite_enemies_manhandla_jaw / 64)
+        !byte SPR_DUNG_MANHANDLA_CORE, SPR_DUNG_MANHANDLA_JAW
+        !byte SPR_DUNG_MANHANDLA_CORE, SPR_DUNG_MANHANDLA_JAW
+        !byte SPR_DUNG_MANHANDLA_CORE, SPR_DUNG_MANHANDLA_JAW
+        !byte SPR_DUNG_MANHANDLA_CORE, SPR_DUNG_MANHANDLA_JAW
 
 gleeok_ptrs:
-        !byte < (sprite_enemies_gleeok_0 / 64), < (sprite_enemies_gleeok_1 / 64)
-        !byte < (sprite_enemies_gleeok_0 / 64), < (sprite_enemies_gleeok_1 / 64)
-        !byte < (sprite_enemies_gleeok_0 / 64), < (sprite_enemies_gleeok_1 / 64)
-        !byte < (sprite_enemies_gleeok_0 / 64), < (sprite_enemies_gleeok_1 / 64)
+        !byte SPR_DUNG_GLEEOK_0, SPR_DUNG_GLEEOK_1
+        !byte SPR_DUNG_GLEEOK_0, SPR_DUNG_GLEEOK_1
+        !byte SPR_DUNG_GLEEOK_0, SPR_DUNG_GLEEOK_1
+        !byte SPR_DUNG_GLEEOK_0, SPR_DUNG_GLEEOK_1
 
 digdogger_ptrs:
-        !byte < (sprite_enemies_digdogger / 64), < (sprite_enemies_digdogger / 64)
-        !byte < (sprite_enemies_digdogger / 64), < (sprite_enemies_digdogger / 64)
-        !byte < (sprite_enemies_digdogger / 64), < (sprite_enemies_digdogger / 64)
-        !byte < (sprite_enemies_digdogger / 64), < (sprite_enemies_digdogger / 64)
+        !byte SPR_DUNG_DIGDOGGER, SPR_DUNG_DIGDOGGER
+        !byte SPR_DUNG_DIGDOGGER, SPR_DUNG_DIGDOGGER
+        !byte SPR_DUNG_DIGDOGGER, SPR_DUNG_DIGDOGGER
+        !byte SPR_DUNG_DIGDOGGER, SPR_DUNG_DIGDOGGER
 
 gohma_ptrs:
-        !byte < (sprite_enemies_gohma_closed / 64), < (sprite_enemies_gohma_open / 64)
-        !byte < (sprite_enemies_gohma_closed / 64), < (sprite_enemies_gohma_open / 64)
-        !byte < (sprite_enemies_gohma_closed / 64), < (sprite_enemies_gohma_open / 64)
-        !byte < (sprite_enemies_gohma_closed / 64), < (sprite_enemies_gohma_open / 64)
+        !byte SPR_DUNG_GOHMA_CLOSED, SPR_DUNG_GOHMA_OPEN
+        !byte SPR_DUNG_GOHMA_CLOSED, SPR_DUNG_GOHMA_OPEN
+        !byte SPR_DUNG_GOHMA_CLOSED, SPR_DUNG_GOHMA_OPEN
+        !byte SPR_DUNG_GOHMA_CLOSED, SPR_DUNG_GOHMA_OPEN
 
 patra_ptrs:
-        !byte < (sprite_enemies_patra_center / 64), < (sprite_enemies_patra_orb / 64)
-        !byte < (sprite_enemies_patra_center / 64), < (sprite_enemies_patra_orb / 64)
-        !byte < (sprite_enemies_patra_center / 64), < (sprite_enemies_patra_orb / 64)
-        !byte < (sprite_enemies_patra_center / 64), < (sprite_enemies_patra_orb / 64)
+        !byte SPR_DUNG_PATRA_CENTER, SPR_DUNG_PATRA_ORB
+        !byte SPR_DUNG_PATRA_CENTER, SPR_DUNG_PATRA_ORB
+        !byte SPR_DUNG_PATRA_CENTER, SPR_DUNG_PATRA_ORB
+        !byte SPR_DUNG_PATRA_CENTER, SPR_DUNG_PATRA_ORB
 
 ganon_ptrs:
-        !byte < (sprite_enemies_ganon_0 / 64), < (sprite_enemies_ganon_1 / 64)
-        !byte < (sprite_enemies_ganon_0 / 64), < (sprite_enemies_ganon_1 / 64)
-        !byte < (sprite_enemies_ganon_0 / 64), < (sprite_enemies_ganon_1 / 64)
-        !byte < (sprite_enemies_ganon_0 / 64), < (sprite_enemies_ganon_1 / 64)
+        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
+        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
+        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
+        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
 
 none_ptrs:
         !byte 0, 0, 0, 0, 0, 0, 0, 0
@@ -2951,12 +2951,12 @@ irq_top:
         lda inv_page
         cmp #INV_PAGE_ITEMS
         bne .skip_top
-        jsr inv_p0_irq_row1
+        jsr $a009                      ; inv_p0_irq_row1 dans l'overlay inventaire
         lda #122                        ; Raster entre Y=106 et Y=134
         sta VIC_RASTER
-        lda #< irq_p0_row2
+        lda #$0c                        ; irq_p0_row2 vecteur ($A00C)
         sta $0314
-        lda #> irq_p0_row2
+        lda #$a0
         sta $0315
         asl VIC_IRQ_FLAG
         jmp $ea81
@@ -3139,10 +3139,10 @@ draw_virtual_to_spr3:
         lda en_timer,x
         cmp #8
         bcc +
-        lda #< (sprite_enemies_enemy_death_0 / 64)
+        lda #SPR_COMMON_DEATH_0
         sta SPRITE_PTR3
         jmp .s3_enable
-+       lda #< (sprite_enemies_enemy_death_1 / 64)
++       lda #SPR_COMMON_DEATH_1
         sta SPRITE_PTR3
 
 .s3_enable:
@@ -3235,10 +3235,10 @@ draw_virtual_to_spr4:
         lda en_timer,x
         cmp #8
         bcc +
-        lda #< (sprite_enemies_enemy_death_0 / 64)
+        lda #SPR_COMMON_DEATH_0
         sta SPRITE_PTR4
         jmp .s4_enable
-+       lda #< (sprite_enemies_enemy_death_1 / 64)
++       lda #SPR_COMMON_DEATH_1
         sta SPRITE_PTR4
 
 .s4_enable:
@@ -3331,10 +3331,10 @@ draw_virtual_to_spr5:
         lda en_timer,x
         cmp #8
         bcc +
-        lda #< (sprite_enemies_enemy_death_0 / 64)
+        lda #SPR_COMMON_DEATH_0
         sta SPRITE_PTR5
         jmp .s5_enable
-+       lda #< (sprite_enemies_enemy_death_1 / 64)
++       lda #SPR_COMMON_DEATH_1
         sta SPRITE_PTR5
 
 .s5_enable:
@@ -3427,10 +3427,10 @@ draw_virtual_to_spr6:
         lda en_timer,x
         cmp #8
         bcc +
-        lda #< (sprite_enemies_enemy_death_0 / 64)
+        lda #SPR_COMMON_DEATH_0
         sta SPRITE_PTR6
         jmp .s6_enable
-+       lda #< (sprite_enemies_enemy_death_1 / 64)
++       lda #SPR_COMMON_DEATH_1
         sta SPRITE_PTR6
 
 .s6_enable:
@@ -3501,7 +3501,7 @@ apply_proj_sprite7:
         jmp .pj_rock
 
 .pj_rock:
-        lda #< (sprite_enemies_octo_rock / 64)
+        lda #SPR_OW_OCTO_ROCK
         sta SPRITE_PTR7
         lda #COL_LRED
         sta VIC_SPRITE_COL7
@@ -3513,31 +3513,31 @@ apply_proj_sprite7:
         beq +
         cmp #DIR_RIGHT
         beq +
-        lda #< (sprite_enemies_moblin_spear_v / 64)
+        lda #SPR_OW_MOBLIN_SPEAR_V
         sta SPRITE_PTR7
         jmp ++
-+       lda #< (sprite_enemies_moblin_spear_h / 64)
++       lda #SPR_OW_MOBLIN_SPEAR_H
         sta SPRITE_PTR7
 ++      lda #COL_LRED
         sta VIC_SPRITE_COL7
         jmp .pj_enable
 
 .pj_fireball:
-        lda #< (sprite_enemies_proj_fireball / 64)
+        lda #SPR_COMMON_FIREBALL
         sta SPRITE_PTR7
         lda #COL_RED
         sta VIC_SPRITE_COL7
         jmp .pj_enable
 
 .pj_magic:
-        lda #< (sprite_enemies_proj_magic / 64)
+        lda #SPR_COMMON_MAGIC
         sta SPRITE_PTR7
         lda #COL_BLUE
         sta VIC_SPRITE_COL7
         jmp .pj_enable
 
 .pj_boom:
-        lda #< (sprite_enemies_proj_boom_en / 64)
+        lda #SPR_COMMON_BOOM_EN
         sta SPRITE_PTR7
         lda #COL_BROWN
         sta VIC_SPRITE_COL7

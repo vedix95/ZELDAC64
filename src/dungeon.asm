@@ -1324,7 +1324,7 @@ dungeon_update:
 
 .hold_triforce:
         ; Link brandit l'objet vers le haut
-        lda #< (sprite_link_item_get / 64)
+        lda #SPR_COMMON_ITEM_GET
         sta SPRITE_PTR0
         rts
 
@@ -2908,7 +2908,7 @@ cellar_draw:
         lda cellar_pickup_timer
         bne +
         jmp .cellar_normal_spr
-+       lda #(sprite_link_item_get / 64)
++       lda #SPR_COMMON_ITEM_GET
         sta SPRITE_PTR0
 
         ; Sprite 1 : Objet brandi au-dessus de la tête

@@ -32,7 +32,7 @@ debug_dungeon_ow_px:
 debug_dungeon_ow_py:
         !byte 146, 146, 146, 146, 146, 146, 146, 146, 146
 
-open_debug:
+ovl_debug_open:
         lda game_state
         sta prev_game_state
         lda #STATE_DEBUG
@@ -54,7 +54,7 @@ open_debug:
         jsr debug_render_screen
         rts
 
-debug_update:
+ovl_debug_update:
         lda key_d_pressed
         bne .do_close
         lda btn_b_pressed
@@ -496,7 +496,7 @@ debug_clear_screen:
         bne .clr
         rts
 
-debug_render_screen:
+ovl_debug_render_screen:
         jsr debug_clear_screen
 
         lda #< (SCREEN_RAM + 6)
@@ -1067,11 +1067,7 @@ dbg_sh1: !text "PETIT  ", 0
 ; ---------------------------------------------------------------------------
 ; Auto-warp debug hook (activable par mémoire ou moniteur)
 ; ---------------------------------------------------------------------------
-debug_hook_cmd:  !byte 0
-debug_hook_arg:  !byte 0
-debug_hook_arg2: !byte 0
-
-debug_exec_hook_cmd:
+ovl_debug_exec_hook_cmd:
         lda debug_hook_cmd
         cmp #1
         beq .hook_warp_ow
@@ -1121,7 +1117,7 @@ debug_exec_hook_cmd:
         jmp .hook_done
 
 .hook_open_debug:
-        jsr open_debug
+        jsr ovl_debug_open
         lda debug_hook_arg
         sta dbg_page
         jsr debug_render_screen

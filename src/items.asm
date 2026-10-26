@@ -115,85 +115,10 @@ use_whistle:
         lda player_has_whistle
         bne +
         rts
-+
-        ; Joue la mélodie de la flûte (synthèse SID)
-        jsr sound_flute
-
-        ; Si Digdogger est dans la salle (Niveau 5) : il rétrécit !
-        ldx #0
-.chk_dig:
-        lda en_state,x
-        cmp #EN_STATE_DEAD
-        beq +
-        lda en_type,x
-        cmp #TYPE_DIGDOGGER
-        bne +
-        lda #TYPE_GEL
-        sta en_type,x
-        lda #2
-        sta en_hp,x
-        lda #AI_ROAM
-        sta en_ai_type,x
-        lda #0
-        sta en_anim,x
-+       inx
-        cpx #MAX_ENEMIES
-        bcc .chk_dig
-
-        lda current_world_type
-        cmp #WORLD_OVERWORLD
-        bne .whistle_end
-
-        ; --- Sur l'Overworld ---
-        lda current_room_idx
-        cmp #66                         ; Salle 66 (C-5) : Assèche l'étang du Donjon 7 !
-        bne .whistle_warp
-
-        ; Remplacement des tuiles d'eau par de l'herbe et apparition de la grotte du Donjon 7
-        ldy #199
--       lda room_buf,y
-        cmp #TILE_WATER
-        bne +
-        lda #TILE_GRASS
-        sta room_buf,y
-+       dey
-        bpl -
-
-        ; Place l'entrée du Donjon 7 au centre de l'ancien étang (ligne 4, col 10 -> index 90)
-        lda #TILE_CAVE
-        sta room_buf+90
-
-        lda #<room_buf
-        sta ZP_MAP
-        lda #>room_buf
-        sta ZP_MAP+1
-        jsr draw_map
-        jsr sound_secret_chime
-        jsr record_room_secret_opened
-        rts
-
-.whistle_warp:
-        ; Téléportation magique par la tornade vers l'entrée d'un donjon !
-        lda #55                         ; Entrée Niveau 1 (H-4)
-        sta current_room_idx
-        lda #7
-        sta current_room_x
-        lda #3
-        sta current_room_y
-        lda #180
-        sta player_x
-        lda #0
-        sta player_x+1
-        lda #150
-        sta player_y
-        jsr load_room
-        jsr hud_init
-        jsr player_draw
-        jsr enemies_init
-        jsr enemies_prep_multiplexer
-        jsr sound_secret_chime
-.whistle_end:
-        rts
++       lda #CART_BANK_OVL_ITEMS
+        ldx #4
+        jsr cart_load_overlay
+        jmp $a000                      ; ovl_item_whistle_exec
 
 use_wand:
         lda player_has_wand
@@ -760,44 +685,16 @@ update_candle:
         ; --- PHASE 1 : BRÛLE SUR PLACE ---
         lda current_world_type
         bne +
-        ; Tester si la flamme brûle un arbre secret
-        lda item_x
-        sta col_x
-        lda item_x+1
-        sta col_x+1
-        lda item_y
-        sta col_y
-        jsr get_tile_at_point           ; A = tile_id, Y = offset dans room_buf
-        cmp #TILE_TREE
-        bne +
-        lda current_room_idx
-        cmp #107                        ; Salle 107 (L-7) : Cœur dans l'arbre !
-        beq .burn_tree_secret
-        cmp #15                         ; Salle 15 (P-1) : Grotte indice
-        beq .burn_tree_secret
-        cmp #108                        ; Salle 108 (M-7) : Arbre Donjon 8
-        beq .burn_tree_secret
-        cmp #109                        ; Salle 109 (N-7) : Arbre Donjon 8
-        beq .burn_tree_secret
-        cmp #82                         ; Salle 82 (C-6) : Moblin secret
-        beq .burn_tree_secret
-        cmp #111                        ; Salle 111 (P-7) : Boutique
-        beq .burn_tree_secret
+        lda #CART_BANK_OVL_ITEMS
+        ldx #4
+        jsr cart_load_overlay
+        jsr $a003                      ; ovl_item_candle_exec
+        bcs .burn_done
 +       dec item_timer
         bne .burn_done
         lda #ITEM_NONE
         sta item_active
 .burn_done:
-        rts
-
-.burn_tree_secret:
-        lda #TILE_CAVE
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret
-        jsr record_room_secret_opened
-        lda #ITEM_NONE
-        sta item_active
         rts
 
 ; ---------------------------------------------------------------------------
@@ -1099,7 +996,7 @@ items_draw:
 
 .drw_wand:
         ; --- BAGUETTE MAGIQUE : ONDE BLEUE ---
-        lda #< (sprite_enemies_proj_magic / 64)
+        lda #SPR_COMMON_MAGIC
         sta SPRITE_PTR2
         lda #COL_CYAN
         sta VIC_SPRITE_COL2
@@ -1230,133 +1127,10 @@ bomb_check_secret_wall:
         lda current_world_type
         beq +
         rts
-+
-
-        ; 1. Centre de la déflagration
-        lda item_x
-        sta col_x
-        lda item_x+1
-        sta col_x+1
-        lda item_y
-        sta col_y
-        jsr .test_bomb_point
-        bcs .do_found_secret
-
-        ; 2. Nord (item_y - 14)
-        lda item_x
-        sta col_x
-        lda item_x+1
-        sta col_x+1
-        sec
-        lda item_y
-        sbc #14
-        sta col_y
-        jsr .test_bomb_point
-        bcs .do_found_secret
-
-        ; 3. Sud (item_y + 14)
-        lda item_x
-        sta col_x
-        lda item_x+1
-        sta col_x+1
-        clc
-        lda item_y
-        adc #14
-        sta col_y
-        jsr .test_bomb_point
-        bcs .do_found_secret
-
-        ; 4. Ouest (item_x - 14)
-        sec
-        lda item_x
-        sbc #14
-        sta col_x
-        lda item_x+1
-        sbc #0
-        sta col_x+1
-        lda item_y
-        sta col_y
-        jsr .test_bomb_point
-        bcs .do_found_secret
-
-        ; 5. Est (item_x + 14)
-        clc
-        lda item_x
-        adc #14
-        sta col_x
-        lda item_x+1
-        adc #0
-        sta col_x+1
-        lda item_y
-        sta col_y
-        jsr .test_bomb_point
-        bcc .bc_done
-
-.do_found_secret:
-        jmp .found_secret
-
-.bc_done:
-        rts
-
-.test_bomb_point:
-        jsr get_tile_at_point           ; A = tile_id, Y = offset tuile dans room_buf
-        cmp #TILE_WALL_BOMB
-        beq .found_b_sec
-        ; Sur l'Overworld : autoriser l'explosion des rochers/murs fissurés des grottes secrètes
-        lda current_world_type
-        bne .not_b_sec
-        lda current_room_idx
-        cmp #5                          ; Salle 5 (F-1, Spectacle Rock, Entrée Donjon 9 !)
-        beq .is_b_room
-        cmp #44                         ; Salle 44 (M-3, Cœur dans rocher)
-        beq .is_b_room
-        cmp #91                         ; Salle 91 (L-6, Cœur choix falaise)
-        beq .is_b_room
-        cmp #36                         ; Salle 36 (E-3, Moblin +30)
-        beq .is_b_room
-        cmp #49                         ; Salle 49 (B-4, Moblin +100)
-        beq .is_b_room
-        cmp #86                         ; Salle 86 (G-6, Moblin +30)
-        beq .is_b_room
-        cmp #98                         ; Salle 98 (C-7, Moblin +30)
-        beq .is_b_room
-        cmp #100                        ; Salle 100 (E-7, Anneau Bleu secret)
-        beq .is_b_room
-        cmp #114                        ; Salle 114 (C-8, Moblin +30)
-        beq .is_b_room
-        cmp #2                          ; Salle 2 (C-1, Door repair)
-        beq .is_b_room
-        cmp #12                         ; Salle 12 (M-1, Door repair)
-        beq .is_b_room
-        cmp #39                         ; Salle 39 (H-3, Door repair)
-        beq .is_b_room
-        cmp #69                         ; Salle 69 (F-5, Door repair)
-        beq .is_b_room
-        cmp #89                         ; Salle 89 (J-6, Door repair)
-        beq .is_b_room
-.not_b_sec:
-        clc
-        rts
-
-.is_b_room:
-        lda room_buf,y
-        cmp #TILE_WALL                  ; Mur ou rocher
-        beq .found_b_sec
-        cmp #TILE_ROCK                  ; Rocher escargot
-        beq .found_b_sec
-        bne .not_b_sec
-.found_b_sec:
-        sec
-        rts
-
-.found_secret:
-        ; Y contient l'offset de la tuile dans room_buf (0..199)
-        lda #TILE_CAVE
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret
-        jsr record_room_secret_opened
-        rts
++       lda #CART_BANK_OVL_ITEMS
+        ldx #4
+        jsr cart_load_overlay
+        jmp $a009                      ; ovl_item_bomb_secret_exec
 
 record_room_secret_opened:
         lda current_world_type

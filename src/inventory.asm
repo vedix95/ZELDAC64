@@ -8,23 +8,6 @@
 
 !zone inventory
 
-STATE_PLAYING   = 0
-STATE_INVENTORY = 1
-STATE_DEBUG     = 2
-STATE_CAVE      = 3
-STATE_INTRO     = 4
-STATE_TRANSITION = 5
-STATE_CELLAR    = 6
-STATE_RAFT      = 7
-
-INV_PAGE_ITEMS     = 0
-INV_PAGE_TRIFORCE  = 1
-INV_PAGE_EQUIPMENT = 2
-INV_PAGE_MAP       = 3
-INV_PAGE_MAX       = 3
-
-game_state:         !byte STATE_INTRO
-inv_page:           !byte 0
 inv_frame_timer:    !byte 0
 map_rx:             !byte 0
 map_ry:             !byte 0
@@ -34,7 +17,7 @@ visited_count:      !byte 0
 ; ---------------------------------------------------------------------------
 ; open_inventory : ouvre le menu d'inventaire
 ; ---------------------------------------------------------------------------
-open_inventory:
+ovl_inventory_open:
         lda #STATE_INVENTORY
         sta game_state
 
@@ -82,7 +65,7 @@ open_inventory:
 ; ---------------------------------------------------------------------------
 ; close_inventory : referme le menu et reprend le jeu
 ; ---------------------------------------------------------------------------
-close_inventory:
+ovl_inventory_close:
         lda #STATE_PLAYING
         sta game_state
 
@@ -130,7 +113,7 @@ close_inventory:
 ; ---------------------------------------------------------------------------
 ; inventory_update : navigation, sélection et changement de page
 ; ---------------------------------------------------------------------------
-inventory_update:
+ovl_inventory_update:
         ; 1. Fermeture par Bouton B, X ou Espace
         lda btn_b_pressed
         bne .do_close

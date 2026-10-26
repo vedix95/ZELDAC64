@@ -1,0 +1,101 @@
+; ===========================================================================
+; overlay_trampolines.asm : Routines résidentes et trampolines d'overlays cartouche
+; Permet à zelda.prg de charger et d'exécuter à la volée les modules secondaires
+; (Inventaire, Cavernes, Menu Debug) dans la zone RAM $A000..$BFFF.
+; ===========================================================================
+
+!zone overlays_trampolines
+
+!source "src/cave_defs.inc"
+
+; ---------------------------------------------------------------------------
+; Variables résidentes persistantes partagées
+; ---------------------------------------------------------------------------
+game_state:             !byte STATE_PLAYING ; État global du jeu
+inv_page:               !byte 0         ; Page active de l'inventaire (0..3)
+debug_hook_cmd:         !byte 0         ; Commande de hook de débug
+debug_hook_arg:         !byte 0         ; Argument 1 du hook
+debug_hook_arg2:        !byte 0         ; Argument 2 du hook
+current_cave_type:      !byte 0         ; Type de la caverne en cours de visite
+
+; Persistance des 128 salles de cavernes (bit 7 = déjà visitée / pillée)
+cave_room_cleared:      !fill 128, 0
+
+; Table de mapping des 128 salles Overworld vers leur type de caverne
+room_cave_types:
+        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 10: Épée Blanche, Salle 15: Moblin secret (+100 rubis)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, 0, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_MOBLIN
+        ; Rangée 1 (16..31 : A-2 .. P-2)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_SHOP_A
+        ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 33: Épée Magique (B-3), Salle 43: Choix Cœur, Salle 44/47: Cœurs
+        !byte 0, CAVE_TYPE_SWORD_MAGIC, 0, 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_HEART_GIFT, 0, 0, CAVE_TYPE_HEART_GIFT
+        ; Rangée 3 (48..63 : A-4 .. P-4)
+        !byte 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, 0, CAVE_TYPE_FAIRY, 0, 0, 0, 0, 0, 0
+        ; Rangée 4 (64..79 : A-5 .. P-5)
+        !byte 0, 0, 0, CAVE_TYPE_FAIRY, 0, CAVE_TYPE_POTION_SHOP, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
+        ; Rangée 5 (80..95 : A-6 .. P-6)
+        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, 0, 0, CAVE_TYPE_SHOP_A, CAVE_TYPE_HEART_GIFT
+        ; Rangée 6 (96..111 : A-7 .. P-7)
+        !byte 0, 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SHOP_SECRET, 0, CAVE_TYPE_SHOP_A, 0, 0, 0, 0, CAVE_TYPE_HEART_GIFT, 0, 0, 0, CAVE_TYPE_SHOP_B
+        ; Rangée 7 (112..127 : A-8 .. P-8)
+        !byte CAVE_TYPE_GAMBLE, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_SWORD_WOOD, 0, 0, 0, 0, 0, 0, 0, 0
+
+; ---------------------------------------------------------------------------
+; Trampolines Overlay Inventaire (Banque 27)
+; ---------------------------------------------------------------------------
+open_inventory:
+        lda #CART_BANK_OVL_INV
+        ldx #16                         ; 16 pages = 4096 octets
+        jsr cart_load_overlay
+        jmp $a000                      ; open_inventory
+
+inventory_update:
+        jmp $a003                      ; inventory_update
+
+close_inventory:
+        jmp $a006                      ; close_inventory
+
+inv_display_current_page:
+        jmp $a012
+
+; ---------------------------------------------------------------------------
+; Trampolines Overlay Cavernes & Échoppes (Banque 28)
+; ---------------------------------------------------------------------------
+cave_enter:
+        lda #CART_BANK_OVL_CAVE
+        ldx #14                         ; 14 pages = 3584 octets
+        jsr cart_load_overlay
+        jmp $a000                      ; cave_enter
+
+cave_update:
+        jmp $a003                      ; cave_update
+
+cave_draw:
+        jmp $a006                      ; cave_draw
+
+cave_draw_screen:
+        lda #CART_BANK_OVL_CAVE
+        ldx #14
+        jsr cart_load_overlay
+        jmp $a00f
+
+; ---------------------------------------------------------------------------
+; Trampolines Overlay Menu Debug (Banque 30)
+; ---------------------------------------------------------------------------
+open_debug:
+        lda #CART_BANK_OVL_DEBUG
+        ldx #8                          ; 8 pages = 2048 octets
+        jsr cart_load_overlay
+        jmp $a000                      ; open_debug
+
+debug_update:
+        jmp $a003                      ; debug_update
+
+debug_exec_hook_cmd:
+        lda #CART_BANK_OVL_DEBUG
+        ldx #8
+        jsr cart_load_overlay
+        jmp $a006                      ; debug_exec_hook_cmd
+
+debug_render_screen:
+        jmp $a009

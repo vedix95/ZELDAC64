@@ -199,38 +199,48 @@ check_ow_raft:
         sta col_x+1
         jsr get_tile_at_point
         cmp #TILE_BRIDGE_H
-        beq .chk_raft_rooms
+        beq .on_dock
         cmp #TILE_BRIDGE_V
-        beq .chk_raft_rooms
+        beq .on_dock
 .ret:   rts
 
-.chk_raft_rooms:
-        ldx #3
--       lda .raft_rooms,x
-        cmp current_room_idx
-        bne +
-        lda player_dir
-        cmp .raft_dirs,x
-        beq .launch
-+       dex
-        bpl -
-        rts
-
-.raft_rooms: !byte 85, 69, 63, 47
-.raft_dirs:  !byte DIR_UP, DIR_DOWN, DIR_UP, DIR_DOWN
-
-.launch:
-        stx raft_journey_id
-        lda #0
-        sta raft_state
-        lda #STATE_RAFT
-        sta game_state
-        jmp sound_secret
+.on_dock:
+        lda #CART_BANK_OVL_ITEMS
+        ldx #4
+        jsr cart_load_overlay
+        jmp $a00c                      ; ovl_item_raft_launch
 
 ; ===========================================================================
 ; raft_update : Animation de transport continue du radeau sur l'eau
 ; ===========================================================================
 raft_update:
+        ; Affiche le sprite du Radeau (Sprite 6) sous les pieds de Link
+        lda #SPR_OW_ITEM_RAFT
+        sta SPRITE_PTR6
+        lda player_x
+        sta VIC_SPRITE_X6
+        lda player_y
+        clc
+        adc #4
+        sta VIC_SPRITE_Y6
+        lda VIC_SPRITE_EN
+        ora #%01000000
+        sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MC
+        ora #%01000000
+        sta VIC_SPRITE_MC
+        lda #COL_BROWN
+        sta VIC_SPRITE_COL6
+        lda player_x+1
+        beq +
+        lda VIC_SPRITE_MSB
+        ora #%01000000
+        sta VIC_SPRITE_MSB
+        jmp ++
++       lda VIC_SPRITE_MSB
+        and #%10111111
+        sta VIC_SPRITE_MSB
+++
         inc player_walk_tick
         lda player_walk_tick
         and #$07
@@ -252,7 +262,7 @@ raft_update:
         ldy raft_state
         bne .check_dock_up
         cmp #84
-        bcs .raft_done
+        bcs .raft_rts
         lda #1
         sta raft_state
         lda #224
@@ -261,11 +271,15 @@ raft_update:
 
 .check_dock_up:
         cmp raft_tgt_y,x
-        bcs .raft_done
+        bcs .raft_rts
         lda raft_tgt_y,x
         sta player_y
         lda #STATE_PLAYING
         sta game_state
+        lda VIC_SPRITE_EN
+        and #%10111111                  ; Masque le sprite du radeau à l'arrivée
+        sta VIC_SPRITE_EN
+.raft_rts:
         rts
 
 .moving_down:
@@ -277,7 +291,7 @@ raft_update:
         ldy raft_state
         bne .check_dock_down
         cmp #224
-        bcc .raft_done
+        bcc .raft_rts
         lda #1
         sta raft_state
         lda #84
@@ -286,11 +300,14 @@ raft_update:
 
 .check_dock_down:
         cmp raft_tgt_y,x
-        bcc .raft_done
+        bcc .raft_rts
         lda raft_tgt_y,x
         sta player_y
         lda #STATE_PLAYING
         sta game_state
+        lda VIC_SPRITE_EN
+        and #%10111111                  ; Masque le sprite du radeau à l'arrivée
+        sta VIC_SPRITE_EN
         rts
 
 .load_target_screen:

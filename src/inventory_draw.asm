@@ -52,7 +52,7 @@ map_row_col_hi:
 ; ---------------------------------------------------------------------------
 ; inv_display_current_page : efface et redessine la page active
 ; ---------------------------------------------------------------------------
-inv_display_current_page:
+ovl_inv_display_current_page:
         jsr clear_inv_area
         jsr draw_tab_header
 
