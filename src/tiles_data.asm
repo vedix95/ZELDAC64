@@ -24,6 +24,7 @@ TILE_BRIDGE_H = 9
 TILE_BRIDGE_V = 10
 TILE_WALL_PASS = 11
 TILE_WALL_BOMB = 12
+TILE_ROCK = 13
 
 ; Constantes des tuiles de donjon (16 tuiles 16x16)
 TILE_DUNG_FLOOR         = 0     ; Sol en dalle
@@ -44,25 +45,25 @@ TILE_DUNG_DOOR_SHUTTER  = 14    ; Volet / herse metallique
 TILE_DUNG_DOOR_BOMB     = 15    ; Mur fissure a la bombe
 
 ow_tile_char_base:
-        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0
+        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 200, 0, 0
 dung_tile_char_base:
         !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 172, 176, 180, 184, 188, 192, 196
 
 ; Caractere de base de chaque tuile (2x2 = 4 caracteres)
 tile_char_base:
-        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0
+        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 200, 0, 0
 
 ; Couleurs de chaque zone regionale (+8 pour mode multicolore)
 zone0_tile_color:
-        !byte 8, 9, 9, 8, 14, 8, 8, 8, 9, 8, 8, 8, 8, 0, 0, 0
+        !byte 8, 9, 9, 8, 14, 8, 8, 8, 9, 8, 8, 8, 8, 8, 0, 0
 zone1_tile_color:
-        !byte 10, 15, 15, 10, 14, 10, 15, 8, 9, 8, 8, 10, 10, 0, 0, 0
+        !byte 10, 15, 15, 10, 14, 10, 15, 8, 9, 8, 8, 10, 10, 10, 0, 0
 zone2_tile_color:
-        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 8, 0, 0
 zone3_tile_color:
-        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 0, 0, 0
+        !byte 13, 13, 10, 13, 14, 8, 15, 8, 9, 8, 8, 8, 8, 8, 0, 0
 zone_dungeon_tile_color:
-        !byte 8, 19, 10, 11, 14, 11, 20, 8, 8, 8, 8, 11, 11, 0, 0, 0
+        !byte 8, 19, 10, 11, 14, 11, 20, 8, 8, 8, 8, 11, 11, 11, 0, 0
 
 zone_color_lo:
         !byte <zone0_tile_color, <zone1_tile_color, <zone2_tile_color, <zone3_tile_color
@@ -82,13 +83,13 @@ active_tile_color:
 tile_color = active_tile_color
 
 ow_tile_flags:
-        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, 0, 0, 0
+        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, TILE_SOLID, 0, 0
 dung_tile_flags:
         !byte 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID
 
 ; drapeaux de chaque tuile (bit 0 = solide)
 tile_flags:
-        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, 0, 0, 0
+        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, TILE_SOLID, 0, 0
 
 ; table ty * MAP_W
 tile_row_offset:

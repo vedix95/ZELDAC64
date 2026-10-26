@@ -49,8 +49,8 @@ room_zone_palette:
 room_enemy_idx:
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 1, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0
-        !byte 1, 1, 14, 0, 15, 16, 16, 17, 18, 0, 10, 19, 20, 21, 22, 23
+        !byte 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0
+        !byte 1, 1, 15, 0, 16, 17, 17, 18, 19, 0, 11, 20, 21, 22, 23, 24
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -68,11 +68,11 @@ room_33:
         !byte 48, 8, 32, 8, 32, 8, 32, 8, 0, 21, 224, 32, 21, 48, 8, 32
         !byte 8, 32, 8, 32, 8, 0, 21, 224, 32, 53, 224, 0, 53, 224, 0, 21
         !byte 255
-; Salle (2, 2) - RLE compact (37 octets)
+; Salle (2, 2) - RLE compact (39 octets)
 room_34:
-        !byte 229, 229, 181, 86, 69, 70, 53, 22, 51, 21, 7, 21, 51, 6, 53, 230
-        !byte 6, 53, 22, 51, 70, 51, 6, 53, 230, 6, 53, 230, 6, 53, 99, 0
-        !byte 115, 165, 0, 149, 255
+        !byte 229, 229, 181, 86, 69, 70, 53, 22, 29, 22, 21, 7, 21, 22, 29, 6
+        !byte 53, 230, 6, 53, 22, 51, 70, 51, 6, 53, 230, 6, 53, 230, 6, 53
+        !byte 99, 0, 115, 165, 0, 149, 255
 ; Salle (3, 2) - RLE compact (50 octets)
 room_35:
         !byte 229, 229, 165, 128, 37, 96, 5, 48, 5, 48, 37, 96, 5, 32, 5, 0
@@ -81,8 +81,8 @@ room_35:
         !byte 21, 255
 ; Salle (4, 2) - RLE compact (38 octets)
 room_36:
-        !byte 197, 0, 229, 53, 0, 85, 224, 96, 21, 16, 21, 16, 21, 16, 21, 16
-        !byte 5, 224, 112, 21, 16, 21, 16, 21, 16, 21, 16, 5, 224, 144, 19, 208
+        !byte 197, 0, 229, 53, 0, 85, 224, 96, 29, 16, 29, 16, 29, 16, 29, 16
+        !byte 13, 224, 112, 29, 16, 29, 16, 29, 16, 29, 16, 13, 224, 144, 19, 208
         !byte 51, 21, 211, 229, 69, 255
 ; Salle (5, 2) - RLE compact (51 octets)
 room_37:
@@ -132,7 +132,7 @@ room_46:
 room_47:
         !byte 229, 229, 165, 6, 37, 6, 21, 4, 5, 22, 21, 38, 53, 6, 37, 6
         !byte 21, 7, 5, 22, 21, 38, 53, 230, 6, 53, 230, 6, 53, 230, 6, 53
-        !byte 230, 6, 165, 3, 229, 53, 3, 165, 255
+        !byte 230, 6, 165, 25, 229, 37, 25, 149, 255
 ; Salle (0, 3) - RLE compact (54 octets)
 room_48:
         !byte 21, 224, 0, 53, 224, 0, 53, 16, 8, 32, 8, 32, 8, 32, 8, 32
@@ -148,16 +148,16 @@ room_49:
 room_50:
         !byte 133, 0, 229, 53, 0, 181, 32, 53, 0, 21, 48, 53, 80, 37, 0, 21
         !byte 64, 37, 224, 224, 96, 67, 224, 69, 19, 192, 101, 195, 229, 117, 255
-; Salle (3, 3) - RLE compact (52 octets)
+; Salle (3, 3) - RLE compact (49 octets)
 room_51:
-        !byte 117, 0, 117, 0, 149, 0, 117, 0, 53, 230, 6, 53, 22, 3, 6, 19
-        !byte 6, 3, 22, 3, 6, 19, 22, 21, 16, 230, 6, 21, 19, 22, 3, 6
-        !byte 19, 6, 3, 22, 3, 6, 19, 22, 53, 230, 6, 53, 230, 6, 53, 227
-        !byte 3, 229, 101, 255
+        !byte 117, 0, 117, 0, 149, 0, 117, 0, 53, 230, 6, 53, 22, 13, 6, 13
+        !byte 6, 13, 6, 13, 6, 13, 70, 21, 16, 230, 6, 53, 22, 13, 6, 13
+        !byte 6, 13, 6, 13, 6, 13, 70, 53, 230, 6, 53, 230, 6, 229, 229, 181
+        !byte 255
 ; Salle (4, 3) - RLE compact (40 octets)
 room_52:
-        !byte 229, 229, 165, 224, 16, 37, 0, 21, 0, 5, 16, 5, 144, 21, 224, 32
-        !byte 21, 0, 21, 0, 5, 16, 5, 32, 116, 5, 160, 116, 5, 3, 144, 116
+        !byte 229, 229, 165, 224, 16, 37, 0, 29, 0, 13, 16, 13, 144, 21, 224, 32
+        !byte 21, 0, 29, 0, 13, 16, 13, 32, 116, 5, 160, 116, 5, 3, 144, 116
         !byte 21, 115, 16, 116, 149, 16, 116, 255
 ; Salle (5, 3) - RLE compact (21 octets)
 room_53:
@@ -248,7 +248,7 @@ overworld_charset:
         !byte 103, 105, 165, 217, 245, 247, 249, 247   ; char 29
         !byte 111, 223, 111, 223, 111, 223, 111, 223   ; char 30
         !byte 249, 247, 249, 247, 249, 247, 249, 247   ; char 31
-; Chars 168..199 (Tuiles 8..15 : 256 octets)
+; Chars 168..199 (Tuiles 8..12 : 256 octets)
         !byte 2, 10, 10, 41, 41, 37, 37, 37   ; char 168
         !byte 128, 128, 144, 96, 100, 84, 84, 84   ; char 169
         !byte 105, 105, 106, 106, 85, 170, 170, 85   ; char 170
@@ -281,8 +281,17 @@ overworld_charset:
         !byte 219, 245, 245, 245, 245, 253, 169, 173   ; char 197
         !byte 215, 215, 149, 153, 111, 109, 191, 110   ; char 198
         !byte 173, 237, 109, 109, 109, 109, 85, 153   ; char 199
+; Chars 200..207 (Tuiles 13..14 : 64 octets dont rocher escargot)
+        !byte 5, 26, 110, 109, 121, 122, 94, 87   ; char 200
+        !byte 80, 92, 151, 231, 119, 119, 87, 87   ; char 201
+        !byte 85, 94, 94, 85, 85, 21, 53, 15   ; char 202
+        !byte 87, 151, 87, 87, 87, 92, 92, 252   ; char 203
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 204
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 205
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 206
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 207
 
-; Formations d'ennemis dédupliquées (24 formations x 24 octets)
+; Formations d'ennemis dédupliquées (25 formations x 24 octets)
 map_enemies:
         ; Formation 0
         !byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
@@ -293,42 +302,44 @@ map_enemies:
         ; Formation 3
         !byte TYPE_LYNEL_RED  ,   9,  4,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_RED  ,  14,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 4
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_ARMOS      ,   2,  3,   TYPE_ARMOS      ,   6,  3,   TYPE_ARMOS      ,  10,  3,   TYPE_ARMOS      ,  14,  3,   TYPE_ARMOS      ,   2,  5,   TYPE_ARMOS      ,   6,  5,   TYPE_ARMOS      ,  10,  5,   TYPE_ARMOS      ,  14,  5
         ; Formation 5
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   7,  6,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7
+        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   7,  3,   TYPE_ARMOS      ,  11,  3,   TYPE_ARMOS      ,  15,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   7,  5,   TYPE_ARMOS      ,  11,  5,   TYPE_ARMOS      ,  15,  5
         ; Formation 6
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  3,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   7,  3,   TYPE_PEAHAT     ,  13,  2,   TYPE_PEAHAT     ,   9,  2,   TYPE_ZORA       ,   9,  4,   TYPE_ZORA       ,  17,  7
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   7,  6,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7
         ; Formation 7
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  2,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,  16,  2,   TYPE_PEAHAT     ,   7,  2,   TYPE_PEAHAT     ,  12,  7,   TYPE_ZORA       ,   8,  8,   TYPE_NONE       ,   0,  0
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  3,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   7,  3,   TYPE_PEAHAT     ,  13,  2,   TYPE_PEAHAT     ,   9,  2,   TYPE_ZORA       ,   9,  4,   TYPE_ZORA       ,  17,  7
         ; Formation 8
-        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  2,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,  16,  2,   TYPE_PEAHAT     ,   7,  2,   TYPE_PEAHAT     ,  12,  7,   TYPE_ZORA       ,   8,  8,   TYPE_NONE       ,   0,  0
         ; Formation 9
-        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 10
-        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 11
-        !byte TYPE_TEKTITE_RED,  10,  6,   TYPE_TEKTITE_RED,   3,  2,   TYPE_TEKTITE_RED,  15,  2,   TYPE_TEKTITE_RED,   5,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_RED ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_LEEVER_BLUE,  15,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 12
-        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  2,   TYPE_OCTO_RED   ,   7,  7,   TYPE_ZORA       ,  12,  3,   TYPE_ZORA       ,  17,  2,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,  10,  6,   TYPE_TEKTITE_RED,   3,  2,   TYPE_TEKTITE_RED,  15,  2,   TYPE_TEKTITE_RED,   5,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 13
-        !byte TYPE_OCTO_BLUE  ,   9,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_BLUE  ,  11,  7,   TYPE_OCTO_BLUE  ,   7,  7,   TYPE_ZORA       ,  10,  4,   TYPE_ZORA       ,   2,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  2,   TYPE_OCTO_RED   ,   7,  7,   TYPE_ZORA       ,  12,  3,   TYPE_ZORA       ,  17,  2,   TYPE_NONE       ,   0,  0
         ; Formation 14
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  2,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,   5,  7,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_LYNEL_BLUE ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_OCTO_BLUE  ,   9,  4,   TYPE_OCTO_BLUE  ,   3,  7,   TYPE_OCTO_BLUE  ,  11,  7,   TYPE_OCTO_BLUE  ,   7,  7,   TYPE_ZORA       ,  10,  4,   TYPE_ZORA       ,   2,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 15
-        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_LEEVER_BLUE,   3,  7,   TYPE_LEEVER_BLUE,  16,  2,   TYPE_LEEVER_BLUE,   5,  2,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  2,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,   5,  7,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_LYNEL_BLUE ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 16
-        !byte TYPE_ZORA       ,  10,  5,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_LEEVER_BLUE,   3,  7,   TYPE_LEEVER_BLUE,  16,  2,   TYPE_LEEVER_BLUE,   5,  2,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 17
-        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_ZORA       ,  19,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_ZORA       ,  10,  5,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 18
-        !byte TYPE_OCTO_BLUE  ,  10,  4,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_RED   ,  15,  2,   TYPE_OCTO_RED   ,  12,  7,   TYPE_OCTO_RED   ,   9,  7,   TYPE_ZORA       ,   8,  4,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_ZORA       ,  19,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 19
-        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_OCTO_BLUE  ,  10,  4,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_RED   ,  15,  2,   TYPE_OCTO_RED   ,  12,  7,   TYPE_OCTO_RED   ,   9,  7,   TYPE_ZORA       ,   8,  4,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0
         ; Formation 20
-        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_BLUE,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_LEEVER_BLUE,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 21
-        !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 22
-        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  2,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  7,   TYPE_OCTO_RED   ,   7,  2,   TYPE_ZORA       ,  12,  3,   TYPE_ZORA       ,  17,  2,   TYPE_NONE       ,   0,  0
+        !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 23
+        !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   3,  2,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  7,   TYPE_OCTO_RED   ,   7,  2,   TYPE_ZORA       ,  12,  3,   TYPE_ZORA       ,  17,  2,   TYPE_NONE       ,   0,  0
+        ; Formation 24
         !byte TYPE_OCTO_BLUE  ,   9,  4,   TYPE_ZORA       ,  10,  4,   TYPE_ZORA       ,   2,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0

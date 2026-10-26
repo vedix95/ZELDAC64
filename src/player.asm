@@ -42,6 +42,7 @@ player_has_blue_ring:  !byte 0          ; 0 = tunique verte, 1 = anneau bleu (d�
 player_has_bracelet:   !byte 0          ; 1 = bracelet de force
 player_has_raft:       !byte 0          ; 1 = radeau
 player_has_stepladder: !byte 0          ; 1 = échelle
+ladder_tile_idx:       !byte $ff        ; $ff = inactive, 0..199 = tuile d'eau où l'échelle est posée
 player_has_magic_key:  !byte 0          ; 1 = clef magique
 
 ; Objets d'inventaire Slot B
@@ -121,6 +122,8 @@ player_init:
         sta player_attacking
         sta player_walk_anim
         sta player_walk_tick
+        lda #$ff
+        sta ladder_tile_idx
         rts
 
 player_update:
@@ -160,6 +163,37 @@ player_update:
         rts
 
 .handle_movement:
+        ; Détection de sortie de l'eau pour ranger l'échelle
+        lda ladder_tile_idx
+        cmp #$ff
+        beq .ladder_check_done
+        lda player_y
+        clc
+        adc #12
+        sta col_y
+        lda player_x
+        clc
+        adc #12
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
+        jsr get_tile_at_point
+        cmp #TILE_BRIDGE_H
+        beq .ladder_check_done
+        cmp #TILE_BRIDGE_V
+        beq .ladder_check_done
+        cmp #TILE_WATER
+        beq .ladder_check_done
+        ; Link est sur la terre ferme : on retire l'échelle et rétablit l'eau
+        ldy ladder_tile_idx
+        lda #TILE_WATER
+        sta room_buf,y
+        jsr redraw_single_tile
+        lda #$ff
+        sta ladder_tile_idx
+.ladder_check_done:
+
         ldx #0                          ; X = indicateur de mouvement (1 = marche)
 
         ; ===================================================================
@@ -403,31 +437,36 @@ player_update:
         adc #PLAYER_SPEED
         sta target_y
 
-        ; Vérifie si le bord bas de l'écran est atteint
-        cmp #(PLAYER_Y_MAX + 1)
-        bcc .down_not_border
-
         ; Si on est dans le donjon dans la salle d'entrée du donjon actif, franchir le seuil sud = sortir
         lda current_world_type
         cmp #WORLD_DUNGEON
-        bne .check_down_trans
+        bne .chk_border_down
         lda current_room_x
         cmp dungeon_entrance_room_x
-        bne .check_down_trans
+        bne .chk_border_down
         lda current_room_y
         cmp dungeon_entrance_room_y
-        bne .check_down_trans
+        bne .chk_border_down
         lda player_x+1
-        bne .clamp_down
+        bne .chk_border_down
         lda player_x
         cmp #145
-        bcc .clamp_down
+        bcc .chk_border_down
         cmp #215
-        bcs .clamp_down
+        bcs .chk_border_down
+        lda target_y
+        cmp #214
+        bcc .chk_border_down
         jsr exit_dungeon
         jmp .no_down
 
-.check_down_trans:
+.chk_border_down:
+        ; Vérifie si le bord bas de l'écran est atteint
+        lda target_y
+        cmp #(PLAYER_Y_MAX + 1)
+        bcc .down_not_border
+
+        ; Déplacement vers le bas : changement de salle
         lda map_rooms_h
         sec
         sbc #1
@@ -530,6 +569,7 @@ player_update:
         rts
 
 .chk_ow_special:
+        jsr check_ow_specials_ext
         ; --- Fontaine des Fées (Bassin) en salle 57 (J-4) et salle 67 (D-5) ---
         lda current_room_idx
         cmp #57
@@ -566,13 +606,16 @@ player_update:
         bne .chk_grave_push
         lda player_has_stepladder
         beq .chk_grave_push
+        lda player_x+1
+        bne .dock_heart_x_ok
         lda player_x
         cmp #200
         bcc .chk_grave_push
+.dock_heart_x_ok:
         lda player_y
         cmp #120
         bcc .chk_grave_push
-        cmp #160
+        cmp #180
         bcs .chk_grave_push
         ; Vérifie si le cœur de la salle 95 a déjà été pris
         ldx #95
@@ -593,27 +636,60 @@ player_update:
         ; --- Pousser la tombe en salle 33 (B-3) vers l'Épée Magique ---
         lda current_room_idx
         cmp #33
+        bne .chk_rock_push
+        lda player_dir
+        cmp #DIR_UP
+        bne .chk_rock_push
+        lda player_x
+        cmp #200
+        bcc .chk_rock_push
+        cmp #232
+        bcs .chk_rock_push
+        lda player_y
+        cmp #148
+        bcc .chk_rock_push
+        cmp #172
+        bcs .chk_rock_push
+        ; Si la tombe n'a pas encore été révélée
+        lda room_buf+92
+        cmp #TILE_CAVE
+        beq .chk_rock_push
+        lda #TILE_CAVE
+        sta room_buf+92
+        ldy #92
+        jsr redraw_single_tile
+        jsr sound_secret
+        jsr record_room_secret_opened
+        rts
+
+.chk_rock_push:
+        ; --- Pousser le rocher escargot en salle 51 (D-4) avec le Bracelet de Force ---
+        lda current_room_idx
+        cmp #51
         bne .ow_special_done
+        lda player_has_bracelet
+        beq .ow_special_done
         lda player_dir
         cmp #DIR_UP
         bne .ow_special_done
+        lda player_x+1
+        bne .ow_special_done
         lda player_x
-        cmp #200
+        cmp #120
         bcc .ow_special_done
-        cmp #232
+        cmp #144
         bcs .ow_special_done
         lda player_y
         cmp #148
         bcc .ow_special_done
-        cmp #172
+        cmp #168
         bcs .ow_special_done
-        ; Si la tombe n'a pas encore été révélée
-        lda room_buf+92
+        lda room_buf+88
         cmp #TILE_CAVE
         beq .ow_special_done
         lda #TILE_CAVE
-        sta room_buf+92
-        ldy #92
+        sta room_buf+88
+        ldy #88
         jsr redraw_single_tile
         jsr sound_secret
         jsr record_room_secret_opened
@@ -760,6 +836,30 @@ get_tile_at_point:
 ; Sortie : Carry = 1 si solide, Carry = 0 si libre
 ; ---------------------------------------------------------------------------
 check_point_solid:
+        ; Mur traversable Overworld : P-2 (Salle 31) en haut, P-1 (Salle 15) en bas
+        ldx current_world_type
+        bne +
+        lda col_x+1
+        bne +
+        lda col_x
+        cmp #170
+        bcc +
+        cmp #211
+        bcs +
+        lda current_room_idx
+        cmp #31                         ; P-2
+        bne .chk_pt_r15
+        lda col_y
+        cmp #114                        ; Traversée du mur nord
+        bcc .free_pt
+        bcs +
+.chk_pt_r15:
+        cmp #15                         ; P-1
+        bne +
+        lda col_y
+        cmp #210                        ; Traversée du mur sud
+        bcs .free_pt
++
         jsr get_tile_at_point
         cmp #$ff
         bne +
@@ -769,12 +869,34 @@ check_point_solid:
         bne .dung_collision
         cmp #TILE_WATER
         bne .not_water
-        ; Sur l'Overworld : l'échelle permet de franchir le goulet d'eau vers le ponton en salle 95
-        lda current_room_idx
-        cmp #95
-        bne .water_solid
         lda player_has_stepladder
-        bne .free
+        beq .water_solid
+        ; Link possède l'échelle : Y contient l'offset de la tuile d'eau
+        lda ladder_tile_idx
+        cmp #$ff
+        beq .deploy_ladder
+        cpy ladder_tile_idx
+        beq .ladder_free
+        bne .water_solid
+.deploy_ladder:
+        sty ladder_tile_idx
+        lda player_dir
+        cmp #DIR_LEFT
+        beq .hl
+        cmp #DIR_RIGHT
+        beq .hl
+        lda #TILE_BRIDGE_V
+        bne +
+.hl:    lda #TILE_BRIDGE_H
++       sta room_buf,y
+        tya
+        pha
+        jsr redraw_single_tile
+        pla
+        tay
+.ladder_free:
+        clc
+        rts
 .water_solid:
         sec
         rts
@@ -795,6 +917,7 @@ check_point_solid:
         sec                             ; Solide !
         rts
 
+.free_pt:
 .free:
         clc                             ; Libre !
         rts
@@ -812,14 +935,11 @@ player_use_item_b:
 ; Recopie la position et les pointeurs dans les registres VIC-II.
 player_draw:
         ; Couleur de Link (Verte ou Blanche si Anneau Bleu)
-        lda player_has_blue_ring
+        lda #COL_GREEN
+        ldx player_has_blue_ring
         beq +
         lda #COL_WHITE
-        sta VIC_SPRITE_COL0
-        jmp ++
-+       lda #COL_GREEN
-        sta VIC_SPRITE_COL0
-++
++       sta VIC_SPRITE_COL0
         lda #PLAYER_SKIN
         sta VIC_SPRITE_MC1
         lda #PLAYER_BROWN

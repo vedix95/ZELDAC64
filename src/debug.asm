@@ -24,13 +24,13 @@ dbg_col7:           !byte 0
 
 ; Entrées Overworld authentiques pour les 9 Donjons
 debug_dungeon_ow_rx:
-        !byte 7, 12, 4, 5, 12, 2, 2, 13, 5
+        !byte 7, 12, 4, 5, 11, 2, 2, 13, 5
 debug_dungeon_ow_ry:
-        !byte 3,  3, 7, 4,  1, 2, 4,  6, 0
+        !byte 3,  3, 7, 4,  0, 2, 4,  6, 0
 debug_dungeon_ow_px:
-        !byte 160, 160, 160, 160, 160, 160, 160, 160, 160
+        !byte 184, 184, 184, 184, 184, 184, 184, 184, 120
 debug_dungeon_ow_py:
-        !byte 140, 140, 140, 140, 140, 140, 140, 140, 140
+        !byte 146, 146, 146, 146, 146, 146, 146, 146, 146
 
 open_debug:
         lda game_state
@@ -767,154 +767,62 @@ debug_draw_p1:
 ; PAGE 2 AFFICHAGE
 ; ---------------------------------------------------------------------------
 debug_draw_p2:
-        lda #< (SCREEN_RAM + 40 * 4 + 2)
+        ; Diagnostic Link & Salle
+        lda #< (SCREEN_RAM + 40 * 6 + 6)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 4 + 2)
+        lda #> (SCREEN_RAM + 40 * 6 + 6)
         sta ZP_DST+1
-
-        lda #< dbg_p2_strings
+        lda #< dbg_p2_str1
         sta ZP_SRC
-        lda #> dbg_p2_strings
+        lda #> dbg_p2_str1
         sta ZP_SRC+1
-
-        ldx #0
-.p2_str_loop:
-        txa
-        pha
         jsr debug_print_str
 
-        tya
-        sec
-        adc ZP_SRC
-        sta ZP_SRC
-        lda ZP_SRC+1
-        adc #0
-        sta ZP_SRC+1
-
-        lda ZP_DST
-        clc
-        adc #80
+        lda #< (SCREEN_RAM + 40 * 6 + 20)
         sta ZP_DST
-        lda ZP_DST+1
-        adc #0
+        lda #> (SCREEN_RAM + 40 * 6 + 20)
         sta ZP_DST+1
-
-        pla
-        tax
-        inx
-        cpx #6
-        bne .p2_str_loop
-
-        ; Link X & Y (Ligne 4)
-        lda #< (SCREEN_RAM + 40 * 4 + 16)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 4 + 16)
-        sta ZP_DST+1
-        lda player_x+1
-        jsr debug_put_hex
-        lda ZP_DST
-        clc
-        adc #2
-        sta ZP_DST
         lda player_x
         jsr debug_put_hex
 
-        lda #< (SCREEN_RAM + 40 * 4 + 25)
+        lda #< (SCREEN_RAM + 40 * 6 + 27)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 4 + 25)
+        lda #> (SCREEN_RAM + 40 * 6 + 27)
         sta ZP_DST+1
         lda player_y
         jsr debug_put_hex
 
-        ; Dir & Monde (Ligne 6)
-        lda #< (SCREEN_RAM + 40 * 6 + 7)
+        lda #< (SCREEN_RAM + 40 * 9 + 6)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 6 + 7)
+        lda #> (SCREEN_RAM + 40 * 9 + 6)
         sta ZP_DST+1
-        lda player_dir
-        jsr debug_put_hex
-
-        lda #< (SCREEN_RAM + 40 * 6 + 17)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 6 + 17)
-        sta ZP_DST+1
-        lda current_world_type
-        cmp #WORLD_DUNGEON
-        beq .p2_d
-        lda #< dbg_ow_str
+        lda #< dbg_p2_str2
         sta ZP_SRC
-        lda #> dbg_ow_str
+        lda #> dbg_p2_str2
         sta ZP_SRC+1
         jsr debug_print_str
-        jmp .p2_r
-.p2_d:
-        lda #< dbg_dung_str
-        sta ZP_SRC
-        lda #> dbg_dung_str
-        sta ZP_SRC+1
-        jsr debug_print_str
-        lda current_dungeon_level
-        clc
-        adc #'0'
-        ldy #7
-        sta (ZP_DST),y
 
-.p2_r:
-        ; Salle (Ligne 8)
-        lda #< (SCREEN_RAM + 40 * 8 + 15)
+        lda #< (SCREEN_RAM + 40 * 9 + 25)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 8 + 15)
-        sta ZP_DST+1
-        lda current_room_x
-        jsr debug_put_hex
-
-        lda #< (SCREEN_RAM + 40 * 8 + 23)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 8 + 23)
-        sta ZP_DST+1
-        lda current_room_y
-        jsr debug_put_hex
-
-        lda #< (SCREEN_RAM + 40 * 8 + 28)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 8 + 28)
+        lda #> (SCREEN_RAM + 40 * 9 + 25)
         sta ZP_DST+1
         lda current_room_idx
         jsr debug_put_hex
 
-        ; Ennemis (Ligne 10)
-        lda #< (SCREEN_RAM + 40 * 10 + 18)
+        lda #< (SCREEN_RAM + 40 * 12 + 6)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 10 + 18)
+        lda #> (SCREEN_RAM + 40 * 12 + 6)
         sta ZP_DST+1
-        lda en_type
-        jsr debug_put_hex
-
-        lda #< (SCREEN_RAM + 40 * 10 + 27)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 10 + 27)
-        sta ZP_DST+1
-        lda en_type+1
-        jsr debug_put_hex
-
-        ; Dual SID (Ligne 14)
-        lda #< (SCREEN_RAM + 40 * 14 + 17)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 14 + 17)
-        sta ZP_DST+1
-        lda dual_sid_enabled
-        bne +
-        lda #< dbg_off_str
+        lda #< dbg_p2_str3
         sta ZP_SRC
-        lda #> dbg_off_str
+        lda #> dbg_p2_str3
         sta ZP_SRC+1
-        jmp ++
-+       lda #< dbg_on_str
-        sta ZP_SRC
-        lda #> dbg_on_str
-        sta ZP_SRC+1
-++      jsr debug_print_str
+        jsr debug_print_str
         rts
+
+dbg_p2_str1: !text "LINK: X=$__ Y=$__", 0
+dbg_p2_str2: !text "SALLE OW/DONJ $__", 0
+dbg_p2_str3: !text "RAM: ZONE <$C000 OK", 0
 
 debug_cheat_heal:
         lda hud_max_hearts
@@ -992,10 +900,12 @@ debug_do_warp_dungeon:
         ldx #0
 +       lda dungeon_start_rx,x
         sta current_room_x
+        sta dungeon_entrance_room_x
         lda dungeon_start_ry,x
         sta current_room_y
+        sta dungeon_entrance_room_y
 
-        lda #160
+        lda #176
         sta player_x
         lda #0
         sta player_x+1
@@ -1039,11 +949,11 @@ debug_do_warp_overworld:
         jsr clear_screen
         jsr disk_load_map_overworld
 
-        lda #160
+        lda #184
         sta player_x
         lda #0
         sta player_x+1
-        lda #140
+        lda #150
         sta player_y
         lda #DIR_DOWN
         sta player_dir
@@ -1101,56 +1011,43 @@ debug_put_dec2_offset:
         rts
 
 dbg_title_str:
-        !text "=== MENU DEBUG ZELDA C64 ===", 0
+        !text "=== DEBUG ZELDA ===", 0
 
 dbg_tabs_base:
-        !text "  1:WARP       2:CHEATS       3:INFOS   ", 0
+        !text " 1:WARP    2:CHEATS    3:INFOS ", 0
 dbg_tab_b1:
         !byte 1, 14, 29
 dbg_tab_b2:
         !byte 8, 23, 37
 
 dbg_foot1_str:
-        !text "[ESPACE] PAGE  -  [FIRE] ACTIVER", 0
+        !text "[ESPACE] PAGE [FIRE] OK", 0
 dbg_foot2_str:
-        !text "[D] / [B] : RETOUR AU JEU", 0
+        !text "[D]/[B] : RETOUR JEU", 0
 
 dbg_p0_strings:
-        !text "  1. N1:AIGLE  H-4", 0
-        !text "  2. N2:LUNE   M-4", 0
-        !text "  3. N3:MANJI  E-8", 0
-        !text "  4. N4:GNOU   F-5", 0
-        !text "  5. N5:LEZARD M-2", 0
-        !text "  6. N6:DRAGON C-3", 0
-        !text "  7. N7:DEMON  C-5", 0
-        !text "  8. N8:LION   N-7", 0
-        !text "  9. N9:M.MORT F-1", 0
-        !text " 10. DEPART OW H-8", 0
-        !text " 11. SALLE OW : $__ (___)", 0
+        !text " 1. N1:AIGLE H-4", 0
+        !text " 2. N2:LUNE  M-4", 0
+        !text " 3. N3:MANJI E-8", 0
+        !text " 4. N4:GNOU  F-5", 0
+        !text " 5. N5:LEZARD L-1", 0
+        !text " 6. N6:DRAGON C-3", 0
+        !text " 7. N7:DEMON  C-5", 0
+        !text " 8. N8:LION   N-7", 0
+        !text " 9. N9:M.MORT F-1", 0
+        !text "10. DEPART OW H-8", 0
+        !text "11. SALLE OW: $__ (___)", 0
 
 dbg_p1_strings:
-        !text "[F] FULL GEAR  [H] SOIN COMPLET", 0
+        !text "[F] GEAR  [H] SOIN COMPLET", 0
         !text "[JOY G/D] +/- MAX COEURS", 0
-        !text "[E] EPEE  [B] BOUCLIER  [R] ANNEAU", 0
+        !text "[E] EPEE  [B] BOUCLIER  [R] RING", 0
         !text "[K] +5 CLES  [M] +4 BOMBES", 0
         !text "[U] +50 RUBIS  [T] +1 TRIFORCE", 0
         !text "ETAT: HP __/__ RUP:$__ CLE:__", 0
 
 dbg_p1_eq_str:
-        !text "EPEE:_______  BOUCL:_______", 0
-
-dbg_p2_strings:
-        !text "LINK POS : X=$____  Y=$__", 0
-        !text "DIR=$__  MONDE:_______", 0
-        !text "SALLE : COL=$__ LIG=$__ ($__)", 0
-        !text "ENNEMIS  : EN0=$__  EN1=$__", 0
-        !text "MEMOIRE  : RAM<$C000 OK", 0
-        !text "[S] DUAL SID : _______", 0
-
-dbg_ow_str:     !text "OVERWORLD", 0
-dbg_dung_str:   !text "DONJON _ ", 0
-dbg_on_str:     !text "ACTIF    ", 0
-dbg_off_str:    !text "DESACTIVE", 0
+        !text "EPEE:___ BOUCL:___", 0
 
 dbg_sw_names_lo:
         !byte <dbg_sw0, <dbg_sw1, <dbg_sw2, <dbg_sw3
@@ -1186,6 +1083,8 @@ debug_exec_hook_cmd:
         beq .hook_open_debug
         cmp #5
         beq .hook_use_item
+        cmp #6
+        beq .hook_force_joy
         jmp .hook_done
 
 .hook_warp_ow:
@@ -1237,6 +1136,15 @@ debug_exec_hook_cmd:
         sta hud_selected_b
         jsr player_use_item_b
         jmp .hook_done
+
+.hook_force_joy:
+        lda debug_hook_arg
+        sta joy
+        dec debug_hook_arg2
+        bne +
+        lda #0
+        sta debug_hook_cmd
++       rts
 
 .hook_done:
         lda #0

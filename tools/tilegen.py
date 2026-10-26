@@ -54,27 +54,27 @@ ZONE_MC2 = [
 
 # Couleurs de tuiles propres (Color RAM, 0-7) par zone :
 # Tuiles : 0:grass, 1:tufts, 2:flowers, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave,
-#          9:bridge_h, 10:bridge_v, 11:wall_pass, 12:wall_bomb
+#          9:bridge_h, 10:bridge_v, 11:wall_pass, 12:wall_bomb, 13:rock
 ZONE_TILE_COLORS = [
     # Zone 0: Cimetiere (fond dgrey, MC1 black, MC2 white)
     [COLORS["black"], COLORS["white"], COLORS["white"], COLORS["black"],
      COLORS["blue"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 
     # Zone 1: Montagne de la Mort (fond brown, MC1 orange, MC2 white)
     [COLORS["red"], COLORS["yellow"], COLORS["yellow"], COLORS["red"],
      COLORS["blue"], COLORS["red"], COLORS["yellow"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["red"], COLORS["red"]],
+     COLORS["black"], COLORS["black"], COLORS["red"], COLORS["red"], COLORS["red"]],
 
     # Zone 2: Plaines (fond lgreen, MC1 orange, MC2 white)
     [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
      COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 
     # Zone 3: Cote (fond orange, MC1 brown, MC2 white)
     [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
      COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
 ]
 
 ZONE_DUNGEON_TILE_COLORS = [
@@ -91,6 +91,7 @@ ZONE_DUNGEON_TILE_COLORS = [
     COLORS["black"],   # 10: bridge_v
     COLORS["cyan"],    # 11: wall_pass
     COLORS["cyan"],    # 12: wall_bomb
+    COLORS["cyan"],    # 13: rock
 ]
 
 DEFAULT_ROOM_ZONES = [
@@ -470,7 +471,7 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("TILE_DUNG_DOOR_SHUTTER  = 14    ; Volet / herse metallique\n")
         f.write("TILE_DUNG_DOOR_BOMB     = 15    ; Mur fissure a la bombe\n\n")
 
-        f.write("ow_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 0, 0, 0\n")
+        f.write("ow_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 200, 0, 0\n")
         f.write("dung_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 172, 176, 180, 184, 188, 192, 196\n")
 
         f.write("\n; Caractere de base de chaque tuile (2x2 = 4 caracteres)\ntile_char_base:\n        !byte ")
@@ -507,7 +508,7 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
 
         f.write("; Tampon de couleur des tuiles de la salle active\nactive_tile_color:\n        !fill 16, 0\ntile_color = active_tile_color\n\n")
 
-        f.write("ow_tile_flags:\n        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, 0, 0, 0\n")
+        f.write("ow_tile_flags:\n        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, TILE_SOLID, 0, 0\n")
         f.write("dung_tile_flags:\n        !byte 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID\n\n")
 
         f.write("; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n        !byte ")
@@ -626,8 +627,12 @@ def write_ow_chunk(path, chunk_id, cfg, tiles, rooms, rooms_x, rooms_y, src_tile
         for c in range(32):
             f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
 
-        f.write("; Chars 168..199 (Tuiles 8..15 : 256 octets)\n")
+        f.write("; Chars 168..199 (Tuiles 8..12 : 256 octets)\n")
         for c in range(168, 200):
+            f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
+
+        f.write("; Chars 200..207 (Tuiles 13..14 : 64 octets dont rocher escargot)\n")
+        for c in range(200, 208):
             f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
 
         f.write(f"\n; Formations d'ennemis dédupliquées ({len(uniq_formations)} formations x 24 octets)\nmap_enemies:\n")

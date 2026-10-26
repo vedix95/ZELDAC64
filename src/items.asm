@@ -162,7 +162,6 @@ use_whistle:
         ; Place l'entrée du Donjon 7 au centre de l'ancien étang (ligne 4, col 10 -> index 90)
         lda #TILE_CAVE
         sta room_buf+90
-        sta room_buf+70
 
         lda #<room_buf
         sta ZP_MAP
@@ -1342,6 +1341,9 @@ bomb_check_secret_wall:
 .is_b_room:
         lda room_buf,y
         cmp #TILE_WALL                  ; Mur ou rocher
+        beq .found_b_sec
+        cmp #TILE_ROCK                  ; Rocher escargot
+        beq .found_b_sec
         bne .not_b_sec
 .found_b_sec:
         sec

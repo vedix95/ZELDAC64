@@ -241,7 +241,7 @@ overworld_charset:
         !byte 103, 105, 165, 217, 245, 247, 249, 247   ; char 29
         !byte 111, 223, 111, 223, 111, 223, 111, 223   ; char 30
         !byte 249, 247, 249, 247, 249, 247, 249, 247   ; char 31
-; Chars 168..199 (Tuiles 8..15 : 256 octets)
+; Chars 168..199 (Tuiles 8..12 : 256 octets)
         !byte 2, 10, 10, 41, 41, 37, 37, 37   ; char 168
         !byte 128, 128, 144, 96, 100, 84, 84, 84   ; char 169
         !byte 105, 105, 106, 106, 85, 170, 170, 85   ; char 170
@@ -274,6 +274,15 @@ overworld_charset:
         !byte 219, 245, 245, 245, 245, 253, 169, 173   ; char 197
         !byte 215, 215, 149, 153, 111, 109, 191, 110   ; char 198
         !byte 173, 237, 109, 109, 109, 109, 85, 153   ; char 199
+; Chars 200..207 (Tuiles 13..14 : 64 octets dont rocher escargot)
+        !byte 5, 26, 110, 109, 121, 122, 94, 87   ; char 200
+        !byte 80, 92, 151, 231, 119, 119, 87, 87   ; char 201
+        !byte 85, 94, 94, 85, 85, 21, 53, 15   ; char 202
+        !byte 87, 151, 87, 87, 87, 92, 92, 252   ; char 203
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 204
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 205
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 206
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 207
 
 ; Formations d'ennemis dédupliquées (28 formations x 24 octets)
 map_enemies:

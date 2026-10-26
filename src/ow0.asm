@@ -48,7 +48,7 @@ room_zone_palette:
 ; Index de formation d'ennemis par salle (128 octets : $C196..$C215)
 room_enemy_idx:
         !byte 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 9, 10, 11, 12, 13, 14
-        !byte 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 26, 27, 28
+        !byte 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 26, 27, 28, 29
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -241,7 +241,7 @@ overworld_charset:
         !byte 103, 105, 165, 217, 245, 247, 249, 247   ; char 29
         !byte 111, 223, 111, 223, 111, 223, 111, 223   ; char 30
         !byte 249, 247, 249, 247, 249, 247, 249, 247   ; char 31
-; Chars 168..199 (Tuiles 8..15 : 256 octets)
+; Chars 168..199 (Tuiles 8..12 : 256 octets)
         !byte 2, 10, 10, 41, 41, 37, 37, 37   ; char 168
         !byte 128, 128, 144, 96, 100, 84, 84, 84   ; char 169
         !byte 105, 105, 106, 106, 85, 170, 170, 85   ; char 170
@@ -274,8 +274,17 @@ overworld_charset:
         !byte 219, 245, 245, 245, 245, 253, 169, 173   ; char 197
         !byte 215, 215, 149, 153, 111, 109, 191, 110   ; char 198
         !byte 173, 237, 109, 109, 109, 109, 85, 153   ; char 199
+; Chars 200..207 (Tuiles 13..14 : 64 octets dont rocher escargot)
+        !byte 5, 26, 110, 109, 121, 122, 94, 87   ; char 200
+        !byte 80, 92, 151, 231, 119, 119, 87, 87   ; char 201
+        !byte 85, 94, 94, 85, 85, 21, 53, 15   ; char 202
+        !byte 87, 151, 87, 87, 87, 92, 92, 252   ; char 203
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 204
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 205
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 206
+        !byte 0, 0, 0, 0, 0, 0, 0, 0   ; char 207
 
-; Formations d'ennemis dédupliquées (29 formations x 24 octets)
+; Formations d'ennemis dédupliquées (30 formations x 24 octets)
 map_enemies:
         ; Formation 0
         !byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
@@ -330,8 +339,10 @@ map_enemies:
         ; Formation 25
         !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  5,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,  14,  4,   TYPE_TEKTITE_RED,   7,  5,   TYPE_ZORA       ,   8,  2,   TYPE_NONE       ,   0,  0
         ; Formation 26
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   9,  7,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7
+        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   7,  3,   TYPE_ARMOS      ,  11,  3,   TYPE_ARMOS      ,  15,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   7,  5,   TYPE_ARMOS      ,  11,  5,   TYPE_ARMOS      ,  15,  5
         ; Formation 27
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  3,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  15,  2,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,   7,  3,   TYPE_ZORA       ,   8,  5,   TYPE_ZORA       ,   2,  7
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   9,  7,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7
         ; Formation 28
+        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  3,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  15,  2,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,   7,  3,   TYPE_ZORA       ,   8,  5,   TYPE_ZORA       ,   2,  7
+        ; Formation 29
         !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,  16,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_ZORA       ,  19,  4,   TYPE_NONE       ,   0,  0

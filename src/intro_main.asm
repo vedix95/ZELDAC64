@@ -22,12 +22,15 @@ start:
 }
         jmp intro_standalone_init
 
+cart_present:
+        !byte 0                         ; 0 = Disquette, 1 = Cartouche Magic Desk (Type 19)
+
 ; Lecture joystick et manette
 !source "src/input.asm"
 
-; Jeu de caractères à $2000
+; Jeu de caractères dédié à l'intro à $2000 (avec blason officiel NES et glyphes)
 * = CHARSET_ADDR
-!source "src/charset.asm"
+!source "src/intro_charset.asm"
 
 ; Code et données de l'introduction à $2800
 * = $2800
@@ -68,17 +71,6 @@ intro_standalone_init:
         and #%11101111                  ; bit 4 = 0 : texte haute résolution (pixels nets 8x8)
         sta VIC_CTRL2
 
-        ; Détecte l'unité de disquette courante
-        lda DEVICE_NUM
-        cmp #8
-        bcc +
-        cmp #12
-        bcs +
-        sta zelda_boot_dev
-        jmp ++
-+       lda #8
-        sta zelda_boot_dev
-++
         ; Efface l'écran
         ldx #0
 -       lda #0
@@ -104,8 +96,8 @@ intro_main_loop:
         jmp intro_main_loop
 
 ; ---------------------------------------------------------------------------
-; launch_zelda_game : Copie un petit chargeur KERNAL dans le buffer cassette
-; ($033C..$03FB), zone protégée non écrasée par le chargement de ZELDA ($0801+)
+; launch_zelda_game : Déballe instantanément le moteur résident zelda.prg
+; depuis les banques cartouche 4..9 vers la RAM ($0800..$C7FF) et lance le jeu.
 ; ---------------------------------------------------------------------------
 launch_zelda_game:
         ; Arrête la musique d'intro
@@ -116,62 +108,81 @@ launch_zelda_game:
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
 
-        ; Copie le chargeur KERNAL dans le buffer cassette $033C
+        ; Copie le déballeur de cartouche dans le buffer cassette $0340
         ldx #0
--       lda .loader_code,x
-        sta $033c,x
+-       lda .cart_unpacker_code,x
+        sta $0340,x
         inx
-        cpx #(.loader_end - .loader_code)
+        cpx #(.cart_unpacker_end - .cart_unpacker_code)
         bne -
 
-        ; Transmet le device de boot actif dans le chargeur à $033C
-        lda zelda_boot_dev
-        sta .loader_dev
+        jmp $0340
 
-        ; Saute dans le chargeur en zone protégée
-        jmp $033c
-
-.loader_code:
-!pseudopc $033c {
+.cart_unpacker_code:
+!pseudopc $0340 {
         sei
         lda #0
         sta VIC_IRQ_ENABLE
         asl VIC_IRQ_FLAG
-        lda #$36                        ; Active KERNAL et I/O, RAM sous BASIC ($A000-$BFFF)
+
+        ; 1. Active LORAM=1 ($37) pour lire la ROM cartouche à $8000..$9FFF
+        lda #$37
         sta CPU_PORT
 
-        jsr $fda3                      ; IOINIT (initialise CIA1 et CIA2)
-        jsr $fd15                      ; RESTOR (restaure vecteurs KERNAL)
+        ; 2. Boucle de déballage des banques 4..9 de zelda.prg en RAM ($0800..$C7FF)
+        lda #4                          ; Banque cartouche de départ (4..9)
+        sta $02
+        lda #$08                        ; Page haute destination en RAM
+        sta $03
 
-        ; SETLFS : LFN=1, Dev=device, SA=1 (adresse d'origine du fichier)
-        lda #1
-.loader_dev = * + 1
-        ldx #8
-        ldy #1
-        jsr SETLFS
+.cart_bank_loop:
+        lda $02
+        sta $de00                       ; Commute la banque à $8000
 
-        ; SETNAM : nom "ZELDA" (5 caractères)
-        lda #5
-        ldx #< .loader_name
-        ldy #> .loader_name
-        jsr SETNAM
-
-        ; LOAD en RAM (A=0 pour LOAD)
         lda #0
-        jsr LOAD
-        bcs .loader_error
+        sta $fb
+        lda #$80
+        sta $fc                         ; Source $8000
+        lda #0
+        sta $fd
+        lda $03
+        sta $fe                         ; Destination ($03):$00
 
-        ; Démarrage direct du jeu ZELDA à SYS 2061 ($080D)
+        ldx #32                         ; 32 pages = 8192 octets par banque
+        ldy #0
+-       lda ($fb),y
+        sta ($fd),y
+        iny
+        bne -
+        inc $fc
+        inc $fe
+        dex
+        bne -
+
+        lda $03
+        clc
+        adc #$20                        ; Avance de 32 pages ($2000 octets)
+        sta $03
+
+        inc $02
+        lda $02
+        cmp #10                         ; Banques 4 à 9 traitées ?
+        bcc .cart_bank_loop
+
+        ; 3. Désactive la ROM BASIC ($A000..$BFFF)
+        lda #$36
+        sta CPU_PORT
+
+        ; 4. Active le flag cart_present dans zelda.prg ($0810)
+        lda #1
+        sta $0810
+
+        ; 5. Désactive la ROM cartouche ($80 = bit 7 actif désactive /ROML)
+        lda #$80
+        sta $de00
+
+        ; 6. Saute au point d'entrée de zelda.prg (SYS 2061 = $080D)
         jmp $080d
-
-.loader_error:
-        lda #COL_RED
-        sta VIC_BORDER
--       jmp -
-
-.loader_name:
-        !text "ZELDA"
 }
-.loader_end:
+.cart_unpacker_end:
 
-zelda_boot_dev: !byte 8

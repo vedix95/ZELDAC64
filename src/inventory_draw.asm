@@ -168,8 +168,8 @@ draw_page_0_items:
         dex
         bpl -
 
-        ; 2. Boîte des 6 Objets sélectionnables (Cols 14..37, Lignes 6..12)
-        ldx #23
+        ; 2. Boîte des 8 Objets sélectionnables (Cols 14..30, Lignes 6..12)
+        ldx #16
 -       lda txt_box_p0_grid,x
         sta SCREEN_RAM+240+14,x
         sta SCREEN_RAM+480+14,x
@@ -201,6 +201,22 @@ draw_page_0_items:
         inx
         cpx #9
         bne .v_p0_loop
+
+        ; En-têtes Ligne 5 (EQUIPE & ARSENAL)
+        ldx #5
+-       lda txt_p0_equipe,x
+        sta SCREEN_RAM+200+4,x
+        lda #COL_YELLOW
+        sta COLOR_RAM+200+4,x
+        dex
+        bpl -
+        ldx #6
+-       lda txt_p0_arsenal,x
+        sta SCREEN_RAM+200+19,x
+        lda #COL_YELLOW
+        sta COLOR_RAM+200+19,x
+        dex
+        bpl -
 
         ; Labels Arme active
         ldx #7
@@ -284,7 +300,7 @@ p0_v_c1:
         !byte 14, 14, 14, 14, 14
 p0_v_c2:
         !byte 10, 10, 10, 10
-        !byte 37, 37, 37, 37, 37
+        !byte 30, 30, 30, 30, 30
 
 ; ---------------------------------------------------------------------------
 ; Multiplexeur raster pour la Page 0 de l'inventaire (grille 4x2 d'objets)
@@ -1348,9 +1364,29 @@ draw_page_3_dungeon_map:
         iny
         bne -
 +
-        jsr draw_map_borders
+        ; Cadre centré 8x8 (Colonnes 11..28, Lignes 6 et 15)
+        lda #'+'
+        sta SCREEN_RAM+240+11
+        sta SCREEN_RAM+240+28
+        sta SCREEN_RAM+600+11
+        sta SCREEN_RAM+600+28
+        lda #COL_BLUE
+        sta COLOR_RAM+240+11
+        sta COLOR_RAM+240+28
+        sta COLOR_RAM+600+11
+        sta COLOR_RAM+600+28
+        ldx #0
+-       lda #'-'
+        sta SCREEN_RAM+240+12,x
+        sta SCREEN_RAM+600+12,x
+        lda #COL_BLUE
+        sta COLOR_RAM+240+12,x
+        sta COLOR_RAM+600+12,x
+        inx
+        cpx #16
+        bne -
 
-        ; Lignes 7..14 : 8 rangées de salles (16 colonnes chacune)
+        ; Lignes 7..14 : 8 rangées de salles (8 colonnes chacune)
         lda #0
         sta map_ry
 .d_row_loop:
@@ -1364,36 +1400,40 @@ draw_page_3_dungeon_map:
         lda map_row_col_hi,x
         sta ZP_COL+1
 
-        txa
-        clc
-        adc #'1'
-        ldy #0
-        sta (ZP_SCR),y
-        lda #COL_WHITE
-        sta (ZP_COL),y
-
+        ; Bordures verticales colonnes 11 et 28
         lda #164
-        ldy #2
+        ldy #11
         sta (ZP_SCR),y
-        ldy #36
+        ldy #28
         sta (ZP_SCR),y
         lda #COL_BLUE
-        ldy #2
+        ldy #11
         sta (ZP_COL),y
-        ldy #36
+        ldy #28
         sta (ZP_COL),y
 
         lda #0
-        sta map_rx
+        sta map_rx                      ; rel_rx (0..7)
 .d_col_loop:
-        ; Calcule index de salle = map_ry * 16 + map_rx
+        ; Calcule colonne réelle = dung_bank_x + rel_rx
+        ldy current_dungeon_level
+        dey
+        cpy #9
+        bcc +
+        ldy #0
++       lda dung_bank_x,y
+        clc
+        adc map_rx
+        sta ZP_TMP                      ; col réelle
+
+        ; Calcule index de salle = map_ry * 16 + col
         lda map_ry
         asl
         asl
         asl
         asl
         clc
-        adc map_rx
+        adc ZP_TMP
         tax                             ; X = index salle 0..127
 
         ; Vérifie si la salle existe dans ce donjon ($C016,x != $C016)
@@ -1407,7 +1447,6 @@ draw_page_3_dungeon_map:
         lda visited_uw_rooms,x
         bne .d_room_revealed
 
-        ; Salle cachée dans le brouillard
 .d_no_room:
         lda #32
         sta ZP_TMP
@@ -1418,11 +1457,18 @@ draw_page_3_dungeon_map:
 
 .d_room_revealed:
         ; 1. Link dans cette salle ?
-        lda map_rx
-        cmp current_room_x
-        bne +
         lda map_ry
         cmp current_room_y
+        bne +
+        lda map_rx
+        ldy current_dungeon_level
+        dey
+        cpy #9
+        bcc ++
+        ldy #0
+++      clc
+        adc dung_bank_x,y
+        cmp current_room_x
         bne +
         lda #HUD_MAP_ACTIVE
         sta ZP_TMP
@@ -1436,10 +1482,12 @@ draw_page_3_dungeon_map:
         beq ++
         ldy current_dungeon_level
         dey
-        lda dungeon_tri_rooms,y
-        cmp map_rx
+        cpy #9
+        bcc +++
+        ldy #0
++++     txa
+        cmp dungeon_tri_rooms,y
         bne ++
-        ; C'est la salle Triforce
         lda #HUD_MAP_ACTIVE
         sta ZP_TMP
         sta ZP_TMP+1
@@ -1447,7 +1495,7 @@ draw_page_3_dungeon_map:
         sta ZP_BASE
         jmp .d_put_cell
 ++
-        ; Salle normale visitée ou cartographiée
+        ; Salle normale explorée
         lda #HUD_MAP_VISITED
         sta ZP_TMP
         sta ZP_TMP+1
@@ -1455,10 +1503,10 @@ draw_page_3_dungeon_map:
         sta ZP_BASE
 
 .d_put_cell:
-        lda map_rx
+        lda map_rx                      ; rel_rx (0..7)
         asl
         clc
-        adc #4
+        adc #12                         ; Colonnes 12, 14, 16..26
         tay
         lda ZP_TMP
         sta (ZP_SCR),y
@@ -1472,7 +1520,7 @@ draw_page_3_dungeon_map:
 
         inc map_rx
         lda map_rx
-        cmp #16
+        cmp #8
         beq +
         jmp .d_col_loop
 +
@@ -1483,149 +1531,23 @@ draw_page_3_dungeon_map:
         beq +
         jmp .d_row_loop
 +
-        ; Lignes 17..20 : Statut des reliques et Boss
-        ; Carte du Donjon (Ligne 17, offset 680)
-        lda #<txt_dung_map_lbl
-        sta ZP_SRC
-        lda #>txt_dung_map_lbl
-        sta ZP_SRC+1
-        lda player_has_dungeon_map
+
+        ; Légende élégante centrée (Ligne 17)
         ldx #0
-        jsr p3_print_relic_info
-
-        ; Boussole (Ligne 18, offset 720)
-        lda #<txt_compass_lbl
-        sta ZP_SRC
-        lda #>txt_compass_lbl
-        sta ZP_SRC+1
-        lda player_has_compass
-        ldx #1
-        jsr p3_print_relic_info
-
-        ; Boss (Ligne 19, offset 760)
-        ldx #2
-        jsr p3_set_line_ptr
-        lda #<txt_boss_lbl
-        sta ZP_SRC
-        lda #>txt_boss_lbl
-        sta ZP_SRC+1
-        jsr p3_set_col4_white
-
-        ldx current_dungeon_level
-        dex
-        cpx #9
-        bcc +
-        ldx #0
-+       lda p3_boss_names_lo,x
-        sta ZP_SRC
-        lda p3_boss_names_hi,x
-        sta ZP_SRC+1
-        lda #COL_LIGHT_RED
-        sta ZP_BASE
-        jsr p3_set_col23
-
-        ; Salle active (Ligne 20, offset 800)
-        ldx #3
-        jsr p3_set_line_ptr
-        lda #<txt_droom_lbl
-        sta ZP_SRC
-        lda #>txt_droom_lbl
-        sta ZP_SRC+1
-        jsr p3_set_col4_white
-
-        lda current_room_x
-        jsr print_2digits
-        ldy #23
-        sta (ZP_SCR),y
-        txa
-        iny
-        sta (ZP_SCR),y
-
-        lda current_room_y
-        jsr print_2digits
-        ldy #27
-        sta (ZP_SCR),y
-        txa
-        iny
-        sta (ZP_SCR),y
-
-        lda #COL_YELLOW
-        ldy #23
-        sta (ZP_COL),y
-        iny
-        sta (ZP_COL),y
-        ldy #27
-        sta (ZP_COL),y
-        iny
-        sta (ZP_COL),y
-        rts
-
-p3_print_relic_info:
-        sta ZP_TMP
-        jsr p3_set_line_ptr
-        jsr p3_set_col4_white
-
-        lda #<txt_relic_no
-        ldx #>txt_relic_no
-        ldy #COL_DARK_GREY
-        lda ZP_TMP
+-       lda txt_dung_legend,x
         beq +
-        lda #<txt_relic_yes
-        ldx #>txt_relic_yes
-        ldy #COL_YELLOW
-+       sta ZP_SRC
-        stx ZP_SRC+1
-        sty ZP_BASE
-        jmp p3_set_col23
+        sta SCREEN_RAM+680+4,x
+        lda txt_dung_leg_col,x
+        sta COLOR_RAM+680+4,x
+        inx
+        bne -
++       rts
 
-p3_set_col4_white:
-        lda #4
-        sta ZP_TMP+1
-        lda #COL_WHITE
-        sta ZP_BASE
-        jmp p3_put_string_at_col
-
-p3_set_col23:
-        lda #23
-        sta ZP_TMP+1
-        jmp p3_put_string_at_col
-
-p3_put_string_at_col:
-        ldy #0
-.p3_str_loop:
-        lda (ZP_SRC),y
-        beq .p3_str_done
-        sta ZP_TMP
-        tya
-        pha
-        clc
-        adc ZP_TMP+1
-        tay
-        lda ZP_TMP
-        sta (ZP_SCR),y
-        lda ZP_BASE
-        sta (ZP_COL),y
-        pla
-        tay
-        iny
-        bne .p3_str_loop
-.p3_str_done:
-        rts
-
-p3_set_line_ptr:
-        lda p3_line_scr_lo,x
-        sta ZP_SCR
-        sta ZP_COL
-        lda p3_line_scr_hi,x
-        jmp inv_set_scr_col_hi
-
-p3_line_scr_lo:
-        !byte <680, <720, <760, <800
-p3_line_scr_hi:
-        !byte >680, >720, >760, >800
+dung_bank_x:
+        !byte 0, 8, 8, 0, 0, 8, 8, 8, 0
 
 dungeon_tri_rooms:
-        !byte 6, 13, 13, 3, 4, 12, 11, 12, 2
+        !byte $36, $0d, $3d, $03, $14, $0c, $2b, $2c, $32
 
 p3_dung_names_lo:
         !byte <p3_d1, <p3_d2, <p3_d3, <p3_d4, <p3_d5, <p3_d6, <p3_d7, <p3_d8, <p3_d9
@@ -1633,35 +1555,32 @@ p3_dung_names_hi:
         !byte >p3_d1, >p3_d2, >p3_d3, >p3_d4, >p3_d5, >p3_d6, >p3_d7, >p3_d8, >p3_d9
 
 txt_dtitle_pref:    !text "DONJON N1 : ", 0
-p3_d1:  !text "AIGLE (EAGLE)", 0
-p3_d2:  !text "LUNE (MOON)", 0
+p3_d1:  !text "AIGLE", 0
+p3_d2:  !text "LUNE", 0
 p3_d3:  !text "MANJI", 0
-p3_d4:  !text "GNOU (STEER)", 0
-p3_d5:  !text "LEZARD (LIZARD)", 0
+p3_d4:  !text "GNOU", 0
+p3_d5:  !text "LEZARD", 0
 p3_d6:  !text "DRAGON", 0
 p3_d7:  !text "DEMON", 0
 p3_d8:  !text "LION", 0
 p3_d9:  !text "M. DE LA MORT", 0
 
-p3_boss_names_lo:
-        !byte <bname_aqua, <bname_dodo, <bname_manh, <bname_glee, <bname_digd, <bname_gohm, <bname_aqua, <bname_dodo, <bname_gano
-p3_boss_names_hi:
-        !byte >bname_aqua, >bname_dodo, >bname_manh, >bname_glee, >bname_digd, >bname_gohm, >bname_aqua, >bname_dodo, >bname_gano
+txt_dung_legend:
+        !byte HUD_MAP_ACTIVE
+        !text " TRIFORCE  "
+        !byte HUD_MAP_ACTIVE
+        !text " LINK  "
+        !byte HUD_MAP_VISITED
+        !text " VISITE", 0
 
-bname_aqua: !text "AQUAMENTUS", 0
-bname_dodo: !text "DODONGO", 0
-bname_manh: !text "MANHANDLA", 0
-bname_glee: !text "GLEEOK", 0
-bname_digd: !text "DIGDOGGER", 0
-bname_gohm: !text "GOHMA", 0
-bname_gano: !text "GANON", 0
-
-txt_dung_map_lbl:   !text "CARTE DU DONJON :", 0
-txt_compass_lbl:    !text "BOUSSOLE        :", 0
-txt_boss_lbl:       !text "BOSS DU DONJON  :", 0
-txt_droom_lbl:      !text "SALLE (COL,LIG) :", 0
-txt_relic_yes:      !text "POSSEDEE", 0
-txt_relic_no:       !text "NON TROUVEE", 0
+txt_dung_leg_col:
+        !byte COL_LIGHT_RED
+        !fill 11, COL_WHITE
+        !byte COL_YELLOW
+        !fill 7, COL_WHITE
+        !byte COL_CYAN
+        !fill 7, COL_WHITE
+        !byte 0
 
 draw_map_borders:
         lda #'+'
@@ -1713,7 +1632,9 @@ txt_footer_help:    !text " [JOY] CHOIX   [1-4] ONGLET   [B] RETOUR "
 
 ; Textes Page 0
 txt_box_small:      !text "+------+"
-txt_box_p0_grid:    !text "+----------------------+"
+txt_box_p0_grid:    !text "+--------------+"
+txt_p0_equipe:      !text "EQUIPE"
+txt_p0_arsenal:     !text "ARSENAL"
 txt_p0_active:      !text "OBJET  B"
 txt_p0_slot_b:      !text "EQUIPE  "
 txt_p0_stock_line:  !text "RUBIS:      CLEFS:      BOMBES:     "
@@ -1725,14 +1646,14 @@ p0_desc_lo:
 p0_desc_hi:
         !byte >desc_boom, >desc_bomb, >desc_bow, >desc_cand, >desc_food, >desc_potion, >desc_whistle, >desc_wand
 
-desc_boom:          !text "BOOMERANG (ETOURDIT)", 0
-desc_bomb:          !text "BOMBES (EXPLOSIF)", 0
-desc_bow:           !text "ARC ET FLECHES (A DISTANCE)", 0
-desc_cand:          !text "BOUGIE (FLAMME)", 0
-desc_food:          !text "APPAT POUR MONSTRES", 0
-desc_potion:        !text "POTION (SOIGNE)", 0
-desc_whistle:       !text "FLUTE (SECRETS)", 0
-desc_wand:          !text "BAGUETTE MAGIQUE", 0
+desc_boom:          !text "BOOMERANG", 0
+desc_bomb:          !text "BOMBES", 0
+desc_bow:           !text "ARC ET FLECHES", 0
+desc_cand:          !text "BOUGIE", 0
+desc_food:          !text "APPAT", 0
+desc_potion:        !text "POTION", 0
+desc_whistle:       !text "FLUTE", 0
+desc_wand:          !text "BAGUETTE", 0
 
 ; Textes Page 1 (Triforce)
 txt_p1_title:       !text "  LA TRIFORCE DE LA SAGESSE   "
@@ -1745,14 +1666,14 @@ txt_tri_all:
         !text "      / 5\\ /\\ /6 \\      "
         !text "     / 7 \\/--\\/ 8 \\     "
         !text "    /--------------\\    "
-txt_p1_counter:     !text "FRAGMENTS RECUPERES : 0 / 8 "
+txt_p1_counter:     !text "FRAGMENTS : 0 / 8", 0
 txt_p1_dungeons_line: !text "DONJONS: [1][2][3][4][5][6][7][8] "
-txt_p1_msg_seek:    !text "CHERCHE LES FRAGMENTS DANS LES DONJ."
-txt_p1_msg_full:    !text "LA TRIFORCE EST TOTALEMENT REUNIE ! "
+txt_p1_msg_seek:    !text "CHERCHE LES FRAGMENTS", 0
+txt_p1_msg_full:    !text "TRIFORCE REUNIE !", 0
 
 ; Textes Page 2 (Équipement)
-txt_p2_title:       !text "ARSENAL DE LINK & RELIQUES HEROIQUES"
-txt_p2_tip:         !text "LES EQUIPEMENTS RESTENT ACQUIS A VIE"
+txt_p2_title:       !text "ARSENAL DE LINK", 0
+txt_p2_tip:         !text "EQUIPEMENTS ACQUIS", 0
 
 ; Textes Page 3 (Carte du Monde)
 txt_room_line:      !text "SALLE COURANTE : A-1  (X:  , Y:  )  "

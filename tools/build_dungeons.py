@@ -109,7 +109,7 @@ DUNGEON_ROOMS = {
 }
 
 def generate_dungeon_charset_bytes():
-    """Génère les 512 octets de caractères VIC-II pour les 16 tuiles de donjon."""
+    """Génère les 576 octets de caractères VIC-II pour les 16 tuiles de donjon."""
     chars_0_31 = []
     for t in range(8):
         art = TILES_ART[t]
@@ -126,7 +126,8 @@ def generate_dungeon_charset_bytes():
         chars_168_199.extend(char_bytes(art, 0, 8))
         chars_168_199.extend(char_bytes(art, 4, 8))
 
-    return chars_0_31, chars_168_199
+    chars_200_207 = [0] * 64
+    return chars_0_31, chars_168_199, chars_200_207
 
 def build_level1_enemies_table():
     """Table authentique d'ennemis pour le Niveau 1 (Aigle)."""
@@ -1569,11 +1570,11 @@ def build_dungeon_asm(lvl):
         lines.append(f"        ; Formation {idx}")
         lines.append("        !byte " + ",   ".join(slots))
 
-    # Charset de 512 octets authentique du donjon
-    chars_0_31, chars_168_199 = generate_dungeon_charset_bytes()
+    # Charset de 576 octets authentique du donjon
+    chars_0_31, chars_168_199, chars_200_207 = generate_dungeon_charset_bytes()
     lines.append("\n; ===========================================================================")
-    lines.append("; Jeu de caracteres authentique du donjon (512 octets)")
-    lines.append("; Copié dynamiquement par disk.asm a $2000 (0..31) et $2540 (168..199)")
+    lines.append("; Jeu de caracteres authentique du donjon (576 octets)")
+    lines.append("; Copié dynamiquement par disk.asm a $2000 (0..31), $2540 (168..199) et $2640 (200..207)")
     lines.append("; ===========================================================================")
     lines.append("dungeon_charset:")
     lines.append("; Chars 0..31 (Tuiles 0..7 : 256 octets)")
@@ -1584,6 +1585,11 @@ def build_dungeon_asm(lvl):
     lines.append("; Chars 168..199 (Tuiles 8..15 : 256 octets)")
     for i in range(0, 256, 8):
         chunk = chars_168_199[i:i+8]
+        lines.append("        !byte " + ", ".join(str(v) for v in chunk))
+
+    lines.append("; Chars 200..207 (Tuiles 13..14 : 64 octets)")
+    for i in range(0, 64, 8):
+        chunk = chars_200_207[i:i+8]
         lines.append("        !byte " + ", ".join(str(v) for v in chunk))
 
     return "\n".join(lines) + "\n"

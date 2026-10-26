@@ -32,22 +32,25 @@ The Commodore 64 features 64 KB of RAM, but shares its address space with ROMs (
 
 ## 2. D64 Disk Structure & Streaming Engine
 
-To accommodate the full 128-room overworld and underground dungeons within the 64 KB RAM ceiling, the project uses a modular disk overlay architecture.
+To accommodate the full 128-room overworld and 9 dungeons within the 64 KB RAM ceiling, the project uses a modular 256 KB Magic Desk Cartridge streaming architecture.
 
-### 2.1 Disk Layout (`zelda.d64`)
+### 2.1 Cartridge Layout (`zelda.crt` - Magic Desk 256 KB)
 
-The 1541 disk image (35 tracks, 683 sectors) contains:
-- `INTRO`: Standalone prologue executable containing the animated waterfall, parchment text scroller, item gallery, and full SID soundtrack.
-- `ZELDA`: Main game engine resident binary.
-- `MAP_OW`: Compiled binary data for all 128 Overworld rooms (16×8 grid).
-- `MAP_UW`: Compiled binary data for Underworld dungeon rooms.
+The 32-bank Magic Desk cartridge contains:
+- **Bank 00**: Cartridge bootloader (`cart_boot.asm`, CBM80 hardware reset vector), unrolls the cinematic intro.
+- **Banks 01..03**: Cinematic intro PRG (`$0800`–`$6800`) with animated waterfall, scroller, Triforce, item gallery, monster showcase and SID music.
+- **Banks 04..09**: Resident Zelda game engine (`$0800`–`$C800`), unpacked into RAM in 0.2s when pressing Start/Fire.
+- **Banks 10..13**: 4 regional Overworld chunks (`OW0` to `OW3`), streamed on-demand directly into `$C000`.
+- **Banks 14..22**: 9 complete Underworld Dungeons (`DUNG1` to `DUNG9`), streamed on-demand directly into `$C000`.
+- **Banks 23..31**: Free headroom (72 KB available).
 
-### 2.2 KERNAL Streaming I/O (`src/disk.asm`)
+### 2.2 Instant Memory Streaming (`src/disk.asm` -> Cartridge Streaming)
 
-When switching between the Overworld and Underworld (or loading a game):
-1. **DMA & IRQ Safe Shutdown**: Sprites and raster IRQs are safely disabled to avoid timing jitter on the IEC bus.
-2. **Device Detection**: Detects boot device number from `$BA` (defaults to Unit 8).
-3. **KERNAL Calls**:
+When moving between Overworld chunks or entering/exiting dungeons:
+1. **Zero Disk Latency**: The latch at `$DE00` commutates the corresponding 8 KB ROM bank into `$8000`–`$9FFF`.
+2. **Interrupt-Safe Block Copy**: Interrupts are masked (`php; sei ... plp`) while `cart_copy_to_c000` copies the 13 pages to `$C000`.
+3. **Charset & Palette Sync**: The dynamic 576-byte tile charset is copied to VIC-II RAM (`$2000`, `$2540`, `$2640`) in under 1 millisecond.
+
    - `SETNAM` (`$FFBD`): Sets filename (`MAP_OW` or `MAP_UW`).
    - `SETLFS` (`$FFBA`): Sets logical file number, device (8), and secondary address (0).
    - `OPEN` (`$FFC0`) and `CHKIN` (`$FFC6`): Establishes IEC serial input channel.
@@ -109,7 +112,8 @@ Music and sound effects are processed in `src/intro_music_data.asm` and executed
 | :--- | :--- | :--- | :--- |
 | `tools/sprgen.py` | Converts ASCII art sprites into 64-byte C64 sprite binary data | `assets/link.txt`, `enemies.txt`, `extra.txt` | `src/sprites*.asm` |
 | `tools/tilegen.py` | Assembles charsets, tilesets, and overworld/underworld rooms | `assets/tiles.txt`, `world.txt`, `underworld.txt` | `src/charset.asm`, `src/tiles_data.asm`, `src/map_*.asm` |
-| `tools/editor.py` | Interactive Python HTTP server with canvas GUI to paint rooms and edit enemies | `assets/world.txt`, `underworld.txt` | Direct asset updates + instant ACME recompile |
+| `tools/cartgen.py` | Packages 32 banks of 8 KB into Magic Desk CRT image | `build/*.prg`, `build/*.dat` | `build/zelda.crt` |
+| `tools/render_maps.py` | Renders high-resolution PNG maps of Overworld & all 9 Dungeons | `assets/world.txt`, `underworld.txt` | `build/map_*.png` |
 | `tools/midi_to_sid.py` | Transcribes MIDI tracks into 6510 frequency and duration tables | `assets/*.mid` | `src/intro_music_data.asm` |
 | `ACME` | Cross-assembler for 6502/6510 producing CBM binaries | `src/*.asm` | `build/*.prg`, `build/*.dat` |
-| `c1541` | VICE disk utility building bootable 1541 D64 disk image | `build/*.prg`, `build/*.dat` | `build/zelda.d64` |
+| `cartconv` | VICE utility packaging raw binary banks into Magic Desk CRT | `build/zelda_banks.bin` | `build/zelda.crt` |

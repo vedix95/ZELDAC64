@@ -194,8 +194,8 @@ map_enemies:
         !byte TYPE_STALFOS      ,  7,  3,   TYPE_STALFOS      , 13,  3,   TYPE_STALFOS      , 10,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
 
 ; ===========================================================================
-; Jeu de caracteres authentique du donjon (512 octets)
-; Copié dynamiquement par disk.asm a $2000 (0..31) et $2540 (168..199)
+; Jeu de caracteres authentique du donjon (576 octets)
+; Copié dynamiquement par disk.asm a $2000 (0..31), $2540 (168..199) et $2640 (200..207)
 ; ===========================================================================
 dungeon_charset:
 ; Chars 0..31 (Tuiles 0..7 : 256 octets)
@@ -264,3 +264,12 @@ dungeon_charset:
         !byte 170, 149, 149, 170, 37, 101, 42, 64
         !byte 168, 145, 145, 160, 100, 101, 170, 0
         !byte 106, 149, 149, 170, 37, 37, 42, 0
+; Chars 200..207 (Tuiles 13..14 : 64 octets)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0

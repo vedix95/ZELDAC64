@@ -199,10 +199,10 @@ gel_ptrs:
         !byte < (sprite_enemies_gel / 64), < (sprite_enemies_gel / 64)
 
 rope_ptrs:
-        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_1 / 64)
-        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_1 / 64)
-        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_1 / 64)
-        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_1 / 64)
+        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_0 / 64)
+        !byte < (sprite_enemies_rope_0 / 64), < (sprite_enemies_rope_0 / 64)
+        !byte < (sprite_enemies_rope_1 / 64), < (sprite_enemies_rope_1 / 64)
+        !byte < (sprite_enemies_rope_1 / 64), < (sprite_enemies_rope_1 / 64)
 
 stalfos_ptrs:
         !byte < (sprite_enemies_stalfos_0 / 64), < (sprite_enemies_stalfos_1 / 64)
@@ -211,14 +211,14 @@ stalfos_ptrs:
         !byte < (sprite_enemies_stalfos_0 / 64), < (sprite_enemies_stalfos_1 / 64)
 
 goriya_ptrs:
-        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_1 / 64)
-        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_1 / 64)
-        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_1 / 64)
-        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_1 / 64)
+        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_0 / 64)
+        !byte < (sprite_enemies_goriya_0 / 64), < (sprite_enemies_goriya_0 / 64)
+        !byte < (sprite_enemies_goriya_1 / 64), < (sprite_enemies_goriya_1 / 64)
+        !byte < (sprite_enemies_goriya_1 / 64), < (sprite_enemies_goriya_1 / 64)
 
 darknut_ptrs:
-        !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_1 / 64)
-        !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_1 / 64)
+        !byte < (sprite_enemies_darknut_1 / 64), < (sprite_enemies_darknut_1 / 64)
+        !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_0 / 64)
         !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_1 / 64)
         !byte < (sprite_enemies_darknut_0 / 64), < (sprite_enemies_darknut_1 / 64)
 
@@ -528,6 +528,13 @@ init_slot_from_table:
         adc #20
         sta en_timer,x
 
+        ; Si c'est un Armos : commence comme statue endormie (en_timer = 0)
+        lda en_type,x
+        cmp #TYPE_ARMOS
+        bne +
+        lda #0
+        sta en_timer,x
++
         ; Points de vie initiaux
         lda en_type,x
         tax
@@ -648,6 +655,9 @@ update_single_enemy:
 +       cmp #AI_WATER
         bne +
         jmp .exec_ai_water
++       cmp #AI_STATUE
+        bne +
+        jmp .exec_ai_statue
 +       cmp #AI_SLIME
         bne +
         jmp .exec_ai_slime
@@ -1360,6 +1370,128 @@ spawn_boss_fireball:
         sta en_proj_y
         jsr sound_enemy_shoot
 +       rts
+
+; ===========================================================================
+; IA : AI_STATUE (Armos : statue endormie qui s'éveille au contact de Link)
+; ===========================================================================
+.exec_ai_statue:
+        ldx en_idx
+        lda en_timer,x
+        bne .statue_active
+
+        ; Statue endormie : immobile
+        lda #0
+        sta en_anim,x
+
+        ; Vérifie si Link entre en collision / touche la statue
+        txa
+        asl
+        tay
+        lda player_x
+        sec
+        sbc en_x,y
+        sta ZP_TMP
+        lda player_x+1
+        sbc en_x+1,y
+        bne .statue_ret
+        lda ZP_TMP
+        bpl +
+        eor #$ff
+        clc
+        adc #1
++       cmp #18
+        bcs .statue_ret
+
+        lda player_y
+        sec
+        sbc en_y,x
+        bpl +
+        eor #$ff
+        clc
+        adc #1
++       cmp #18
+        bcs .statue_ret
+
+        ; --- RÉVEIL DE L'ARMOS ! ---
+        lda #60
+        sta en_timer,x
+        jsr sound_secret
+
+        ; Révèle le secret sous la statue
+        jsr armos_reveal_secret
+.statue_ret:
+        rts
+
+.statue_active:
+        ; L'Armos réveillé se déplace en roaming
+        jmp .exec_ai_roam
+
+armos_reveal_secret:
+        ldx en_idx
+        txa
+        asl
+        tay
+        ; Calcule tx = (en_x - 20) / 16
+        lda en_x,y
+        sec
+        sbc #20
+        lsr
+        lsr
+        lsr
+        lsr
+        sta ZP_TMP                      ; tx (0..19)
+
+        ; Calcule ty = (en_y - 80) / 16
+        lda en_y,x
+        sec
+        sbc #80
+        lsr
+        lsr
+        lsr
+        lsr
+        sta ZP_ROW                      ; ty (0..9)
+
+        ; Tile index = ty * 20 + tx
+        ldx ZP_ROW
+        lda tile_row_offset,x
+        clc
+        adc ZP_TMP
+        tay                             ; Y = tile index (0..199)
+
+        lda current_room_idx
+        cmp #36                         ; Salle E-3 : Statue en haut à droite (Bracelet)
+        bne .ars_chk_caves
+        ; Si statue en haut à droite (tx >= 12 et ty <= 4)
+        lda ZP_TMP
+        cmp #12
+        bcc .ars_done
+        lda ZP_ROW
+        cmp #5
+        bcs .ars_done
+        lda #TILE_CAVE
+        sta room_buf,y
+        jsr redraw_single_tile
+        lda player_has_bracelet
+        bne .ars_done
+        lda #1
+        sta player_has_bracelet
+        jsr sound_item_fanfare
+        jsr hud_render
+        rts
+
+.ars_chk_caves:
+        ldx current_room_idx
+        lda room_cave_types,x
+        beq .ars_done
+        lda ZP_TMP
+        cmp #8
+        bcc .ars_done
+        lda #TILE_CAVE
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr record_room_secret_opened
+.ars_done:
+        rts
 
 ; ===========================================================================
 ; IA 5 : AI_ROAM (Octorok, Moblin, Lynel, Stalfos, Darknut, etc.)
@@ -3022,7 +3154,7 @@ draw_virtual_to_spr3:
         sta VIC_SPRITE_MC
         lda en_type,x
         cmp #TYPE_AQUAMENTUS
-        bne .s3_no_exp
+        bcc .s3_no_exp
         lda VIC_SPRITE_EXP_X
         ora #%00001000
         sta VIC_SPRITE_EXP_X
@@ -3051,6 +3183,12 @@ draw_virtual_to_spr4:
         lda VIC_SPRITE_EN
         and #%11101111
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_EXP_X
+        and #%11101111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11101111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 .s4_draw:
@@ -3110,6 +3248,23 @@ draw_virtual_to_spr4:
         lda VIC_SPRITE_MC
         ora #%00010000
         sta VIC_SPRITE_MC
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        bcc .s4_no_exp
+        lda VIC_SPRITE_EXP_X
+        ora #%00010000
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        ora #%00010000
+        sta VIC_SPRITE_EXP_Y
+        rts
+.s4_no_exp:
+        lda VIC_SPRITE_EXP_X
+        and #%11101111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11101111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 draw_virtual_to_spr5:
@@ -3124,6 +3279,12 @@ draw_virtual_to_spr5:
         lda VIC_SPRITE_EN
         and #%11011111
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_EXP_X
+        and #%11011111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11011111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 .s5_draw:
@@ -3183,6 +3344,23 @@ draw_virtual_to_spr5:
         lda VIC_SPRITE_MC
         ora #%00100000
         sta VIC_SPRITE_MC
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        bcc .s5_no_exp
+        lda VIC_SPRITE_EXP_X
+        ora #%00100000
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        ora #%00100000
+        sta VIC_SPRITE_EXP_Y
+        rts
+.s5_no_exp:
+        lda VIC_SPRITE_EXP_X
+        and #%11011111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11011111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 draw_virtual_to_spr6:
@@ -3197,6 +3375,12 @@ draw_virtual_to_spr6:
         lda VIC_SPRITE_EN
         and #%10111111
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_EXP_X
+        and #%10111111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%10111111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 .s6_draw:
@@ -3256,6 +3440,23 @@ draw_virtual_to_spr6:
         lda VIC_SPRITE_MC
         ora #%01000000
         sta VIC_SPRITE_MC
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        bcc .s6_no_exp
+        lda VIC_SPRITE_EXP_X
+        ora #%01000000
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        ora #%01000000
+        sta VIC_SPRITE_EXP_Y
+        rts
+.s6_no_exp:
+        lda VIC_SPRITE_EXP_X
+        and #%10111111
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%10111111
+        sta VIC_SPRITE_EXP_Y
         rts
 
 ; ---------------------------------------------------------------------------

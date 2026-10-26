@@ -34,16 +34,18 @@ jobs:
       - name: Check build environment
         run: make check
 
-      - name: Build D64 Disk Image and Binaries
-        run: make
+      - name: Build Cartridge CRT and Maps
+        run: |
+          make
+          make maps
 
       - name: Upload Assets to GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         with:
           files: |
-            build/zelda.d64
-            build/zelda_disk1.d64
-            build/zelda_disk2.d64
+            build/zelda.crt
+            build/map_overworld.png
+            build/map_dungeon_*.png
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

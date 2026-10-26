@@ -12,9 +12,9 @@ check() {  # nom  obligatoire(1/0)  conseil
 }
 echo "Outils obligatoires :"
 check make   1 "sudo pacman -S make"
-check acme   1 "sudo pacman -S acme"
-check x64sc  1 "sudo pacman -S vice"
-check c1541  1 "sudo pacman -S vice"
+check acme     1 "sudo pacman -S acme"
+check x64sc    1 "sudo pacman -S vice"
+check cartconv 1 "fourni par vice (cartouche CRT)"
 echo "Outils optionnels :"
 check exomizer 0 "yay -S exomizer  (compression de PRG)"
 check petcat   0 "fourni par vice  (BASIC <-> PRG)"

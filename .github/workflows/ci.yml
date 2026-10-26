@@ -32,14 +32,13 @@ jobs:
       - name: Generate previews
         run: make preview
 
-      - name: Build D64 Disk Image
-        run: make
+      - name: Build Cartridge CRT and Maps
+        run: |
+          make
+          make maps
 
-      - name: Upload playable D64 disk images
+      - name: Upload playable CRT cartridge image
         uses: actions/upload-artifact@v4
         with:
-          name: zelda-c64-d64
-          path: |
-            build/zelda.d64
-            build/zelda_disk1.d64
-            build/zelda_disk2.d64
+          name: zelda-c64-crt
+          path: build/zelda.crt

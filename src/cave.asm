@@ -481,13 +481,18 @@ cave_trigger_moblin:
         bne +
         lda #1
         sta cave_room_cleared,x
-        ; Ajoute 30 rubis (max 255)
+        ; Ajoute 30 rubis (ou 100 rubis en salle 15 / P-1)
+        lda #30
+        cpx #15
+        bne ++
+        lda #100
+++      sta ZP_TMP
         lda hud_rupees
         clc
-        adc #30
-        bcc ++
+        adc ZP_TMP
+        bcc +++
         lda #255
-++      sta hud_rupees
++++     sta hud_rupees
         jsr hud_render
 
         ; Jingle sonore de rubis
@@ -586,11 +591,24 @@ cave_render_texts:
         bne -
 +
         ldx current_cave_type
+        cpx #CAVE_TYPE_MOBLIN
+        bne .set_def_txt2
+        lda current_room_idx
+        cmp #15
+        bne .set_def_txt2
+        lda #<txt_moblin_100_2
+        sta ZP_SRC
+        lda #>txt_moblin_100_2
+        sta ZP_SRC+1
+        jmp .draw_txt2_chars
+
+.set_def_txt2:
         lda cave_txt2_lo,x
         sta ZP_SRC
         lda cave_txt2_hi,x
         sta ZP_SRC+1
 
+.draw_txt2_chars:
         ; Ligne 8 : 28 caractères
         ldy #0
 -       lda (ZP_SRC),y
@@ -612,63 +630,47 @@ cave_render_prices:
         cpx #18
         bne -
 
-        ; Slot 1 (X=136 -> Col 13..16)
-        lda cave_slot1_active
-        beq +
-        lda cave_slot1_price
-        beq +
+        ldx #0
+        jsr .print_slot_price
+        ldx #5
+        jsr .print_slot_price
+        ldx #10
+        jsr .print_slot_price
+        rts
+
+.print_slot_price:
+        lda cave_slot1_active,x
+        beq .psp_done
+        lda cave_slot1_price,x
+        beq .psp_done
+        pha
+        lda cave_price_cols,x
+        tay
         lda #HUD_CHAR_RUPEE
-        sta SCREEN_RAM+640+13
+        sta SCREEN_RAM+640,y
         lda #COL_YELLOW
-        sta COLOR_RAM+640+13
-        lda cave_slot1_price
+        sta COLOR_RAM+640,y
+        pla
         jsr cave_print_price
-        sta SCREEN_RAM+640+14
-        stx SCREEN_RAM+640+15
-        sty SCREEN_RAM+640+16
+        iny
+        sta SCREEN_RAM+640,y
         lda #COL_YELLOW
-        sta COLOR_RAM+640+14
-        sta COLOR_RAM+640+15
-        sta COLOR_RAM+640+16
-+
-        ; Slot 2 (X=176 -> Col 18..21)
-        lda cave_slot2_active
-        beq +
-        lda cave_slot2_price
-        beq +
-        lda #HUD_CHAR_RUPEE
-        sta SCREEN_RAM+640+18
+        sta COLOR_RAM+640,y
+        iny
+        txa
+        sta SCREEN_RAM+640,y
         lda #COL_YELLOW
-        sta COLOR_RAM+640+18
-        lda cave_slot2_price
-        jsr cave_print_price
-        sta SCREEN_RAM+640+19
-        stx SCREEN_RAM+640+20
-        sty SCREEN_RAM+640+21
+        sta COLOR_RAM+640,y
+        iny
+        tya
+        sta SCREEN_RAM+640,y
         lda #COL_YELLOW
-        sta COLOR_RAM+640+19
-        sta COLOR_RAM+640+20
-        sta COLOR_RAM+640+21
-+
-        ; Slot 3 (X=216 -> Col 23..26)
-        lda cave_slot3_active
-        beq +
-        lda cave_slot3_price
-        beq +
-        lda #HUD_CHAR_RUPEE
-        sta SCREEN_RAM+640+23
-        lda #COL_YELLOW
-        sta COLOR_RAM+640+23
-        lda cave_slot3_price
-        jsr cave_print_price
-        sta SCREEN_RAM+640+24
-        stx SCREEN_RAM+640+25
-        sty SCREEN_RAM+640+26
-        lda #COL_YELLOW
-        sta COLOR_RAM+640+24
-        sta COLOR_RAM+640+25
-        sta COLOR_RAM+640+26
-+       rts
+        sta COLOR_RAM+640,y
+.psp_done:
+        rts
+
+cave_price_cols:
+        !byte 13, 0, 0, 0, 0, 18, 0, 0, 0, 0, 23
 
 cave_print_price:
         ; Convertit A (0..255) en 3 caractères ASCII : A (centaines), X (dizaines), Y (unités)
@@ -886,100 +888,55 @@ cave_update:
 ; Achats & Prises d'objets
 ; ---------------------------------------------------------------------------
 cave_buy_slot1:
-        lda cave_slot1_price
-        beq .take_slot1
-        ; Vérifie les rubis suffisants
-        lda hud_rupees
-        cmp cave_slot1_price
-        bcs .pay_slot1
-        jmp .cant_afford
-.pay_slot1:
-        sec
-        sbc cave_slot1_price
-        sta hud_rupees
-        jsr hud_render
-
-.take_slot1:
-        lda cave_slot1_type
-        jsr cave_grant_item
-        lda #0
-        sta cave_slot1_active
-
-        ; Si Choix Vital : efface aussi le Slot 3
-        lda current_cave_type
-        cmp #CAVE_TYPE_HEART_CHOICE
-        bne +
-        lda #0
-        sta cave_slot3_active
-+
-        ; Marque persistance
-        ldx current_room_idx
-        lda cave_room_cleared,x
-        ora #1
-        sta cave_room_cleared,x
-
-        jsr cave_start_celebration
-        jsr cave_render_prices
-        rts
-
+        ldx #0
+        jmp cave_buy_slot_x
 cave_buy_slot2:
-        lda cave_slot2_price
-        beq .take_slot2
-        lda hud_rupees
-        cmp cave_slot2_price
-        bcs .pay_slot2
-        jmp .cant_afford
-.pay_slot2:
-        sec
-        sbc cave_slot2_price
-        sta hud_rupees
-        jsr hud_render
-
-.take_slot2:
-        lda cave_slot2_type
-        jsr cave_grant_item
-        lda #0
-        sta cave_slot2_active
-
-        ldx current_room_idx
-        lda cave_room_cleared,x
-        ora #2
-        sta cave_room_cleared,x
-
-        jsr cave_start_celebration
-        jsr cave_render_prices
-        rts
-
+        ldx #5
+        jmp cave_buy_slot_x
 cave_buy_slot3:
-        lda cave_slot3_price
-        beq .take_slot3
+        ldx #10
+
+cave_buy_slot_x:
+        lda cave_slot1_price,x
+        beq .take_slot_x
         lda hud_rupees
-        cmp cave_slot3_price
-        bcs .pay_slot3
+        cmp cave_slot1_price,x
+        bcs .pay_slot_x
         jmp .cant_afford
-.pay_slot3:
+.pay_slot_x:
         sec
-        sbc cave_slot3_price
+        sbc cave_slot1_price,x
         sta hud_rupees
         jsr hud_render
 
-.take_slot3:
-        lda cave_slot3_type
+.take_slot_x:
+        lda cave_slot1_type,x
         jsr cave_grant_item
         lda #0
-        sta cave_slot3_active
+        sta cave_slot1_active,x
 
-        ; Si Choix Vital : efface aussi le Slot 1
+        ; Si Choix Vital : efface l'autre slot
         lda current_cave_type
         cmp #CAVE_TYPE_HEART_CHOICE
         bne +
-        lda #0
-        sta cave_slot1_active
+        cpx #0
+        bne ++
+        sta cave_slot3_active
+        jmp +
+++      sta cave_slot1_active
 +
-        ldx current_room_idx
-        lda cave_room_cleared,x
-        ora #4
-        sta cave_room_cleared,x
+        cpx #0
+        bne ++
+        lda #1
+        jmp +++
+++      cpx #5
+        bne ++++
+        lda #2
+        jmp +++
+++++    lda #4
++++     ldy current_room_idx
+        ora cave_room_cleared,y
+        sta cave_room_cleared,y
 
         jsr cave_start_celebration
         jsr cave_render_prices
@@ -1416,66 +1373,67 @@ cave_txt2_hi:
         !byte >txt_choice_2, >txt_hint1_2, >txt_hint2_2, >txt_hint3_2, >txt_gamble_2
         !byte >txt_fairy_2, >txt_gift_2, >txt_sword_mg_2
 
-txt_dflt_1:     !text "BIENVENUE DANS MA GROTTE", 0
-txt_dflt_2:     !text "REPOSE-TOI UN INSTANT.", 0
+txt_dflt_1:     !text "REPOSE-TOI UN INSTANT.", 0
+txt_dflt_2:     !text "", 0
 
 txt_sword_w_1:  !text "C'EST DANGEREUX D'Y ALLER", 0
 txt_sword_w_2:  !text "TOUT SEUL ! PRENDS CECI.", 0
 
-txt_shop_a_1:   !text "ACHETE DU MATERIEL QUAND", 0
+txt_shop_a_1:   !text "ACHETE DU MATERIEL", 0
 txt_shop_a_2:   !text "TU VEUX. CHOISIS ET PAIE !", 0
 
-txt_shop_b_1:   !text "DES ARMES ET DES MUNITIONS", 0
+txt_shop_b_1:   !text "ARMES ET MUNITIONS", 0
 txt_shop_b_2:   !text "POUR TRIOMPHER DU MAL !", 0
 
-txt_shop_s_1:   !text "OBJETS SPECIAUX ET RARES", 0
+txt_shop_s_1:   !text "OBJETS RARES", 0
 txt_shop_s_2:   !text "REGARDE CE QUE J'AI LA !", 0
 
-txt_pot_1:      !text "PRENDS UNE BONNE POTION", 0
-txt_pot_2:      !text "POUR RETROUVER TA FORCE.", 0
+txt_pot_1:      !text "UNE BONNE POTION", 0
+txt_pot_2:      !text "POUR TA FORCE.", 0
 
-txt_sword_wh_1: !text "VOICI UNE LAME TRES FORTE !", 0
-txt_sword_wh_2: !text "PRENDS L'EPEE BLANCHE !", 0
+txt_sword_wh_1: !text "UNE LAME FORTE !", 0
+txt_sword_wh_2: !text "L'EPEE BLANCHE !", 0
 
-txt_sword_mg_1: !text "VOICI L'EPEE MAGIQUE !", 0
-txt_sword_mg_2: !text "LIBERE HYRULE DE GANON !", 0
+txt_sword_mg_1: !text "L'EPEE MAGIQUE !", 0
+txt_sword_mg_2: !text "LIBERE HYRULE !", 0
 
 txt_moblin_1:   !text "C'EST UN SECRET POUR", 0
 txt_moblin_2:   !text "TOUT LE MONDE. (+30 RUBIS)", 0
+txt_moblin_100_2: !text "TOUT LE MONDE. (+100 RUBIS)", 0
 
 txt_choice_1:   !text "GARDE CECI SECRET.", 0
 txt_choice_2:   !text "CHOISIS L'UN DES DEUX.", 0
 
-txt_hint1_1:    !text "LE MONT DU PERIL RENFERME", 0
-txt_hint1_2:    !text "LE REPAIRE DU CRUEL GANON.", 0
+txt_hint1_1:    !text "AU MONT DU PERIL GIT", 0
+txt_hint1_2:    !text "LE REPAIRE DE GANON.", 0
 
-txt_hint2_1:    !text "LES ARBRES VERTS CACHENT", 0
-txt_hint2_2:    !text "BIEN DES PASSAGES SECRETS.", 0
+txt_hint2_1:    !text "LES ARBRES CACHENT", 0
+txt_hint2_2:    !text "DES PASSAGES SECRETS.", 0
 
-txt_hint3_1:    !text "VA VERS L'EST POUR TROUVER", 0
-txt_hint3_2:    !text "LA CASCADE ET SES MYSTERES.", 0
+txt_hint3_1:    !text "VA VERS L'EST TROUVER", 0
+txt_hint3_2:    !text "LA CASCADE ET SES SECRETS.", 0
 
-txt_gamble_1:   !text "TENTE TA CHANCE ICI !", 0
-txt_gamble_2:   !text "CHOISIS UN SAC DE RUBIS.", 0
+txt_gamble_1:   !text "TENTE TA CHANCE !", 0
+txt_gamble_2:   !text "CHOISIS UN SAC.", 0
 
-txt_fairy_1:    !text "JE VAIS TE SOIGNER !", 0
-txt_fairy_2:    !text "TA FORCE EST RESTAUREE.", 0
+txt_fairy_1:    !text "JE TE SOIGNE !", 0
+txt_fairy_2:    !text "FORCE RESTAUREE.", 0
 
-txt_gift_1:     !text "PRENDS CECI C'EST POUR TOI.", 0
+txt_gift_1:     !text "PRENDS CECI.", 0
 txt_gift_2:     !text "GARDE LE SECRET !", 0
 
 ; ===========================================================================
 ; TABLE DES 128 SALLES DE L'OVERWORLD VERS LES 23 GROTTES
 ; ===========================================================================
 room_cave_types:
-        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 10: Épée Blanche
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, 0, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2
+        ; Rangée 0 (0..15 : A-1 .. P-1) - Salle 10: Épée Blanche, Salle 15: Moblin secret (+100 rubis)
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_SWORD_WHITE, 0, CAVE_TYPE_SHOP_A, 0, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_MOBLIN
         ; Rangée 1 (16..31 : A-2 .. P-2)
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_SHOP_A
         ; Rangée 2 (32..47 : A-3 .. P-3) - Salle 33: Épée Magique (B-3), Salle 43: Choix Cœur, Salle 44/47: Cœurs
         !byte 0, CAVE_TYPE_SWORD_MAGIC, 0, 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_HEART_GIFT, 0, 0, CAVE_TYPE_HEART_GIFT
         ; Rangée 3 (48..63 : A-4 .. P-4)
-        !byte 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, 0, 0, 0, CAVE_TYPE_FAIRY, 0, 0, 0, 0, 0, 0
+        !byte 0, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_MOBLIN, 0, 0, 0, 0, 0, CAVE_TYPE_FAIRY, 0, 0, 0, 0, 0, 0
         ; Rangée 4 (64..79 : A-5 .. P-5)
         !byte 0, 0, 0, CAVE_TYPE_FAIRY, 0, CAVE_TYPE_POTION_SHOP, 0, 0, 0, 0, CAVE_TYPE_SHOP_B, 0, 0, 0, 0, 0
         ; Rangée 5 (80..95 : A-6 .. P-6)

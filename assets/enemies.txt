@@ -35,6 +35,7 @@ ggbbbbgg
 
 
 
+
 [octo_down_1]
 ..gssg..
 ggsggsgg
@@ -52,6 +53,7 @@ ggbbbbgg
 ..gggg..
 ........
 ........
+
 
 
 
@@ -76,6 +78,7 @@ gggggggg
 
 
 
+
 [octo_up_1]
 ..gggg..
 gggggggg
@@ -93,6 +96,7 @@ gggggggg
 ..gggg..
 ........
 ........
+
 
 
 
@@ -117,6 +121,7 @@ g.gbbbgg
 
 
 
+
 [octo_left_1]
 ...g.g.g
 ...ggggg
@@ -137,6 +142,7 @@ g.gbbbgg
 
 
 
+
 # Profil droit : miroirs officiels
 [octo_right_0] mirror octo_left_0
 [octo_right_1] mirror octo_left_1
@@ -147,6 +153,7 @@ g.gbbbgg
 .gg.
 .gg.
 ....
+
 
 
 
@@ -174,6 +181,7 @@ sggggg..
 
 
 
+
 [moblin_down_1]
 ........
 ...sss..
@@ -191,6 +199,7 @@ ggggsss.
 sggssg..
 .gssss..
 ..sssb..
+
 
 
 
@@ -215,6 +224,7 @@ sggggg..
 
 
 
+
 [moblin_up_1]
 ........
 ...ggg..
@@ -232,6 +242,7 @@ ggggsss.
 sggssg..
 .gssss..
 ..sssb..
+
 
 
 
@@ -256,6 +267,7 @@ bbb.....
 
 
 
+
 [moblin_left_1]
 .ss..ss.
 .ssssss.
@@ -276,6 +288,7 @@ bgbbbggb
 
 
 
+
 # Profil droit : miroirs officiels
 [moblin_right_0] mirror moblin_left_0
 [moblin_right_1] mirror moblin_left_1
@@ -285,6 +298,7 @@ bgbbbggb
 ........
 bbbbbbbb
 ........
+
 
 
 
@@ -298,6 +312,7 @@ bbbbbbbb
 .b.
 .b.
 .b.
+
 
 
 
@@ -328,6 +343,7 @@ g......g
 
 
 
+
 [tektite_1]
 ........
 ...bb...
@@ -345,6 +361,7 @@ g......g
 g......g
 g......g
 g......g
+
 
 
 
@@ -371,6 +388,7 @@ ggsggsgg
 
 
 
+
 [leever_1]
 ...bb...
 .b.bb.b.
@@ -388,6 +406,7 @@ sggssggs
 ggsggsgg
 .sgssgs.
 ..gggg..
+
 
 
 
@@ -414,6 +433,7 @@ sggbbggs
 
 
 
+
 [peahat_1]
 ........
 .bb..bb.
@@ -431,6 +451,7 @@ bbbggbbb
 ..gggg..
 ..ssss..
 ...ss...
+
 
 
 
@@ -457,6 +478,7 @@ bbbb.ggs
 
 
 
+
 [armos_1]
 .gbgggss
 .gggggss
@@ -474,6 +496,7 @@ sssggggs
 sssggggs
 bbbb.ggs
 .....gg.
+
 
 
 
@@ -500,6 +523,7 @@ sbbssb..
 
 
 
+
 [ghini_1]
 ...bbg..
 ..bbbbg.
@@ -517,6 +541,7 @@ bbbbg...
 bbggss..
 sssssss.
 ssssss..
+
 
 
 
@@ -543,6 +568,7 @@ bsbssbsb
 
 
 
+
 [zora_1]
 g..gg..g
 gbbggbbg
@@ -560,6 +586,7 @@ bssggssb
 bsbggbsb
 .ssbbss.
 .bssssb.
+
 
 
 
@@ -586,6 +613,7 @@ b...gg..
 
 
 
+
 [lynel_1]
 .ggsgg..
 ..gsgb..
@@ -603,6 +631,7 @@ ggggggg.
 ggbbbgg.
 .g...g..
 ........
+
 
 
 
@@ -629,6 +658,7 @@ g..gg..g
 
 
 
+
 [keese_1]
 ........
 ........
@@ -646,6 +676,7 @@ g..gg..g
 ...gg...
 ........
 ........
+
 
 
 
@@ -672,6 +703,7 @@ gggggggg
 
 
 
+
 [zol_1]
 ........
 ........
@@ -692,6 +724,7 @@ gggggggg
 
 
 
+
 [gel]
 ........
 ........
@@ -709,6 +742,7 @@ gggggggg
 ........
 ........
 ........
+
 
 
 
@@ -735,6 +769,7 @@ g.gggg.g
 
 
 
+
 [rope_1]
 .......g
 g......g
@@ -752,6 +787,7 @@ ggb..gsg
 gb...gsg
 bb...gsg
 b.......
+
 
 
 
@@ -778,6 +814,7 @@ ggg..ggg
 
 
 
+
 [stalfos_1]
 ..gggg..
 .g.gg.g.
@@ -795,6 +832,7 @@ gbsggsbg
 ggg..ggg
 ........
 ........
+
 
 
 
@@ -821,6 +859,7 @@ gsgssgsg
 
 
 
+
 [goriya_1]
 gg......
 gg..ggg.
@@ -838,6 +877,7 @@ ss..ggbb
 gg..ggss
 sg..ggb.
 ........
+
 
 
 
@@ -864,6 +904,7 @@ bbbggbbb
 
 
 
+
 [darknut_1]
 bs....sb
 gs....sg
@@ -881,6 +922,7 @@ gss..ssg
 gss..ssg
 bss..ssb
 ..s..s..
+
 
 
 
@@ -907,6 +949,7 @@ gsgbbgsg
 
 
 
+
 [wizzrobe_1]
 ........
 ..gggg..
@@ -924,6 +967,7 @@ gsgbbgsg
 ..gggg..
 ..gggg..
 .gggggg.
+
 
 
 
@@ -950,6 +994,7 @@ gggggggg
 
 
 
+
 [wallmaster_1]
 ........
 g......g
@@ -967,6 +1012,7 @@ ggg..ggg
 ggg..ggg
 ggg..ggg
 gggggggg
+
 
 
 
@@ -993,6 +1039,7 @@ gg.gg.gg
 
 
 
+
 [likelike_1]
 ........
 ..gggg..
@@ -1010,6 +1057,7 @@ gsgbbgsg
 gb.gg.bg
 ........
 ........
+
 
 
 
@@ -1036,6 +1084,7 @@ gggggggg
 
 
 
+
 [polsvoice_1]
 g......g
 gg....gg
@@ -1053,6 +1102,7 @@ ssggggss
 .bggggb.
 bggggggb
 gg.gg.gg
+
 
 
 
@@ -1079,6 +1129,7 @@ ggg..ggg
 
 
 
+
 [gibdo_1]
 b..bb..b
 gggggggg
@@ -1096,6 +1147,7 @@ ggbbbbgg
 .bggggb.
 ........
 ........
+
 
 
 
@@ -1122,6 +1174,7 @@ gggggggg
 
 
 
+
 [vire_1]
 ........
 .sg..gs.
@@ -1139,6 +1192,7 @@ gggggggg
 .gsggsg.
 .gggggg.
 .gggggg.
+
 
 
 
@@ -1165,6 +1219,7 @@ bgbbbbgb
 
 
 
+
 [bubble_1]
 ...gg...
 ..bggb..
@@ -1182,6 +1237,7 @@ bgbbbbgb
 .bbggbb.
 ..gssg..
 ...bb...
+
 
 
 
@@ -1208,6 +1264,7 @@ s......s
 
 
 
+
 # ---------------------------------------------------------------------------
 # 24. LANMOLA (Mille-pattes géant segmenté)
 # ---------------------------------------------------------------------------
@@ -1231,6 +1288,7 @@ g.gggg.g
 
 
 
+
 [lanmola_body]
 ........
 g......g
@@ -1251,56 +1309,59 @@ b......b
 
 
 
+
 # ---------------------------------------------------------------------------
 # 25. AQUAMENTUS (Dragon cornu à crachat triple)
 # ---------------------------------------------------------------------------
 [aquamentus_0] pad 0 0
-b......s.gg.
+b......g.gg.
 b.....bbggg.
-.bgg..sggg..
-.bbb.bbggsb.
-.bsb.bbgggb.
-.ggg.ssgggg.
+.bbb.bbgggb.
+.bgb.bbgggb.
 gggg.bbggggb
-sggg.bbggggb
-ggbg.ssgsggb
+gggg.bbggggb
 gggg.bbgbgg.
 b.b..sbgsgb.
-...s..ggsgb.
+.......gsgb.
+.......gbg..
 ...b..ggggb.
-....ggbsssss
-....gggsssgg
 ....ggggsggg
-....gbggsggs
-....gbbbbggs
-..g.gbbbbggs
+....gggggggg
+....gggggggg
+....gggggggg
+....gggggggg
+....gggggggg
+....gbbbbggg
+..g.gbbbbggg
 ..bggg..gggs
-...ggg...sss
+b.bgg....ss.
+
 
 
 
 [aquamentus_1] pad 0 0
-b......s.gg.
+b......g.gg.
 b.....bgggg.
-.bgg..sggg..
-.bbb.bbggsb.
-.bsb.ssgggb.
-.ggg.bbgggg.
-ggss.bbggggb
-sgsg.ssggggb
-gsgg.bbgsggb
-gs.g.bggbgg.
+.bbb.bbgggb.
+.bgb.sggggb.
+gggg.bbggggb
+gggg.sgggggb
+gg.g.bggbgg.
 bg....ggsgb.
-...s..sssgb.
+.....gggsgb.
+.....gggbg..
 ...b..ssggb.
-....ggbbbbbg
-....gggsssgg
+....ggggsggg
+....ggggssgg
+....ggggssss
 ....gggggggg
-....gbggsggg
+....gggggggg
+....gggggggg
 ....gbbbgggg
 ..g.bbbbgggg
 ..bgs...ggg.
-...gs..gggg.
+b.bgs..gggg.
+
 
 
 
@@ -1332,6 +1393,7 @@ ggbggssggg..
 
 
 
+
 [dodongo_1] pad 0 0
 ............
 ............
@@ -1354,6 +1416,7 @@ ggbggssggg..
 ...bgggggggg
 ..gggssggbgg
 .....bbb....
+
 
 
 
@@ -1380,6 +1443,7 @@ gsggggsg
 
 
 
+
 [manhandla_jaw]
 g......g
 bg....gb
@@ -1397,6 +1461,7 @@ bbb..bbb
 bb....bb
 bbg..gbb
 bgg..ggb
+
 
 
 
@@ -1423,6 +1488,7 @@ sbbbbbbs
 
 
 
+
 [gleeok_1]
 ........
 ........
@@ -1440,6 +1506,7 @@ bbbbbbbb
 ..bbbb..
 ..bbbb..
 .ssbbss.
+
 
 
 
@@ -1466,6 +1533,7 @@ gggggggg
 
 
 
+
 # ---------------------------------------------------------------------------
 # 30. GOHMA (Arachnide cuirassé à l'œil vulnérable aux flèches)
 # ---------------------------------------------------------------------------
@@ -1489,6 +1557,7 @@ gggggggg
 
 
 
+
 [gohma_open]
 ........
 ........
@@ -1506,6 +1575,7 @@ bssbbssb
 bbsbbsbb
 sbbggbbs
 ssbssbss
+
 
 
 
@@ -1532,6 +1602,7 @@ gggggggg
 
 
 
+
 [patra_orb]
 ........
 ........
@@ -1549,6 +1620,7 @@ gggggggg
 .ssssss.
 .ssssss.
 .ggssgg.
+
 
 
 
@@ -1580,6 +1652,7 @@ ggggssssgggg
 
 
 
+
 [ganon_1] pad 0 0
 sggg.gggsggg
 ssgg.gggssgg
@@ -1605,6 +1678,7 @@ ggggssssgggg
 
 
 
+
 # ---------------------------------------------------------------------------
 # 33. PROJECTILES ENNEMIS OFFICIELS
 # ---------------------------------------------------------------------------
@@ -1620,6 +1694,7 @@ ssbbggbbss
 
 
 
+
 [proj_magic] pad 0 0
 ..gg..
 .gggg.
@@ -1627,6 +1702,7 @@ gggggg
 gggggg
 .gggg.
 ..gg..
+
 
 
 
@@ -1638,6 +1714,7 @@ gggggg
 ..bb..bb..
 ...bbbb...
 ....bb....
+
 
 
 
@@ -1656,6 +1733,7 @@ ssssssssss
 
 
 
+
 [enemy_death_1]
 ..s....s..
 .s.s..s.s.
@@ -1665,6 +1743,7 @@ ssssssssss
 ..s....s..
 .s.s..s.s.
 ..s....s..
+
 
 
 

@@ -72,6 +72,8 @@ clear_screen:
 
 ; Charge et dessine la salle désignée par current_room_x / current_room_y
 load_room:
+        lda #$ff
+        sta ladder_tile_idx
         lda current_world_type
         bne +
         jsr disk_ensure_ow_chunk
@@ -102,7 +104,7 @@ load_room:
         tay
         lda bit_powers,y
         and overworld_secrets_opened,x
-        beq +
+        beq .no_secret_restored
 
         ; Si Salle 66 (C-5) : étang asséché du Donjon 7
         lda current_room_idx
@@ -118,13 +120,19 @@ load_room:
         bpl -
         lda #TILE_CAVE
         sta room_buf+90
-        sta room_buf+70
-        jmp +
+        jmp .check_std_sec
 
-+       cmp #33
++       lda current_room_idx
+        cmp #33
         bne +
         lda #TILE_CAVE
         sta room_buf+92
+        jmp .check_std_sec
+
++       cmp #51
+        bne +
+        lda #TILE_CAVE
+        sta room_buf+88
         jmp .check_std_sec
 
 +       cmp #109
@@ -154,6 +162,7 @@ load_room:
 .sk_bomb_conv:
         dey
         bpl -
+.no_secret_restored:
 +
         ; Application des couleurs de la zone active
         lda current_world_type
@@ -393,7 +402,7 @@ enter_dungeon:
         sta current_room_y
         sta dungeon_entrance_room_y
 
-        lda #160
+        lda #176
         sta player_x
         lda #0
         sta player_x+1

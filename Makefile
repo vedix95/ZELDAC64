@@ -11,7 +11,6 @@
 NAME    := zelda
 ACME    ?= acme
 VICE    ?= x64sc
-C1541   ?= c1541
 PYTHON  ?= python3
 
 SRC_DIR := src
@@ -26,15 +25,13 @@ SRCS       := $(filter-out $(DUNG_ASMS) $(SRC_DIR)/ow%.asm $(SRC_DIR)/map_overwo
 
 PRG     := $(BLD_DIR)/$(NAME).prg
 PRG_INT := $(BLD_DIR)/intro.prg
-D64     := $(BLD_DIR)/$(NAME).d64
-D64_DISK1 := $(BLD_DIR)/$(NAME)_disk1.d64
-D64_DISK2 := $(BLD_DIR)/$(NAME)_disk2.d64
+CRT     := $(BLD_DIR)/$(NAME).crt
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
-.PHONY: all run run-game debug d64 clean distclean check preview editor extract-music
+.PHONY: all run run-game run-crt debug crt clean distclean check preview maps extract-music
 
-all: $(D64) $(D64_DISK1) $(D64_DISK2)
+all: $(CRT)
 
 # sprites.asm est généré depuis l'ASCII art (assets/link.txt)
 $(SRC_DIR)/sprites.asm: assets/link.txt tools/sprgen.py
@@ -80,60 +77,33 @@ $(PRG): $(SRCS) | $(BLD_DIR)
 	$(ACME) -f cbm -o $@ --vicelabels $(LABELS) -r $(REPORT) $(MAIN)
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-$(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_music_data.asm $(SRC_DIR)/intro_monsters_data.asm $(SRC_DIR)/charset.asm $(SRC_DIR)/input.asm | $(BLD_DIR)
-	$(ACME) -f cbm -o $@ $<
+$(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_music_data.asm $(SRC_DIR)/intro_monsters_data.asm $(SRC_DIR)/intro_charset.asm $(SRC_DIR)/input.asm | $(BLD_DIR)
+	$(ACME) -f cbm -o $@ --vicelabels $(BLD_DIR)/intro.vs $<
 	@echo "OK : $@ ($$(stat -c %s $@) octets)"
 
-# Image disquette D64 unifiée : contient INTRO, ZELDA (moteur résident), OW0..OW3 (chunks Overworld) et les 9 Donjons
-$(D64): $(PRG_INT) $(PRG) $(OW_DATS) $(DUNG_DATS)
-	$(C1541) -format "$(NAME),01" d64 $@ \
-		-write $(PRG_INT) intro \
-		-write $(PRG) zelda \
-		-write $(BLD_DIR)/ow0.dat ow0 \
-		-write $(BLD_DIR)/ow1.dat ow1 \
-		-write $(BLD_DIR)/ow2.dat ow2 \
-		-write $(BLD_DIR)/ow3.dat ow3 \
-		-write $(BLD_DIR)/dung1.dat dung1 \
-		-write $(BLD_DIR)/dung2.dat dung2 \
-		-write $(BLD_DIR)/dung3.dat dung3 \
-		-write $(BLD_DIR)/dung4.dat dung4 \
-		-write $(BLD_DIR)/dung5.dat dung5 \
-		-write $(BLD_DIR)/dung6.dat dung6 \
-		-write $(BLD_DIR)/dung7.dat dung7 \
-		-write $(BLD_DIR)/dung8.dat dung8 \
-		-write $(BLD_DIR)/dung9.dat dung9
-	@echo "OK : $@ image disquette D64 prete (INTRO + ZELDA + 4 CHUNKS OVERWORLD + 9 DONJONS) !"
+# Image cartouche Magic Desk CRT (256 Ko) avec banques mémoires et streaming instantané
+$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(PRG_INT) tools/cartgen.py src/cart_boot.asm
+	$(PYTHON) tools/cartgen.py
 
-# Disquette 1 (Face A - Overworld & Moteur principal)
-$(D64_DISK1): $(PRG_INT) $(PRG) $(OW_DATS)
-	$(C1541) -format "zelda1,01" d64 $@ \
-		-write $(PRG_INT) intro \
-		-write $(PRG) zelda \
-		-write $(BLD_DIR)/ow0.dat ow0 \
-		-write $(BLD_DIR)/ow1.dat ow1 \
-		-write $(BLD_DIR)/ow2.dat ow2 \
-		-write $(BLD_DIR)/ow3.dat ow3
-	@echo "OK : $@ Disquette 1 prete (Face Overworld) !"
+crt: $(CRT)
 
-# Disquette 2 (Face B - Monde Souterrain & 9 Donjons)
-$(D64_DISK2): $(DUNG_DATS)
-	$(C1541) -format "zelda2,02" d64 $@ \
-		-write $(BLD_DIR)/dung1.dat dung1 \
-		-write $(BLD_DIR)/dung2.dat dung2 \
-		-write $(BLD_DIR)/dung3.dat dung3 \
-		-write $(BLD_DIR)/dung4.dat dung4 \
-		-write $(BLD_DIR)/dung5.dat dung5 \
-		-write $(BLD_DIR)/dung6.dat dung6 \
-		-write $(BLD_DIR)/dung7.dat dung7 \
-		-write $(BLD_DIR)/dung8.dat dung8 \
-		-write $(BLD_DIR)/dung9.dat dung9
-	@echo "OK : $@ Disquette 2 prete (Face Donjons) !"
+# Lance le jeu directement depuis la cartouche (0 délai de chargement, streaming instantané)
+run: $(CRT)
+	$(VICE) -cartcrt $(CRT)
 
+run-game: $(CRT)
+	$(VICE) -cartcrt $(CRT)
+
+run-crt: $(CRT)
+	$(VICE) -cartcrt $(CRT)
+
+debug: $(CRT)
+	$(VICE) -moncommands $(LABELS) -cartcrt $(CRT)
 
 $(BLD_DIR):
 	mkdir -p $@
 
-# Aperçus PNG : build/link_preview.png, enemies_preview.png et world_preview.png
+# Aperçus PNG des sprites et tuiles
 preview: | $(BLD_DIR)
 	$(PYTHON) tools/sprgen.py assets/link.txt -o $(SRC_DIR)/sprites.asm --preview $(BLD_DIR)/link_preview.png
 	$(PYTHON) tools/sprgen.py assets/enemies.txt -o $(SRC_DIR)/sprites_enemies.asm --preview $(BLD_DIR)/enemies_preview.png
@@ -142,18 +112,9 @@ preview: | $(BLD_DIR)
 		--preview $(BLD_DIR)/world_preview.png
 	@echo "Aperçus : $(BLD_DIR)/link_preview.png $(BLD_DIR)/enemies_preview.png $(BLD_DIR)/world_preview.png"
 
-# Lance la disquette complète (démarre par l'intro puis enchaîne sur le jeu)
-run: $(D64)
-	$(VICE) +drive8truedrive -trapdevice8 -autostart $(D64)
-
-# Lance directement le jeu sans passer par l'intro (démarrage instantané)
-run-game: $(PRG) $(D64)
-	$(VICE) -autostart $(PRG) -8 $(D64)
-
-debug: $(D64)
-	$(VICE) +drive8truedrive -trapdevice8 -moncommands $(LABELS) -autostart $(D64)
-
-d64: $(D64)
+# Génération des cartes complètes PNG de l'Overworld et des 9 Donjons
+maps: | $(BLD_DIR)
+	$(PYTHON) tools/render_maps.py
 
 clean:
 	rm -rf $(BLD_DIR)
@@ -164,6 +125,4 @@ distclean: clean
 check:
 	@./scripts/check-env.sh
 
-editor:
-	$(PYTHON) tools/editor.py
 

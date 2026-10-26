@@ -297,6 +297,7 @@ dungeon_init:
         lda #0
         ldx #127
 -       sta dungeon_room_state,x
+        sta visited_uw_rooms,x
         dex
         bpl -
         rts

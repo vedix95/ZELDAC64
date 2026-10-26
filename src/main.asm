@@ -23,6 +23,9 @@ start:
 }
         jmp game_init
 
+cart_present:
+        !byte 0                         ; 0 = Disquette, 1 = Cartouche Magic Desk (Type 19)
+
 ; Les sprites doivent impérativement être en-dessous de $1000 (ou au-delà de $2000)
 ; car pour le VIC-II (banque 0), la zone $1000-$1FFF voit la ROM des caractères (chargen).
 !align 63, 0
@@ -43,7 +46,6 @@ game_init:
         lda #MEMSETUP_VALUE
         sta VIC_MEMSETUP
 
-        jsr disk_init
 !if START_IN_DUNGEON == 0 {
         jsr disk_load_map_overworld
         lda #WORLD_OVERWORLD
@@ -128,6 +130,9 @@ main_loop:
 +       cmp #STATE_CELLAR
         bne +
         jmp .in_cellar
++       cmp #STATE_RAFT
+        bne +
+        jmp .in_raft
 +
 
         ; Touche D : ouvre l'écran de debug depuis le jeu normal
@@ -208,6 +213,11 @@ main_loop:
         jsr cellar_draw
         jmp main_loop
 
+.in_raft:
+        jsr raft_update
+        jsr player_draw
+        jmp main_loop
+
 .in_debug:
         jsr debug_update
         jmp main_loop
@@ -221,15 +231,51 @@ wait_frame:
         beq .wait
         rts
 
+; ---------------------------------------------------------------------------
+; cart_copy_to_c000 : Situé en Zone 1 ($1000..$1FFF) pour pouvoir basculer
+; CPU_PORT=$37 (LORAM=1 pour lire la ROM cartouche à $8000) sans écraser le
+; code exécutable par la ROM BASIC ($A000..$BFFF).
+; ---------------------------------------------------------------------------
+cart_copy_to_c000:
+        php
+        sei
+        lda #$37
+        sta CPU_PORT            ; Active LORAM=1 pour lire la ROM cartouche à $8000
+
+        ldx #13                 ; 13 pages = 3328 octets ($C000..$CCFF)
+        lda #<$8000
+        sta ZP_SRC
+        lda #>$8000
+        sta ZP_SRC+1
+        lda #<$c000
+        sta ZP_DST
+        lda #>$c000
+        sta ZP_DST+1
+        ldy #0
+-       lda (ZP_SRC),y
+        sta (ZP_DST),y
+        iny
+        bne -
+        inc ZP_SRC+1
+        inc ZP_DST+1
+        dex
+        bne -
+
+        lda #$36
+        sta CPU_PORT            ; Rétablit le mode RAM de jeu sous BASIC
+        plp
+        rts
+
+
+!source "src/tiles_data.asm"
 !source "src/input.asm"
 !source "src/player.asm"
 !source "src/tilemap.asm"
-!source "src/gameplay.asm"
 
-; Buffers de travail résidents non volatils en RAM Zone 1 ($1DAC..$1FBC, 528 octets)
-dungeon_room_state:  !fill 128, 0     ; États des 128 salles donjon (portes, clés, boss, trésors)
-room_buf:            !fill 200, 0     ; Tampon de la salle active décompressée (20x10 tuiles)
-target_room_buf:     !fill 200, 0     ; Tampon de la salle cible pour transition (20x10 tuiles)
+; Buffers de travail résidents non volatils
+dungeon_room_state   = $033c           ; 128 octets en tampon cassette ($033c..$03bb)
+room_buf             = $cd00           ; 200 octets en zone haute ($cd00..$cdc7)
+target_room_buf      = $ce00           ; 200 octets en zone haute dynamique ($ce00..$cec7)
 
 ; Le jeu de caractères est à une adresse fixe ($2000)
 !if * > CHARSET_ADDR {
@@ -249,7 +295,6 @@ target_room_buf:     !fill 200, 0     ; Tampon de la salle cible pour transition
 
 ; Code CPU au-delà de la banque VIC 0 ($4000..$CFFF)
 * = $4000
-!source "src/tiles_data.asm"
 !source "src/transition.asm"
 !source "src/items.asm"
 !source "src/enemies.asm"

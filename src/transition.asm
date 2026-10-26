@@ -19,6 +19,306 @@ col_row_hi:
         !byte $d8, $d8, $d8, $d8, $d8, $d8, $d8, $d9, $d9, $d9, $d9, $d9
         !byte $d9, $da, $da, $da, $da, $da, $da, $da, $db, $db, $db, $db
 
+lost_woods_progress:    !byte 0
+lost_hills_progress:    !byte 0
+trans_override_target:  !byte 0
+trans_target_rx:        !byte 0
+trans_target_ry:        !byte 0
+trans_target_room_idx:  !byte 0
+
+apply_trans_override_end:
+        lda trans_override_target
+        beq +
+        lda trans_target_rx
+        sta current_room_x
+        lda trans_target_ry
+        sta current_room_y
+        sec
+        rts
++       clc
+        rts
+
+; ---------------------------------------------------------------------------
+; check_lost_navigation : gère les séquences de sortie des Labyrinthes Overworld
+;   - Forêt Perdue (Salle $52 / C-6) : Haut, Gauche, Bas, Gauche vers le Cimetière ($51)
+;   - Collines Perdues (Salle $1B / L-2) : 4x Haut vers le Donjon 5 ($11)
+; Entrée : A = direction du mouvement (DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT)
+; ---------------------------------------------------------------------------
+check_lost_navigation:
+        sta ZP_TMP                      ; dir
+        lda #0
+        sta trans_override_target
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        beq +
+        rts
++       lda current_room_idx
+        cmp #$52                        ; Lost Woods (Screen C-6 = Row 5, Col 2)
+        beq .eval_lost_woods
+        cmp #$2b                        ; Lost Hills (Screen L-3 = Row 2, Col 11)
+        bne +
+        jmp .eval_lost_hills
++       lda #0
+        sta lost_woods_progress
+        sta lost_hills_progress
+        rts
+
+.eval_lost_woods:
+        lda #0
+        sta lost_hills_progress
+        lda ZP_TMP
+        cmp #DIR_RIGHT
+        bne +
+        ; Sortie vers l'Est (D-6 / $53) : sortie normale de la forêt
+        lda #0
+        sta lost_woods_progress
+        rts
++       cmp #DIR_UP
+        bne .lw_chk_left
+        lda lost_woods_progress
+        beq .lw_up_ok
+        lda #0
+        sta lost_woods_progress
+        jmp .lw_loop
+.lw_up_ok:
+        lda #1
+        sta lost_woods_progress
+        jmp .lw_loop
+
+.lw_chk_left:
+        cmp #DIR_LEFT
+        bne .lw_chk_down
+        lda lost_woods_progress
+        cmp #1
+        beq .lw_left_1
+        cmp #3
+        beq .lw_solved
+        lda #0
+        sta lost_woods_progress
+        jmp .lw_loop
+.lw_left_1:
+        lda #2
+        sta lost_woods_progress
+        jmp .lw_loop
+.lw_solved:
+        ; Séquence Up -> Left -> Down -> Left accomplie !
+        ; Transition normale à gauche vers le cimetière (Salle $51 = Screen B-6)
+        lda #0
+        sta lost_woods_progress
+        jsr sound_secret
+        rts
+
+.lw_chk_down:
+        lda lost_woods_progress
+        cmp #2
+        beq .lw_down_ok
+        lda #0
+        sta lost_woods_progress
+        jmp .lw_loop
+.lw_down_ok:
+        lda #3
+        sta lost_woods_progress
+        jmp .lw_loop
+
+.lw_loop:
+        lda #1
+        sta trans_override_target
+        lda #2
+        sta trans_target_rx
+        lda #5
+        sta trans_target_ry
+        lda #$52
+        sta trans_target_room_idx
+        rts
+
+.eval_lost_hills:
+        lda #0
+        sta lost_woods_progress
+        lda ZP_TMP
+        cmp #DIR_UP
+        beq .lh_up
+        lda #0
+        sta lost_hills_progress
+        rts
+
+.lh_up:
+        inc lost_hills_progress
+        lda lost_hills_progress
+        cmp #4
+        bcs .lh_solved
+        lda #1
+        sta trans_override_target
+        lda #11
+        sta trans_target_rx
+        lda #2
+        sta trans_target_ry
+        lda #$2b
+        sta trans_target_room_idx
+        rts
+
+.lh_solved:
+        lda #0
+        sta lost_hills_progress
+        jsr sound_secret
+        rts
+
+; ===========================================================================
+; check_ow_raft : Navigation en Radeau (Raft) sur l'Overworld
+; Docks authentiques :
+;   - Salle 85 (F-6, rx=5, ry=5) vers Salle 69 (F-5 / Donjon 4, rx=5, ry=4)
+;   - Salle 69 (F-5, rx=5, ry=4) vers Salle 85 (F-6, rx=5, ry=5)
+;   - Salle 93 (N-6, rx=13, ry=5) vers Salle 77 (N-5 / Coeur, rx=13, ry=4)
+;   - Salle 77 (N-5, rx=13, ry=4) vers Salle 93 (N-6, rx=13, ry=5)
+; ===========================================================================
+raft_journey_id:  !byte 0         ; 0=F6->F5, 1=F5->F6, 2=P4->P3, 3=P3->P4
+raft_state:       !byte 0         ; 0=écran 1, 1=écran 2
+
+raft_tgt_rx:      !byte 5, 5, 15, 15
+raft_tgt_ry:      !byte 4, 5, 2, 3
+raft_tgt_room:    !byte 69, 85, 47, 63
+raft_tgt_y:       !byte 190, 150, 190, 150
+
+check_ow_raft:
+        lda player_has_raft
+        beq .ret
+        lda current_world_type
+        bne .ret
+        lda game_state
+        bne .ret
+
+        lda player_y
+        clc
+        adc #12
+        sta col_y
+        lda player_x
+        clc
+        adc #12
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
+        jsr get_tile_at_point
+        cmp #TILE_BRIDGE_H
+        beq .chk_raft_rooms
+        cmp #TILE_BRIDGE_V
+        beq .chk_raft_rooms
+.ret:   rts
+
+.chk_raft_rooms:
+        ldx #3
+-       lda .raft_rooms,x
+        cmp current_room_idx
+        bne +
+        lda player_dir
+        cmp .raft_dirs,x
+        beq .launch
++       dex
+        bpl -
+        rts
+
+.raft_rooms: !byte 85, 69, 63, 47
+.raft_dirs:  !byte DIR_UP, DIR_DOWN, DIR_UP, DIR_DOWN
+
+.launch:
+        stx raft_journey_id
+        lda #0
+        sta raft_state
+        lda #STATE_RAFT
+        sta game_state
+        jmp sound_secret
+
+; ===========================================================================
+; raft_update : Animation de transport continue du radeau sur l'eau
+; ===========================================================================
+raft_update:
+        inc player_walk_tick
+        lda player_walk_tick
+        and #$07
+        bne +
+        lda player_walk_anim
+        eor #1
+        sta player_walk_anim
++
+        ldx raft_journey_id             ; 0..3
+        lda raft_journey_id
+        and #1                          ; pair = UP, impair = DOWN
+        bne .moving_down
+
+        ; Glisse vers le haut (2 px par frame)
+        lda player_y
+        sec
+        sbc #2
+        sta player_y
+        ldy raft_state
+        bne .check_dock_up
+        cmp #84
+        bcs .raft_done
+        lda #1
+        sta raft_state
+        lda #224
+        sta player_y
+        bne .load_target_screen
+
+.check_dock_up:
+        cmp raft_tgt_y,x
+        bcs .raft_done
+        lda raft_tgt_y,x
+        sta player_y
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+.moving_down:
+        ; Glisse vers le bas (2 px par frame)
+        lda player_y
+        clc
+        adc #2
+        sta player_y
+        ldy raft_state
+        bne .check_dock_down
+        cmp #224
+        bcc .raft_done
+        lda #1
+        sta raft_state
+        lda #84
+        sta player_y
+        bne .load_target_screen
+
+.check_dock_down:
+        cmp raft_tgt_y,x
+        bcc .raft_done
+        lda raft_tgt_y,x
+        sta player_y
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+.load_target_screen:
+        ldx raft_journey_id
+        lda raft_tgt_rx,x
+        sta current_room_x
+        lda raft_tgt_ry,x
+        sta current_room_y
+        lda raft_tgt_room,x
+        sta current_room_idx
+        jsr clear_screen
+        lda current_room_idx
+        lsr
+        lsr
+        lsr
+        lsr
+        lsr
+        jsr disk_ensure_ow_chunk_a
+        jsr load_room
+        jsr hud_render
+        jsr enemies_room_init
+.raft_done:
+        rts
+
+check_ow_specials_ext:
+        jsr check_ow_raft
+        rts
+
 
 
 ; ---------------------------------------------------------------------------
@@ -67,15 +367,20 @@ transition_right:
         lda #STATE_TRANSITION
         sta game_state
         jsr enemies_clear
-        ; Pointeur ZP_TGT vers la salle cible (current_room_x + 1)
-        ldx current_room_y
+        lda #DIR_RIGHT
+        jsr check_lost_navigation
+        lda trans_override_target
+        beq +
+        ldx trans_target_room_idx
+        jmp ++
++       ldx current_room_y
         lda world_row_offset,x
         clc
         adc current_room_x
         clc
         adc #1
         tax
-        jsr trans_setup_target
+++      jsr trans_setup_target
 .tr_step:
         jsr wait_frame
         jsr wait_frame
@@ -190,10 +495,11 @@ transition_right:
         beq .tr_step_done
         jmp .tr_step
 .tr_step_done:
-
         ; Fin de transition
+        jsr apply_trans_override_end
+        bcs +
         inc current_room_x
-        lda #<(PLAYER_X_MIN + 4)
++       lda #<(PLAYER_X_MIN + 4)
         ldx current_world_type
         cpx #WORLD_DUNGEON
         bne +
@@ -212,15 +518,20 @@ transition_left:
         lda #STATE_TRANSITION
         sta game_state
         jsr enemies_clear
-        ; Pointeur ZP_TGT vers la salle cible (current_room_x - 1)
-        ldx current_room_y
+        lda #DIR_LEFT
+        jsr check_lost_navigation
+        lda trans_override_target
+        beq +
+        ldx trans_target_room_idx
+        jmp ++
++       ldx current_room_y
         lda world_row_offset,x
         clc
         adc current_room_x
         sec
         sbc #1
         tax
-        jsr trans_setup_target
+++      jsr trans_setup_target
 .tl_step:
         jsr wait_frame
         jsr wait_frame
@@ -337,10 +648,11 @@ transition_left:
         beq .tl_step_done
         jmp .tl_step
 .tl_step_done:
-
         ; Fin de transition
+        jsr apply_trans_override_end
+        bcs +
         dec current_room_x
-        lda #<(PLAYER_X_MAX - 4)
++       lda #<(PLAYER_X_MAX - 4)
         ldy #>(PLAYER_X_MAX - 4)
         ldx current_world_type
         cpx #WORLD_DUNGEON
@@ -360,14 +672,19 @@ transition_down:
         lda #STATE_TRANSITION
         sta game_state
         jsr enemies_clear
-        ; Pointeur ZP_TGT vers la salle cible (current_room_y + 1)
-        ldx current_room_y
+        lda #DIR_DOWN
+        jsr check_lost_navigation
+        lda trans_override_target
+        beq +
+        ldx trans_target_room_idx
+        jmp ++
++       ldx current_room_y
         inx
         lda world_row_offset,x
         clc
         adc current_room_x
         tax
-        jsr trans_setup_target
+++      jsr trans_setup_target
 .td_step:
         jsr wait_frame
         jsr wait_frame
@@ -469,10 +786,11 @@ transition_down:
         beq .td_step_done
         jmp .td_step
 .td_step_done:
-
         ; Fin de transition
+        jsr apply_trans_override_end
+        bcs +
         inc current_room_y
-        lda #(PLAYER_Y_MIN + 4)
++       lda #(PLAYER_Y_MIN + 4)
         ldx current_world_type
         cpx #WORLD_DUNGEON
         bne +
@@ -489,14 +807,19 @@ transition_up:
         lda #STATE_TRANSITION
         sta game_state
         jsr enemies_clear
-        ; Pointeur ZP_TGT vers la salle cible (current_room_y - 1)
-        ldx current_room_y
+        lda #DIR_UP
+        jsr check_lost_navigation
+        lda trans_override_target
+        beq +
+        ldx trans_target_room_idx
+        jmp ++
++       ldx current_room_y
         dex
         lda world_row_offset,x
         clc
         adc current_room_x
         tax
-        jsr trans_setup_target
+++      jsr trans_setup_target
 .tu_step:
         jsr wait_frame
         jsr wait_frame
@@ -602,10 +925,11 @@ transition_up:
         beq .tu_step_done
         jmp .tu_step
 .tu_step_done:
-
         ; Fin de transition
+        jsr apply_trans_override_end
+        bcs +
         dec current_room_y
-        lda #(PLAYER_Y_MAX - 4)
++       lda #(PLAYER_Y_MAX - 4)
         ldx current_world_type
         cpx #WORLD_DUNGEON
         bne +

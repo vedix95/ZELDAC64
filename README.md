@@ -12,19 +12,19 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
-## 💾 Téléchargement Direct & Releases (v0.9.1)
+## 💾 Téléchargement Direct & Releases (v0.10.1)
 
-L'image disquette officielle et prête à jouer est disponible au téléchargement sur la page des releases :
+L'image cartouche officielle et prête à jouer est disponible au téléchargement sur la page des releases :
 
-- 🎮 **[Télécharger les images disquettes v0.9.1 (`zelda.d64`, `zelda_disk1.d64`, `zelda_disk2.d64`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
-- ⚙️ **Distribution tout-en-un 1541 avec Streaming par Chunks** : La disquette `zelda.d64` rassemble l'introduction cinématique, le moteur résident avec musiques in-game 100% authentiques NES cadencées sous interruption raster 50 Hz (sans aucune saccade lors des transitions d'écran), l'Overworld découpé en 4 chunks disque (`OW0` à `OW3`), et les 9 Donjons complets (`DUNG1` à `DUNG9`) chargés à la volée dans une fenêtre mémoire compacte de 4 Ko (`$C000`–`$CFFF`).
+- 🎮 **[Télécharger l'image cartouche v0.10.1 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
+- ⚡ **Cartouche Magic Desk 256 Ko avec Streaming ROM Instantané (0 délai)** : La cartouche `zelda.crt` rassemble l'introduction cinématique complète (cascade animée, parchemin, blason, musique SID, bestiaire), le moteur résident, les 4 chunks régionaux de l'Overworld et les 9 Donjons complets, streamés instantanément en RAM ($C000) sans aucun temps de chargement.
 - 🏰 **Intégration Complète des 9 Donjons & Tous les Boss NES** : Tous les donjons de Zelda 1 (Niveaux 1 à 9) sont intégrés avec leurs énigmes, volets, portes à clés, salles de la Triforce et l'ensemble de leurs Boss (Aquamentus, Dodongos, Manhandla, Gleeok, Digdogger, Gohma et l'antre de Ganon au Donjon 9).
-- 🚀 **Prêt à l'emploi** : La release propose l'image disquette `.d64` standard tout-en-un ainsi que le jeu en double-disquette (`zelda_disk1.d64` pour l'Overworld et `zelda_disk2.d64` pour les Donjons).
-- 🛠️ **Nouveautés v0.9.1** : Correction du pipeline d'intégration continue GitHub Actions (conflit de symboles résolu dans `tools/tilegen.py`), stabilisation du menu Debug (élimination des déplacements automatiques et duplication du curseur), affichage corrigé du menu Inventaire et validation automatique des 50 scénarios de jeu par capture d'écran.
+- 🗺️ **Rochers Escargots, Secret Moblin & Générateur de Cartes PNG** : Zone D-4 enrichie avec les rochers spirales authentiques NES et la grotte secrète déblocable au Bracelet de Force. Outil de rendu PNG complet pour analyser l'Overworld et chaque donjon (`make maps`).
+- 🛠️ **Nouveautés v0.10.1** : Abandon de la version disquette au profit de la cartouche exclusive Magic Desk 256 Ko (gain de plus de 450 octets de RAM en Zone 3), transition instantanée intro vers gameplay, sécurisation des interruptions lors de la copie mémoire, suppression de l'éditeur web et unification des outils d'analyse de cartes.
 
-Pour lancer directement la disquette dans [VICE](https://vice-emu.sourceforge.io/) :
+Pour lancer directement la cartouche dans [VICE](https://vice-emu.sourceforge.io/) :
 ```sh
-x64sc -autostart zelda.d64
+x64sc -cartcrt zelda.crt
 ```
 
 ---
@@ -112,7 +112,7 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
   - Extraction directe des tuiles CHR NES `bos1` depuis `zelda.nes` combinée à l'expansion matérielle 2× en X et en Y du VIC-II (`VIC_SPRITE_EXP_X` / `VIC_SPRITE_EXP_Y`), donnant à Aquamentus sa stature imposante face à Link avec boîtes de collision et point de crachat des triples boules de feu ajustés.
 - **Moteur Audio SID & Support Dual SID ($D420 stéréo)** :
   - Touche `3` en jeu pour basculer instantanément en mode stéréo Dual SID.
-- **HUD sur fond noir, Mini-carte 1:1 & Éditeur visuel intégré** (`tools/editor.py`).
+- **HUD sur fond noir, Mini-carte 1:1 & Générateur de Cartes PNG Haute Résolution** (`make maps`).
 
 ---
 
@@ -140,11 +140,10 @@ make check
 
 | Commande | Action |
 | :--- | :--- |
-| `make` | Compile le projet complet et génère l'image disquette `build/zelda.d64` |
-| `make run` | Lance la disquette complète dans VICE (Intro cinéma + enchaînement sur le jeu) |
-| `make run-game` | Lance directement le moteur de jeu résident sans passer par l'intro |
+| `make` | Compile le projet complet et génère l'image cartouche `build/zelda.crt` (Magic Desk) |
+| `make run` | Lance directement le jeu cartouche dans VICE (Intro cinéma + streaming instantané) |
 | `make debug` | Lance dans VICE avec chargement automatique des labels symboliques (`build/zelda.vs`) |
-| `make editor` | Lance l'éditeur de niveau visuel interactif |
+| `make maps` | Génère les images PNG haute résolution de l'Overworld et des 9 Donjons pour analyse |
 | `make preview` | Génère les aperçus graphiques PNG des sprites et du monde dans `build/` |
 | `make clean` | Nettoie les fichiers de build temporaires (`build/`) |
 | `make distclean` | Nettoie les fichiers de build et les fichiers ASM générés |
@@ -169,14 +168,16 @@ Le jeu se joue idéalement avec une manette ou un joystick branché sur le **Por
 
 ---
 
-## Architecture de la Disquette C64 (`zelda.d64`)
+## Architecture de la Cartouche C64 (`zelda.crt` - Magic Desk 256 Ko)
 
-La disquette 1541 est formatée sous le nom `zelda,01` et contient les fichiers suivants :
+La cartouche Magic Desk (Type 19) utilise 32 banques de 8 Ko commutables à `$8000`–`$9FFF` :
 
-1. `INTRO` (`PRG`) : Programme d'introduction autonome exécuté au démarrage (`$0801`–`$3FFF`), gérant la cascade, le parchemin en défilement vertical fin et la musique SID complète.
-2. `ZELDA` (`PRG`) : Moteur de jeu principal résident en mémoire (`$0801`–`$A091`, avec plus de 7,5 Ko libres jusqu'à `$BDFF`), incluant le pilote audio SID 50 Hz sous IRQ et les 83 sprites d'ennemis originaux en `$2800`–`$3FFF`.
-3. `OW0` à `OW3` (`DAT`) : Les 4 chunks régionaux de la carte Overworld (32 salles par chunk + formations d'ennemis dédupliquées, ~2,8 Ko chacun), chargés dynamiquement à la demande en `$C000`–`$CFFF`.
-4. `DUNG1` à `DUNG9` (`DAT`) : Fichiers autonomes compactés (~1,8 à 2,3 Ko) des 9 donjons d'Hyrule, chargés dynamiquement à `$C000`–`$CFFF`. *(Seul le Donjon 1 est implémenté partiellement pour le moment).*
+1. **Banque 00** : Bootloader cartouche (`cart_boot.asm`, vecteurs matériels CBM80), initialise la machine et déballe l'introduction.
+2. **Banques 01..03** : Introduction cinématique complète (`intro.prg`, $0800..$6800), cascade, parchemin vertical, blason NES et bestiaire.
+3. **Banques 04..09** : Moteur résident principal du jeu (`zelda.prg`, $0800..$C800), déballé en RAM en 0.2s lors du passage de l'intro.
+4. **Banques 10..13** : Les 4 chunks régionaux de l'Overworld (`OW0` à `OW3`), streamés instantanément en ROM à `$C000`.
+5. **Banques 14..22** : Les 9 donjons complets d'Hyrule (`DUNG1` à `DUNG9`), streamés instantanément à `$C000`.
+6. **Banques 23..31** : Banques libres (72 Ko d'espace disponible pour extensions).
 
 ### Carte mémoire du C64
 
