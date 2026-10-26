@@ -658,26 +658,10 @@ def write_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world, o
 
 
 def preview(path, cfg, tiles, grid, rooms_x=16, rooms_y=8, scale=2):
-    room_zones = get_room_zones(rooms_x * rooms_y)
-    pix = []
-    for y_tile, row in enumerate(grid):
-        ry = y_tile // MAP_H
-        for ar in range(ART_H):
-            line = []
-            for x_tile, t in enumerate(row):
-                rx = x_tile // MAP_W
-                room_idx = ry * rooms_x + rx
-                zone = room_zones[room_idx] if room_idx < len(room_zones) else 2
-                bg_col = ZONE_BG[zone]
-                mc1_col = ZONE_MC1[zone]
-                mc2_col = ZONE_MC2[zone]
-                tile_col = ZONE_TILE_COLORS[zone][t] if t < len(ZONE_TILE_COLORS[zone]) else tiles[t]["color"]
-                cols = [PALETTE[bg_col], PALETTE[mc1_col], PALETTE[mc2_col], PALETTE[tile_col]]
-                tile = tiles[t]
-                for ch in tile["rows"][ar]:
-                    line.extend([cols[PIX[ch]]] * (2 * scale))
-            pix.extend([line] * scale)
-    write_png(path, pix)
+    # Délégué au générateur de cartes avec grille et repères de debug (render_maps.py)
+    from render_maps import render_overworld
+    render_overworld(path)
+
 
 
 def write_underworld_map(path, cfg, tiles, rooms, rooms_x, rooms_y, src_tiles, src_world):
