@@ -377,6 +377,9 @@ enter_dungeon:
         lda #1
         sta current_dungeon_level
 +
+        lda #WORLD_DUNGEON
+        sta current_world_type
+
         ; 4. Vider l'écran et charger le Donjon depuis la cartouche
         jsr clear_screen
         jsr disk_load_dungeon
@@ -448,6 +451,8 @@ exit_dungeon:
 
         ; 3. Vider l'écran et recharger le chunk Overworld actif
         jsr clear_screen
+        lda #WORLD_OVERWORLD
+        sta current_world_type
         jsr disk_load_map_overworld
         jsr cart_load_sprites_ow
 

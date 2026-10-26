@@ -16,11 +16,19 @@
 basic_end:
         !word 0
 
+!ifndef SKIP_INTRO {
+        SKIP_INTRO = 0
+}
+
 start:
 !if start != 2061 {
         !error "L'adresse de start doit etre 2061 (SYS 2061)"
 }
+!if SKIP_INTRO == 1 {
+        jmp launch_zelda_game
+} else {
         jmp intro_standalone_init
+}
 
 cart_present:
         !byte 0                         ; 0 = Disquette, 1 = Cartouche Magic Desk (Type 19)

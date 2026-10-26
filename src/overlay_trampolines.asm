@@ -44,8 +44,9 @@ room_cave_types:
 ; Trampolines Overlay Inventaire (Banque 27)
 ; ---------------------------------------------------------------------------
 open_inventory:
+        jsr cart_load_sprites_npc       ; Charge les sprites d'objets (Banque 13)
         lda #CART_BANK_OVL_INV
-        ldx #16                         ; 16 pages = 4096 octets
+        ldx #20                         ; 20 pages = 5120 octets (ovl_inv.dat = 4372 o)
         jsr cart_load_overlay
         jmp $a000                      ; open_inventory
 
@@ -53,7 +54,13 @@ inventory_update:
         jmp $a003                      ; inventory_update
 
 close_inventory:
-        jmp $a006                      ; close_inventory
+        jsr $a006                      ; ovl_inventory_close
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq .rst_dung_spr
+        jmp cart_load_sprites_ow
+.rst_dung_spr:
+        jmp cart_load_sprites_dung
 
 inv_display_current_page:
         jmp $a012
@@ -63,7 +70,7 @@ inv_display_current_page:
 ; ---------------------------------------------------------------------------
 cave_enter:
         lda #CART_BANK_OVL_CAVE
-        ldx #14                         ; 14 pages = 3584 octets
+        ldx #16                         ; 16 pages = 4096 octets (ovl_cave.dat = 3141 o)
         jsr cart_load_overlay
         jmp $a000                      ; cave_enter
 
@@ -75,7 +82,7 @@ cave_draw:
 
 cave_draw_screen:
         lda #CART_BANK_OVL_CAVE
-        ldx #14
+        ldx #16
         jsr cart_load_overlay
         jmp $a00f
 
@@ -84,7 +91,7 @@ cave_draw_screen:
 ; ---------------------------------------------------------------------------
 open_debug:
         lda #CART_BANK_OVL_DEBUG
-        ldx #8                          ; 8 pages = 2048 octets
+        ldx #16                         ; 16 pages = 4096 octets (ovl_debug.dat = 2715 o)
         jsr cart_load_overlay
         jmp $a000                      ; open_debug
 
@@ -93,7 +100,7 @@ debug_update:
 
 debug_exec_hook_cmd:
         lda #CART_BANK_OVL_DEBUG
-        ldx #8
+        ldx #16                         ; 16 pages = 4096 octets
         jsr cart_load_overlay
         jmp $a006                      ; debug_exec_hook_cmd
 

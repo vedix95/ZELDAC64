@@ -128,7 +128,7 @@ ovl_cave_enter:
         jsr cave_setup_room_items
 
         ; 7. Dessine le décor complet et les textes
-        jsr cave_draw_screen
+        jsr ovl_cave_draw_screen
 
         ; Événement spécial Moblin : don de +30 rubis immédiat
         lda current_cave_type
@@ -757,9 +757,9 @@ ovl_cave_update:
         lda player_y
         sbc #PLAYER_SPEED
         sta player_y
-        cmp #162
+        cmp #150
         bcs ++
-        lda #162
+        lda #150
         sta player_y
 ++      ldx #1
 +
@@ -818,47 +818,47 @@ ovl_cave_update:
 .anim_cave_done:
 
         ; -------------------------------------------------------------------
-        ; Test de ramassage / achat des 3 objets (Y ~ 148..166)
+        ; Test de ramassage / achat des 3 objets (Y ~ 140..174)
         ; -------------------------------------------------------------------
         lda player_x+1
         bne .check_done
         lda player_y
-        cmp #148
+        cmp #140
         bcc .check_done
-        cmp #166
+        cmp #174
         bcs .check_done
 
-        ; Test Slot 1 (X=136 -> contact 128..144)
+        ; Test Slot 1 (X=136 -> contact 120..152)
         lda cave_slot1_active
         beq .test_slot2
         lda player_x
-        cmp #128
+        cmp #120
         bcc .test_slot2
-        cmp #144
+        cmp #152
         bcs .test_slot2
         jsr cave_buy_slot1
         rts
 
 .test_slot2:
-        ; Test Slot 2 (X=176 -> contact 168..184)
+        ; Test Slot 2 (X=176 -> contact 156..196)
         lda cave_slot2_active
         beq .test_slot3
         lda player_x
-        cmp #168
+        cmp #156
         bcc .test_slot3
-        cmp #184
+        cmp #196
         bcs .test_slot3
         jsr cave_buy_slot2
         rts
 
 .test_slot3:
-        ; Test Slot 3 (X=216 -> contact 208..224)
+        ; Test Slot 3 (X=216 -> contact 200..232)
         lda cave_slot3_active
         beq .check_done
         lda player_x
-        cmp #208
+        cmp #200
         bcc .check_done
-        cmp #224
+        cmp #232
         bcs .check_done
         jsr cave_buy_slot3
         rts

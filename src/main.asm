@@ -36,7 +36,15 @@ cart_present:
         !error "Les sprites Link debordent sur la zone ROM chargen ($1000)"
 }
 
-START_IN_DUNGEON = 0 ; 0 = Overworld normal, 1 = Donjon 1 Entrée, 2 = Donjon 1 Boss Aquamentus, 3 = Donjon 1 Stalfos
+!ifndef START_IN_DUNGEON {
+        START_IN_DUNGEON = 0 ; 0 = Overworld normal, 1 = Donjon 1 Entrée, 2 = Donjon 1 Boss Aquamentus, 3 = Donjon 1 Stalfos
+}
+!ifndef START_IN_INVENTORY {
+        START_IN_INVENTORY = 0 ; 1 = Ouvre directement l'inventaire au lancement
+}
+!ifndef START_IN_DEBUG {
+        START_IN_DEBUG     = 0 ; 1 = Ouvre directement le menu debug au lancement
+}
 
 game_init:
         ; Désactive la ROM BASIC ($A000-$BFFF) pour libérer les 64 Ko de RAM
@@ -110,6 +118,13 @@ game_init:
 
         lda #STATE_PLAYING
         sta game_state
+
+!if START_IN_INVENTORY == 1 {
+        jsr open_inventory
+}
+!if START_IN_DEBUG == 1 {
+        jsr open_debug
+}
 
 main_loop:
         jsr wait_frame
