@@ -227,6 +227,10 @@ def render_dungeon(lvl, out_path):
     col_mc2 = meta['wall'] % 16
     col_ram = 1
 
+    if not rooms:
+        print(f"  [!] Donjon {lvl} : aucune salle décodée (source de données absente), carte ignorée.")
+        return
+
     r_coords = [(r % 16, r // 16) for r in rooms.keys()]
     min_rx = min(rx for rx, ry in r_coords)
     max_rx = max(rx for rx, ry in r_coords)
