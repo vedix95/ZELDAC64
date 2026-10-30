@@ -12,11 +12,16 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ---
 
+## 💾 Téléchargement Direct & Releases
+
+### Latest Release (v0.12.1)
+
+- **[Télécharger l'image cartouche v0.12.1 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)** - Reorg & cleanup: logs consolidated, docs merged, project structure streamlined
+- Previous releases are available in the [GitHub Releases](https://github.com/vedix95/ZELDAC64/releases) section.
+
+---
+
 ## 💾 Téléchargement Direct & Releases (v0.10.1)
-
-L'image cartouche officielle et prête à jouer est disponible au téléchargement sur la page des releases :
-
-- 🎮 **[Télécharger l'image cartouche v0.10.1 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)**
 - ⚡ **Cartouche Magic Desk 256 Ko avec Streaming ROM Instantané (0 délai)** : La cartouche `zelda.crt` rassemble l'introduction cinématique complète (cascade animée, parchemin, blason, musique SID, bestiaire), le moteur résident, les 4 chunks régionaux de l'Overworld et les 9 Donjons complets, streamés instantanément en RAM ($C000) sans aucun temps de chargement.
 - 🏰 **Intégration Complète des 9 Donjons & Tous les Boss NES** : Tous les donjons de Zelda 1 (Niveaux 1 à 9) sont intégrés avec leurs énigmes, volets, portes à clés, salles de la Triforce et l'ensemble de leurs Boss (Aquamentus, Dodongos, Manhandla, Gleeok, Digdogger, Gohma et l'antre de Ganon au Donjon 9).
 - 🗺️ **Rochers Escargots, Secret Moblin & Générateur de Cartes PNG** : Zone D-4 enrichie avec les rochers spirales authentiques NES et la grotte secrète déblocable au Bracelet de Force. Outil de rendu PNG complet pour analyser l'Overworld et chaque donjon (`make maps`).
