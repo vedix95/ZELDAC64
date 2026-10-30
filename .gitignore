@@ -47,3 +47,15 @@ env/
 Thumbs.db
 .vscode/
 .idea/
+
+# Large world PNG files - moved to docs/images/
+world_original.png
+world_original_cave.png
+world_preview.png
+
+# Additional image patterns for space savings (after keeping 1.png)
+*.png !1.png !docs/images/*.png
+
+# Generated build artifacts in build directory (keep source work)
+build/*.prg
+build/*.dat
