@@ -1458,6 +1458,11 @@ armos_reveal_secret:
         adc ZP_TMP
         tay                             ; Y = tile index (0..199)
 
+        ; Remplace la tuile statique de statue par du sol praticable
+        lda #TILE_GRASS
+        sta room_buf,y
+        jsr redraw_single_tile
+
         lda current_room_idx
         cmp #36                         ; Salle E-3 : Statue en haut à droite (Bracelet)
         bne .ars_chk_caves
@@ -1484,7 +1489,7 @@ armos_reveal_secret:
         lda room_cave_types,x
         beq .ars_done
         lda ZP_TMP
-        cmp #8
+        cmp #6
         bcc .ars_done
         lda #TILE_CAVE
         sta room_buf,y
@@ -2182,6 +2187,12 @@ test_sword_single:
         cmp #EN_STATE_WALK
         beq +
         rts                             ; ne peut être touché que s'il marche
++       lda en_type,x
+        cmp #TYPE_ARMOS
+        bne +
+        lda en_timer,x
+        bne +
+        rts                             ; statue Armos endormie invulnérable
 +
         ; Distance X
         lda en_idx
@@ -2394,6 +2405,11 @@ test_item_single:
         lda en_anim_tick,x
         bne +
         rts
++       cmp #TYPE_ARMOS
+        bne +
+        lda en_timer,x
+        bne +
+        rts
 +
         ; Calcule distance X avec item_x
         lda en_idx
@@ -2591,6 +2607,11 @@ test_body_single:
         cmp #TYPE_ZORA
         bne +
         lda en_anim_tick,x
+        bne +
+        rts
++       cmp #TYPE_ARMOS
+        bne +
+        lda en_timer,x
         bne +
         rts
 +
@@ -2797,6 +2818,10 @@ sort_enemies_y:
         bne +
         lda en_anim_tick,x
         beq .sey_dead                   ; Zora sous l'eau envoyé tout en bas ($FF)
++       cmp #TYPE_ARMOS
+        bne +
+        lda en_timer,x
+        beq .sey_dead                   ; Armos endormi (tuile de fond) envoyé tout en bas ($FF)
 +       lda en_y,x
         sta sort_eff_y,x
         jmp ++
@@ -3080,8 +3105,12 @@ draw_virtual_to_spr3:
         beq .s3_disable
         lda en_type,x
         cmp #TYPE_ZORA
-        bne .s3_draw
+        bne +
         lda en_anim_tick,x
+        beq .s3_disable
++       cmp #TYPE_ARMOS
+        bne .s3_draw
+        lda en_timer,x
         bne .s3_draw
 .s3_disable:
         lda VIC_SPRITE_EN
@@ -3176,8 +3205,12 @@ draw_virtual_to_spr4:
         beq .s4_disable
         lda en_type,x
         cmp #TYPE_ZORA
-        bne .s4_draw
+        bne +
         lda en_anim_tick,x
+        beq .s4_disable
++       cmp #TYPE_ARMOS
+        bne .s4_draw
+        lda en_timer,x
         bne .s4_draw
 .s4_disable:
         lda VIC_SPRITE_EN
@@ -3272,8 +3305,12 @@ draw_virtual_to_spr5:
         beq .s5_disable
         lda en_type,x
         cmp #TYPE_ZORA
-        bne .s5_draw
+        bne +
         lda en_anim_tick,x
+        beq .s5_disable
++       cmp #TYPE_ARMOS
+        bne .s5_draw
+        lda en_timer,x
         bne .s5_draw
 .s5_disable:
         lda VIC_SPRITE_EN
@@ -3368,8 +3405,12 @@ draw_virtual_to_spr6:
         beq .s6_disable
         lda en_type,x
         cmp #TYPE_ZORA
-        bne .s6_draw
+        bne +
         lda en_anim_tick,x
+        beq .s6_disable
++       cmp #TYPE_ARMOS
+        bne .s6_draw
+        lda en_timer,x
         bne .s6_draw
 .s6_disable:
         lda VIC_SPRITE_EN

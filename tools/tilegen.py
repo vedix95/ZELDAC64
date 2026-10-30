@@ -53,34 +53,38 @@ ZONE_MC2 = [
 ]
 
 # Couleurs de tuiles propres (Color RAM, 0-7) par zone :
-# Tuiles : 0:grass, 1:tufts, 2:flowers, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave,
-#          9:bridge_h, 10:bridge_v, 11:wall_pass, 12:wall_bomb, 13:rock
+# Tuiles : 0:grass, 1:tufts, 2:pillar, 3:tree, 4:water, 5:wall, 6:sand, 7:cave, 8:grave,
+#          9:bridge_h, 10:bridge_v, 11:wall_pass, 12:wall_bomb, 13:rock, 14:statue, 15:monument
 ZONE_TILE_COLORS = [
     # Zone 0: Cimetiere (fond dgrey, MC1 black, MC2 white)
-    [COLORS["black"], COLORS["white"], COLORS["white"], COLORS["black"],
-     COLORS["blue"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
+    [COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"],
+     COLORS["blue"],  COLORS["black"], COLORS["black"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"],
+     COLORS["black"], COLORS["black"]],
 
     # Zone 1: Montagne de la Mort (fond brown, MC1 orange, MC2 white)
-    [COLORS["red"], COLORS["yellow"], COLORS["yellow"], COLORS["red"],
-     COLORS["blue"], COLORS["red"], COLORS["yellow"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["red"], COLORS["red"], COLORS["red"]],
+    [COLORS["red"],   COLORS["red"],   COLORS["red"],   COLORS["red"],
+     COLORS["blue"],  COLORS["red"],   COLORS["yellow"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["red"],   COLORS["red"],   COLORS["red"],
+     COLORS["red"],   COLORS["red"]],
 
     # Zone 2: Plaines (fond lgreen, MC1 orange, MC2 white)
-    [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
-     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
+    [COLORS["green"], COLORS["black"], COLORS["black"], COLORS["green"],
+     COLORS["blue"],  COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"],
+     COLORS["red"],   COLORS["black"]],
 
-    # Zone 3: Cote (fond orange, MC1 brown, MC2 white)
-    [COLORS["green"], COLORS["green"], COLORS["red"], COLORS["green"],
-     COLORS["blue"], COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
-     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"]],
+    # Zone 3: Cote (fond lgreen, MC1 orange, MC2 white)
+    [COLORS["green"], COLORS["black"], COLORS["black"], COLORS["green"],
+     COLORS["blue"],  COLORS["black"], COLORS["yellow"], COLORS["black"], COLORS["white"],
+     COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"], COLORS["black"],
+     COLORS["red"],   COLORS["black"]],
 ]
 
 ZONE_DUNGEON_TILE_COLORS = [
     COLORS["black"],   # 0: grass (sol noir donjon)
     COLORS["dgrey"],   # 1: tufts (détail sol)
-    COLORS["red"],     # 2: flowers (torches / feu)
+    COLORS["red"],     # 2: pillar / flowers (torches / feu)
     COLORS["cyan"],    # 3: tree (bloc / pilier cyan Level 1)
     COLORS["blue"],    # 4: water (eau)
     COLORS["cyan"],    # 5: wall (murs de pierre cyan)
@@ -92,6 +96,8 @@ ZONE_DUNGEON_TILE_COLORS = [
     COLORS["cyan"],    # 11: wall_pass
     COLORS["cyan"],    # 12: wall_bomb
     COLORS["cyan"],    # 13: rock
+    COLORS["cyan"],    # 14: statue
+    COLORS["cyan"],    # 15: monument
 ]
 
 DEFAULT_ROOM_ZONES = [
@@ -100,7 +106,7 @@ DEFAULT_ROOM_ZONES = [
     0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3,
     0, 0, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
-    0, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
+    3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
     3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
     3, 3, 3, 3, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3,
 ]
@@ -119,9 +125,9 @@ def get_room_zones(total_rooms=128):
                     for x in range(16):
                         idx = y * 16 + x
                         outer = t1[idx] & 3
-                        if (x in [0, 1] and y in [2, 3, 4]) or (x == 0 and y == 5):
-                            z = 0  # 7 salles authentiques du cimetiere et son passage
-                        elif y in [0, 1]:
+                        if x in (0, 1) and y in (2, 3, 4):
+                            z = 0  # 6 salles authentiques du cimetiere (A3-B5)
+                        elif y in (0, 1):
                             z = 1  # 32 salles de la Montagne de la Mort
                         elif outer == 2:
                             z = 2  # Plaines et forets du centre
@@ -184,6 +190,7 @@ def parse_tiles(path):
 
 def parse_world(path, tiles):
     index = {t["symbol"]: i for i, t in enumerate(tiles)}
+    index.setdefault("f", 2)
     raw_lines = []
     with open(path, encoding="utf-8") as f:
         for n, raw in enumerate(f, 1):
@@ -471,15 +478,16 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
         f.write("TILE_DUNG_DOOR_SHUTTER  = 14    ; Volet / herse metallique\n")
         f.write("TILE_DUNG_DOOR_BOMB     = 15    ; Mur fissure a la bombe\n\n")
 
-        f.write("ow_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 184, 188, 192, 196, 200, 0, 0\n")
+        f.write("ow_tile_char_base:\n        !byte ")
+        bases = [TILE_CHAR_BASES[i] if i < len(tiles) else 0 for i in range(16)]
+        f.write(", ".join(str(v) for v in bases) + "\n")
         f.write("dung_tile_char_base:\n        !byte 0, 4, 8, 12, 16, 20, 24, 28, 168, 172, 176, 180, 184, 188, 192, 196\n")
 
         f.write("\n; Caractere de base de chaque tuile (2x2 = 4 caracteres)\ntile_char_base:\n        !byte ")
-        bases = [TILE_CHAR_BASES[i] if i < len(tiles) else 0 for i in range(16)]
         f.write(", ".join(str(v) for v in bases) + "\n")
 
         f.write("\n; Couleurs de chaque zone regionale (+8 pour mode multicolore)\n")
-        for z in range(4):
+        for z in range(len(ZONE_TILE_COLORS)):
             cols = []
             for i in range(16):
                 if i < len(tiles):
@@ -499,8 +507,10 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
                 dungeon_cols.append(0)
         f.write("zone_dungeon_tile_color:\n        !byte " + ", ".join(str(c) for c in dungeon_cols) + "\n\n")
 
-        f.write("zone_color_lo:\n        !byte <zone0_tile_color, <zone1_tile_color, <zone2_tile_color, <zone3_tile_color\n")
-        f.write("zone_color_hi:\n        !byte >zone0_tile_color, >zone1_tile_color, >zone2_tile_color, >zone3_tile_color\n\n")
+        lo_list = ", ".join(f"<zone{z}_tile_color" for z in range(len(ZONE_TILE_COLORS)))
+        hi_list = ", ".join(f">zone{z}_tile_color" for z in range(len(ZONE_TILE_COLORS)))
+        f.write(f"zone_color_lo:\n        !byte {lo_list}\n")
+        f.write(f"zone_color_hi:\n        !byte {hi_list}\n\n")
 
         f.write("zone_bg_color:\n        !byte " + ", ".join(str(c) for c in ZONE_BG) + "\n")
         f.write("zone_mc1_color:\n        !byte " + ", ".join(str(c) for c in ZONE_MC1) + "\n")
@@ -508,13 +518,13 @@ def write_tiles_data(path, cfg, tiles, rooms_x, rooms_y):
 
         f.write("; Tampon de couleur des tuiles de la salle active\nactive_tile_color:\n        !fill 16, 0\ntile_color = active_tile_color\n\n")
 
-        f.write("ow_tile_flags:\n        !byte 0, 0, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, 0, TILE_SOLID, 0, 0, 0, TILE_SOLID, TILE_SOLID, 0, 0\n")
-        f.write("dung_tile_flags:\n        !byte 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID\n\n")
-
-        f.write("; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n        !byte ")
         flags = [("TILE_SOLID" if t["solid"] else "0") for t in tiles]
         while len(flags) < 16:
             flags.append("0")
+        f.write("ow_tile_flags:\n        !byte " + ", ".join(flags) + "\n")
+        f.write("dung_tile_flags:\n        !byte 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID, TILE_SOLID, 0, TILE_SOLID, TILE_SOLID, TILE_SOLID\n\n")
+
+        f.write("; drapeaux de chaque tuile (bit 0 = solide)\ntile_flags:\n        !byte ")
         f.write(", ".join(flags) + "\n")
 
         f.write("\n; table ty * MAP_W\ntile_row_offset:\n        !byte ")
@@ -631,8 +641,8 @@ def write_ow_chunk(path, chunk_id, cfg, tiles, rooms, rooms_x, rooms_y, src_tile
         for c in range(168, 200):
             f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
 
-        f.write("; Chars 200..207 (Tuiles 13..14 : 64 octets dont rocher escargot)\n")
-        for c in range(200, 208):
+        f.write("; Chars 200..211 (Tuiles 13..15 : 96 octets dont rocher, statue, monument)\n")
+        for c in range(200, 212):
             f.write("        !byte " + ", ".join(str(v) for v in chars[c]) + f"   ; char {c}\n")
 
         f.write(f"\n; Formations d'ennemis dédupliquées ({len(uniq_formations)} formations x 24 octets)\nmap_enemies:\n")

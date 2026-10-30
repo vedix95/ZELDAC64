@@ -92,7 +92,7 @@ load_room:
 
         ; Restauration des grottes secrètes déjà ouvertes à la bombe ou à la flûte
         lda current_world_type
-        bne +
+        bne .no_secret_restored
         ldx current_room_idx
         txa
         lsr
@@ -118,6 +118,21 @@ load_room:
         ldy .sec_tiles,x
         lda #TILE_CAVE
         sta room_buf,y
+        cmp #0                          ; toujours non-zéro
+        lda current_room_idx
+        cmp #66
+        bne .check_std_sec
+        ldy #0
+.dry_c5_loop:
+        lda room_buf,y
+        cmp #TILE_WATER
+        bne .sk_dry_c5
+        lda #TILE_GRASS
+        sta room_buf,y
+.sk_dry_c5:
+        iny
+        cpy #200
+        bcc .dry_c5_loop
         jmp .check_std_sec
 +       dex
         bpl -
@@ -129,15 +144,16 @@ load_room:
         !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90
 
 .check_std_sec:
-        ldy #199
+        ldy #0
 -       lda room_buf,y
         cmp #TILE_WALL_BOMB
         bne .sk_bomb_conv
         lda #TILE_CAVE
         sta room_buf,y
 .sk_bomb_conv:
-        dey
-        bpl -
+        iny
+        cpy #200
+        bcc -
 .no_secret_restored:
 +
         ; Application des couleurs de la zone active

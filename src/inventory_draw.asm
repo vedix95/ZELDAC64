@@ -1048,8 +1048,8 @@ p2_simple_mask:
         !byte %00001000, %00010000, %00100000, %01000000, %10000000
 p2_simple_spr:
         !byte (sprite_link_item_ring / 64)
-        !byte (sprite_link_item_food / 64)
-        !byte (sprite_link_item_wand / 64)
+        !byte (sprite_link_item_raft / 64)
+        !byte (sprite_link_item_stepladder / 64)
         !byte (sprite_link_item_key / 64)
         !byte (sprite_link_item_wand / 64)
 p2_simple_col:
@@ -1070,13 +1070,13 @@ p2_stat_offs_hi:
         !byte >(720+3), >(720+11), >(720+19), >(720+27)
 
 p2_sword_colors:    !byte COL_DARK_GREY, COL_BROWN, COL_WHITE, COL_CYAN
-p2_sword_status:    !text " BOIS BLANC MAGIQ "
-p2_shield_status:   !text " PETIT MAGIQ "
-p2_ring_status:     !text " BLEU  ROUGE "
+p2_sword_status:    !text " WOOD  WHITE MAGIC"
+p2_shield_status:   !text " SMALL MAGIC"
+p2_ring_status:     !text " BLUE   RED "
 
-txt_all_slot_names: !text " EPEE BOUCL.ANNEAUBRACELRADEAUECHEL. CLEF  LIVRE"
-txt_p2_empty:       !text "[VIDE]"
-txt_p2_acquired:    !text "ACQUIS"
+txt_all_slot_names: !text " SWORDSHIELD RING BRACEL RAFT LADDER KEY   BOOK "
+txt_p2_empty:       !text "[NONE]"
+txt_p2_acquired:    !text "OWNED "
 
 ; ===========================================================================
 ; PAGE 3 : CARTE (OVERWORLD OU DONJON DYNAMIQUE)
@@ -1554,16 +1554,16 @@ p3_dung_names_lo:
 p3_dung_names_hi:
         !byte >p3_d1, >p3_d2, >p3_d3, >p3_d4, >p3_d5, >p3_d6, >p3_d7, >p3_d8, >p3_d9
 
-txt_dtitle_pref:    !text "DONJON N1 : ", 0
-p3_d1:  !text "AIGLE", 0
-p3_d2:  !text "LUNE", 0
+txt_dtitle_pref:    !text "LEVEL   1 : ", 0
+p3_d1:  !text "EAGLE", 0
+p3_d2:  !text "MOON", 0
 p3_d3:  !text "MANJI", 0
-p3_d4:  !text "GNOU", 0
-p3_d5:  !text "LEZARD", 0
+p3_d4:  !text "SNAKE", 0
+p3_d5:  !text "LIZARD", 0
 p3_d6:  !text "DRAGON", 0
 p3_d7:  !text "DEMON", 0
 p3_d8:  !text "LION", 0
-p3_d9:  !text "M. DE LA MORT", 0
+p3_d9:  !text "DEATH MOUNTAIN", 0
 
 txt_dung_legend:
         !byte HUD_MAP_ACTIVE
@@ -1571,7 +1571,7 @@ txt_dung_legend:
         !byte HUD_MAP_ACTIVE
         !text " LINK  "
         !byte HUD_MAP_VISITED
-        !text " VISITE", 0
+        !text " SEEN  ", 0
 
 txt_dung_leg_col:
         !byte COL_LIGHT_RED
@@ -1623,22 +1623,22 @@ calc_visited_count:
 ; ===========================================================================
 
 ; En-tête d'onglets unique et tables d'encadrement
-txt_tabs_base:      !text " 1:OBJETS  2:TRIFORCE  3:EQUIP  4:CARTE "
+txt_tabs_base:      !text " 1:ITEMS   2:TRIFORCE  3:EQUIP  4:MAP   "
 tab_bracket_pos:    !byte 0, 9,  10, 21,  21, 30,  30, 39
 tab_start:          !byte 0, 10, 22, 31
 tab_end:            !byte 10, 22, 31, 40
 
-txt_footer_help:    !text " [JOY] CHOIX   [1-4] ONGLET   [B] RETOUR "
+txt_footer_help:    !text " [JOY] SELECT  [1-4] PAGE     [B] EXIT  "
 
 ; Textes Page 0
 txt_box_small:      !text "+------+"
 txt_box_p0_grid:    !text "+--------------+"
-txt_p0_equipe:      !text "EQUIPE"
-txt_p0_arsenal:     !text "ARSENAL"
-txt_p0_active:      !text "OBJET  B"
-txt_p0_slot_b:      !text "EQUIPE  "
-txt_p0_stock_line:  !text "RUBIS:      CLEFS:      BOMBES:     "
-txt_p0_tip:         !text "[GAUCHE/DROITE] CHOISIR  [A] EQUIPER"
+txt_p0_equipe:      !text "EQUIP "
+txt_p0_arsenal:     !text "WEAPONS"
+txt_p0_active:      !text "ITEM   B"
+txt_p0_slot_b:      !text "EQUIPPED"
+txt_p0_stock_line:  !text "RUPEES:     KEYS:       BOMBS:      "
+txt_p0_tip:         !text "[LEFT/RIGHT] SELECT      [A] EQUIP  "
 
 ; Descriptifs des 8 armes (exactement 36 caractères)
 p0_desc_lo:
@@ -1647,16 +1647,16 @@ p0_desc_hi:
         !byte >desc_boom, >desc_bomb, >desc_bow, >desc_cand, >desc_food, >desc_potion, >desc_whistle, >desc_wand
 
 desc_boom:          !text "BOOMERANG", 0
-desc_bomb:          !text "BOMBES", 0
-desc_bow:           !text "ARC ET FLECHES", 0
-desc_cand:          !text "BOUGIE", 0
-desc_food:          !text "APPAT", 0
+desc_bomb:          !text "BOMBS", 0
+desc_bow:           !text "BOW AND ARROWS", 0
+desc_cand:          !text "CANDLE", 0
+desc_food:          !text "FOOD", 0
 desc_potion:        !text "POTION", 0
-desc_whistle:       !text "FLUTE", 0
-desc_wand:          !text "BAGUETTE", 0
+desc_whistle:       !text "RECORDER", 0
+desc_wand:          !text "MAGICAL ROD", 0
 
 ; Textes Page 1 (Triforce)
-txt_p1_title:       !text "  LA TRIFORCE DE LA SAGESSE   "
+txt_p1_title:       !text "   THE TRIFORCE OF WISDOM     "
 txt_tri_all:
         !text "           /\\           "
         !text "          /  \\          "
@@ -1666,16 +1666,16 @@ txt_tri_all:
         !text "      / 5\\ /\\ /6 \\      "
         !text "     / 7 \\/--\\/ 8 \\     "
         !text "    /--------------\\    "
-txt_p1_counter:     !text "FRAGMENTS : 0 / 8", 0
-txt_p1_dungeons_line: !text "DONJONS: [1][2][3][4][5][6][7][8] "
-txt_p1_msg_seek:    !text "CHERCHE LES FRAGMENTS", 0
-txt_p1_msg_full:    !text "TRIFORCE REUNIE !", 0
+txt_p1_counter:     !text "    TRIFORCE PIECES : 0 / 8 "
+txt_p1_dungeons_line: !text "LEVELS : [1][2][3][4][5][6][7][8] "
+txt_p1_msg_seek:    !text "    FIND THE 8 TRIFORCE PIECES!     "
+txt_p1_msg_full:    !text "   THE TRIFORCE IS COMPLETE!        "
 
 ; Textes Page 2 (Équipement)
-txt_p2_title:       !text "ARSENAL DE LINK", 0
-txt_p2_tip:         !text "EQUIPEMENTS ACQUIS", 0
+txt_p2_title:       !text "         LINK'S EQUIPMENT           "
+txt_p2_tip:         !text "    PASSIVE ITEMS AND RELICS        "
 
 ; Textes Page 3 (Carte du Monde)
-txt_room_line:      !text "SALLE COURANTE : A-1  (X:  , Y:  )  "
-txt_expl_line:      !text "EXPLOREES :    0 / 128 SALLES       "
-txt_legend_line:    !text "LEGENDE:    LINK     VU    - INCONNU"
+txt_room_line:      !text "CURRENT ROOM   : A-1  (X:  , Y:  )  "
+txt_expl_line:      !text "EXPLORED  :    0 / 128 ROOMS        "
+txt_legend_line:    !text "LEGEND :    LINK     SEEN  - UNKNOWN"

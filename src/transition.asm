@@ -55,8 +55,11 @@ check_lost_navigation:
 +       lda current_room_idx
         cmp #$52                        ; Lost Woods (Screen C-6 = Row 5, Col 2)
         beq .eval_lost_woods
+        cmp #$1b                        ; Lost Hills (Screen L-2 = Row 1, Col 11)
+        beq .go_lost_hills
         cmp #$2b                        ; Lost Hills (Screen L-3 = Row 2, Col 11)
         bne +
+.go_lost_hills:
         jmp .eval_lost_hills
 +       lda #0
         sta lost_woods_progress
@@ -150,9 +153,9 @@ check_lost_navigation:
         sta trans_override_target
         lda #11
         sta trans_target_rx
-        lda #2
+        lda current_room_y
         sta trans_target_ry
-        lda #$2b
+        lda current_room_idx
         sta trans_target_room_idx
         rts
 
@@ -205,10 +208,21 @@ check_ow_raft:
 .ret:   rts
 
 .on_dock:
+        ldx #3
+.chk_raft_room:
+        lda current_room_idx
+        cmp raft_src_room,x
+        beq .do_raft_ovl
+        dex
+        bpl .chk_raft_room
+        rts
+.do_raft_ovl:
         lda #CART_BANK_OVL_ITEMS
         ldx #4
         jsr cart_load_overlay
         jmp $a00c                      ; ovl_item_raft_launch
+
+raft_src_room:    !byte 85, 69, 63, 47
 
 ; ===========================================================================
 ; raft_update : Animation de transport continue du radeau sur l'eau

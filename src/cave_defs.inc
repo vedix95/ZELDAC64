@@ -16,4 +16,6 @@ CAVE_TYPE_HINT_3       = 11     ; Cascade de l'Est
 CAVE_TYPE_GAMBLE       = 12     ; Salle 112 (Jeu de hasard)
 CAVE_TYPE_FAIRY        = 13     ; Fontaine des Fées (Soin complet de Link)
 CAVE_TYPE_HEART_GIFT   = 14     ; Grotte secrète Conteneur de Cœur gratuit
-CAVE_TYPE_SWORD_MAGIC  = 15     ; Salle 34 (Épée Magique si max_hearts >= 12)
+CAVE_TYPE_SWORD_MAGIC  = 15     ; Salle 33 (Épée Magique si max_hearts >= 12)
+CAVE_TYPE_WARP         = 16     ; Téléporteur "Emprunte la route que tu souhaites"
+CAVE_TYPE_DOOR_REPAIR  = 17     ; Réparation de porte (-20 rubis)

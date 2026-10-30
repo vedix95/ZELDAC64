@@ -681,6 +681,23 @@ player_update:
         ; --- Pousser les rochers secrets avec le Bracelet de Force ---
         lda player_has_bracelet
         beq .ow_special_done
+        lda player_dir
+        cmp #DIR_UP
+        bne .ow_special_done
+        lda player_x
+        clc
+        adc #12
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
+        lda player_y
+        sec
+        sbc #4
+        sta col_y
+        jsr get_tile_at_point
+        cmp #TILE_ROCK
+        bne .ow_special_done
         lda #CART_BANK_OVL_ITEMS
         ldx #4
         jsr cart_load_overlay

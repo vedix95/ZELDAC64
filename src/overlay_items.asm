@@ -58,21 +58,30 @@ ovl_item_whistle_exec:
         ; --- Sur l'Overworld ---
         lda current_room_idx
         cmp #66                         ; Salle 66 (C-5) : Assèche l'étang du Donjon 7 !
+        beq .whistle_open_d7
+        cmp #51                         ; Salle 51 (D-4) : Dallage sacré aux piliers
         bne .whistle_warp
 
+.whistle_open_d7:
         ; Remplacement des tuiles d'eau par de l'herbe et apparition de la grotte du Donjon 7
-        ldy #199
+        ldy #0
 -       lda room_buf,y
         cmp #TILE_WATER
         bne +
         lda #TILE_GRASS
         sta room_buf,y
-+       dey
-        bpl -
++       iny
+        cpy #200
+        bcc -
 
-        ; Place l'entrée du Donjon 7 au centre de l'ancien étang (ligne 4, col 10 -> index 90)
+        ; Place l'entrée au centre (ligne 4, col 10 -> index 90, ou col 9 -> 89 en D-4)
         lda #TILE_CAVE
-        sta room_buf+90
+        ldy #90
+        ldx current_room_idx
+        cpx #51
+        bne +
+        ldy #89
++       sta room_buf,y
 
         lda #<room_buf
         sta ZP_MAP
@@ -125,21 +134,19 @@ ovl_item_candle_exec:
         bne .candle_done
 
         lda current_room_idx
-        cmp #107                        ; Salle 107 (L-7) : Cœur dans l'arbre !
+        ldx #21
+.chk_burn_tbl:
+        cmp .burnable_rooms,x
         beq .burn_tree_secret
-        cmp #15                         ; Salle 15 (P-1) : Grotte indice
-        beq .burn_tree_secret
-        cmp #108                        ; Salle 108 (M-7) : Arbre Donjon 8
-        beq .burn_tree_secret
-        cmp #109                        ; Salle 109 (N-7) : Arbre Donjon 8
-        beq .burn_tree_secret
-        cmp #82                         ; Salle 82 (C-6) : Moblin secret
-        beq .burn_tree_secret
-        cmp #111                        ; Salle 111 (P-7) : Boutique
-        beq .burn_tree_secret
+        dex
+        bpl .chk_burn_tbl
 .candle_done:
         clc
         rts
+
+.burnable_rooms:
+        !byte 15, 29, 40, 68, 70, 81, 82, 83, 88, 91, 94
+        !byte 98, 99, 100, 102, 103, 106, 107, 108, 109, 111, 113
 
 .burn_tree_secret:
         lda #TILE_CAVE
@@ -297,55 +304,28 @@ ovl_item_bomb_secret_exec:
         cmp #TILE_WALL
         bne .not_b_sec
         lda current_room_idx
-        cmp #14                         ; Salle 14 (O-1, Grotte de jeu)
+        ldx #41
+.chk_bomb_tbl:
+        cmp .bombable_rooms,x
         beq .is_b_room
-        cmp #33                         ; Salle 33 (B-3, Grotte potion)
-        beq .is_b_room
-        cmp #37                         ; Salle 37 (F-3, Grotte marchande)
-        beq .is_b_room
-        cmp #50                         ; Salle 50 (C-4, Grotte arme)
-        beq .is_b_room
-        cmp #67                         ; Salle 67 (D-5, Moblin +30)
-        beq .is_b_room
-        cmp #73                         ; Salle 73 (J-5, Moblin +100)
-        beq .is_b_room
-        cmp #86                         ; Salle 86 (G-6, Moblin +30)
-        beq .is_b_room
-        cmp #98                         ; Salle 98 (C-7, Moblin +30)
-        beq .is_b_room
-        cmp #100                        ; Salle 100 (E-7, Anneau Bleu secret)
-        beq .is_b_room
-        cmp #114                        ; Salle 114 (C-8, Moblin +30)
-        beq .is_b_room
-        cmp #2                          ; Salle 2 (C-1, Door repair)
-        beq .is_b_room
-        cmp #61                         ; Salle 61 (N-4, Porte Niveau 4)
-        beq .is_b_room
-        bne .not_b_sec
+        dex
+        bpl .chk_bomb_tbl
+        jmp .not_b_sec
 .is_b_room:
-        cpy #6
-        beq .found_b_sec
-        cpy #7
-        beq .found_b_sec
-        cpy #8
-        beq .found_b_sec
-        cpy #9
-        beq .found_b_sec
-        cpy #10
-        beq .found_b_sec
-        cpy #11
-        beq .found_b_sec
-        cpy #12
-        beq .found_b_sec
-        cpy #13
-        beq .found_b_sec
-        bne .not_b_sec
+        cpy #120
+        bcc .found_b_sec
+        jmp .not_b_sec
 .found_b_sec:
         sec
         rts
 .not_b_sec:
         clc
         rts
+
+.bombable_rooms:
+        !byte 1, 2, 3, 4, 5, 7, 14, 15, 16, 17, 18, 19, 20, 24, 25, 26, 28, 30, 31
+        !byte 33, 37, 43, 44, 45, 50, 61, 67, 72, 73, 74, 78, 86, 98, 100, 103, 104
+        !byte 110, 112, 114, 118, 120, 125
 
 ; ===========================================================================
 ; 5. RADEAU DE TRANSPORT (Raft launch check)

@@ -295,19 +295,18 @@ hud_render:
         ; Garantit que les 8 caractères minimap sont en place sur Lignes 1 & 2 (cols 2..5)
         jsr hud_setup_map_cells
 
-        inc hud_blink_tick
+        ; Efface le tampon minimap_buf (64 octets) en RAM, SANS toucher à $2358..$2397
+        ldx #63
+        lda #0
+-       sta minimap_buf,x
+        dex
+        bpl -
 
         lda current_world_type
         cmp #WORLD_DUNGEON
         beq .render_uw_minimap
 
         ; --- OVERWORLD MINIMAP (16x8 salles = 32x16 pixels, 2x2 par salle) ---
-        ldx #63
-        lda #0
--       sta $2358,x
-        dex
-        bpl -
-
         ldx #0
 .ow_room_loop:
         lda visited_ow_rooms,x
@@ -322,23 +321,13 @@ hud_render:
         lsr
         lsr
         sta minimap_ry
-        jsr minimap_set_room_2x2
+        jsr minimap_buf_set_room_2x2
         ldx ZP_SRC
 .ow_room_next:
         inx
         cpx #128
         bne .ow_room_loop
-
-        ; Clignotement de Link (carré 2x2 éteint quand bit 3 == 0)
-        lda hud_blink_tick
-        and #%00001000
-        bne +
-        lda current_room_x
-        sta minimap_rx
-        lda current_room_y
-        sta minimap_ry
-        jsr minimap_clear_room_2x2
-+       jmp .minimap_done
+        jmp .minimap_commit
 
         ; ===================================================================
         ; MINIMAP SOUS-SOL / DONJONS (2x2 pixels par salle, centré dans 32x16)
@@ -349,14 +338,7 @@ hud_render:
         lda #1
         sta current_dungeon_level
 +
-        ; Efface les 64 octets de la bitmap ($2358..$2397)
-        ldx #63
-        lda #0
--       sta $2358,x
-        dex
-        bpl -
-
-        ; Affiche les salles du donjon
+        ; Affiche les salles du donjon dans minimap_buf
         ldx #0
 .uw_room_loop:
         lda player_has_dungeon_map
@@ -404,7 +386,7 @@ hud_render:
         bcs .uw_room_skip
         sta minimap_ry
 
-        jsr minimap_set_room_2x2
+        jsr minimap_buf_set_room_2x2
 
 .uw_room_skip:
         ldx ZP_SRC
@@ -413,8 +395,48 @@ hud_render:
         cpx #128
         bne .uw_room_loop
 
-        ; 1. Position actuelle de Link dans le donjon
-        ldy current_dungeon_level
+.minimap_commit:
+        ; Copie atomique de minimap_buf vers la RAM caractères VIC-II ($2358..$2397)
+        ldx #63
+-       lda minimap_buf,x
+        sta $2358,x
+        dex
+        bpl -
+
+        ; Applique immédiatement l'état courant du clignotement
+        jsr hud_apply_blink
+        jmp .counters
+
+; ---------------------------------------------------------------------------
+; hud_blink_update : appelé chaque frame dans main_loop (sans reconstruire
+; toute la minimap) pour faire clignoter uniquement le carré 2x2 de Link
+; et celui de la Triforce sans aucun clignotement/tearing de la carte.
+; ---------------------------------------------------------------------------
+hud_blink_update:
+        inc hud_blink_tick
+hud_apply_blink:
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq .blink_uw
+
+        ; Overworld : position de Link
+        lda current_room_x
+        sta minimap_rx
+        lda current_room_y
+        sta minimap_ry
+        lda hud_blink_tick
+        and #%00010000
+        bne .blink_ow_on
+        jmp minimap_clear_room_2x2
+.blink_ow_on:
+        jmp minimap_set_room_2x2
+
+.blink_uw:
+        lda current_dungeon_level
+        bne +
+        lda #1
+        sta current_dungeon_level
++       ldy current_dungeon_level
         dey
         lda current_room_x
         clc
@@ -425,35 +447,28 @@ hud_render:
         adc dung_shift_y,y
         sta minimap_ry
 
-        ; Clignotement de Link
         lda hud_blink_tick
-        and #%00001000
+        and #%00010000
         bne +
         jsr minimap_clear_room_2x2
         jmp ++
 +       jsr minimap_set_room_2x2
 ++
-        ; 2. Salle de la Triforce (si le joueur a trouvé la Boussole)
         lda player_has_compass
-        beq .minimap_done
-
+        beq .blink_done
         ldy current_dungeon_level
         dey
         lda dungeon_tri_px,y
         sta minimap_rx
         lda dungeon_tri_py,y
         sta minimap_ry
-
-        ; La Triforce clignote en opposition avec Link
         lda hud_blink_tick
-        and #%00001000
+        and #%00010000
         bne +
-        jsr minimap_set_room_2x2
-        jmp .minimap_done
-+       jsr minimap_clear_room_2x2
-
-.minimap_done:
-        jmp .counters
+        jmp minimap_set_room_2x2
++       jmp minimap_clear_room_2x2
+.blink_done:
+        rts
 
 ; ---------------------------------------------------------------------------
 ; hud_setup_map_cells : Place les 8 caractères et couleurs du canvas minimap
@@ -509,6 +524,23 @@ minimap_calc_offset:
         tay                             ; Y = index masque (0..3)
         rts
 
+minimap_buf_set_room_2x2:
+        lda minimap_rx
+        cmp #16
+        bcs .bset_ret
+        lda minimap_ry
+        cmp #8
+        bcs .bset_ret
+        jsr minimap_calc_offset
+        lda room_mask_2x2,y
+        ora minimap_buf,x
+        sta minimap_buf,x
+        lda room_mask_2x2,y
+        ora minimap_buf+1,x
+        sta minimap_buf+1,x
+.bset_ret:
+        rts
+
 minimap_set_room_2x2:
         lda minimap_rx
         cmp #16
@@ -542,6 +574,9 @@ minimap_clear_room_2x2:
         sta $2359,x
 .clr_ret:
         rts
+
+minimap_buf:
+        !fill 64, 0
 
 .counters:
 
@@ -642,12 +677,16 @@ minimap_clear_room_2x2:
         inx
         cpx hud_max_hearts
         bne .heart_loop
+        jsr hud_update_sword
         rts
 
 ; Convertit A (0..99) en 2 caractères ASCII (dizaines dans A, unités dans X)
 ; Préserve le registre Y intact.
 print_2digits:
-        ldx #0
+        cmp #100
+        bcc +
+        lda #99
++       ldx #0
 .div10:
         cmp #10
         bcc .done10

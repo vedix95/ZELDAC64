@@ -23,8 +23,20 @@ from sprgen import parse, to_grid, encode
 BANK_SIZE = 8192
 BASE_PTR = 0xA0 # $2800 / 64
 
-# Sprites communs fixes aux slots 87..95 ($F7..$FF)
+# Sprites communs fixes aux slots 75..95 ($EB..$FF) présents dans TOUTES les banques
 COMMON_SLOTS = {
+    75: ('moblin_down_0', 'enemies', 'SPR_NPC_MOBLIN_DOWN_0'),
+    76: ('old_man', 'extra', 'SPR_NPC_OLD_MAN'),
+    77: ('merchant', 'extra', 'SPR_NPC_MERCHANT'),
+    78: ('old_woman', 'extra', 'SPR_NPC_OLD_WOMAN'),
+    79: ('item_shield', 'extra', 'SPR_NPC_ITEM_SHIELD'),
+    80: ('item_ring', 'extra', 'SPR_NPC_ITEM_RING'),
+    81: ('item_food', 'extra', 'SPR_NPC_ITEM_FOOD'),
+    82: ('item_potion', 'extra', 'SPR_NPC_ITEM_POTION'),
+    83: ('item_whistle', 'extra', 'SPR_NPC_ITEM_WHISTLE'),
+    84: ('item_wand', 'extra', 'SPR_NPC_ITEM_WAND'),
+    85: ('item_raft', 'extra', 'SPR_NPC_ITEM_RAFT'),
+    86: ('item_stepladder', 'extra', 'SPR_NPC_ITEM_STEPLADDER'),
     87: ('item_get', 'extra', 'SPR_COMMON_ITEM_GET'),
     88: ('enemy_death_0', 'enemies', 'SPR_COMMON_DEATH_0'),
     89: ('enemy_death_1', 'enemies', 'SPR_COMMON_DEATH_1'),
@@ -173,11 +185,6 @@ def main():
         sym = f"SPR_DUNG_{name.upper()}"
         inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
 
-    inc_lines.append("\n; --- Sprites PNJs & Grottes ($A0..$EF) ---\n")
-    for name, ptr in sorted(npc_ptrs.items()):
-        sym = f"SPR_NPC_{name.upper()}"
-        inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
-
     inc_lines.append("\n; --- Alias de compatibilité d'adresses (Pointeur * 64) ---\n")
     compat = [
         ("sprite_link_item_triforce", "SPR_COMMON_TRIFORCE"),
@@ -192,7 +199,7 @@ def main():
         ("sprite_link_old_woman", "SPR_NPC_OLD_WOMAN"),
         ("sprite_link_item_wand", "SPR_NPC_ITEM_WAND"),
         ("sprite_link_item_potion", "SPR_NPC_ITEM_POTION"),
-        ("sprite_link_item_raft", "SPR_OW_ITEM_RAFT"),
+        ("sprite_link_item_raft", "SPR_NPC_ITEM_RAFT"),
         ("sprite_link_item_stepladder", "SPR_NPC_ITEM_STEPLADDER"),
         ("sprite_link_item_get", "SPR_COMMON_ITEM_GET"),
         ("sprite_enemies_moblin_down_0", "SPR_NPC_MOBLIN_DOWN_0"),

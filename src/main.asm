@@ -219,7 +219,7 @@ main_loop:
         jsr player_draw
         jsr items_draw
         jsr enemies_prep_multiplexer
-        jsr hud_render
+        jsr hud_blink_update
 .skip_play_draw:
         jmp main_loop
 

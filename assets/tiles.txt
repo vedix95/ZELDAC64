@@ -32,41 +32,41 @@ mc2: white
 ........
 ........
 
-[tufts] , green
-........
-..c.....
-.c.c....
-........
-........
-......c.
-.....c.c
-........
-........
-....c...
-...c.c..
-........
-........
-.c......
-c.c.....
-........
+[tufts] , black
+221c221c
+221c221c
+221c221c
+111c111c
+222c222c
+2ccc2ccc
+2ccc2ccc
+111c111c
+221c221c
+221c221c
+221c221c
+111c111c
+222c222c
+2ccc2ccc
+2ccc2ccc
+111c111c
 
-[flowers] f red
+[pillar] P black solid
 ........
-..c.....
-.c2c....
-..c.....
-........
-........
-......c.
-.....c2c
-......c.
-........
-....c...
-...c2c..
-....c...
-........
-........
-........
+...22..2
+1.2cc1.2
+12cccc12
+12c22c12
+cc2111cc
+ccc11ccc
+cccccccc
+ccc22ccc
+cc1111cc
+cc2112cc
+c......c
+cc1cc1cc
+.c1cc1c.
+.111111.
+11111111
 
 [tree] T green solid
 ........
@@ -157,7 +157,6 @@ c1cccc1c
 c1cccc1c
 12cccc21
 c1cccc1c
-
 
 [grave] G white solid
 ...22...
@@ -266,3 +265,39 @@ c11cc2c1
 .11111c.
 .c1111c.
 ..ccccc.
+
+[statue] A red solid
+.c.ccc..
+.1c1c1..
+..c12c..
+..c22c..
+ccc1cc..
+cc11111.
+ccc1ccc1
+ccc1ccc1
+ccc1ccc1
+ccc12cc1
+ccc12211
+ccc12c11
+cc11c111
+ccc1.cc.
+.1111cc1
+11111111
+
+[monument] M black solid
+.11..111
+111.1111
+11c11111
+c1c11111
+ccc1111c
+cccc11cc
+cc1c1ccc
+cc1ccccc
+cc1cc11c
+cc2cc11c
+cc2cc11c
+cc1ccccc
+cccccccc
+cc111ccc
+c11111cc
+c111111c

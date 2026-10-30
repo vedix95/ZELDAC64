@@ -177,6 +177,7 @@ INV_PAGE_MAX        = 3
 ; Constantes des tuiles Overworld
 TILE_GRASS          = 0
 TILE_TUFTS          = 1
+TILE_PILLAR         = 2
 TILE_FLOWERS        = 2
 TILE_TREE           = 3
 TILE_WATER          = 4
@@ -189,7 +190,9 @@ TILE_BRIDGE_V       = 10
 TILE_WALL_PASS      = 11
 TILE_WALL_BOMB      = 12
 TILE_ROCK           = 13
-TILE_WALL_SECRET_B  = 14
+TILE_STATUE         = 14
+TILE_WALL_SECRET_B  = 12
+TILE_MONUMENT       = 15
 
 ; Constantes d'ennemis
 EN_STATE_DEAD       = 0

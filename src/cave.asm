@@ -143,15 +143,21 @@ ovl_cave_enter:
         ; 6. Configure les emplacements d'objets selon le type de grotte
         jsr cave_setup_room_items
 
-        ; 7. Dessine le décor complet et les textes
+        ; 7. Dessine le décor complet, les textes et les sprites
         jsr ovl_cave_draw_screen
 
-        ; Événement spécial Moblin : don de +30 rubis immédiat
+        ; Événement spécial Moblin (+30 / +100 rubis) ou Réparation de porte (-20 rubis)
         lda current_cave_type
         cmp #CAVE_TYPE_MOBLIN
         bne +
         jsr cave_trigger_moblin
-+       rts
+        jmp .cave_ent_draw_spr
++       cmp #CAVE_TYPE_DOOR_REPAIR
+        bne .cave_ent_draw_spr
+        jsr cave_trigger_door_repair
+.cave_ent_draw_spr:
+        jsr ovl_cave_draw
+        rts
 
 ; ---------------------------------------------------------------------------
 ; cave_setup_room_items : configure les 3 slots selon la grotte et la persistance
@@ -408,11 +414,64 @@ cave_setup_room_items:
         rts
 
 +       cmp #CAVE_TYPE_HEART_CHOICE
-        beq .do_choice
-        cmp #CAVE_TYPE_FAIRY
-        beq .do_fairy
-        cmp #CAVE_TYPE_HEART_GIFT
-        beq .do_gift
+        bne +
+        jmp .do_choice
++       cmp #CAVE_TYPE_FAIRY
+        bne +
+        jmp .do_fairy
++       cmp #CAVE_TYPE_HEART_GIFT
+        bne +
+        jmp .do_gift
++       cmp #CAVE_TYPE_GAMBLE
+        bne +
+        jmp .do_gamble
++       cmp #CAVE_TYPE_WARP
+        bne +
+        jmp .do_warp
++       rts
+
+.do_warp:
+        ; 3 portails de téléportation vers D3 (#35), J5 (#73), N2 (#29), J8 (#121)
+        lda #1
+        sta cave_slot1_active
+        sta cave_slot2_active
+        sta cave_slot3_active
+        lda #0
+        sta cave_slot1_price
+        sta cave_slot2_price
+        sta cave_slot3_price
+        lda #(sprite_link_item_ring / 64)
+        sta cave_slot1_ptr
+        sta cave_slot2_ptr
+        sta cave_slot3_ptr
+        lda #COL_CYAN
+        sta cave_slot1_col
+        sta cave_slot2_col
+        sta cave_slot3_col
+        rts
+
+.do_gamble:
+        ; Jeu de hasard : 3 mises à 10 rubis
+        lda #1
+        sta cave_slot1_active
+        sta cave_slot2_active
+        sta cave_slot3_active
+        lda #10
+        sta cave_slot1_price
+        sta cave_slot2_price
+        sta cave_slot3_price
+        lda #ITEM_ID_HEART
+        sta cave_slot1_type
+        sta cave_slot2_type
+        sta cave_slot3_type
+        lda #(sprite_link_item_key / 64)
+        sta cave_slot1_ptr
+        sta cave_slot2_ptr
+        sta cave_slot3_ptr
+        lda #COL_YELLOW
+        sta cave_slot1_col
+        sta cave_slot2_col
+        sta cave_slot3_col
         rts
 
 .do_fairy:
@@ -479,10 +538,17 @@ cave_trigger_moblin:
         bne +
         lda #1
         sta cave_room_cleared,x
-        ; Ajoute 30 rubis (ou 100 rubis en salle 15 / P-1)
+        ; Ajoute 30 rubis (ou 100 rubis en salles 15, 83, 98, 107)
         lda #30
         cpx #15
+        beq .mob_100
+        cpx #83
+        beq .mob_100
+        cpx #98
+        beq .mob_100
+        cpx #107
         bne ++
+.mob_100:
         lda #100
 ++      sta ZP_TMP
         lda hud_rupees
@@ -497,12 +563,29 @@ cave_trigger_moblin:
         jsr sound_rupee
 +       rts
 
+cave_trigger_door_repair:
+        ldx current_room_idx
+        lda cave_room_cleared,x
+        bne +
+        lda #1
+        sta cave_room_cleared,x
+        lda hud_rupees
+        sec
+        sbc #20
+        bcs ++
+        lda #0
+++      sta hud_rupees
+        jsr hud_render
+        jsr sound_shield_block
++       rts
+
 build_cave_room:
-        ldx #199
+        ldx #0
         lda #0
 -       sta room_buf,x
-        dex
-        bpl -
+        inx
+        cpx #200
+        bcc -
 
         ; Rangée 0 : 20 blocs solides
         ldx #19
@@ -541,15 +624,15 @@ ovl_cave_draw_screen:
         sta active_bg_color
         sta VIC_BACKGROUND
         sta VIC_BORDER
-        lda #COL_BROWN
+        lda #COL_ORANGE
         sta VIC_BG_MC1
-        lda #COL_GREY
+        lda #COL_WHITE
         sta VIC_BG_MC2
 
-        ; Initialise la palette de tuiles de la grotte (sol noir, murs bleu clair)
+        ; Initialise la palette de tuiles de la grotte (sol noir, murs rocheux bruns/rouges NES)
         lda #COL_BLACK
         sta active_tile_color+0
-        lda #14                         ; 8 + 6 (Multicolore + Bleu Clair)
+        lda #10                         ; 8 + 2 (Multicolore + Rouge brique/roche)
         sta active_tile_color+5
 
         ; 1. Décor de la salle de grotte résidente
@@ -601,7 +684,14 @@ cave_render_texts:
         bne .set_def_txt2
         lda current_room_idx
         cmp #15
+        beq .show_mob100
+        cmp #83
+        beq .show_mob100
+        cmp #98
+        beq .show_mob100
+        cmp #107
         bne .set_def_txt2
+.show_mob100:
         lda #<txt_moblin_100_2
         sta ZP_SRC
         lda #>txt_moblin_100_2
@@ -923,6 +1013,64 @@ cave_buy_slot3:
         ldx #10
 
 cave_buy_slot_x:
+        ; Si grotte de téléportation (CAVE_TYPE_WARP) : téléporte Link immédiatement !
+        lda current_cave_type
+        cmp #CAVE_TYPE_WARP
+        bne .chk_gamble_slot
+        ; Choisit la destination selon le slot (0 -> D3 #35, 5 -> J5 #73, 10 -> N2 #29 ou J8 #121)
+        ldy #0
+        cpx #0
+        beq .do_warp_dest
+        iny
+        cpx #5
+        beq .do_warp_dest
+        iny
+        lda current_room_idx
+        cmp #29
+        bne .do_warp_dest
+        iny
+.do_warp_dest:
+        lda warp_dest_rx,y
+        sta current_room_x
+        lda warp_dest_ry,y
+        sta current_room_y
+        lda warp_dest_idx,y
+        sta current_room_idx
+        lda #160
+        sta saved_overworld_x
+        lda #0
+        sta saved_overworld_x+1
+        lda #132
+        sta saved_overworld_y
+        jsr sound_secret_chime
+        jmp cave_exit
+
+warp_dest_rx:   !byte 3, 9, 13, 9
+warp_dest_ry:   !byte 2, 4,  1, 7
+warp_dest_idx:  !byte 35, 73, 29, 121
+
+.chk_gamble_slot:
+        cmp #CAVE_TYPE_GAMBLE
+        bne .std_buy_slot
+        lda hud_rupees
+        cmp #10
+        bcc .cant_afford
+        ; Gain de +40 rubis nets (+50 - 10 de mise)
+        clc
+        adc #40
+        bcc +
+        lda #255
++       sta hud_rupees
+        jsr hud_render
+        lda #0
+        sta cave_slot1_active
+        sta cave_slot2_active
+        sta cave_slot3_active
+        jsr sound_rupee
+        jsr cave_render_prices
+        rts
+
+.std_buy_slot:
         lda cave_slot1_price,x
         beq .take_slot_x
         lda hud_rupees
@@ -1402,73 +1550,79 @@ cave_txt1_lo:
         !byte <txt_dflt_1, <txt_sword_w_1, <txt_shop_a_1, <txt_shop_b_1
         !byte <txt_shop_s_1, <txt_pot_1, <txt_sword_wh_1, <txt_moblin_1
         !byte <txt_choice_1, <txt_hint1_1, <txt_hint2_1, <txt_hint3_1, <txt_gamble_1
-        !byte <txt_fairy_1, <txt_gift_1, <txt_sword_mg_1
+        !byte <txt_fairy_1, <txt_gift_1, <txt_sword_mg_1, <txt_warp_1, <txt_repair_1
 
 cave_txt1_hi:
         !byte >txt_dflt_1, >txt_sword_w_1, >txt_shop_a_1, >txt_shop_b_1
         !byte >txt_shop_s_1, >txt_pot_1, >txt_sword_wh_1, >txt_moblin_1
         !byte >txt_choice_1, >txt_hint1_1, >txt_hint2_1, >txt_hint3_1, >txt_gamble_1
-        !byte >txt_fairy_1, >txt_gift_1, >txt_sword_mg_1
+        !byte >txt_fairy_1, >txt_gift_1, >txt_sword_mg_1, >txt_warp_1, >txt_repair_1
 
 cave_txt2_lo:
         !byte <txt_dflt_2, <txt_sword_w_2, <txt_shop_a_2, <txt_shop_b_2
         !byte <txt_shop_s_2, <txt_pot_2, <txt_sword_wh_2, <txt_moblin_2
         !byte <txt_choice_2, <txt_hint1_2, <txt_hint2_2, <txt_hint3_2, <txt_gamble_2
-        !byte <txt_fairy_2, <txt_gift_2, <txt_sword_mg_2
+        !byte <txt_fairy_2, <txt_gift_2, <txt_sword_mg_2, <txt_warp_2, <txt_repair_2
 
 cave_txt2_hi:
         !byte >txt_dflt_2, >txt_sword_w_2, >txt_shop_a_2, >txt_shop_b_2
         !byte >txt_shop_s_2, >txt_pot_2, >txt_sword_wh_2, >txt_moblin_2
         !byte >txt_choice_2, >txt_hint1_2, >txt_hint2_2, >txt_hint3_2, >txt_gamble_2
-        !byte >txt_fairy_2, >txt_gift_2, >txt_sword_mg_2
+        !byte >txt_fairy_2, >txt_gift_2, >txt_sword_mg_2, >txt_warp_2, >txt_repair_2
 
-txt_dflt_1:     !text "REPOSE-TOI UN INSTANT.", 0
-txt_dflt_2:     !text "", 0
+txt_dflt_1:     !text "MASTER USING IT AND", 0
+txt_dflt_2:     !text "YOU CAN HAVE THIS.", 0
 
-txt_sword_w_1:  !text "C'EST DANGEREUX D'Y ALLER", 0
-txt_sword_w_2:  !text "TOUT SEUL ! PRENDS CECI.", 0
+txt_sword_w_1:  !text "IT'S DANGEROUS TO GO", 0
+txt_sword_w_2:  !text "ALONE! TAKE THIS.", 0
 
-txt_shop_a_1:   !text "ACHETE DU MATERIEL", 0
-txt_shop_a_2:   !text "TU VEUX. CHOISIS ET PAIE !", 0
+txt_shop_a_1:   !text "BUY SOMETHIN' WILL YA!", 0
+txt_shop_a_2:   !text "", 0
 
-txt_shop_b_1:   !text "ARMES ET MUNITIONS", 0
-txt_shop_b_2:   !text "POUR TRIOMPHER DU MAL !", 0
+txt_shop_b_1:   !text "BOY, THIS IS REALLY", 0
+txt_shop_b_2:   !text "EXPENSIVE!", 0
 
-txt_shop_s_1:   !text "OBJETS RARES", 0
-txt_shop_s_2:   !text "REGARDE CE QUE J'AI LA !", 0
+txt_shop_s_1:   !text "BUY SOMETHIN' WILL YA!", 0
+txt_shop_s_2:   !text "", 0
 
-txt_pot_1:      !text "UNE BONNE POTION", 0
-txt_pot_2:      !text "POUR TA FORCE.", 0
+txt_pot_1:      !text "BUY MEDICINE BEFORE", 0
+txt_pot_2:      !text "YOU GO.", 0
 
-txt_sword_wh_1: !text "UNE LAME FORTE !", 0
-txt_sword_wh_2: !text "L'EPEE BLANCHE !", 0
+txt_sword_wh_1: !text "MASTER USING IT AND", 0
+txt_sword_wh_2: !text "YOU CAN HAVE THIS.", 0
 
-txt_sword_mg_1: !text "L'EPEE MAGIQUE !", 0
-txt_sword_mg_2: !text "LIBERE HYRULE !", 0
+txt_sword_mg_1: !text "MASTER USING IT AND", 0
+txt_sword_mg_2: !text "YOU CAN HAVE THIS.", 0
 
-txt_moblin_1:   !text "C'EST UN SECRET POUR", 0
-txt_moblin_2:   !text "TOUT LE MONDE. (+30 RUBIS)", 0
-txt_moblin_100_2: !text "TOUT LE MONDE. (+100 RUBIS)", 0
+txt_moblin_1:   !text "IT'S A SECRET", 0
+txt_moblin_2:   !text "TO EVERYBODY. (+30)", 0
+txt_moblin_100_2: !text "TO EVERYBODY. (+100)", 0
 
-txt_choice_1:   !text "GARDE CECI SECRET.", 0
-txt_choice_2:   !text "CHOISIS L'UN DES DEUX.", 0
+txt_choice_1:   !text "TAKE ANY ONE", 0
+txt_choice_2:   !text "YOU WANT.", 0
 
-txt_hint1_1:    !text "AU MONT DU PERIL GIT", 0
-txt_hint1_2:    !text "LE REPAIRE DE GANON.", 0
+txt_hint1_1:    !text "SPECTACLE ROCK IS", 0
+txt_hint1_2:    !text "AN ENTRANCE TO DEATH.", 0
 
-txt_hint2_1:    !text "LES ARBRES CACHENT", 0
-txt_hint2_2:    !text "DES PASSAGES SECRETS.", 0
+txt_hint2_1:    !text "GO NORTH, WEST, SOUTH,", 0
+txt_hint2_2:    !text "WEST TO THE FOREST.", 0
 
-txt_hint3_1:    !text "VA VERS L'EST TROUVER", 0
-txt_hint3_2:    !text "LA CASCADE ET SES SECRETS.", 0
+txt_hint3_1:    !text "WALK INTO THE", 0
+txt_hint3_2:    !text "WATERFALL.", 0
 
-txt_gamble_1:   !text "TENTE TA CHANCE !", 0
-txt_gamble_2:   !text "CHOISIS UN SAC.", 0
+txt_gamble_1:   !text "LET'S PLAY MONEY", 0
+txt_gamble_2:   !text "MAKING GAME.", 0
 
-txt_fairy_1:    !text "JE TE SOIGNE !", 0
-txt_fairy_2:    !text "FORCE RESTAUREE.", 0
+txt_fairy_1:    !text "FAIRY FOUNTAIN", 0
+txt_fairy_2:    !text "LIFE RESTORED.", 0
 
-txt_gift_1:     !text "PRENDS CECI.", 0
-txt_gift_2:     !text "GARDE LE SECRET !", 0
+txt_gift_1:     !text "SHOW THIS TO THE", 0
+txt_gift_2:     !text "OLD WOMAN.", 0
+
+txt_warp_1:     !text "TAKE ANY ROAD", 0
+txt_warp_2:     !text "YOU WANT.", 0
+
+txt_repair_1:   !text "PAY ME FOR THE DOOR", 0
+txt_repair_2:   !text "REPAIR CHARGE.", 0
 
 

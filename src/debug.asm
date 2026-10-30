@@ -821,7 +821,7 @@ debug_draw_p2:
         rts
 
 dbg_p2_str1: !text "LINK: X=$__ Y=$__", 0
-dbg_p2_str2: !text "SALLE OW/DONJ $__", 0
+dbg_p2_str2: !text "ROOM  OW/DUNG $__", 0
 dbg_p2_str3: !text "RAM: ZONE <$C000 OK", 0
 
 debug_cheat_heal:
@@ -848,13 +848,16 @@ debug_cheat_full_gear:
         sta player_has_candle
         sta player_has_whistle
         sta player_has_wand
+        sta player_has_book
+        sta player_has_compass
+        sta player_has_dungeon_map
         lda #16
         sta hud_max_hearts
         sta hud_cur_hearts
         lda #8
         sta hud_keys
         sta hud_bombs
-        lda #255
+        lda #99
         sta hud_rupees
         lda #$ff
         sta player_triforce_pieces
@@ -891,6 +894,7 @@ debug_do_warp_dungeon:
 
         jsr clear_screen
         jsr disk_load_dungeon
+        jsr cart_load_sprites_dung
         jsr dungeon_init
 
         ldx current_dungeon_level
@@ -1014,55 +1018,55 @@ dbg_title_str:
         !text "=== DEBUG ZELDA ===", 0
 
 dbg_tabs_base:
-        !text " 1:WARP    2:CHEATS    3:INFOS ", 0
+        !text " 1:WARP    2:CHEATS    3:INFO  ", 0
 dbg_tab_b1:
         !byte 1, 14, 29
 dbg_tab_b2:
         !byte 8, 23, 37
 
 dbg_foot1_str:
-        !text "[ESPACE] PAGE [FIRE] OK", 0
+        !text "[SPACE]  PAGE [FIRE] OK", 0
 dbg_foot2_str:
-        !text "[D]/[B] : RETOUR JEU", 0
+        !text "[D]/[B] : RESUME GAME", 0
 
 dbg_p0_strings:
-        !text " 1. N1:AIGLE H-4", 0
-        !text " 2. N2:LUNE  M-4", 0
-        !text " 3. N3:MANJI E-8", 0
-        !text " 4. N4:GNOU  F-5", 0
-        !text " 5. N5:LEZARD L-1", 0
-        !text " 6. N6:DRAGON C-3", 0
-        !text " 7. N7:DEMON  C-5", 0
-        !text " 8. N8:LION   N-7", 0
-        !text " 9. N9:M.MORT F-1", 0
-        !text "10. DEPART OW H-8", 0
-        !text "11. SALLE OW: $__ (___)", 0
+        !text " 1. L1:EAGLE  H-4", 0
+        !text " 2. L2:MOON   M-4", 0
+        !text " 3. L3:MANJI  E-8", 0
+        !text " 4. L4:SNAKE  F-5", 0
+        !text " 5. L5:LIZARD L-1", 0
+        !text " 6. L6:DRAGON C-3", 0
+        !text " 7. L7:DEMON  C-5", 0
+        !text " 8. L8:LION   N-7", 0
+        !text " 9. L9:DEATH  F-1", 0
+        !text "10. OW START  H-8", 0
+        !text "11. OW ROOM : $__ (___)", 0
 
 dbg_p1_strings:
-        !text "[F] GEAR  [H] SOIN COMPLET", 0
-        !text "[JOY G/D] +/- MAX COEURS", 0
-        !text "[E] EPEE  [B] BOUCLIER  [R] RING", 0
-        !text "[K] +5 CLES  [M] +4 BOMBES", 0
-        !text "[U] +50 RUBIS  [T] +1 TRIFORCE", 0
-        !text "ETAT: HP __/__ RUP:$__ CLE:__", 0
+        !text "[F] GEAR  [H] FULL HEAL", 0
+        !text "[JOY L/R] +/- MAX HEARTS", 0
+        !text "[E] SWORD [B] SHIELD    [R] RING", 0
+        !text "[K] +5 KEYS  [M] +4 BOMBS", 0
+        !text "[U] +50 RUPEES [T] +1 TRIFORCE", 0
+        !text "STAT: HP __/__ RUP:$__ KEY:__", 0
 
 dbg_p1_eq_str:
-        !text "EPEE:___ BOUCL:___", 0
+        !text "SWRD:___ SHLD :___", 0
 
 dbg_sw_names_lo:
         !byte <dbg_sw0, <dbg_sw1, <dbg_sw2, <dbg_sw3
 dbg_sw_names_hi:
         !byte >dbg_sw0, >dbg_sw1, >dbg_sw2, >dbg_sw3
-dbg_sw0: !text "AUCUNE ", 0
-dbg_sw1: !text "BOIS   ", 0
-dbg_sw2: !text "BLANCHE", 0
-dbg_sw3: !text "MAGIQUE", 0
+dbg_sw0: !text "NONE   ", 0
+dbg_sw1: !text "WOOD   ", 0
+dbg_sw2: !text "WHITE  ", 0
+dbg_sw3: !text "MAGIC  ", 0
 
 dbg_sh_names_lo:
         !byte <dbg_sh1, <dbg_sw3
 dbg_sh_names_hi:
         !byte >dbg_sh1, >dbg_sw3
-dbg_sh1: !text "PETIT  ", 0
+dbg_sh1: !text "SMALL  ", 0
 
 ; ---------------------------------------------------------------------------
 ; Auto-warp debug hook (activable par mémoire ou moniteur)
@@ -1081,6 +1085,12 @@ ovl_debug_exec_hook_cmd:
         beq .hook_use_item
         cmp #6
         beq .hook_force_joy
+        cmp #7
+        beq .hook_full_gear
+        jmp .hook_done
+
+.hook_full_gear:
+        jsr debug_cheat_full_gear
         jmp .hook_done
 
 .hook_warp_ow:

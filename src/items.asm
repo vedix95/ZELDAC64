@@ -685,6 +685,9 @@ update_candle:
         ; --- PHASE 1 : BRÛLE SUR PLACE ---
         lda current_world_type
         bne +
+        lda item_timer
+        cmp #60
+        bne +
         lda #CART_BANK_OVL_ITEMS
         ldx #4
         jsr cart_load_overlay
@@ -870,16 +873,16 @@ items_draw:
         jmp .enable_spr2
 +       cmp #DROP_RAFT
         bne +
-        lda #< (sprite_link_item_food / 64)
+        lda #< (sprite_link_item_raft / 64)
         sta SPRITE_PTR2
         lda #COL_BROWN
         sta VIC_SPRITE_COL2
         jmp .enable_spr2
 +       cmp #DROP_LADDER
         bne +
-        lda #< (sprite_link_item_shield / 64)
+        lda #< (sprite_link_item_stepladder / 64)
         sta SPRITE_PTR2
-        lda #COL_CYAN
+        lda #COL_BROWN
         sta VIC_SPRITE_COL2
         jmp .enable_spr2
 +       cmp #DROP_WHISTLE
@@ -887,6 +890,13 @@ items_draw:
         lda #< (sprite_link_item_whistle / 64)
         sta SPRITE_PTR2
         lda #COL_YELLOW
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
++       cmp #DROP_BOOK
+        bne +
+        lda #< (sprite_link_item_wand / 64)
+        sta SPRITE_PTR2
+        lda #COL_LIGHT_BLUE
         sta VIC_SPRITE_COL2
         jmp .enable_spr2
 +

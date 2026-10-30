@@ -110,7 +110,7 @@ copy_map_charset:
         bne -
 
         inc ZP_SRC+1
-        ldy #63
+        ldy #95
 -       lda (ZP_SRC),y
         sta $2640,y
         dey

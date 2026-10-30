@@ -126,7 +126,7 @@ def generate_dungeon_charset_bytes():
         chars_168_199.extend(char_bytes(art, 0, 8))
         chars_168_199.extend(char_bytes(art, 4, 8))
 
-    chars_200_207 = [0] * 64
+    chars_200_207 = [0] * 96
     return chars_0_31, chars_168_199, chars_200_207
 
 def build_level1_enemies_table():
@@ -1587,8 +1587,8 @@ def build_dungeon_asm(lvl):
         chunk = chars_168_199[i:i+8]
         lines.append("        !byte " + ", ".join(str(v) for v in chunk))
 
-    lines.append("; Chars 200..207 (Tuiles 13..14 : 64 octets)")
-    for i in range(0, 64, 8):
+    lines.append("; Chars 200..211 (Tuiles 13..15 : 96 octets)")
+    for i in range(0, 96, 8):
         chunk = chars_200_207[i:i+8]
         lines.append("        !byte " + ", ".join(str(v) for v in chunk))
 

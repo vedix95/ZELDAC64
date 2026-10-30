@@ -1431,10 +1431,7 @@ dungeon_update:
         ; 5. Porte verrouillée : ouverture automatique si Link touche une porte avec une clé
         jsr dungeon_check_key_door
 
-        ; 6. Escalier secret vers le passage sous-terrain (Salle 0x22)
-        lda current_room_idx
-        cmp #$22
-        bne +
+        ; 6. Escalier secret vers le passage sous-terrain (Salle 0x22 et trésors N3..N9)
         lda player_x
         clc
         adc #8
@@ -1448,9 +1445,22 @@ dungeon_update:
         sta col_y
         jsr get_tile_at_point
         cmp #TILE_DUNG_STAIRS
-        bne +
+        bne .no_cellar_stairs
+        ldx #8
+.chk_cellar_room:
+        lda current_room_idx
+        cmp .cellar_rooms,x
+        beq .do_enter_cellar
+        dex
+        bpl .chk_cellar_room
+        rts
+.do_enter_cellar:
         jsr enter_cellar
-+       rts
+.no_cellar_stairs:
+        rts
+
+.cellar_rooms:
+        !byte $22, $6a, $04, $36, $08, $4a, $6f, $23, $45
 
 ; ===========================================================================
 ; BLOCS POUSSABLES (toutes les salles de donjon)
@@ -2407,8 +2417,8 @@ dungeon_setup_room_41:
         sta VIC_SPRITE_MC
         rts
 
-txt_hint_d1_1:  !text "LA PENINSULE TOUT A L'EST"
-txt_hint_d1_2:  !text "EST LE SECRET."
+txt_hint_d1_1:  !text "EASTMOST PENINSULA IS THE"
+txt_hint_d1_2:  !text "   SECRET.    "
 
 ; ===========================================================================
 ; PASSAGE SOUS-TERRAIN VU DE CÔTÉ (STATE_CELLAR - Trésor de l'Arc du Donjon 1)
@@ -2944,7 +2954,7 @@ cellar_draw:
         jmp .brandish_pos
 
 .brandish_candle:
-        lda #(sprite_link_item_potion / 64)
+        lda #(sprite_link_item_candle / 64)
         sta SPRITE_PTR1
         lda #COL_RED
         sta VIC_SPRITE_COL1
@@ -2974,9 +2984,9 @@ cellar_draw:
         jmp .brandish_pos
 
 .brandish_ladder:
-        lda #(sprite_link_item_shield / 64)
+        lda #(sprite_link_item_stepladder / 64)
         sta SPRITE_PTR1
-        lda #COL_CYAN
+        lda #COL_BROWN
         sta VIC_SPRITE_COL1
         jmp .brandish_pos
 
@@ -2988,7 +2998,7 @@ cellar_draw:
         jmp .brandish_pos
 
 .brandish_raft:
-        lda #(sprite_link_item_food / 64)
+        lda #(sprite_link_item_raft / 64)
         sta SPRITE_PTR1
         lda #COL_BROWN
         sta VIC_SPRITE_COL1
@@ -3073,7 +3083,7 @@ cellar_draw:
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
         bne .no_bow_pedestal_top
-        lda #(sprite_link_item_potion / 64)
+        lda #(sprite_link_item_candle / 64)
         sta SPRITE_PTR1
         lda #COL_RED
         sta VIC_SPRITE_COL1
@@ -3120,9 +3130,9 @@ cellar_draw:
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
         bne .no_bow_pedestal
-        lda #(sprite_link_item_shield / 64)
+        lda #(sprite_link_item_stepladder / 64)
         sta SPRITE_PTR1
-        lda #COL_CYAN
+        lda #COL_BROWN
         sta VIC_SPRITE_COL1
         jmp .place_pedestal_spr
 
@@ -3142,7 +3152,7 @@ cellar_draw:
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
         bne .no_bow_pedestal
-        lda #(sprite_link_item_food / 64)
+        lda #(sprite_link_item_raft / 64)
         sta SPRITE_PTR1
         lda #COL_BROWN
         sta VIC_SPRITE_COL1
