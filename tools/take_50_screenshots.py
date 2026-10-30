@@ -115,7 +115,10 @@ def main():
     mon_file = "/tmp/zelda_50_shots.mon"
     with open(mon_file, "w") as f:
         # Initial breakpoint at main_loop ($1045)
-        f.write(f"bk {main_addr:04x}\n")
+        f.write("break 080d\n")
+        f.write("g\n")
+        f.write("g 55c2\n")
+        f.write(f"break {main_addr:04x}\n")
         f.write("g\n")
 
         for fname, cmd, arg1, arg2, desc in SCENARIOS:
@@ -123,25 +126,31 @@ def main():
             f.write(f"> {arg2_addr:04x} {arg2:02x}\n")
             f.write(f"> {arg_addr:04x} {arg1:02x}\n")
             f.write(f"> {cmd_addr:04x} {cmd:02x}\n")
-            f.write("g\n")
-            f.write("g\n")
+            for _ in range(5):
+                f.write("g\n")
             f.write(f'screenshot "{out_png}" 2\n')
 
-        f.write("q\n")
+        f.write("quit\n")
 
     cmdline = [
         "x64sc",
-        "-autostart", "build/zelda.d64:zelda",
-        "-moncommands", mon_file,
-        "+sound",
-        "-warp"
+        "-default",
+        "-cartcrt", "build/zelda.crt",
+        "-warp",
+        "-limitcycles", "200000000",
+        "-moncommands", mon_file
     ]
     print("Executing VICE in warp mode to capture all 50 screenshots...")
     t0 = time.time()
-    res = subprocess.run(cmdline, capture_output=True, text=True, timeout=120)
+    res = subprocess.run(cmdline, capture_output=True, text=True, timeout=300)
     elapsed = time.time() - t0
     print(f"VICE finished in {elapsed:.1f}s.")
 
+    for f in os.listdir(OUT_DIR):
+        if f.endswith(".pcx"):
+            p = os.path.join(OUT_DIR, f)
+            subprocess.run(["magick", p, p[:-4]])
+            os.remove(p)
     files = sorted([f for f in os.listdir(OUT_DIR) if f.endswith(".png")])
     print(f"\nSuccessfully generated {len(files)} screenshots out of {len(SCENARIOS)}!")
     for f in files:

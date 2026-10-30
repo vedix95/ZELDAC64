@@ -133,7 +133,20 @@ main_loop:
         ; Auto-warp debug hook (activable par mémoire ou moniteur)
         lda debug_hook_cmd
         beq +
+        cmp #3
+        beq .hook_inv_resident
         jsr debug_exec_hook_cmd
+        jmp +
+.hook_inv_resident:
+        ; Ouverture de l'inventaire depuis le code résident : l'overlay
+        ; inventaire écrase $A000, donc on ne peut pas l'appeler depuis
+        ; l'overlay debug qui contient le hook.
+        jsr open_inventory
+        lda debug_hook_arg
+        sta inv_page
+        jsr inv_display_current_page
+        lda #0
+        sta debug_hook_cmd
 +
         ; Dispatch selon l'état de jeu
         lda game_state
