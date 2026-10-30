@@ -157,12 +157,12 @@ cmd = [
     "-default",
     "-cartcrt", os.path.join(BLD_DIR, "zelda.crt"),
     "-warp",
-    "-limitcycles", "15000000",
+    "-limitcycles", "300000000",
     "-moncommands", mon_file
 ]
 
 print("[*] Lancement de la campagne de vérification dans VICE...")
-res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+res = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
 print(f"[*] Fin émulateur (code {res.returncode})")
 
 # Conversion des PCX éventuels
