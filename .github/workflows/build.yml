@@ -1,0 +1,104 @@
+name: Build Zelda C64
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system build tools (ACME, VICE, Pillow)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y acme vice python3 python3-pil
+          echo "✅ Installed ACME assembler and VICE emulator"
+
+      - name: Check build environment
+        run: make check
+
+      - name: Generate previews
+        run: make preview
+
+      - name: Build CRT cartridge image
+        run: make
+
+      - name: Build maps (PNG)
+        run: make maps || echo "Map generation optional, skipping if data missing"
+
+      - name: Run verification test
+        run: make check || true
+
+      - name: Upload CRT cartridge build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelda-c64-cartoche
+          path: |
+            build/zelda.crt
+            !build/*.dat
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload build logs (if available)
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/*.rep
+            build/*.log
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Generate release notes from CHANGELOG or git log
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo "## Release ${{ github.ref_name }}" >> build/release_notes.md
+          echo "" >> build/release_notes.md
+          git log --format=fuller -1 HEAD >> build/release_notes.md || true
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: ${{ github.ref_name }}-release-notes
+          path: build/release_notes.md
+          if-no-files-found: ignore
+
+      - name: Upload latest built CRT as artifact for download
+        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: release-${{ github.ref_name }}.crt
+          path: build/zelda.crt
+          retention-days: 30
+
+      # For NES recompilation support (future enhancement)
+      - name: Prepare for potential NES export
+        run: |
+          echo "C64 emulator/NES recompilation project configured" >> build/CI_STATUS.txt
+          echo "Build: $(date)" >> build/CI_STATUS.txt
+          echo "Commit: ${{ github.sha }}" >> build/CI_STATUS.txt
+          echo "Version tag: ${{ github.ref_name }}" >> build/CI_STATUS.txt
+
+      - name: Upload CI status file
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-status-${{ github.sha }}
+          path: build/CI_STATUS.txt
+          if-no-files-found: ignore
+
+    # Note: NES recompilation would be handled by a separate workflow (release.yml) or environment
