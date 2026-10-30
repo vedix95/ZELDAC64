@@ -53,6 +53,52 @@ x64sc -cartcrt zelda.crt
 | :---: | :---: | :---: |
 | ![Salle de départ](docs/images/shot_start.png) | ![Cimetière avec ennemis](docs/images/shot_graveyard.png) | ![Désert](docs/images/shot_desert.png) |
 
+### Galerie : Overworld, Donjons, Boss & Menus
+
+**Overworld**
+
+| Côte | Forêt | Lac |
+| :---: | :---: | :---: |
+| ![Côte](docs/images/gal_ow_coast.png) | ![Forêt](docs/images/gal_ow_forest.png) | ![Lac](docs/images/gal_ow_lake.png) |
+
+| Cascade | Death Mountain | Entrée Donjon 2 |
+| :---: | :---: | :---: |
+| ![Cascade](docs/images/gal_ow_waterfall.png) | ![Death Mountain](docs/images/gal_ow_death_mountain.png) | ![Entrée Donjon 2](docs/images/gal_ow_dung2_entrance.png) |
+
+**Donjons (entrées)**
+
+| Donjon 2 — La Lune | Donjon 3 — Manji | Donjon 4 — Le Serpent |
+| :---: | :---: | :---: |
+| ![Donjon 2 — La Lune](docs/images/gal_d2_entrance.png) | ![Donjon 3 — Manji](docs/images/gal_d3_entrance.png) | ![Donjon 4 — Le Serpent](docs/images/gal_d4_entrance.png) |
+
+| Donjon 5 — Le Lézard | Donjon 6 — Le Dragon | Donjon 7 — Le Démon |
+| :---: | :---: | :---: |
+| ![Donjon 5 — Le Lézard](docs/images/gal_d5_entrance.png) | ![Donjon 6 — Le Dragon](docs/images/gal_d6_entrance.png) | ![Donjon 7 — Le Démon](docs/images/gal_d7_entrance.png) |
+
+| Donjon 8 — Le Lion | Donjon 9 — Death Mountain |
+| :---: | :---: |
+| ![Donjon 8 — Le Lion](docs/images/gal_d8_entrance.png) | ![Donjon 9 — Death Mountain](docs/images/gal_d9_entrance.png) |
+
+**Boss**
+
+| Dodongo (D2) | Manhandla (D3) | Gleeok (D4) |
+| :---: | :---: | :---: |
+| ![Dodongo (D2)](docs/images/gal_boss_dodongo.png) | ![Manhandla (D3)](docs/images/gal_boss_manhandla.png) | ![Gleeok (D4)](docs/images/gal_boss_gleeok.png) |
+
+| Digdogger (D5) | Gohma (D6) | Ganon (D9) |
+| :---: | :---: | :---: |
+| ![Digdogger (D5)](docs/images/gal_boss_digdogger.png) | ![Gohma (D6)](docs/images/gal_boss_gohma.png) | ![Ganon (D9)](docs/images/gal_boss_ganon.png) |
+
+**Inventaire & Menu Debug**
+
+| Objets | Triforce | Équipement |
+| :---: | :---: | :---: |
+| ![Objets](docs/images/gal_inv_items.png) | ![Triforce](docs/images/gal_inv_triforce.png) | ![Équipement](docs/images/gal_inv_equipment.png) |
+
+| Carte du monde | Menu Debug (Warp) |
+| :---: | :---: |
+| ![Carte du monde](docs/images/gal_inv_map.png) | ![Menu Debug (Warp)](docs/images/gal_debug_warp.png) |
+
 ### Cinématique d'Introduction Authentique (Chute d'eau, Parchemin & Bestiaire)
 
 | Écran Titre & Cascade Animée | Déroulement de la Légende d'Hyrule | Présentation de tous les Trésors | Défilé des Monstres (Ghini) |
