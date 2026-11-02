@@ -38,9 +38,10 @@ def read_audio_state(bin_path):
         'secret_chime_idx':    data[5],
         'secret_chime_pending':data[6],
         'sfx_rupee_pending':   data[7],
-        'cur_music_v1_note':   data[8],
-        'cur_music_v2_note':   data[9],
-        'cur_music_v3_note':   data[10]
+        'sfx_pending_idx':     data[8],
+        'cur_music_v1_note':   data[9],
+        'cur_music_v2_note':   data[10],
+        'cur_music_v3_note':   data[11]
     }
     return state
 
@@ -92,14 +93,14 @@ def run_test():
         f.write("g\n")
 
         # DUMP 1 : juste après les deux déclenchements
-        f.write(f's "/tmp/audio_dump_1.bin" 0 {audio_base:04x} {audio_base+10:04x}\n')
+        f.write(f's "/tmp/audio_dump_1.bin" 0 {audio_base:04x} {audio_base+11:04x}\n')
 
         # Avancer de 8 frames (durée du SFX rupee)
         for _ in range(8):
             f.write("g\n")
 
         # DUMP 2 : rupee doit être fini, chime doit avoir démarré !
-        f.write(f's "/tmp/audio_dump_2.bin" 0 {audio_base:04x} {audio_base+10:04x}\n')
+        f.write(f's "/tmp/audio_dump_2.bin" 0 {audio_base:04x} {audio_base+11:04x}\n')
 
         # Avancer de 20 frames (chime actif)
         for _ in range(20):
@@ -111,21 +112,21 @@ def run_test():
         f.write("g\n")
 
         # DUMP 3 : rupee_pending doit être 1, chime_active doit être 1
-        f.write(f's "/tmp/audio_dump_3.bin" 0 {audio_base:04x} {audio_base+10:04x}\n')
+        f.write(f's "/tmp/audio_dump_3.bin" 0 {audio_base:04x} {audio_base+11:04x}\n')
 
         # Avancer de 35 frames (fin du chime)
         for _ in range(35):
             f.write("g\n")
 
         # DUMP 4 : chime doit être fini, rupee doit avoir démarré à la suite !
-        f.write(f's "/tmp/audio_dump_4.bin" 0 {audio_base:04x} {audio_base+10:04x}\n')
+        f.write(f's "/tmp/audio_dump_4.bin" 0 {audio_base:04x} {audio_base+11:04x}\n')
 
         # Avancer de 10 frames (fin du rupee)
         for _ in range(10):
             f.write("g\n")
 
         # DUMP 5 : tout libre
-        f.write(f's "/tmp/audio_dump_5.bin" 0 {audio_base:04x} {audio_base+10:04x}\n')
+        f.write(f's "/tmp/audio_dump_5.bin" 0 {audio_base:04x} {audio_base+11:04x}\n')
         f.write("quit\n")
 
     cmd = [

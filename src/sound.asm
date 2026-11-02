@@ -85,6 +85,7 @@ secret_chime_timer:     !byte 0                 ; compte à rebours de frames pa
 secret_chime_idx:       !byte 0                 ; index de note du carillon (0..7)
 secret_chime_pending:   !byte 0                 ; 1 si le carillon attend la fin d'un son Voix 3 (clé/rupee)
 sfx_rupee_pending:      !byte 0                 ; 1 si le son de ramassage attend la fin du carillon
+sfx_pending_idx:        !byte 0                 ; index SFX+1 en attente dans la file pendant le carillon
 cur_music_v1_note:      !byte 0                 ; dernière note programmée Voix 1
 cur_music_v2_note:      !byte 0                 ; dernière note programmée Voix 2
 cur_music_v3_note:      !byte 0                 ; dernière note programmée Voix 3
@@ -152,6 +153,7 @@ sound_init:
         sta secret_chime_idx
         sta secret_chime_pending
         sta sfx_rupee_pending
+        sta sfx_pending_idx
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
@@ -244,6 +246,12 @@ music_play:
         beq .already_playing            ; Évite de redémarrer le morceau si déjà en cours
         sta current_music
 
+        lda #15
+        sta SID1_VOLUME
+        lda dual_sid_enabled
+        beq +
+        sta SID2_VOLUME
++
         lda #0
         sta music_part
         sta music_step
@@ -255,6 +263,7 @@ music_play:
         sta secret_chime_idx
         sta secret_chime_pending
         sta sfx_rupee_pending
+        sta sfx_pending_idx
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
@@ -421,6 +430,7 @@ music_stop:
         sta secret_chime_idx
         sta secret_chime_pending
         sta sfx_rupee_pending
+        sta sfx_pending_idx
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
@@ -531,6 +541,14 @@ restore_music_voice_2:
         sta SID1_V2_CTRL
         lda dual_sid_enabled
         beq +
+        lda #$00
+        sta SID2_V2_PW_LO
+        lda #$08
+        sta SID2_V2_PW_HI
+        lda #$09
+        sta SID2_V2_AD
+        lda #$c0
+        sta SID2_V2_SR
         lda music_note_freq_lo,x
         clc
         adc #2
@@ -606,6 +624,10 @@ restore_music_voice_3:
 
         lda dual_sid_enabled
         beq +
+        lda #$09
+        sta SID2_V3_AD
+        lda #$e2
+        sta SID2_V3_SR
         lda music_note_freq_lo,x
         sta SID2_V3_FREQ_LO
         lda music_note_freq_hi,x
@@ -946,11 +968,17 @@ music_update:
         bcs .v2_hold_uw
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
-        jmp .skip_v2
+        lda dual_sid_enabled
+        beq +
+        sta SID2_V2_CTRL
++       jmp .skip_v2
 .v2_hold_uw:
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V2_CTRL
-        jmp .skip_v2
+        lda dual_sid_enabled
+        beq +
+        sta SID2_V2_CTRL
++       jmp .skip_v2
 
 .v2_new_note:
         lda music_note_freq_lo,x
@@ -1069,6 +1097,9 @@ music_update:
         beq .to_skip_v3                 ; Percussion n'est pas maintenue
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
+        lda dual_sid_enabled
+        beq .to_skip_v3
+        sta SID2_V3_CTRL
 .to_skip_v3:
         jmp .skip_v3
 
@@ -1291,12 +1322,24 @@ sound_triforce_fanfare:
         jmp music_play
 
 play_sfx_v3:
-        lda dual_sid_enabled
-        bne .dual
+        lda secret_chime_active
+        beq .play_now
+        ; Carillon actif : on met le SFX en attente dans la file au lieu de voler Voix 3
+        cpx #SFX_RUPEE
+        bne +
+        lda #1
+        sta sfx_rupee_pending
++       inx
+        stx sfx_pending_idx
+        ldx sfx_saved_x
+        rts
+
+.play_now:
         lda #3
         sta sfx_voice
         lda sfx_timer_tbl,x
         sta sfx_timer
+
         lda sfx_freq_lo_tbl,x
         sta SID1_V3_FREQ_LO
         lda sfx_freq_hi_tbl,x
@@ -1317,9 +1360,10 @@ play_sfx_v3:
         nop
         lda sfx_ctrl_tbl,x
         sta SID1_V3_CTRL
-        ldx sfx_saved_x
-        rts
-.dual:
+
+        lda dual_sid_enabled
+        beq .sfx_v3_done
+
         lda sfx_freq_lo_tbl,x
         sta SID2_V3_FREQ_LO
         lda sfx_freq_hi_tbl,x
@@ -1340,6 +1384,8 @@ play_sfx_v3:
         nop
         lda sfx_ctrl_tbl,x
         sta SID2_V3_CTRL
+
+.sfx_v3_done:
         ldx sfx_saved_x
         rts
 
@@ -1426,6 +1472,8 @@ update_secret_chime:
 
         lda dual_sid_enabled
         beq +
+        lda #15
+        sta SID2_VOLUME
         lda secret_chime_lo,x
         sta SID2_V2_FREQ_LO
         lda secret_chime_hi,x
@@ -1467,7 +1515,17 @@ update_secret_chime:
         beq +
         lda #0
         sta sfx_rupee_pending
+        sta sfx_pending_idx
         jsr sound_rupee
+        rts
++
+        ; Tout autre SFX en attente dans la file (épée, monstre, etc.)
+        ldx sfx_pending_idx
+        beq +
+        lda #0
+        sta sfx_pending_idx
+        dex                             ; Restaure l'index SFX original
+        jsr play_sfx_v3
 +       rts
 
 .chime_done:

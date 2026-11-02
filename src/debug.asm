@@ -1113,6 +1113,11 @@ ovl_debug_exec_hook_cmd:
         bne +
         jsr sound_rupee
         jsr sound_secret_chime
+        jmp .hook_done
++       cmp #4
+        bne +
+        jsr sound_sword
+        jmp .hook_done
 +       jmp .hook_done
 
 .hook_full_gear:

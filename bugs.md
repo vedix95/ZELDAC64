@@ -236,3 +236,23 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Toujours préserver l'accès natif direct aux registres SID en jeu (relocalisation au boot uniquement).
   - Maintenir les sprites du menu intro sous le plafond strict de `$1000` en banque 0 VIC-II.
 
+---
+
+## 16. Dual SID Stéréo : Perte de l'Épée et Déconnexion des Canaux Stéréo en Donjon
+* **Fichiers concernés** : [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm), [tools/test_dual_sid_dungeon.py](file:///home/vedix/Documents/C64/zelda/tools/test_dual_sid_dungeon.py)
+* **Symptômes** :
+  1. En mode 2 SID Stéréo ($D420/$D500/$DF00), les coups d'épée (`sound_sword`) et plusieurs bruitages devenaient totalement inaudibles.
+  2. Les voix musicales d'harmonie (Voix 2) et de basse (Voix 3) perdaient leur canal stéréo sur la 2e puce SID lors des pas de maintien (`HOLD $FE`), très fréquents dans la partition des Donjons, dégradant la spatialisation.
+  3. La file d'attente anti-conflit (ramassage d'objet vs carillon secret) ne s'activait pas en mode Dual SID, provoquant des conflits audio simultanés.
+* **Causes racines** :
+  1. *Asymétrie et omission de `sfx_timer` dans `play_sfx_v3`* : Lorsque `dual_sid_enabled == 1`, la branche `.dual` écrivait uniquement sur `SID2_V3` sans jamais renseigner `sfx_voice = 3` ni `sfx_timer = sfx_timer_tbl,x`. Dès la frame suivante, le moteur musical `apply_music_step` ignorait la présence d'un SFX et réécrivait immédiatement la note de basse sur `SID2_V3`, étouffant le bruitage d'épée en moins de 20 ms. De plus, sur `SID1_V3`, aucun son d'épée n'était envoyé.
+  2. *Déconnexion de `SID2` sur les pas de maintien (`$FE`)* : Dans `apply_music_step`, les pas de maintien (`cpx #$fe`) exécutaient `sta SID1_V2_CTRL` et `sta SID1_V3_CTRL` sans répercuter le maintien Gate ON sur `SID2_V2_CTRL` et `SID2_V3_CTRL`. En Donjon, où un pas sur deux est un `$FE`, la 2e puce SID s'éteignait immédiatement.
+  3. *Absence de reprogrammation ADSR/PW sur `SID2` lors des restaurations* : Dans `restore_music_voice_2` (`.res_v2_uw`) et `restore_music_voice_3`, la largeur d'impulsion et les registres ADSR n'étaient reprogrammés que sur `SID1`.
+* **Correctif appliqué** :
+  1. *Refonte symétrique de `play_sfx_v3`* : Programmation inconditionnelle de `sfx_voice = 3` et `sfx_timer = sfx_timer_tbl,x` pour tous les modes. Émission du SFX sur `SID1_V3` et, si `dual_sid_enabled == 1`, sur `SID2_V3` en stéréo intégrale, avec protection matérielle continue contre l'écrasement par la musique.
+  2. *Maintien continu de Gate ON sur `SID2` lors des pas `$FE`* : Ajout systématique de l'activation `SID2_V2_CTRL` et `SID2_V3_CTRL` lors des maintiens musicaux.
+  3. *Restauration complète de la configuration matérielle SID2* : Réinitialisation propre de la PW et de l'enveloppe ADSR sur `SID2` lors des retours de SFX/carillons.
+* **Règle anti-régression** :
+  - Tout effet sonore doit obligatoirement armer `sfx_timer` et `sfx_voice`, y compris en mode Dual SID.
+  - Toute écriture de maintien (`Gate ON`) ou de restauration de canal sur `SID1` doit être symétriquement dupliquée sur `SID2` lorsque `dual_sid_enabled != 0`.
+
