@@ -86,13 +86,13 @@ items_use_b:
         jmp spawn_candle
 +       cmp #4
         bne +
-        jmp use_food
+        jmp use_whistle
 +       cmp #5
         bne +
-        jmp use_potion
+        jmp use_food
 +       cmp #6
         bne +
-        jmp use_whistle
+        jmp use_potion
 +       jmp use_wand
 
 use_food:

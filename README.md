@@ -14,9 +14,9 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ## 💾 Téléchargement Direct & Releases
 
-### Latest Release (v0.16)
+### Latest Release (v0.17)
 
-- **[Télécharger l'image cartouche v0.16 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)** - Menus Héroïques, Triforce assemblée en Sprites Matériels, Biomes réels sur la Carte du Monde et File Audio Dual SID Stéréo.
+- **[Télécharger l'image cartouche v0.17 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)** - Grande Pyramide de la Triforce Authentique NES (96x42), Cadres d'Inventaire Redimensionnés sans Débordement, 6 Reliques Passives, Clé Magique Lion et Clignotement de Link Monocase.
 - Previous releases are available in the [GitHub Releases](https://github.com/vedix95/ZELDAC64/releases) section.
 
 ---
@@ -128,16 +128,21 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
 
 ---
 
-## Points forts & Fonctionnalités (Nouveautés v0.16 — Menus Héroïques, Triforce en Sprites, Biomes Carte & Stéréo Dual SID)
+## Points forts & Fonctionnalités (Nouveautés v0.17 — Grande Pyramide Triforce NES, Restructuration Menu, Clé Magique & Carte Monocase)
 
-- 👑 **Triforce de la Sagesse Assemblée en Sprites Matériels VIC-II (Page 2: TRIFORCE)** :
-  - **Assemblage physique 1:1 en 8 fragments de sprites** : Éradication complète des anciens caractères ASCII ; chaque fragment de la Triforce de la Sagesse (Donjons 1 à 8) est désormais matérialisé par un fragment de sprite matériel C64 dédié qui s'enclenche au pixel près pour reformer la Grande Triforce dorée étincelante (48×42 pixels hires).
-  - **Dais de pierre taillée & Scintillement dynamique** : Emplacements numérotés [1] à [8] en pierre sombre indiquant les reliques encore manquantes, étincelles d'or pulsantes à 50 Hz et messages de quête dynamiques.
-- 🏛️ **Refonte Visuelle des Écrans d'Inventaire & Équipements Héroïques (Pages 1 & 3)** :
-  - **Fin de l'écrasement des sprites & disposition aérée** : Grilles d'objets et d'équipements restructurées avec un espacement royal de 32 pixels, supprimant toute déformation visuelle.
-  - **Frises architecturales héroïques & cadres de menu dédiés** : Remplacement des bordures ASCII par des glyphes graphiques personnalisés intégrés dans le jeu de caractères (`CHAR_HERO_*` et `CHAR_SLOT_*` : corniche cloutée de diamants, séparateurs doubles, cadres à double gorge).
-  - **Sprites d'objets et reliques dédiés** : Nouvelles silhouettes précises pour l'Épée Blanche/Magique, le Grand Bouclier Magique, l'Anneau Bleu, le Bracelet de Force, le Radeau de Transport, l'Échelle, la Clef Magique et le Livre de Magie.
-- 🗺️ **Carte du Monde Topologique 16×8 aux 6 Biomes Authentiques NES (Page 4: MAP)** :
+- 👑 **Grande Pyramide de la Triforce Authentique NES (Page 2: TRIFORCE)** :
+  - **Assemblage physique complet 96×42 pixels** : Émulation exacte du schéma original de *The Legend of Zelda* NES (`inventaire.png`). La Grande Pyramide est assemblée par 8 sprites matériels VIC-II biseautés et étincelants en or pur (`COL_YELLOW`, `COL_ORANGE`, `COL_WHITE`), s'illuminant au fur et à mesure de la conquête des 8 Donjons.
+  - **Typographie et socle officiels** : Label officiel `"TRIFORCE"` centré à la ligne 14 sous la pyramide, indicateurs de progression par niveau [1]..[8] et compteur de fragments dynamiques.
+- 🏛️ **Restructuration Exacte du Menu d'Objets & Reliques Passives (Page 1: ITEMS)** :
+  - **Ajustement parfait du cadre sans débordement** : Boîte des armes B redimensionnée avec précision à 18 colonnes (Cols 13..31), offrant une marge de sécurité de 4 à 8 pixels : aucun sprite ne déborde ni ne touche les bordures.
+  - **Disposition fidèle à `inventaire.png`** : Cadre dédié à l'arme équipée à gauche (`"INVENTORY"`, `"USE B BUTTON / FOR THIS"`), boîte spacieuse des 8 armes utilisables à droite et rangée d'honneur supérieure accueillant les 6 Reliques Passives (Radeau, Livre, Anneau, Échelle, Clé Magique, Bracelet) avec leurs glyphes et couleurs dynamiques.
+  - **Navigation 2D directionnelle au Joystick** : Déplacement libre Haut / Bas / Gauche / Droite dans la grille 4×2 d'objets.
+  - **Ordre d'arsenal officiel NES** : Boomerang, Bombe, Arc & Flèche, Bougie, Flûte, Nourriture, Potion de Vie, Baguette Magique.
+- 🗝️ **Clé Magique Dédiée (Lion Key) & Bannissement de la Petite Clé** :
+  - Intégration du sprite haute résolution à tête de lion authentique NES (`sprite_link_item_magic_key`) pour la Clé Magique dans la liste des reliques passives et équipements permanents, éradiquant l'affichage erroné de la petite clé de donjon.
+- 🗺️ **Carte du Monde Topologique 16×8 avec Clignotement Link Monocase (Page 4: MAP)** :
+  - **Correction du clignotement double case** : Chaque salle de la carte Overworld est désormais matérialisée par un bloc unique délimité par un espace, garantissant que le clignotement de la position de Link n'affecte strictement qu'une seule case nette.
+  - **Lecture intuitive des 6 biomes** : Couleurs topologiques en jeu direct (Montagne, Forêt, Océan/Rivières, Désert, Cimetière, Plaine).
   - **Rendu topologique fidèle de l'Overworld (128 salles)** : Remplacement de l'ancien damier monochrome vert par les 6 vraies teintes de biomes officielles extraites directement de `assets/world.txt` et de la ROM originale :
     - 🌊 **Eau, Lacs & Océan (`COL_LIGHT_BLUE`)** : Rivière Zora, cascades, Lac Hylia et grand océan oriental.
     - 🌲 **Forêts & Bois Perdus (`COL_GREEN`)** : Frondaisons épaisses et clairières sylvestres.

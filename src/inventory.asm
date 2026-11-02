@@ -222,7 +222,7 @@ update_items_page:
 
         ; Bouton A : Cycle l'objet
         lda btn_a_pressed
-        beq .check_joy_horiz
+        beq .check_joy_vert
         lda hud_selected_b
         cmp #7
         beq .wrap_a_min
@@ -236,17 +236,46 @@ update_items_page:
         jsr inv_update_cursor
         rts
 
+.check_joy_vert:
+        ; Joystick HAUT (navigation grille 4x2)
+        lda joy_pressed
+        and #JOY_UP
+        beq .check_down
+        lda hud_selected_b
+        cmp #4
+        bcc .check_down
+        sec
+        sbc #4
+        sta hud_selected_b
+        jmp .sel_changed
+
+.check_down:
+        ; Joystick BAS (navigation grille 4x2)
+        lda joy_pressed
+        and #JOY_DOWN
+        beq .check_joy_horiz
+        lda hud_selected_b
+        cmp #4
+        bcs .check_joy_horiz
+        clc
+        adc #4
+        sta hud_selected_b
+        jmp .sel_changed
+
 .check_joy_horiz:
         ; Joystick GAUCHE
         lda joy_pressed
         and #JOY_LEFT
         beq .check_right
         lda hud_selected_b
+        and #3
         beq .wrap_left
         dec hud_selected_b
         jmp .sel_changed
 .wrap_left:
-        lda #7
+        lda hud_selected_b
+        clc
+        adc #3
         sta hud_selected_b
         jmp .sel_changed
 
@@ -256,12 +285,15 @@ update_items_page:
         and #JOY_RIGHT
         beq .items_idle
         lda hud_selected_b
-        cmp #7
+        and #3
+        cmp #3
         beq .wrap_right
         inc hud_selected_b
         jmp .sel_changed
 .wrap_right:
-        lda #0
+        lda hud_selected_b
+        sec
+        sbc #3
         sta hud_selected_b
 
 .sel_changed:
@@ -366,7 +398,5 @@ map_update_link_color:
         adc #4
         tay
         lda map_link_color
-        sta (ZP_COL),y
-        iny
         sta (ZP_COL),y
         rts

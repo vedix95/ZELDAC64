@@ -94,8 +94,8 @@ NPC_NAMES = [
     'item_shield', 'item_ring',
     'item_food', 'item_potion', 'item_whistle', 'item_wand',
     'item_raft', 'item_stepladder',
-    'item_sword', 'item_bracelet', 'item_book',
-    'tri_p1', 'tri_p2', 'tri_p3', 'tri_p4', 'tri_p5'
+    'item_sword', 'item_bracelet', 'item_book', 'item_magic_key',
+    'tri_p1', 'tri_p2', 'tri_p3', 'tri_p4', 'tri_p5', 'tri_p6', 'tri_p7', 'tri_p8'
 ]
 
 def encode_sprite(frame):
@@ -213,11 +213,15 @@ def main():
         ("sprite_link_item_sword", "SPR_NPC_ITEM_SWORD"),
         ("sprite_link_item_bracelet", "SPR_NPC_ITEM_BRACELET"),
         ("sprite_link_item_book", "SPR_NPC_ITEM_BOOK"),
+        ("sprite_link_item_magic_key", "SPR_NPC_ITEM_MAGIC_KEY"),
         ("sprite_tri_p1", "SPR_NPC_TRI_P1"),
         ("sprite_tri_p2", "SPR_NPC_TRI_P2"),
         ("sprite_tri_p3", "SPR_NPC_TRI_P3"),
         ("sprite_tri_p4", "SPR_NPC_TRI_P4"),
         ("sprite_tri_p5", "SPR_NPC_TRI_P5"),
+        ("sprite_tri_p6", "SPR_NPC_TRI_P6"),
+        ("sprite_tri_p7", "SPR_NPC_TRI_P7"),
+        ("sprite_tri_p8", "SPR_NPC_TRI_P8"),
         ("sprite_link_item_get", "SPR_COMMON_ITEM_GET"),
         ("sprite_enemies_moblin_down_0", "SPR_NPC_MOBLIN_DOWN_0"),
     ]

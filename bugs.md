@@ -259,3 +259,33 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Ne jamais tester `dual_sid_enabled` avec `lda` immédiatement avant une écriture dans un registre SID2 (`sta SID2_*`) : toujours utiliser `ldy dual_sid_enabled` pour préserver l'accumulateur.
   - Toute écriture de maintien (`Gate ON`) ou de restauration de canal sur `SID1` doit être symétriquement dupliquée sur `SID2` lorsque `dual_sid_enabled != 0`.
 
+---
+
+## 17. Refonte Graphique et Géométrique de l'Inventaire : Grand Triangle de la Triforce, Ajustement du Cadre des Objets et Correction du Clignotement de Link
+* **Fichiers concernés** : [src/inventory.asm](file:///home/vedix/Documents/C64/zelda/src/inventory.asm), [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm), [src/items.asm](file:///home/vedix/Documents/C64/zelda/src/items.asm), [src/hud.asm](file:///home/vedix/Documents/C64/zelda/src/hud.asm), [src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm), [assets/extra.txt](file:///home/vedix/Documents/C64/zelda/assets/extra.txt), [assets/link.txt](file:///home/vedix/Documents/C64/zelda/assets/link.txt), [tools/build_sprite_banks.py](file:///home/vedix/Documents/C64/zelda/tools/build_sprite_banks.py)
+* **Symptômes** :
+  1. *Triforce déformée et trop petite* : Sur la page Triforce, l'affichage utilisait un piédestal ASCII et de minuscules sprites 12x21 superposés, sans ressemblance avec la pyramide officielle de *The Legend of Zelda* (NES).
+  2. *Sprites d'objets dépassant du cadre et cadre surdimensionné* : Le cadre des armes utilisables occupait 26 colonnes (Cols 12..37), mais les sprites de la rangée 2 (Y=132..153) débordaient sur la bordure inférieure (raster 146..154). De plus, les 6 reliques passives n'étaient pas affichées sur l'écran d'inventaire principal contrairement à `inventaire.png`.
+  3. *Clignotement de Link sur 2 cases de la carte* : Sur la Page 3 (Carte 16x8), chaque salle occupait 2 caractères `HUD_MAP_ACTIVE` côte à côte et `map_update_link_color` écrivait sur `y` et `y+1`, faisant clignoter 2 cases adjacentes au lieu d'une seule salle nette.
+  4. *Inversion d'objets et icône de clé parasite* : La clé de donjon (`sprite_link_item_key`) était affichée à tort dans les reliques passives au lieu de la Clé Magique (Lion Key), et l'ordre des armes en rangée 2 inversait la Flûte et la Nourriture.
+* **Causes racines & Correctifs appliqués** :
+  1. *Assemblage Matériel de la Grande Triforce (96x42 pixels)* :
+     - Remplacement complet de la page 1 par un grand triangle équilatéral centré (Cols 14..25, Rows 7..12).
+     - Modélisation des 8 fragments sous forme de 8 sprites matériels VIC-II dédiés (`sprite_tri_p1` à `sprite_tri_p8`) avec biseautage étincelant (`COL_YELLOW`, `COL_ORANGE`, `COL_WHITE`).
+     - Activation directe par masque matériel `player_triforce_pieces -> VIC_SPRITE_EN`.
+     - Intégration du label officiel `"TRIFORCE"` centré à la ligne 14 sous la pyramide.
+  2. *Redimensionnement Harmonieux du Cadre et Intégration des 6 Reliques Passives* :
+     - Redimensionnement du cadre des armes à 18 colonnes (Cols 13..31) et Y=118 / Y=142 avec marges internes généreuses ($\ge 4$ pixels haut, $\ge 8$ pixels bas) : zéro chevauchement.
+     - Positionnement de l'arme équipée dans le cadre gauche à X=52, Y=100 avec `"INVENTORY"` en haut et `"USE B BUTTON / FOR THIS"` en bas.
+     - Affichage d'une rangée dédiée aux 6 Reliques Passives (Radeau, Livre, Anneau, Échelle, Clé Magique, Bracelet) à la ligne 6 avec les glyphes résidents du charset (120, 175, 173, 121, 99, 122) et coloration dynamique (actif vs `COL_DARK_GREY`).
+     - Navigation 2D directionnelle au Joystick (Haut, Bas, Gauche, Droite) dans la grille 4x2.
+  3. *Unicité de Case pour la Carte du Monde* :
+     - Rendu de chaque salle sur 1 seul caractère de bloc (`(ZP_SCR),y = HUD_MAP_ACTIVE`), la colonne suivante (`y+1`) étant systématiquement un espace `' '` neutre.
+     - Restriction de `map_update_link_color` à `sta (ZP_COL),y` sans incrémenter vers `y+1`.
+  4. *Sprites Authentiques NES 1986 & Clé Magique Dédiée* :
+     - Extraction et intégration du sprite authentique de la Clé Magique (`item_magic_key` / `sprite_link_item_magic_key`) dans `assets/extra.txt` et banque cartouche 13.
+     - Réalignement fidèle de la grille d'objets B sur la ROM NES : Boomerang, Bombe, Arc, Bougie, Flûte, Nourriture, Potion, Baguette.
+* **Règle anti-régression** :
+  - Les sprites d'inventaire dans un cadre doivent obligatoirement respecter une marge interne minimale de 4 pixels de chaque côté pour éviter tout clippage avec les bordures de caractères VIC-II.
+  - Sur la carte 16x8, une salle ne doit jamais occuper plus d'un bloc de caractère actif afin de préserver l'indépendance visuelle de chaque case lors du clignotement de la position de Link.
+

@@ -3068,7 +3068,7 @@ irq_top:
         cmp #INV_PAGE_ITEMS
         bne .skip_top
         jsr $a009                      ; inv_p0_irq_row1 dans l'overlay inventaire
-        lda #118                        ; Raster entre Y=104 et Y=132
+        lda #139                        ; Raster entre Y=118 (fin=139) et Y=142
         sta VIC_RASTER
         lda #$0c                        ; irq_p0_row2 vecteur ($A00C)
         sta $0314

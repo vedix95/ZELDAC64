@@ -69,9 +69,9 @@ b_item_names:
         !text "BOMB"
         !text "BOW "
         !text "CAND"
+        !text "FLUT"
         !text "FOOD"
         !text "POTI"
-        !text "FLUT"
         !text "WAND"
 
 ; ---------------------------------------------------------------------------
