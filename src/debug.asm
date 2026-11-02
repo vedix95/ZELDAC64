@@ -1074,20 +1074,46 @@ dbg_sh1: !text "SMALL  ", 0
 ovl_debug_exec_hook_cmd:
         lda debug_hook_cmd
         cmp #1
-        beq .hook_warp_ow
-        cmp #2
-        beq .hook_warp_dung
-        cmp #3
-        beq .hook_open_inv
-        cmp #4
-        beq .hook_open_debug
-        cmp #5
-        beq .hook_use_item
-        cmp #6
-        beq .hook_force_joy
-        cmp #7
-        beq .hook_full_gear
+        bne +
+        jmp .hook_warp_ow
++       cmp #2
+        bne +
+        jmp .hook_warp_dung
++       cmp #3
+        bne +
+        jmp .hook_open_inv
++       cmp #4
+        bne +
+        jmp .hook_open_debug
++       cmp #5
+        bne +
+        jmp .hook_use_item
++       cmp #6
+        bne +
+        jmp .hook_force_joy
++       cmp #7
+        bne +
+        jmp .hook_full_gear
++       cmp #8
+        bne +
+        jmp .hook_test_sound
++       jmp .hook_done
+
+.hook_test_sound:
+        lda debug_hook_arg
+        cmp #1
+        bne +
+        jsr sound_rupee
         jmp .hook_done
++       cmp #2
+        bne +
+        jsr sound_secret_chime
+        jmp .hook_done
++       cmp #3
+        bne +
+        jsr sound_rupee
+        jsr sound_secret_chime
++       jmp .hook_done
 
 .hook_full_gear:
         jsr debug_cheat_full_gear

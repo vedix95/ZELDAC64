@@ -59,8 +59,9 @@ else:
 # 1.2 Test dynamique sous VICE : Warp Donjon 4, salle $41
 mon_file_d4 = "/tmp/test_dungeon4_41.mon"
 with open(mon_file_d4, "w") as f:
-    f.write("bk 299b\ng\ndel 1\n> 0816 01\n") # Pass intro
-    f.write(f"bk {main_addr:04x}\ng\ndel 2\n") # Reach main_loop
+    f.write("bk 5628\ng\ndel 1\n> 0816 01\n") # Pass SID setup menu
+    f.write("bk 299b\ng\ndel 2\n> 0816 01\n") # Pass intro
+    f.write(f"bk {main_addr:04x}\ng\ndel 3\n") # Reach main_loop
     # Warp vers Donjon 4 (arg=4), Salle $41 (arg2=$41)
     f.write(f"> {arg_addr:04x} 04\n")
     f.write(f"> {arg2_addr:04x} 41\n")
@@ -70,7 +71,7 @@ with open(mon_file_d4, "w") as f:
     f.write(f"bk {apply_top_addr:04x}\n")
     f.write("g\n") # S'arrête dès que apply_top_sprites est appelé
     f.write(f'screenshot "{os.path.join(OUT_DIR, "11_dungeon4_room41_zols.png")}" 2\n')
-    f.write("del 3\n")
+    f.write("del 4\n")
     for _ in range(10):
         f.write("g\n")
     f.write("q\n")
@@ -93,8 +94,9 @@ print("\n[TEST 2] Rendu visuel de la bombe en 3 phases & Hardware scaling désac
 
 mon_file_bomb = "/tmp/test_bomb_phases.mon"
 with open(mon_file_bomb, "w") as f:
-    f.write("bk 299b\ng\ndel 1\n> 0816 01\n")
-    f.write(f"bk {main_addr:04x}\ng\ndel 2\n")
+    f.write("bk 5628\ng\ndel 1\n> 0816 01\n") # Pass SID setup menu
+    f.write("bk 299b\ng\ndel 2\n> 0816 01\n") # Pass intro
+    f.write(f"bk {main_addr:04x}\ng\ndel 3\n") # Reach main_loop
     f.write(f"> {cmd_addr:04x} 07\n") # All gear
     f.write("g\n")
     # Poser bombe

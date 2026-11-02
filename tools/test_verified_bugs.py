@@ -28,16 +28,22 @@ py_addr = labels['player_y']
 
 mon_file = "/tmp/test_zelda_fixes.mon"
 with open(mon_file, "w") as f:
+    # 0. Menu de configuration SID : valider Mono (Option 1)
+    f.write("bk 5628\n")
+    f.write("g\n")
+    f.write("del 1\n")
+    f.write("> 0816 01\n")
+
     # 1. Démarrage cartouche : passer l'intro via btn_a_pressed à $299B
     f.write("bk 299b\n")
     f.write("g\n")
-    f.write("del 1\n")
+    f.write("del 2\n")
     f.write("> 0816 01\n")
 
     # 2. Arrivée dans main_loop ($1045)
     f.write(f"bk {main_addr:04x}\n")
     f.write("g\n")
-    f.write("del 2\n")
+    f.write("del 3\n")
 
     # 3. Donner tout l'équipement (bombes, etc.)
     f.write(f"> {cmd_addr:04x} 07\n")

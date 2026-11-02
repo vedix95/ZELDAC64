@@ -176,3 +176,63 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Ne jamais dépasser `$1000` pour la fin de `src/sprites.asm`.
   - Préserver les 7 lobes de la rosace lors de toute retouche graphique de l'explosion.
 
+---
+
+## 13. Moteur Audio SID : Perte de Voix, Monophonie et Notes Suspendues Donjon/Overworld
+* **Fichiers concernés** : [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm), [src/items.asm](file:///home/vedix/Documents/C64/zelda/src/items.asm), [tools/test_4_bugs_stabilisation.py](file:///home/vedix/Documents/C64/zelda/tools/test_4_bugs_stabilisation.py)
+* **Symptôme** : Un événement sonore en donjon (déverrouillage d'une porte, ramassage d'une clé/rubis, volets de salle ou défaite de monstres) provoquait la coupure des voix d'harmonie/basse (Voix 2 et/ou Voix 3) ou la suspension d'une note drone, ne laissant qu'une seule note/voix fonctionnelle, persistant même après le retour dans l'Overworld.
+* **Cause racine** : 
+  1. *Timing Gate OFF $\rightarrow$ Gate ON (Horloge interne SID)* : Les instructions consécutives `sta SID_CTRL` (Gate=0) puis immédiatement `sta SID_CTRL` (Gate=1) ne laissaient le signal Gate bas que pendant 4 à 6 cycles CPU. Le diviseur d'horloge du générateur d'enveloppe ADSR (MOS 6581/8580) n'échantillonne que toutes les 16 périodes. Dans 62.5% des cas, la coupure Gate=0 était ratée ; l'enveloppe tombée à Release=0 ne réarmait jamais son Attack et restait muette de façon permanente.
+  2. *Carillon secret (`update_secret_chime`) dans `items_update` au lieu de l'interruption raster 50 Hz* : Lors d'une transition d'écran (porte franchie) ou d'un affichage de sous-écran, la boucle principale ne tournait plus dans `STATE_PLAYING`, figeant `update_secret_chime` en plein milieu des 8 notes du carillon tandis que `music_update` continuait en IRQ avec `secret_chime_active == 1`.
+  3. *Désynchronisation de `cur_music_v2_note` et déclenchement aveugle sur HOLD ($FE)* : Pendant l'activité du carillon, `cur_music_v2_note` n'était pas mis à jour. Sur un pas `$FE`, `v2_play` forçait Gate ON sans vérifier `cur_music_v2_note` et sans réécrire la fréquence, réactivant la voix sur la dernière fréquence aiguë laissée par le carillon ($1DA0 / 1390 Hz).
+  4. *Initialisation précipitée de `music_play` avec Gate ON* : Dans `.init_overworld_inst` et `.init_dungeon_inst`, les 3 voix étaient activées avec Gate ON avant même que le premier pas musical (step 0) n'ait programmé les fréquences, produisant des bruits parasites ou des notes figées au redémarrage d'un thème.
+* **Correction** : 
+  1. Insertion d'une pause matérielle calibrée ($\ge 16$ cycles CPU, 8 `nop`) entre chaque mise à 0 de Gate et son activation montante, garantissant mathématiquement l'échantillonnage par le diviseur SID sur chaque réarmement ADSR.
+  2. Migration complète de `update_secret_chime`, `sound_secret_chime` et des tables de fréquences dans [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm), exécuté de manière synchrone et inconditionnelle à 50 Hz dans l'interruption `music_update`.
+  3. Mise à jour continue de `cur_music_v2_note` sur chaque pas de partition même lorsque le carillon est actif, et ajout d'un garde-fou dans `.v2_play` n'activant Gate sur un pas `$FE` que si `cur_music_v2_note != 0`.
+  4. Réinitialisation des registres de contrôle avec **Gate OFF** dans `music_play`, l'activation Gate ON n'intervenant qu'à la programmation des fréquences du pas 0 dans `apply_music_step`.
+* **Règle anti-régression** : 
+  - Toujours observer un délai minimal de 16 cycles d'horloge (ou un tick complet de trame) entre la coupure `Gate=0` et la montée `Gate=1` sur un canal SID.
+  - Tout effet sonore ou carillon multipasse doit progresser dans l'interruption raster (`music_update`) pour rester synchrone avec le matériel audio, indépendamment de l'état de jeu (`game_state`).
+  - Ne jamais forcer Gate ON sur un pas de maintien musical (`$FE`) si la note de la voix courante est nulle (`cur_music_vX_note == 0`).
+
+### Bug 14 : Conflit de Canaux Audio Simultanés (Ramassage Clé/Objet & Découverte Secret/Ouverture de Porte)
+* **Symptôme** : Dans le donjon, lorsqu'un joueur ramasse une clé tout en touchant une porte verrouillée (ou dans l'Overworld lors d'un ramassage simultané avec un secret), la musique de fond se dégrade et s'effondre en une note unique ("une seule note qui semble fonctionner"), persistant après l'ouverture ou lors du passage en Overworld.
+* **Cause racine** :
+  1. `dungeon_collect_drop` déclenche `sound_rupee` (Voix 3, durée 8 frames).
+  2. Dans la même frame de jeu, `dungeon_check_key_door` ouvre la porte et déclenche `sound_secret_chime` (Voix 2, durée 56 frames).
+  3. Les deux canaux musicaux (Voix 2 harmonie et Voix 3 basse) sont réquisitionnés simultanément, ne laissant que la Voix 1 en monophonie.
+  4. À la frame 8, la fin du son de clé tentait de restaurer la Voix 3 alors que la partition du Donjon contenait un silence ($00), laissant la Voix 3 coupée tandis que la Voix 2 jouait encore son carillon pour 48 frames, provoquant un vide sonore prolongé et une cacophonie lors des transitions de salle.
+* **Correctif appliqué** :
+  1. Implémentation d'une file d'attente audio séquentielle bidirectionnelle dans [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm) :
+     - Si un son court de ramassage (Voix 3) est en cours, `sound_secret_chime` est mis en attente (`secret_chime_pending = 1`). La Voix 2 continue de jouer le BGM sans perturbation.
+     - Dès que le son de ramassage se termine (frame 8), la Voix 3 est restaurée au BGM, et le carillon secret est automatiquement déclenché sur Voix 2.
+     - Inversement, si un son de ramassage est appelé pendant le carillon, il est mis en attente (`sfx_rupee_pending = 1`) et déclenché dès la fin du carillon après restauration de la Voix 2.
+  2. Réinitialisation inconditionnelle des drapeaux d'attente (`secret_chime_pending = 0`, `sfx_rupee_pending = 0`) dans `music_play`, `music_stop`, et `sound_init` pour éviter tout son parasite en changement de monde.
+  3. Validation automatisée complète via [tools/test_audio_queue_conflict.py](file:///home/vedix/Documents/C64/zelda/tools/test_audio_queue_conflict.py) sous VICE.
+* **Règle anti-régression** :
+  - Ne jamais autoriser deux effets sonores/fanfares majeurs à monopoliser simultanément les Voix 2 et 3 : toujours ordonnancer et sérialiser les sons via la file d'attente (`secret_chime_pending` / `sfx_rupee_pending`).
+  - Restaurer systématiquement le canal audio emprunté avant de lancer le son suivant dans la file.
+
+---
+
+## 15. Configuration Matérielle SID au Démarrage & Relocalisation Stéréo Dynamique
+* **Fichiers concernés** : [src/intro_main.asm](file:///home/vedix/Documents/C64/zelda/src/intro_main.asm), [src/intro_charset.asm](file:///home/vedix/Documents/C64/zelda/src/intro_charset.asm), [src/main.asm](file:///home/vedix/Documents/C64/zelda/src/main.asm), [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm)
+* **Contexte & Besoin** :
+  - Permettre aux utilisateurs sur matériel réel (C64 avec MixSID, Ultimate 64, Turbo Chameleon, etc.) ou émulateur (VICE) de choisir la configuration de leur système audio au boot froid de la cartouche : 1 SID Mono standard (compatible 100% C64 d'origine) ou 2 SID Stéréo à l'adresse de leur choix ($D420, $D500 ou $DF00).
+  - Présenter un menu visuel prestigieux avec un logo Triforce géant composé de sprites VIC-II matériels agrandis en couleur or (`COL_YELLOW = 7`) au sommet de l'écran, sans corrompre le chargen ni la RAM résidente.
+* **Architecture technique implémentée** :
+  1. *Menu de Sélection au Boot Froid* :
+     - Affichage avant l'intro cascade, proposant 4 options : Mono (1 SID standard), Stéréo $D420 (VICE / StereoSID), Stéréo $D500 (MixSID / SIDFx), Stéréo $DF00 (I/O 2 / Ultimate 64).
+     - Logo Triforce composé de 3 sprites matériels expansés (96x84 pixels) logés sous `$1000` (pointeur `$28`, `$0A00`), en conformité stricte avec la règle 7 de `AGENTS.md`.
+     - Navigation par Joystick (haut/bas/feu), Clavier (touches 1..4, Espace, Return) et temporisation de sécurité (auto-démarrage mono par défaut après ~10s d'inactivité).
+     - Bip sonore de confirmation sur Voix 1 respectant le palier $\ge 16$ cycles Gate 0 -> 1.
+  2. *Passage Cartouche $\rightarrow$ Jeu Résident ($0340 buffer cassette)* :
+     - Transmission des variables de configuration `selected_dual_sid` et `selected_sid2_addr_idx` au déballeur cartouche en `$0340`, qui les injecte en `$0811` et `$0812` dans le segment de tête de `zelda.prg`.
+  3. *Relocalisation Dynamique Zéro Overhead en RAM* :
+     - Appel de `sound_set_dual_sid_config` dès l'initialisation de `zelda.prg` : parcours des 79 instructions ciblant `$D420..$D438` dans le code audio résident ($89BC..$93A8) pour patcher in-situ l'octet d'adresse haute ($D4, $D5 ou $DF).
+     - En jeu à 50 Hz, aucune indirection ni saut conditionnel : l'exécution reste en instructions 4 cycles natives directes, garantissant 0 microseconde de perte de framerate.
+* **Règle anti-régression** :
+  - Toujours préserver l'accès natif direct aux registres SID en jeu (relocalisation au boot uniquement).
+  - Maintenir les sprites du menu intro sous le plafond strict de `$1000` en banque 0 VIC-II.
+

@@ -47,9 +47,6 @@ items_init:
         sta item_active
         sta item_state
         sta item_timer
-        sta secret_chime_active
-        sta secret_chime_timer
-        sta secret_chime_idx
         ; Masque tous les sprites de projectiles (bits 2..6)
         lda VIC_SPRITE_EN
         and #%10000011                  ; préserve Link (0) et Épée (1)
@@ -291,10 +288,6 @@ set_spawn_coords:
 ; items_update : mis à jour à chaque frame en jeu
 ; ---------------------------------------------------------------------------
 items_update:
-        lda secret_chime_active
-        beq +
-        jsr update_secret_chime
-+
         lda item_active
         bne +
         rts
@@ -1122,60 +1115,4 @@ record_room_secret_opened:
         ora overworld_secrets_opened,x
         sta overworld_secrets_opened,x
 +       rts
-
-; ---------------------------------------------------------------------------
-; sound_secret : déclenche le carillon triomphal de découverte secrète
-; ---------------------------------------------------------------------------
-sound_secret_chime:
-sound_secret:
-        lda #1
-        sta secret_chime_active
-        lda #0
-        sta secret_chime_idx
-        lda #1                          ; première note dès la prochaine frame
-        sta secret_chime_timer
-        rts
-
-update_secret_chime:
-        dec secret_chime_timer
-        bne .chime_done
-        lda #7                          ; 7 frames par note (~0.14s)
-        sta secret_chime_timer
-
-        ldx secret_chime_idx
-        cpx #8
-        bcs .stop_chime
-
-        lda secret_chime_lo,x
-        sta SID_V2_FREQ_LO
-        lda secret_chime_hi,x
-        sta SID_V2_FREQ_HI
-        lda #15
-        sta SID_VOLUME
-        lda #$03
-        sta SID_V2_AD
-        lda #$a4
-        sta SID_V2_SR
-        lda #%00010001                  ; Triangle + Gate ON
-        sta SID_V2_CTRL
-        inc secret_chime_idx
-        rts
-
-.stop_chime:
-        lda #%00010000                  ; Gate OFF
-        sta SID_V2_CTRL
-        lda #0
-        sta secret_chime_active
-        jsr restore_music_voice_2
-.chime_done:
-        rts
-
-secret_chime_lo:
-        !byte $1c, $bd, $d4, $e7, $2f, $91, $5d, $a0
-secret_chime_hi:
-        !byte $16, $14, $10, $0c, $0c, $11, $17, $1d
-
-secret_chime_active:    !byte 0
-secret_chime_timer:     !byte 0
-secret_chime_idx:       !byte 0
 

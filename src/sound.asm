@@ -80,9 +80,16 @@ music_delay:            !byte 0                 ; compte à rebours de frames av
 dual_sid_enabled:       !byte 0                 ; 0 = Single SID (standard), 1 = Dual SID (Stereo)
 sfx_timer:              !byte 0                 ; durée active de l'effet sonore (frames)
 sfx_voice:              !byte 0                 ; voix occupée par le SFX (1, 2 ou 3)
+secret_chime_active:    !byte 0                 ; 1 si le carillon triomphal est en cours
+secret_chime_timer:     !byte 0                 ; compte à rebours de frames par note du carillon
+secret_chime_idx:       !byte 0                 ; index de note du carillon (0..7)
+secret_chime_pending:   !byte 0                 ; 1 si le carillon attend la fin d'un son Voix 3 (clé/rupee)
+sfx_rupee_pending:      !byte 0                 ; 1 si le son de ramassage attend la fin du carillon
 cur_music_v1_note:      !byte 0                 ; dernière note programmée Voix 1
 cur_music_v2_note:      !byte 0                 ; dernière note programmée Voix 2
 cur_music_v3_note:      !byte 0                 ; dernière note programmée Voix 3
+
+sound_code_start:
 
 ; ---------------------------------------------------------------------------
 ; sound_init : Réinitialise les puces SID et prépare le moteur audio
@@ -95,56 +102,138 @@ sound_init:
         dex
         bpl -
 
-        ; Silence complet sur SID 2
+        ; Silence complet sur SID 2 si Dual SID actif
+        lda dual_sid_enabled
+        beq +
         ldx #24
         lda #0
 -       sta SID2_BASE,x
         dex
         bpl -
 
+        ; Volume maximum sur SID 2 si Dual SID actif
+        lda #15
+        sta SID2_VOLUME
++
+
         ; Volume maximum sur SID 1
         lda #15
         sta SID1_VOLUME
 
-        ; Détection / Initialisation Dual SID :
-        ; Si dual_sid_enabled est actif, active le volume sur SID 2
-        lda dual_sid_enabled
-        beq +
-        lda #15
-        sta SID2_VOLUME
-+
         ; Largeur d'impulsion initiale (50% square)
         lda #$00
         sta SID1_V1_PW_LO
         sta SID1_V2_PW_LO
-        sta SID2_V1_PW_LO
-        sta SID2_V2_PW_LO
         lda #$08
         sta SID1_V1_PW_HI
         sta SID1_V2_PW_HI
+
+        lda dual_sid_enabled
+        beq +
+        lda #$00
+        sta SID2_V1_PW_LO
+        sta SID2_V2_PW_LO
+        lda #$08
         sta SID2_V1_PW_HI
         sta SID2_V2_PW_HI
++
 
         lda #MUSIC_NONE
         sta current_music
+        sta saved_bg_music
         lda #0
         sta music_part
         sta music_step
         sta music_delay
         sta sfx_timer
         sta sfx_voice
+        sta secret_chime_active
+        sta secret_chime_timer
+        sta secret_chime_idx
+        sta secret_chime_pending
+        sta sfx_rupee_pending
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
         rts
 
 ; ---------------------------------------------------------------------------
-; sound_detect_dual_sid : Teste la présence d'une seconde puce SID en $D420
+; sound_set_dual_sid_config : Configure et relocalise dynamiquement le 2ème SID
+; Entrée :
+;   A = dual_sid (0 = Single SID Mono, 1 = Dual SID Stéréo)
+;   X = sid2_addr_idx (0 = $D420, 1 = $D500, 2 = $DF00)
+; ---------------------------------------------------------------------------
+sound_set_dual_sid_config:
+        sta dual_sid_enabled
+        bne +
+        rts
+
++       cpx #3
+        bcc +
+        ldx #0                          ; Défaut $D420 si index invalide
++
+        lda sid2_base_lo_tbl,x
+        sta .reloc_base_lo
+        lda sid2_base_hi_tbl,x
+        sta .reloc_base_hi
+
+        ; Relocalise tous les accès $D420..$D438 entre sound_code_start et sound_code_end
+        lda #<sound_code_start
+        sta ZP_SCR
+        lda #>sound_code_start
+        sta ZP_SCR+1
+
+.reloc_scan:
+        ldy #2
+        lda (ZP_SCR),y
+        cmp #$d4
+        bne .reloc_next
+
+        dey
+        lda (ZP_SCR),y
+        cmp #$20
+        bcc .reloc_next
+        cmp #$39
+        bcs .reloc_next
+
+        ; Match trouvé ! Opérande $D420..$D438
+        sec
+        sbc #$20                        ; Décalage registre $00..$18
+        clc
+.reloc_base_lo = * + 1
+        adc #$20
+        sta (ZP_SCR),y
+
+        iny
+.reloc_base_hi = * + 1
+        lda #$d4
+        sta (ZP_SCR),y
+
+.reloc_next:
+        inc ZP_SCR
+        bne +
+        inc ZP_SCR+1
++
+        lda ZP_SCR
+        cmp #<sound_code_end
+        lda ZP_SCR+1
+        sbc #>sound_code_end
+        bcc .reloc_scan
+        rts
+
+sid2_base_lo_tbl:
+        !byte $20, $00, $00
+sid2_base_hi_tbl:
+        !byte $d4, $d5, $df
+
+sound_set_sid2_volume:
+        sta SID2_VOLUME
+        rts
+
+; ---------------------------------------------------------------------------
+; sound_detect_dual_sid : Maintenu pour compatibilité
 ; ---------------------------------------------------------------------------
 sound_detect_dual_sid:
-        ; Mode 1 SID par defaut pour une fidelite maximale
-        lda #0
-        sta dual_sid_enabled
         rts
 
 ; ---------------------------------------------------------------------------
@@ -162,6 +251,10 @@ music_play:
         sta sfx_timer
         sta sfx_voice
         sta secret_chime_active
+        sta secret_chime_timer
+        sta secret_chime_idx
+        sta secret_chime_pending
+        sta sfx_rupee_pending
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
@@ -178,14 +271,6 @@ music_play:
 
 .init_overworld_inst:
         ; --- Instruments Overworld Authentiques ---
-        ; Couper d'abord le Gate pour garantir le réarmement ADSR 0 -> 1
-        lda #%01000000                  ; Pulse Gate OFF
-        sta SID1_V1_CTRL
-        lda #%00100000                  ; Sawtooth Gate OFF
-        sta SID1_V2_CTRL
-        lda #%00010000                  ; Triangle Gate OFF
-        sta SID1_V3_CTRL
-
         ; Voix 1 : Cuivre / Lead héroïque (Pulse 50%)
         lda #$00
         sta SID1_V1_PW_LO
@@ -195,7 +280,7 @@ music_play:
         sta SID1_V1_AD
         lda #$c2                        ; Sustain 12, Release 24ms
         sta SID1_V1_SR
-        lda #%01000001
+        lda #%01000000                  ; Pulse Gate OFF (attendre apply_music_step)
         sta SID1_V1_CTRL
 
         ; Voix 2 : Harmonie & Basse héroïque (Sawtooth chaud)
@@ -203,7 +288,7 @@ music_play:
         sta SID1_V2_AD
         lda #$a2                        ; Sustain 10, Release 24ms
         sta SID1_V2_SR
-        lda #%00100001
+        lda #%00100000                  ; Sawtooth Gate OFF (attendre apply_music_step)
         sta SID1_V2_CTRL
 
         ; Voix 3 : Basse héroïque marchante (Triangle pur)
@@ -211,7 +296,7 @@ music_play:
         sta SID1_V3_AD
         lda #$e2                        ; Sustain 14, Release 24ms
         sta SID1_V3_SR
-        lda #%00010001                  ; Triangle Gate ON
+        lda #%00010000                  ; Triangle Gate OFF (attendre apply_music_step)
         sta SID1_V3_CTRL
 
         ; Si Dual SID, configure SID 2 pour le chorus stéréo
@@ -225,33 +310,25 @@ music_play:
         sta SID2_V1_AD
         lda #$c2
         sta SID2_V1_SR
-        lda #%01000001
+        lda #%01000000
         sta SID2_V1_CTRL
         lda #$07
         sta SID2_V2_AD
         lda #$a2
         sta SID2_V2_SR
-        lda #%00100001
+        lda #%00100000
         sta SID2_V2_CTRL
         lda #$09
         sta SID2_V3_AD
         lda #$e2
         sta SID2_V3_SR
-        lda #%00010001
+        lda #%00010000
         sta SID2_V3_CTRL
 +       rts
 
 
 .init_dungeon_inst:
         ; --- Instruments Underworld (Dungeon) Authentiques ---
-        ; Couper d'abord le Gate sur les 3 voix pour garantir le réarmement ADSR 0 -> 1
-        lda #%01000000                  ; Pulse Gate OFF
-        sta SID1_V1_CTRL
-        lda #%00000000                  ; Gate OFF
-        sta SID1_V2_CTRL
-        lda #%00010000                  ; Triangle Gate OFF
-        sta SID1_V3_CTRL
-
         ; Voix 1 : Pulse 50% ($0800), arpeggio lead
         lda #$00
         sta SID1_V1_PW_LO
@@ -261,7 +338,7 @@ music_play:
         sta SID1_V1_AD
         lda #$c0                        ; Sustain 12, Release 6ms
         sta SID1_V1_SR
-        lda #%01000001
+        lda #%01000000                  ; Pulse Gate OFF (attendre apply_music_step)
         sta SID1_V1_CTRL
 
         ; Voix 2 : Pulse 50% ($0800), arpeggio contre-chant (NES Square 0)
@@ -273,7 +350,7 @@ music_play:
         sta SID1_V2_AD
         lda #$c0
         sta SID1_V2_SR
-        lda #%01000001                  ; Pulse Gate ON (matching pulse timbre)
+        lda #%01000000                  ; Pulse Gate OFF (attendre apply_music_step)
         sta SID1_V2_CTRL
 
         ; Voix 3 : Basse des profondeurs (Triangle pur, octave basse)
@@ -281,7 +358,7 @@ music_play:
         sta SID1_V3_AD
         lda #$e2
         sta SID1_V3_SR
-        lda #%00010001
+        lda #%00010000                  ; Triangle Gate OFF (attendre apply_music_step)
         sta SID1_V3_CTRL
 
         lda dual_sid_enabled
@@ -294,7 +371,7 @@ music_play:
         sta SID2_V1_AD
         lda #$c0
         sta SID2_V1_SR
-        lda #%01000001
+        lda #%01000000
         sta SID2_V1_CTRL
 
         lda #$00
@@ -305,14 +382,14 @@ music_play:
         sta SID2_V2_AD
         lda #$c0
         sta SID2_V2_SR
-        lda #%01000001
+        lda #%01000000
         sta SID2_V2_CTRL
 
         lda #$09
         sta SID2_V3_AD
         lda #$e2
         sta SID2_V3_SR
-        lda #%00010001
+        lda #%00010000
         sta SID2_V3_CTRL
 +       rts
 
@@ -322,14 +399,28 @@ music_play:
 music_stop:
         lda #MUSIC_NONE
         sta current_music
-        lda #%01000000
+        lda #%01000000                  ; Pulse Gate OFF
         sta SID1_V1_CTRL
-        lda #%00100000
+        lda #%00100000                  ; Sawtooth Gate OFF
         sta SID1_V2_CTRL
-        lda #%00010000
+        lda #%00010000                  ; Triangle Gate OFF
         sta SID1_V3_CTRL
-        lda #0
+        lda dual_sid_enabled
+        beq +
+        lda #%01000000
+        sta SID2_V1_CTRL
+        lda #%00100000
+        sta SID2_V2_CTRL
+        lda #%00010000
+        sta SID2_V3_CTRL
++       lda #0
         sta sfx_timer
+        sta sfx_voice
+        sta secret_chime_active
+        sta secret_chime_timer
+        sta secret_chime_idx
+        sta secret_chime_pending
+        sta sfx_rupee_pending
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
@@ -376,8 +467,16 @@ restore_music_voice_2:
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V2_FREQ_HI
-        lda #%00100000
+        lda #%00100000                  ; Gate OFF (>= 16 cycles pour réarmer ADSR)
         sta SID1_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
         lda dual_sid_enabled
@@ -391,6 +490,14 @@ restore_music_voice_2:
         sta SID2_V2_FREQ_HI
         lda #%00100000
         sta SID2_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00100001
         sta SID2_V2_CTRL
 +       rts
@@ -410,8 +517,16 @@ restore_music_voice_2:
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V2_FREQ_HI
-        lda #%01000000                  ; Gate OFF
+        lda #%01000000                  ; Gate OFF (>= 16 cycles pour réarmer ADSR)
         sta SID1_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V2_CTRL
         lda dual_sid_enabled
@@ -425,6 +540,14 @@ restore_music_voice_2:
         sta SID2_V2_FREQ_HI
         lda #%01000000
         sta SID2_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%01000001
         sta SID2_V2_CTRL
 +       rts
@@ -470,6 +593,14 @@ restore_music_voice_3:
         sta SID1_V3_FREQ_HI
         lda #%00010000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
 
@@ -481,6 +612,14 @@ restore_music_voice_3:
         sta SID2_V3_FREQ_HI
         lda #%00010000
         sta SID2_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00010001
         sta SID2_V3_CTRL
 +       rts
@@ -492,21 +631,32 @@ restore_music_voice_3:
         beq +
         sta SID2_V3_CTRL
 +       rts
-        rts
 
 ; ---------------------------------------------------------------------------
 ; music_update : Mise à jour par interruption 50 Hz (VBlank)
 ; ---------------------------------------------------------------------------
 music_update:
-        ; 1. Gestion du compte à rebours d'effet sonore
+        ; 1. Mise à jour synchrone 50 Hz du carillon secret
+        jsr update_secret_chime
+
+        ; 2. Gestion du compte à rebours d'effet sonore
         lda sfx_timer
-        beq .check_delay
+        beq .check_pending_chime
         dec sfx_timer
-        bne .check_delay
+        bne .check_pending_chime
         ; Fin de l'effet sonore : restaure intégralement la voix de musique
         jsr restore_music_voice
         lda #0
         sta sfx_voice
+
+.check_pending_chime:
+        lda secret_chime_pending
+        beq .check_delay
+        lda sfx_timer
+        bne .check_delay
+        lda #0
+        sta secret_chime_pending
+        jsr sound_secret_chime
 
 .check_delay:
         ; 2. Pas de musique active ?
@@ -547,6 +697,10 @@ music_update:
         sta current_music
         lda #0
         sta secret_chime_active
+        sta secret_chime_timer
+        sta secret_chime_idx
+        sta secret_chime_pending
+        sta sfx_rupee_pending
         sta sfx_timer
         sta sfx_voice
         lda saved_bg_music
@@ -674,12 +828,16 @@ music_update:
         beq +
         lda sfx_voice
         cmp #1
-        beq .skip_v1                    ; Voix 1 occupée par un SFX
+        bne +
+        jmp .skip_v1                    ; Voix 1 occupée par un SFX
 +
         ldx temp_v1
-        beq .v1_mute
-        cpx #$fe                        ; $FE = TIE / HOLD (prolonger la note sans réarmer l'enveloppe)
-        beq .skip_v1
+        bne +
+        jmp .v1_mute
++       cpx #$fe                        ; $FE = TIE / HOLD (prolonger la note sans réarmer l'enveloppe)
+        bne +
+        jmp .skip_v1
++
         lda music_note_freq_lo,x
         sta SID1_V1_FREQ_LO
         lda music_note_freq_hi,x
@@ -705,6 +863,14 @@ music_update:
 .v1_adsr_done:
         lda #%01000000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V1_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V1_CTRL
 
@@ -720,6 +886,14 @@ music_update:
         sta SID2_V1_FREQ_HI
         lda #%01000000
         sta SID2_V1_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%01000001
         sta SID2_V1_CTRL
         jmp .skip_v1
@@ -733,16 +907,15 @@ music_update:
 .skip_v1:
 
         ; --- VOIX 2 : Harmonie / Contre-chant ---
-        ; Si le carillon secret est actif, ignorer totalement la mise à jour de la Voix 2
-        lda secret_chime_active
-        beq +
-        jmp .skip_v2
-+
-
         ldx temp_v2
         cpx #$fe
         beq +
         stx cur_music_v2_note
++
+        ; Si le carillon secret est actif, ignorer totalement la mise à jour matérielle de la Voix 2
+        lda secret_chime_active
+        beq +
+        jmp .skip_v2
 +
         lda sfx_timer
         beq +
@@ -763,7 +936,11 @@ music_update:
 .v2_play:
         cpx #$fe                        ; $FE = TIE / HOLD (prolonger l'harmonie sans réarmer)
         bne .v2_new_note
-        ; Sur un HOLD ($FE), s'assurer que le Gate est bien ON si la voix devait jouer !
+        ; Sur un HOLD ($FE), s'assurer que le Gate est bien ON UNIQUEMENT si une note est active !
+        ldx cur_music_v2_note
+        bne +
+        jmp .skip_v2                    ; Si pas de note active, reste silencieux !
++
         lda current_music
         cmp #MUSIC_DUNGEON
         bcs .v2_hold_uw
@@ -791,6 +968,14 @@ music_update:
         sta SID1_V2_SR
         lda #%00100000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
         jmp .v2_dual_sid
@@ -807,6 +992,14 @@ music_update:
         sta SID1_V2_SR
         lda #%01000000                  ; Gate OFF
         sta SID1_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V2_CTRL
 
@@ -825,12 +1018,28 @@ music_update:
         bcs .v2_dual_pulse
         lda #%00100000
         sta SID2_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00100001
         sta SID2_V2_CTRL
         jmp .skip_v2
 .v2_dual_pulse:
         lda #%01000000
         sta SID2_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%01000001
         sta SID2_V2_CTRL
 .skip_v2:
@@ -849,8 +1058,9 @@ music_update:
         jmp .skip_v3                    ; Voix 3 occupée par un SFX
 +
         lda temp_v3
-        beq .v3_mute
-        cmp #$fe                        ; $FE = TIE / HOLD
+        bne +
+        jmp .v3_mute
++       cmp #$fe                        ; $FE = TIE / HOLD
         bne .v3_not_hold
         ; Sur un HOLD ($FE), s'assurer que le Gate de basse est bien ON si une note de basse était active
         ldx cur_music_v3_note
@@ -878,6 +1088,14 @@ music_update:
         sta SID1_V3_SR
         lda #%00010000                  ; Gate OFF pour réarmer l'ADSR
         sta SID1_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
 
@@ -889,6 +1107,14 @@ music_update:
         sta SID2_V3_FREQ_HI
         lda #%00010000
         sta SID2_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%00010001
         sta SID2_V3_CTRL
         rts
@@ -903,8 +1129,16 @@ music_update:
         sta SID1_V3_AD
         lda #$00
         sta SID1_V3_SR
-        lda #%10000000
+        lda #%10000000                  ; Bruit Gate OFF
         sta SID1_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda #%10000001                  ; Bruit Gate ON
         sta SID1_V3_CTRL
         rts
@@ -971,7 +1205,13 @@ sound_shield_block:
         ldx #SFX_SHIELD_BLOCK
         jmp play_sfx_v3
 sound_rupee:
-        stx sfx_saved_x
+        lda secret_chime_active
+        beq +
+        ; Carillon actif : on met le son de rupee en attente pour jouer à la suite
+        lda #1
+        sta sfx_rupee_pending
+        rts
++       stx sfx_saved_x
         ldx #SFX_RUPEE
         jmp play_sfx_v3
 sound_arrow:
@@ -1026,6 +1266,10 @@ sound_boss_roar:
 sound_item_fanfare:
         lda #0
         sta secret_chime_active
+        sta secret_chime_timer
+        sta secret_chime_idx
+        sta secret_chime_pending
+        sta sfx_rupee_pending
         sta sfx_timer
         sta sfx_voice
         lda current_music
@@ -1063,6 +1307,14 @@ play_sfx_v3:
         sta SID1_V3_SR
         lda #0
         sta SID1_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda sfx_ctrl_tbl,x
         sta SID1_V3_CTRL
         ldx sfx_saved_x
@@ -1078,6 +1330,14 @@ play_sfx_v3:
         sta SID2_V3_SR
         lda #0
         sta SID2_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
         lda sfx_ctrl_tbl,x
         sta SID2_V3_CTRL
         ldx sfx_saved_x
@@ -1097,6 +1357,128 @@ sfx_ctrl_tbl:
         !byte %10000001, %00100001, %10000001, %10000001, %00010001, %00010001, %10000001, %00010001
         !byte %10000001, %10000001, %00100001, %10000001, %00010001, %10000001, %00010001, %00010001
         !byte %00010001, %00010001, %10000001
+
+; ---------------------------------------------------------------------------
+; sound_secret_chime / sound_secret : Déclenche le carillon triomphal
+; ---------------------------------------------------------------------------
+sound_secret_chime:
+sound_secret:
+        lda sfx_timer
+        beq .start_chime_now
+        lda sfx_voice
+        cmp #3
+        bne .start_chime_now
+        ; Un SFX est en cours sur Voix 3 (ex: ramassage de clé) : on met le carillon en attente
+        lda #1
+        sta secret_chime_pending
+        rts
+
+.start_chime_now:
+        lda #0
+        sta secret_chime_pending
+        lda #1
+        sta secret_chime_active
+        lda #0
+        sta secret_chime_idx
+        lda #1                          ; Première note dès la prochaine frame
+        sta secret_chime_timer
+        rts
+
+; ---------------------------------------------------------------------------
+; update_secret_chime : Avancement synchrone à 50 Hz dans l'interruption raster
+; ---------------------------------------------------------------------------
+update_secret_chime:
+        lda secret_chime_active
+        bne +
+        rts
++       dec secret_chime_timer
+        beq +
+        rts
++       lda #7                          ; 7 frames par note (~0.14s)
+        sta secret_chime_timer
+
+        ldx secret_chime_idx
+        cpx #8
+        bcs .stop_chime
+
+        lda secret_chime_lo,x
+        sta SID1_V2_FREQ_LO
+        lda secret_chime_hi,x
+        sta SID1_V2_FREQ_HI
+        lda #15
+        sta SID1_VOLUME
+        lda #$03
+        sta SID1_V2_AD
+        lda #$a4
+        sta SID1_V2_SR
+        lda #%00010000                  ; Triangle Gate OFF (>= 16 cycles pour réarmer)
+        sta SID1_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%00010001                  ; Triangle Gate ON
+        sta SID1_V2_CTRL
+
+        lda dual_sid_enabled
+        beq +
+        lda secret_chime_lo,x
+        sta SID2_V2_FREQ_LO
+        lda secret_chime_hi,x
+        sta SID2_V2_FREQ_HI
+        lda #$03
+        sta SID2_V2_AD
+        lda #$a4
+        sta SID2_V2_SR
+        lda #%00010000
+        sta SID2_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%00010001
+        sta SID2_V2_CTRL
++
+        inc secret_chime_idx
+        rts
+
+.stop_chime:
+        lda #%00010000                  ; Gate OFF
+        sta SID1_V2_CTRL
+        lda dual_sid_enabled
+        beq +
+        sta SID2_V2_CTRL
++       lda #0
+        sta secret_chime_active
+        sta secret_chime_idx
+        sta secret_chime_timer
+        jsr restore_music_voice_2
+
+        ; Si un son de rupee/clé était en attente, le déclencher immédiatement à la suite !
+        lda sfx_rupee_pending
+        beq +
+        lda #0
+        sta sfx_rupee_pending
+        jsr sound_rupee
++       rts
+
+.chime_done:
+        rts
+
+sound_code_end:
+
+secret_chime_lo:
+        !byte $1c, $bd, $d4, $e7, $2f, $91, $5d, $a0
+secret_chime_hi:
+        !byte $16, $14, $10, $0c, $0c, $11, $17, $1d
 
 ; Données musicales incluses
 !source "src/music_data.inc"

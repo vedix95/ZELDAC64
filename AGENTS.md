@@ -29,10 +29,13 @@ Avant toute modification ou ajout de code, consulter le registre des anomalies d
   3. La salle, les coordonnées du bloc et la direction autorisée sont explicitement répertoriées dans `push_tbl`.
 
 ## 6. Moteur Sonore SID et Fanfares
-- **Réarmement ADSR** : L'enveloppe SID ne se déclenche que sur une transition montante `Gate 0 -> 1`. Toujours forcer `Gate=0` sur les 3 voix avant de programmer `Gate=1` lors de l'initialisation ou de la reprise d'un thème (`.init_dungeon_inst`, `.init_overworld_inst`).
-- **Gestion des Drapeaux SFX & Découplage des Voix** : Les canaux Voix 2 (carillon secret / contre-chant) et Voix 3 (SFX / basse) sont strictement découplés (`restore_music_voice_2` et `restore_music_voice_3`). `.stop_chime` doit appeler `restore_music_voice_2` de manière inconditionnelle sans jamais être bloqué par `sfx_timer`.
-- **Boucle des Celliers** : Toujours exécuter `jsr items_update` dans l'état `.in_cellar` (`src/main.asm`) pour permettre l'extinction normale des minuteurs sonores.
+- **Réarmement ADSR & Délai d'Échantillonnage ($\ge 16$ cycles)** : L'enveloppe SID ne se déclenche que sur une transition montante `Gate 0 -> 1`. Le diviseur d'horloge interne de l'enveloppe échantillonne Gate toutes les 16 périodes CPU : toujours respecter un palier bas `Gate=0` d'au moins 16 cycles (8 `nop`) avant de programmer `Gate=1` pour que le réarmement ne soit jamais manqué.
+- **Initialisation avec Gate OFF** : Dans `.init_dungeon_inst` et `.init_overworld_inst`, programmer systématiquement les registres de contrôle avec `Gate=0` ; la montée à `Gate=1` est réservée à `apply_music_step` lors de l'assignation de la fréquence de note.
+- **Gestion des Drapeaux SFX & Découplage des Voix** : Les canaux Voix 2 (carillon secret / contre-chant) et Voix 3 (SFX / basse) sont strictement découplés (`restore_music_voice_2` et `restore_music_voice_3`). `.stop_chime` doit appeler `restore_music_voice_2` de manière inconditionnelle.
+- **Exécution Synchrone du Carillon (50 Hz IRQ)** : `update_secret_chime` doit s'exécuter dans `music_update` (raster IRQ) pour ne jamais geler lors des transitions d'écran (`STATE_TRANSITION`) ou des menus inventaire/grottes.
+- **Boucle des Celliers** : Toujours exécuter `jsr items_update` dans l'état `.in_cellar` (`src/main.asm`) pour permettre l'extinction normale des minuteurs d'objets.
 - **Drops Mineurs** : Les ramassages standards en donjon (petites clés, carte, boussole) doivent jouer un effet sonore court (`sound_rupee` sur Voix 3) sans interrompre la musique de fond BGM.
+- **Sérialisation des Sons en Conflit (File d'Attente)** : Ne jamais réquisitionner simultanément la Voix 2 (carillon) et la Voix 3 (SFX objet/clé). Si deux sons sont appelés dans la même frame ou pendant la lecture d'un autre son, les ordonnancer séquentiellement via les drapeaux d'attente (`secret_chime_pending` / `sfx_rupee_pending`) et toujours restaurer le canal audio emprunté avant de lancer le son suivant.
 
 ## 7. Plafond Mémoire des Sprites Link ($1000)
 - `src/sprites.asm` (généré depuis `assets/link.txt`) commence sous `$0800` et s'achève exactement à `$1000`, adresse à laquelle commence la ROM des caractères (chargen) pour le VIC-II en banque 0.

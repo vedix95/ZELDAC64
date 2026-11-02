@@ -40,19 +40,20 @@ arg2_addr = symbols.get("debug_hook_arg2", 0)
 
 
 def write_boot_sequence(f):
-    """Bypasse l'intro cartouche et atteint le main loop résident en jeu."""
-    f.write("bk 299b\ng\ndel 1\n> 0816 01\n")
-    f.write(f"bk {main_addr:04x}\ng\ndel 2\n")
+    """Bypasse le menu audio initial et l'intro cartouche, puis atteint le main loop résident en jeu."""
+    f.write("bk 5628\ng\ndel 1\n> 0816 01\n")
+    f.write("bk 299b\ng\ndel 2\n> 0816 01\n")
+    f.write(f"bk {main_addr:04x}\ng\ndel 3\n")
 
 
 def test_1_audio_minor_item():
     print("\n--- [TEST 1] Audio : Découplage Voix 2 / Voix 3 & Restauration Voix 2 ---")
-    with open(os.path.join(BASE_DIR, "src", "items.asm")) as f:
-        items_src = f.read()
+    with open(os.path.join(BASE_DIR, "src", "sound.asm")) as f:
+        snd_src = f.read()
 
     # Vérification que .stop_chime appelle directement restore_music_voice_2 sans tester sfx_timer
-    stop_chime_block = items_src[items_src.find(".stop_chime:"):items_src.find("secret_chime_lo:")]
-    assert "jsr restore_music_voice_2" in stop_chime_block, "restore_music_voice_2 non appelé dans .stop_chime"
+    stop_chime_block = snd_src[snd_src.find(".stop_chime:"):snd_src.find("secret_chime_lo:")]
+    assert ("restore_music_voice_2" in stop_chime_block), "restore_music_voice_2 non appelé dans .stop_chime"
     assert "bne .chime_done" not in stop_chime_block, "Condition bloquante résiduelle dans .stop_chime"
     print("  [PASS] .stop_chime appelle restore_music_voice_2 inconditionnellement.")
 

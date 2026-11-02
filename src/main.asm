@@ -27,6 +27,10 @@ start:
 
 cart_present:
         !byte 0                         ; 0 = Disquette, 1 = Cartouche Magic Desk (Type 19)
+cfg_dual_sid:
+        !byte 0                         ; $0811: 0 = Mono (Single SID), 1 = Dual SID (Stereo)
+cfg_sid2_addr_idx:
+        !byte 0                         ; $0812: 0 = $D420, 1 = $D500, 2 = $DF00
 
 ; Les sprites doivent impérativement être en-dessous de $1000 (ou au-delà de $2000)
 ; car pour le VIC-II (banque 0), la zone $1000-$1FFF voit la ROM des caractères (chargen).
@@ -106,9 +110,11 @@ game_init:
 }
         jsr player_draw
         jsr enemies_prep_multiplexer
-        jsr init_raster_irq
+        lda cfg_dual_sid
+        ldx cfg_sid2_addr_idx
+        jsr sound_set_dual_sid_config
         jsr sound_init
-        jsr sound_detect_dual_sid
+        jsr init_raster_irq
 !if START_IN_DUNGEON == 0 {
         lda #MUSIC_OVERWORLD
 } else {
@@ -204,11 +210,11 @@ main_loop:
         sta dual_sid_enabled
         beq .disable_sid2
         lda #15
-        sta SID2_VOLUME
+        jsr sound_set_sid2_volume
         jmp +
 .disable_sid2:
         lda #0
-        sta SID2_VOLUME
+        jsr sound_set_sid2_volume
 +
 
         ; --- ÉTAT DE JEU NORMAL ---
