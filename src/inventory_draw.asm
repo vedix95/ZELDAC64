@@ -1,12 +1,32 @@
 ; ---------------------------------------------------------------------------
 ; inventory_draw.asm : Affichage graphique du menu d'inventaire en 4 pages
-;   Page 0 : [1:OBJETS]     - Sélection Slot B (6 objets, descriptif, stock)
-;   Page 1 : [2:TRIFORCE]   - La Triforce de la Sagesse (8 fragments numérotés)
-;   Page 2 : [3:EQUIPEMENT] - Équipement permanent (Épées, Boucliers, Anneau, Reliques)
-;   Page 3 : [4:CARTE]      - Carte du Monde 16x8 (128 salles, Link clignotant)
+;   Page 0 : [1:ITEMS]     - Sélection Slot B (8 armes, descriptif, stock)
+;   Page 1 : [2:TRIFORCE]  - La Triforce de la Sagesse (8 fragments assemblés)
+;   Page 2 : [3:EQUIP]     - Équipement permanent (Épées, Boucliers, Anneau, Reliques)
+;   Page 3 : [4:MAP]       - Carte du Monde 16x8 (Biomes réels, Link clignotant)
 ; ---------------------------------------------------------------------------
 
 !zone inventory_draw
+
+; Codes des caractères de la frise et des cadres héroïques
+CHAR_HERO_TL      = 232
+CHAR_HERO_TOP     = 233
+CHAR_HERO_TR      = 234
+CHAR_HERO_VERT    = 235
+CHAR_HERO_BL      = 236
+CHAR_HERO_BOT     = 237
+CHAR_HERO_BR      = 238
+CHAR_HERO_DIV     = 239
+
+CHAR_SLOT_TL      = 240
+CHAR_SLOT_TR      = 241
+CHAR_SLOT_BL      = 242
+CHAR_SLOT_BR      = 243
+CHAR_SLOT_TH      = 244
+CHAR_SLOT_BH      = 245
+CHAR_SLOT_LV      = 246
+CHAR_SLOT_RV      = 247
+CHAR_DIAMOND      = 248
 
 ; Tables des sprites et couleurs des 8 armes sélectionnables (Slot B)
 item_sprite_ptrs:
@@ -29,18 +49,17 @@ item_colors:
         !byte COL_YELLOW                ; 6: Flûte
         !byte COL_LIGHT_BLUE            ; 7: Baguette Magique
 
-; Coordonnées X des 8 objets (2 rangées de 4 colonnes)
+; Coordonnées X des 8 objets dans la grille spacieuse (2 rangées de 4 colonnes)
 cursor_x_coords:
-        !byte 148, 178, 208, 238        ; rangée 1 : Boomerang, Bombe, Arc, Bougie
-        !byte 148, 178, 208, 238        ; rangée 2 : Viande, Potion, Flûte, Baguette
+        !byte 136, 168, 200, 232        ; rangée 1 : Boomerang, Bombe, Arc, Bougie
+        !byte 136, 168, 200, 232        ; rangée 2 : Viande, Potion, Flûte, Baguette
 
 cursor_y_coords:
-        !byte 106, 106, 106, 106        ; rangée 1
-        !byte 134, 134, 134, 134        ; rangée 2
+        !byte 104, 104, 104, 104        ; rangée 1
+        !byte 132, 132, 132, 132        ; rangée 2
 
 flash_colors:
         !byte COL_YELLOW, COL_LIGHT_RED, COL_WHITE, COL_ORANGE
-
 
 map_row_scr_lo:
         !byte $18, $40, $68, $90, $b8, $e0, $08, $30
@@ -121,9 +140,9 @@ draw_tab_header:
         ; Colorie l'onglet actif en jaune étincelant
         jsr highlight_active_tab
 
-        ; Ligne 5 : Séparateur bleu
+        ; Ligne 5 : Frise héroïque supérieure (40 colonnes)
         ldx #0
--       lda #'-'
+-       lda #CHAR_HERO_TOP
         sta SCREEN_RAM+200,x
         lda #COL_BLUE
         sta COLOR_RAM+200,x
@@ -157,80 +176,126 @@ highlight_active_tab:
 ; PAGE 0 : OBJETS ACTIFS DU SLOT B
 ; ===========================================================================
 draw_page_0_items:
-        ; 1. Boîte Arme équipée (Cols 3..10, Lignes 6..11)
-        ldx #7
--       lda txt_box_small,x
-        sta SCREEN_RAM+240+3,x
-        sta SCREEN_RAM+440+3,x
-        lda #COL_BLUE
-        sta COLOR_RAM+240+3,x
-        sta COLOR_RAM+440+3,x
+        ; 1. Boîte Arme équipée (Cols 2..9, Lignes 6..12)
+        lda #CHAR_HERO_TL
+        sta SCREEN_RAM+240+2
+        lda #CHAR_HERO_TR
+        sta SCREEN_RAM+240+9
+        lda #CHAR_HERO_BL
+        sta SCREEN_RAM+480+2
+        lda #CHAR_HERO_BR
+        sta SCREEN_RAM+480+9
+        ldx #6
+-       lda #CHAR_HERO_TOP
+        sta SCREEN_RAM+240+2+1,x
+        lda #CHAR_HERO_BOT
+        sta SCREEN_RAM+480+2+1,x
+        lda #COL_CYAN
+        sta COLOR_RAM+240+2,x
+        sta COLOR_RAM+480+2,x
         dex
         bpl -
+        lda #COL_CYAN
+        sta COLOR_RAM+240+9
+        sta COLOR_RAM+480+9
 
-        ; 2. Boîte des 8 Objets sélectionnables (Cols 14..30, Lignes 6..12)
-        ldx #16
--       lda txt_box_p0_grid,x
-        sta SCREEN_RAM+240+14,x
-        sta SCREEN_RAM+480+14,x
-        lda #COL_BLUE
-        sta COLOR_RAM+240+14,x
-        sta COLOR_RAM+480+14,x
-        dex
-        bpl -
-
-        ; Bordures verticales pour les deux boîtes
+        ; Bordures verticales pour la boîte équipée
         ldx #0
-.v_p0_loop:
-        lda p0_v_scr_lo,x
+.v_p0_eq:
+        lda p0_eq_v_lo,x
         sta ZP_SCR
         sta ZP_COL
-        lda p0_v_scr_hi,x
+        lda p0_eq_v_hi,x
         jsr inv_set_scr_col_hi
 
-        lda #164
-        ldy p0_v_c1,x
+        lda #CHAR_HERO_VERT
+        ldy #2
         sta (ZP_SCR),y
-        ldy p0_v_c2,x
+        ldy #9
         sta (ZP_SCR),y
-        lda #COL_BLUE
-        ldy p0_v_c1,x
+        lda #COL_CYAN
+        ldy #2
         sta (ZP_COL),y
-        ldy p0_v_c2,x
+        ldy #9
         sta (ZP_COL),y
         inx
-        cpx #9
-        bne .v_p0_loop
+        cpx #5
+        bne .v_p0_eq
 
-        ; En-têtes Ligne 5 (EQUIPE & ARSENAL)
+        ; 2. Boîte des 8 Armes sélectionnables (Cols 12..37, Lignes 6..12)
+        lda #CHAR_HERO_TL
+        sta SCREEN_RAM+240+12
+        lda #CHAR_HERO_TR
+        sta SCREEN_RAM+240+37
+        lda #CHAR_HERO_BL
+        sta SCREEN_RAM+480+12
+        lda #CHAR_HERO_BR
+        sta SCREEN_RAM+480+37
+
+        ldx #24
+-       lda #CHAR_HERO_TOP
+        sta SCREEN_RAM+240+12+1,x
+        lda #CHAR_HERO_BOT
+        sta SCREEN_RAM+480+12+1,x
+        lda #COL_CYAN
+        sta COLOR_RAM+240+12,x
+        sta COLOR_RAM+480+12,x
+        dex
+        bpl -
+        lda #COL_CYAN
+        sta COLOR_RAM+240+37
+        sta COLOR_RAM+480+37
+
+        ; Bordures verticales pour la boîte de l'arsenal
+        ldx #0
+.v_p0_ars:
+        lda p0_eq_v_lo,x
+        sta ZP_SCR
+        sta ZP_COL
+        lda p0_eq_v_hi,x
+        jsr inv_set_scr_col_hi
+
+        lda #CHAR_HERO_VERT
+        ldy #12
+        sta (ZP_SCR),y
+        ldy #37
+        sta (ZP_SCR),y
+        lda #COL_CYAN
+        ldy #12
+        sta (ZP_COL),y
+        ldy #37
+        sta (ZP_COL),y
+        inx
+        cpx #5
+        bne .v_p0_ars
+
+        ; En-tête Ligne 5 : EQUIP & WEAPONS
         ldx #5
 -       lda txt_p0_equipe,x
-        sta SCREEN_RAM+200+4,x
+        sta SCREEN_RAM+200+3,x
         lda #COL_YELLOW
-        sta COLOR_RAM+200+4,x
-        dex
-        bpl -
-        ldx #6
--       lda txt_p0_arsenal,x
-        sta SCREEN_RAM+200+19,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+200+19,x
+        sta COLOR_RAM+200+3,x
         dex
         bpl -
 
-        ; Labels Arme active
-        ldx #7
--       lda txt_p0_active,x
-        sta SCREEN_RAM+480+3,x
-        lda #COL_WHITE
-        sta COLOR_RAM+480+3,x
-        lda txt_p0_slot_b,x
-        sta SCREEN_RAM+520+3,x
-        lda #COL_CYAN
-        sta COLOR_RAM+520+3,x
+        ldx #8
+-       lda txt_p0_arsenal,x
+        sta SCREEN_RAM+200+21,x
+        lda #COL_YELLOW
+        sta COLOR_RAM+200+21,x
         dex
         bpl -
-        ; Ligne 14 : Description de l'objet pointé
+
+        ; Label Arme active en dessous du cadre
+        ldx #7
+-       lda txt_p0_active,x
+        sta SCREEN_RAM+520+2,x
+        lda #COL_WHITE
+        sta COLOR_RAM+520+2,x
+        dex
+        bpl -
+
+        ; Ligne 14 : Description de l'arme sélectionnée
         jsr draw_p0_description
 
         ; Ligne 16 : Compteurs d'inventaire
@@ -254,20 +319,21 @@ setup_p0_sprites:
         lda #0
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
+        sta VIC_SPRITE_MSB
         lda #PLAYER_SKIN
         sta VIC_SPRITE_MC1
         lda #COL_WHITE
         sta VIC_SPRITE_MC2
 
-        ; Sprite 0 : Arme actuellement équipée (X=64, Y=106)
+        ; Sprite 0 : Arme actuellement équipée dans le cadre gauche (X=60, Y=104)
         ldx hud_selected_b
         lda item_sprite_ptrs,x
         sta SPRITE_PTR0
         lda item_colors,x
         sta VIC_SPRITE_COL0
-        lda #64
+        lda #60
         sta VIC_SPRITE_X0
-        lda #106
+        lda #104
         sta VIC_SPRITE_Y0
 
         ; Initialise la rangée 1 pour le démarrage
@@ -281,32 +347,22 @@ setup_p0_sprites:
 
         jsr inv_update_cursor
 
-        lda #0
-        sta VIC_SPRITE_MSB
         lda #%10011111                  ; Sprites 0, 1, 2, 3, 4, 7 actifs
         sta VIC_SPRITE_EN
         lda #%00011111                  ; Sprites 0..4 multicolores, Sprite 7 haute résolution
         sta VIC_SPRITE_MC
         rts
 
-p0_v_scr_lo:
-        !byte <280, <320, <360, <400
+p0_eq_v_lo:
         !byte <280, <320, <360, <400, <440
-p0_v_scr_hi:
-        !byte >280, >320, >360, >400
+p0_eq_v_hi:
         !byte >280, >320, >360, >400, >440
-p0_v_c1:
-        !byte 3, 3, 3, 3
-        !byte 14, 14, 14, 14, 14
-p0_v_c2:
-        !byte 10, 10, 10, 10
-        !byte 30, 30, 30, 30, 30
 
 ; ---------------------------------------------------------------------------
-; Multiplexeur raster pour la Page 0 de l'inventaire (grille 4x2 d'objets)
+; Multiplexeur raster pour la Page 0 de l'inventaire (grille 4x2 d'armes)
 ; ---------------------------------------------------------------------------
 inv_p0_irq_row1:
-        ; Sprites 1..4 (Rangée 1) : Boomerang, Bombe, Arc, Bougie (Y=106)
+        ; Sprites 1..4 (Rangée 1) : Boomerang, Bombe, Arc, Bougie (Y=104)
         lda #(sprite_link_item_boomerang / 64)
         sta SPRITE_PTR1
         lda #(sprite_link_item_bomb / 64)
@@ -325,16 +381,16 @@ inv_p0_irq_row1:
         lda #COL_LIGHT_BLUE
         sta VIC_SPRITE_COL4
 
-        lda #148
+        lda #136
         sta VIC_SPRITE_X1
-        lda #178
+        lda #168
         sta VIC_SPRITE_X2
-        lda #208
+        lda #200
         sta VIC_SPRITE_X3
-        lda #238
+        lda #232
         sta VIC_SPRITE_X4
 
-        lda #106
+        lda #104
         sta VIC_SPRITE_Y1
         sta VIC_SPRITE_Y2
         sta VIC_SPRITE_Y3
@@ -342,7 +398,7 @@ inv_p0_irq_row1:
         rts
 
 irq_p0_row2:
-        ; Sprites 1..4 (Rangée 2) : Viande, Potion, Flûte, Baguette (Y=134)
+        ; Sprites 1..4 (Rangée 2) : Viande, Potion, Flûte, Baguette (Y=132)
         lda #(sprite_link_item_food / 64)
         sta SPRITE_PTR1
         lda #(sprite_link_item_potion / 64)
@@ -361,16 +417,16 @@ irq_p0_row2:
         lda #COL_LIGHT_BLUE
         sta VIC_SPRITE_COL4
 
-        lda #148
+        lda #136
         sta VIC_SPRITE_X1
-        lda #178
+        lda #168
         sta VIC_SPRITE_X2
-        lda #208
+        lda #200
         sta VIC_SPRITE_X3
-        lda #238
+        lda #232
         sta VIC_SPRITE_X4
 
-        lda #134
+        lda #132
         sta VIC_SPRITE_Y1
         sta VIC_SPRITE_Y2
         sta VIC_SPRITE_Y3
@@ -386,8 +442,6 @@ irq_p0_row2:
 
         asl VIC_IRQ_FLAG
         jmp $ea81
-
-
 
 inv_update_cursor:
         ldx hud_selected_b
@@ -424,11 +478,11 @@ draw_p0_description:
         ldy #0
 -       lda (ZP_SRC),y
         beq +
-        sta SCREEN_RAM+560+2,y
-        lda #COL_CYAN
-        sta COLOR_RAM+560+2,y
+        sta SCREEN_RAM+560+6,y
+        lda #COL_YELLOW
+        sta COLOR_RAM+560+6,y
         iny
-        cpy #36
+        cpy #30
         bne -
 +       rts
 
@@ -465,48 +519,52 @@ p0_write_stat_val:
         rts
 
 ; ===========================================================================
-; PAGE 1 : LA TRIFORCE DE LA SAGESSE (8 FRAGMENTS)
+; PAGE 1 : LA TRIFORCE DE LA SAGESSE (8 FRAGMENTS ASSEMBLES)
 ; ===========================================================================
 draw_page_1_triforce:
         lda #0
-        sta VIC_SPRITE_EN
         sta VIC_SPRITE_MSB
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
 
-        ; Ligne 6 : Titre
+        ; Ligne 6 : Titre orné de joyaux
         ldx #0
 -       lda txt_p1_title,x
-        sta SCREEN_RAM+240+5,x
+        sta SCREEN_RAM+240+4,x
         lda #COL_YELLOW
-        sta COLOR_RAM+240+5,x
+        sta COLOR_RAM+240+4,x
         inx
-        cpx #30
+        cpx #32
         bne -
 
-        ; Lignes 8..14 : Le Grand Triangle de la Triforce à 8 fragments
-        jsr draw_triforce_triangle
+        ; Lignes 8..14 : Piédestal sacré en pierre avec les repères [1]..[8]
+        jsr draw_p1_pedestal
 
-        ; Ligne 16 : Compteur de fragments
+        ; Configuration matérielle des 8 sprites de fragments
+        jsr setup_p1_triforce_sprites
+
+        ; Ligne 17 : Compteur de fragments
         jsr draw_p1_counter
 
-        ; Ligne 18 : Indicateurs de donjons [1] .. [8]
+        ; Ligne 19 : Indicateurs des 8 donjons
         jsr draw_p1_dungeons
 
-        ; Ligne 20 : Statut légendaire
+        ; Ligne 21 : Statut légendaire
         jsr draw_p1_status
         rts
 
-draw_triforce_triangle:
-        lda #<txt_tri_all
+draw_p1_pedestal:
+        lda #<txt_tri_pedestal
         sta ZP_SRC
-        lda #>txt_tri_all
+        lda #>txt_tri_pedestal
         sta ZP_SRC+1
-        lda #<(SCREEN_RAM+328)
+        lda #<(SCREEN_RAM+240+4)
         sta ZP_DST
-        lda #>(SCREEN_RAM+328)
+        lda #>(SCREEN_RAM+240+4)
         sta ZP_DST+1
 
-        ldx #8
-.tri_row:
+        ldx #7                          ; 7 lignes
+.ped_row:
         lda ZP_DST
         sta ZP_COL
         lda ZP_DST+1
@@ -514,17 +572,17 @@ draw_triforce_triangle:
         adc #($d8 - $04)
         sta ZP_COL+1
 
-        ldy #23
+        ldy #31
 -       lda (ZP_SRC),y
         sta (ZP_DST),y
-        lda #COL_YELLOW
+        lda #COL_DARK_GREY
         sta (ZP_COL),y
         dey
         bpl -
 
         clc
         lda ZP_SRC
-        adc #24
+        adc #32
         sta ZP_SRC
         lda ZP_SRC+1
         adc #0
@@ -539,27 +597,98 @@ draw_triforce_triangle:
         sta ZP_DST+1
 
         dex
-        bne .tri_row
+        bne .ped_row
+        rts
+
+setup_p1_triforce_sprites:
+        ; Configuration multicolore d'or pour tous les 8 sprites
+        lda #PLAYER_SKIN
+        sta VIC_SPRITE_MC1
+        lda #COL_BROWN
+        sta VIC_SPRITE_MC2
+        lda #%11111111
+        sta VIC_SPRITE_MC
+
+        ; Pointeurs des 8 sprites de fragments (assemblés par paires/trios)
+        lda #(sprite_tri_p1 / 64)       ; Piece 1 : Apex Sup Gauche
+        sta SPRITE_PTR0
+        lda #(sprite_tri_p2 / 64)       ; Piece 2 : Apex Sup Droit
+        sta SPRITE_PTR1
+        lda #(sprite_tri_p3 / 64)       ; Piece 3 : Apex Inf Gauche
+        sta SPRITE_PTR2
+        lda #(sprite_tri_p4 / 64)       ; Piece 4 : Base Inf Gauche Ext
+        sta SPRITE_PTR3
+        lda #(sprite_tri_p5 / 64)       ; Piece 5 : Base Inf Gauche Int
+        sta SPRITE_PTR4
+        lda #(sprite_tri_p3 / 64)       ; Piece 6 : Apex Inf Droit
+        sta SPRITE_PTR5
+        lda #(sprite_tri_p4 / 64)       ; Piece 7 : Base Inf Droit Int
+        sta SPRITE_PTR6
+        lda #(sprite_tri_p5 / 64)       ; Piece 8 : Base Inf Droit Ext
+        sta SPRITE_PTR7
+
+        ; Couleur d'or étincelant pour tous les 8 sprites
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL0
+        sta VIC_SPRITE_COL1
+        sta VIC_SPRITE_COL2
+        sta VIC_SPRITE_COL3
+        sta VIC_SPRITE_COL4
+        sta VIC_SPRITE_COL5
+        sta VIC_SPRITE_COL6
+        sta VIC_SPRITE_COL7
+
+        ; Coordonnées X et Y des 8 fragments pour former la Grande Triforce
+        ; Triangle Supérieur (Pieces 1 & 2 : X=172, Y=96)
+        lda #172
+        sta VIC_SPRITE_X0
+        sta VIC_SPRITE_X1
+        lda #96
+        sta VIC_SPRITE_Y0
+        sta VIC_SPRITE_Y1
+
+        ; Triangle Inférieur Gauche (Pieces 3, 4, 5 : X=148, Y=118)
+        lda #148
+        sta VIC_SPRITE_X2
+        sta VIC_SPRITE_X3
+        sta VIC_SPRITE_X4
+        lda #118
+        sta VIC_SPRITE_Y2
+        sta VIC_SPRITE_Y3
+        sta VIC_SPRITE_Y4
+
+        ; Triangle Inférieur Droit (Pieces 6, 7, 8 : X=196, Y=118)
+        lda #196
+        sta VIC_SPRITE_X5
+        sta VIC_SPRITE_X6
+        sta VIC_SPRITE_X7
+        lda #118
+        sta VIC_SPRITE_Y5
+        sta VIC_SPRITE_Y6
+        sta VIC_SPRITE_Y7
+
+        ; Activation matérielle des fragments possédés dans player_triforce_pieces
+        lda player_triforce_pieces
+        sta VIC_SPRITE_EN
         rts
 
 draw_p1_counter:
-        ; Compte les fragments possédés
         lda #0
         sta ZP_TMP
         lda player_triforce_pieces
         ldx #8
-.count_bits:
+.cnt_bits:
         lsr
         bcc +
         inc ZP_TMP
 +       dex
-        bne .count_bits
+        bne .cnt_bits
 
         ldx #0
 -       lda txt_p1_counter,x
-        sta SCREEN_RAM+640+6,x
+        sta SCREEN_RAM+680+6,x
         lda #COL_WHITE
-        sta COLOR_RAM+640+6,x
+        sta COLOR_RAM+680+6,x
         inx
         cpx #28
         bne -
@@ -567,30 +696,30 @@ draw_p1_counter:
         lda #'0'
         clc
         adc ZP_TMP
-        sta SCREEN_RAM+640+28
+        sta SCREEN_RAM+680+28
         lda #COL_YELLOW
-        sta COLOR_RAM+640+28
+        sta COLOR_RAM+680+28
         rts
 
 draw_p1_dungeons:
         ldx #0
 -       lda txt_p1_dungeons_line,x
-        sta SCREEN_RAM+720+3,x
+        sta SCREEN_RAM+760+3,x
         lda #COL_WHITE
-        sta COLOR_RAM+720+3,x
+        sta COLOR_RAM+760+3,x
         inx
         cpx #34
         bne -
 
         ; Colorie chaque donjon selon possession
         ldx #0
-.dungeon_col_loop:
+.dung_col_loop:
         lda bit_powers,x
         and player_triforce_pieces
-        beq .missing_dungeon
+        beq .missing_dung
         lda #COL_YELLOW
         jmp .apply_dcol
-.missing_dungeon:
+.missing_dung:
         lda #COL_DARK_GREY
 .apply_dcol:
         sta ZP_TMP
@@ -602,36 +731,39 @@ draw_p1_dungeons:
         adc #14
         tay
         lda ZP_TMP
-        sta COLOR_RAM+720+3,y
+        sta COLOR_RAM+760+3,y
         iny
-        sta COLOR_RAM+720+3,y
+        sta COLOR_RAM+760+3,y
         iny
-        sta COLOR_RAM+720+3,y
+        sta COLOR_RAM+760+3,y
 
         inx
         cpx #8
-        bne .dungeon_col_loop
+        bne .dung_col_loop
         rts
 
 draw_p1_status:
+        lda player_triforce_pieces
+        cmp #$ff
+        beq .p1_full
         lda #<txt_p1_msg_seek
         ldx #>txt_p1_msg_seek
         ldy #COL_CYAN
-        lda player_triforce_pieces
-        cmp #$ff
-        bne +
+        jmp .p1_draw
+.p1_full:
         lda #<txt_p1_msg_full
         ldx #>txt_p1_msg_full
         ldy #COL_YELLOW
-+       sta ZP_SRC
+.p1_draw:
+        sta ZP_SRC
         stx ZP_SRC+1
         sty ZP_BASE
 
         ldy #35
 -       lda (ZP_SRC),y
-        sta SCREEN_RAM+800+2,y
+        sta SCREEN_RAM+840+2,y
         lda ZP_BASE
-        sta COLOR_RAM+800+2,y
+        sta COLOR_RAM+840+2,y
         dey
         bpl -
         rts
@@ -640,13 +772,12 @@ draw_p1_status:
 ; PAGE 2 : EQUIPEMENT PERMANENT & RELIQUES HEROIQUES
 ; ===========================================================================
 draw_page_2_equipment:
-        ; Désactive l'agrandissement pour des sprites nets et non déformés
         lda #0
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
         sta VIC_SPRITE_MSB
 
-        ; Configuration multicolore des 8 sprites
+        ; Configuration multicolore des 8 sprites matériels
         lda #PLAYER_SKIN
         sta VIC_SPRITE_MC1
         lda #COL_WHITE
@@ -654,25 +785,25 @@ draw_page_2_equipment:
         lda #%11111111
         sta VIC_SPRITE_MC
 
-        ; Ligne 6 : Titre
+        ; Ligne 5 : Titre noble
         ldx #0
 -       lda txt_p2_title,x
-        sta SCREEN_RAM+240+2,x
+        sta SCREEN_RAM+200+3,x
         lda #COL_YELLOW
-        sta COLOR_RAM+240+2,x
+        sta COLOR_RAM+200+3,x
         inx
-        cpx #36
+        cpx #34
         bne -
 
-        ; Tracé des 8 boîtes visuelles
+        ; Tracé des 8 boîtes d'équipement avec cadres héroïques
         jsr draw_p2_boxes
 
         ; Configuration des 8 sprites et de leurs statuts
         jsr setup_p2_slots
 
-        ; Ligne 20 : Séparateur
+        ; Ligne 20 : Frise de séparation
         ldx #0
--       lda #'-'
+-       lda #CHAR_HERO_TOP
         sta SCREEN_RAM+800,x
         lda #COL_BLUE
         sta COLOR_RAM+800,x
@@ -691,117 +822,149 @@ draw_page_2_equipment:
         bne -
         rts
 
-; ---------------------------------------------------------------------------
-; draw_p2_boxes : trace les 8 cadres de l'arsenal
-; ---------------------------------------------------------------------------
 draw_p2_boxes:
         ldx #0
-.box_loop:
+.box_p2_loop:
         lda p2_box_offs_lo,x
         sta ZP_SCR
         sta ZP_COL
         lda p2_box_offs_hi,x
         jsr inv_set_scr_col_hi
 
-        ; Coins '+'
-        lda #'+'
+        ; Coins héroïques du cadre de l'objet
+        lda #CHAR_SLOT_TL
         ldy #0
         sta (ZP_SCR),y
-        ldy #5
+        lda #CHAR_SLOT_TR
+        ldy #7
         sta (ZP_SCR),y
-        ldy #120
+        lda #CHAR_SLOT_BL
+        ldy #200
         sta (ZP_SCR),y
-        ldy #125
+        lda #CHAR_SLOT_BR
+        ldy #207
         sta (ZP_SCR),y
 
-        ; Horizontales '-'
-        lda #'-'
+        ; Rails horizontaux supérieur et inférieur
         ldy #1
--       sta (ZP_SCR),y
+-       lda #CHAR_SLOT_TH
+        sta (ZP_SCR),y
+        lda #CHAR_SLOT_BH
+        tya
+        clc
+        adc #200
+        tay
+        sta (ZP_SCR),y
+        tya
+        sec
+        sbc #200
+        tay
         iny
-        cpy #5
-        bne -
-        ldy #121
--       sta (ZP_SCR),y
-        iny
-        cpy #125
+        cpy #7
         bne -
 
-        ; Verticales (barre char 164)
-        lda #164
+        ; Rails verticaux
+        lda #CHAR_SLOT_LV
         ldy #40
-        sta (ZP_SCR),y
-        ldy #45
         sta (ZP_SCR),y
         ldy #80
         sta (ZP_SCR),y
-        ldy #85
+        ldy #120
+        sta (ZP_SCR),y
+        ldy #160
+        sta (ZP_SCR),y
+
+        lda #CHAR_SLOT_RV
+        ldy #47
+        sta (ZP_SCR),y
+        ldy #87
+        sta (ZP_SCR),y
+        ldy #127
+        sta (ZP_SCR),y
+        ldy #167
         sta (ZP_SCR),y
 
         ; Couleur bleue pour le cadre
-        lda #COL_BLUE
         ldy #0
--       sta (ZP_COL),y
-        iny
-        cpy #6
-        bne -
-        ldy #120
--       sta (ZP_COL),y
-        iny
-        cpy #126
-        bne -
-        ldy #40
+-       lda #COL_BLUE
         sta (ZP_COL),y
-        ldy #45
+        iny
+        cpy #8
+        bne -
+
+        ldy #200
+-       lda #COL_BLUE
+        sta (ZP_COL),y
+        iny
+        cpy #208
+        bne -
+
+        ldy #40
+        lda #COL_BLUE
+        sta (ZP_COL),y
+        ldy #47
         sta (ZP_COL),y
         ldy #80
         sta (ZP_COL),y
-        ldy #85
+        ldy #87
+        sta (ZP_COL),y
+        ldy #120
+        sta (ZP_COL),y
+        ldy #127
+        sta (ZP_COL),y
+        ldy #160
+        sta (ZP_COL),y
+        ldy #167
         sta (ZP_COL),y
 
         inx
         cpx #8
-        bne .box_loop
-        rts
+        beq +
+        jmp .box_p2_loop
++       rts
 
 p2_box_offs_lo:
-        !byte <(280+3), <(280+11), <(280+19), <(280+27)
-        !byte <(520+3), <(520+11), <(520+19), <(520+27)
+        !byte <(240+2), <(240+11), <(240+20), <(240+29)
+        !byte <(520+2), <(520+11), <(520+20), <(520+29)
 p2_box_offs_hi:
-        !byte >(280+3), >(280+11), >(280+19), >(280+27)
-        !byte >(520+3), >(520+11), >(520+19), >(520+27)
+        !byte >(240+2), >(240+11), >(240+20), >(240+29)
+        !byte >(520+2), >(520+11), >(520+20), >(520+29)
 
-; ---------------------------------------------------------------------------
-; setup_p2_slots : initialise les sprites et textes pour chaque objet
-; ---------------------------------------------------------------------------
 setup_p2_slots:
         lda #0
         sta ZP_TMP                      ; masque VIC_SPRITE_EN
 
-        ; Positions fixes des 8 sprites matériels
+        ; Positions des 8 sprites centrés dans leurs cadres
+        ; Rangée Supérieure (Y=96)
         lda #60
         sta VIC_SPRITE_X0
         sta VIC_SPRITE_X4
-        lda #124
+        lda #132
         sta VIC_SPRITE_X1
         sta VIC_SPRITE_X5
-        lda #188
+        lda #204
         sta VIC_SPRITE_X2
         sta VIC_SPRITE_X6
-        lda #252
+        lda #20                         ; 276 - 256 (MSB=1)
         sta VIC_SPRITE_X3
         sta VIC_SPRITE_X7
 
-        lda #108
+        lda #102
         sta VIC_SPRITE_Y0
         sta VIC_SPRITE_Y1
         sta VIC_SPRITE_Y2
         sta VIC_SPRITE_Y3
-        lda #156
+
+        ; Rangée Inférieure (Y=158)
+        lda #158
         sta VIC_SPRITE_Y4
         sta VIC_SPRITE_Y5
         sta VIC_SPRITE_Y6
         sta VIC_SPRITE_Y7
+
+        ; Sprites 3 et 7 sont à X > 255 (Col 29)
+        lda #%10001000
+        sta VIC_SPRITE_MSB
 
         ; Affiche les noms des 8 slots
         lda #<txt_all_slot_names
@@ -837,7 +1000,7 @@ setup_p2_slots:
         cpx #8
         bne .p2_name_loop
 
-        ; --- Slot 0 : Épée (Sprite 0, Col 3, Ligne 12) ---
+        ; --- Slot 0 : Épée ---
         ldx #0
         jsr p2_set_slot_ptr
         lda player_has_sword
@@ -849,20 +1012,19 @@ setup_p2_slots:
         lda ZP_TMP
         ora #%00000001
         sta ZP_TMP
-        lda #(sprite_link_sword_up / 64)
+        lda #(sprite_link_item_sword / 64)
         sta SPRITE_PTR0
         ldx player_has_sword
         lda p2_sword_colors,x
         sta VIC_SPRITE_COL0
 
-        ; Offset = (sword-1) * 6
         dex
         txa
         asl
         sta .p2_tmp_val
         asl
         clc
-        adc .p2_tmp_val                 ; A = (sword-1)*6
+        adc .p2_tmp_val
         clc
         adc #<p2_sword_status
         sta ZP_SRC
@@ -873,7 +1035,7 @@ setup_p2_slots:
         jsr p2_print_status
 
 .p2_slot1:
-        ; --- Slot 1 : Bouclier (Sprite 1, Col 11) ---
+        ; --- Slot 1 : Bouclier ---
         ldx #1
         jsr p2_set_slot_ptr
         lda player_has_shield
@@ -909,7 +1071,7 @@ setup_p2_slots:
         jsr p2_print_status
 
 .p2_slot2:
-        ; --- Slot 2 : Anneau (Sprite 2, Col 19) ---
+        ; --- Slot 2 : Anneau ---
         ldx #2
         jsr p2_set_slot_ptr
         lda player_has_blue_ring
@@ -945,11 +1107,9 @@ setup_p2_slots:
         jsr p2_print_status
 
 .p2_slots_simple:
-        ldx #0                          ; index 0..4 (correspond aux slots 3..7)
+        ldx #0
 .p2_simp_loop:
         stx .p2_cur_idx
-
-        ; Positionnement du pointeur écran pour ce slot (X = idx + 3)
         txa
         clc
         adc #3
@@ -1003,7 +1163,6 @@ setup_p2_slots:
 .p2_cur_idx:  !byte 0
 .p2_tmp_val:  !byte 0
 
-; Helpers d'affichage pour la page 2
 inv_set_scr_col_hi:
         clc
         adc #>SCREEN_RAM
@@ -1047,27 +1206,27 @@ p2_simp_flags_hi:
 p2_simple_mask:
         !byte %00001000, %00010000, %00100000, %01000000, %10000000
 p2_simple_spr:
-        !byte (sprite_link_item_ring / 64)
+        !byte (sprite_link_item_bracelet / 64)
         !byte (sprite_link_item_raft / 64)
         !byte (sprite_link_item_stepladder / 64)
         !byte (sprite_link_item_key / 64)
-        !byte (sprite_link_item_wand / 64)
+        !byte (sprite_link_item_book / 64)
 p2_simple_col:
         !byte COL_YELLOW, COL_BROWN, COL_BROWN, COL_YELLOW, COL_LIGHT_BLUE
 
 p2_name_offs_lo:
-        !byte <(440+3), <(440+11), <(440+19), <(440+27)
-        !byte <(680+3), <(680+11), <(680+19), <(680+27)
+        !byte <(400+3), <(400+12), <(400+21), <(400+30)
+        !byte <(680+3), <(680+12), <(680+21), <(680+30)
 p2_name_offs_hi:
-        !byte >(440+3), >(440+11), >(440+19), >(440+27)
-        !byte >(680+3), >(680+11), >(680+19), >(680+27)
+        !byte >(400+3), >(400+12), >(400+21), >(400+30)
+        !byte >(680+3), >(680+12), >(680+21), >(680+30)
 
 p2_stat_offs_lo:
-        !byte <(480+3), <(480+11), <(480+19), <(480+27)
-        !byte <(720+3), <(720+11), <(720+19), <(720+27)
+        !byte <(440+3), <(440+12), <(440+21), <(440+30)
+        !byte <(720+3), <(720+12), <(720+21), <(720+30)
 p2_stat_offs_hi:
-        !byte >(480+3), >(480+11), >(480+19), >(480+27)
-        !byte >(720+3), >(720+11), >(720+19), >(720+27)
+        !byte >(440+3), >(440+12), >(440+21), >(440+30)
+        !byte >(720+3), >(720+12), >(720+21), >(720+30)
 
 p2_sword_colors:    !byte COL_DARK_GREY, COL_BROWN, COL_WHITE, COL_CYAN
 p2_sword_status:    !text " WOOD  WHITE MAGIC"
@@ -1079,7 +1238,7 @@ txt_p2_empty:       !text "[NONE]"
 txt_p2_acquired:    !text "OWNED "
 
 ; ===========================================================================
-; PAGE 3 : CARTE (OVERWORLD OU DONJON DYNAMIQUE)
+; PAGE 3 : CARTE DU MONDE AUX VRAIES COULEURS DE BIOMES
 ; ===========================================================================
 draw_page_3_map:
         lda #0
@@ -1130,6 +1289,7 @@ draw_page_3_map:
         lda map_row_col_hi,x
         sta ZP_COL+1
 
+        ; Chiffre de ligne 1..8
         txa
         clc
         adc #'1'
@@ -1138,15 +1298,16 @@ draw_page_3_map:
         lda #COL_WHITE
         sta (ZP_COL),y
 
-        lda #164
+        ; Bordures verticales colonnes 2 et 37
+        lda #CHAR_HERO_VERT
         ldy #2
         sta (ZP_SCR),y
-        ldy #36
+        ldy #37
         sta (ZP_SCR),y
         lda #COL_BLUE
         ldy #2
         sta (ZP_COL),y
-        ldy #36
+        ldy #37
         sta (ZP_COL),y
 
         lda #0
@@ -1158,6 +1319,10 @@ draw_page_3_map:
         adc map_rx
         tax
 
+        ; Couleur de biome réelle pour cette salle
+        lda ow_room_biome_colors,x
+        sta ZP_BASE
+
         lda map_rx
         cmp current_room_x
         bne .check_visited
@@ -1165,11 +1330,11 @@ draw_page_3_map:
         cmp current_room_y
         bne .check_visited
 
-        ; Link
+        ; Link clignotant
         lda #HUD_MAP_ACTIVE
         sta ZP_TMP
-        sta ZP_TMP+1
-        lda #COL_YELLOW
+        sta ZP_TCOL
+        lda map_link_color
         sta ZP_BASE
         jmp .render_cell
 
@@ -1177,18 +1342,18 @@ draw_page_3_map:
         lda visited_rooms,x
         beq .cell_unseen
 
-        lda #HUD_MAP_VISITED
+        ; Salle visitée : bloc plein avec la vraie couleur de biome !
+        lda #HUD_MAP_ACTIVE
         sta ZP_TMP
-        sta ZP_TMP+1
-        lda #COL_LIGHT_GREEN
-        sta ZP_BASE
+        sta ZP_TCOL
         jmp .render_cell
 
 .cell_unseen:
+        ; Salle inexplorée : point discret gris sombre
         lda #HUD_MAP_EMPTY
         sta ZP_TMP
         lda #' '
-        sta ZP_TMP+1
+        sta ZP_TCOL
         lda #COL_DARK_GREY
         sta ZP_BASE
 
@@ -1203,7 +1368,7 @@ draw_page_3_map:
         lda ZP_BASE
         sta (ZP_COL),y
         iny
-        lda ZP_TMP+1
+        lda ZP_TCOL
         sta (ZP_SCR),y
         lda ZP_BASE
         sta (ZP_COL),y
@@ -1219,7 +1384,7 @@ draw_page_3_map:
         beq +
         jmp .row_loop
 +
-        ; Ligne 17 : Coordonnées
+        ; Ligne 17 : Coordonnées et progression
         ldx #0
 -       lda txt_room_line,x
         sta SCREEN_RAM+680+2,x
@@ -1232,42 +1397,17 @@ draw_page_3_map:
         lda #'A'
         clc
         adc current_room_x
-        sta SCREEN_RAM+680+19
+        sta SCREEN_RAM+680+13
         lda #'1'
         clc
         adc current_room_y
-        sta SCREEN_RAM+680+21
+        sta SCREEN_RAM+680+15
         lda #COL_YELLOW
-        sta COLOR_RAM+680+19
-        sta COLOR_RAM+680+20
-        sta COLOR_RAM+680+21
+        sta COLOR_RAM+680+13
+        sta COLOR_RAM+680+14
+        sta COLOR_RAM+680+15
 
-        lda current_room_x
-        jsr print_2digits
-        sta SCREEN_RAM+680+27
-        stx SCREEN_RAM+680+28
-        lda #COL_YELLOW
-        sta COLOR_RAM+680+27
-        sta COLOR_RAM+680+28
-
-        lda current_room_y
-        jsr print_2digits
-        sta SCREEN_RAM+680+33
-        stx SCREEN_RAM+680+34
-        lda #COL_YELLOW
-        sta COLOR_RAM+680+33
-        sta COLOR_RAM+680+34
-
-        ; Ligne 19 : Exploration
-        ldx #0
--       lda txt_expl_line,x
-        sta SCREEN_RAM+760+2,x
-        lda #COL_WHITE
-        sta COLOR_RAM+760+2,x
-        inx
-        cpx #36
-        bne -
-
+        ; Calcul et affichage du compteur de salles visitées
         jsr calc_visited_count
         lda visited_count
         cmp #100
@@ -1285,20 +1425,41 @@ draw_page_3_map:
         stx ZP_TMP+1
         lda #' '
 .write_vis:
-        sta SCREEN_RAM+760+14
+        sta SCREEN_RAM+680+35
         lda ZP_TMP
-        sta SCREEN_RAM+760+15
+        sta SCREEN_RAM+680+36
         lda ZP_TMP+1
-        sta SCREEN_RAM+760+16
+        sta SCREEN_RAM+680+37
 
         lda #COL_YELLOW
-        sta COLOR_RAM+760+14
-        sta COLOR_RAM+760+15
-        sta COLOR_RAM+760+16
+        sta COLOR_RAM+680+35
+        sta COLOR_RAM+680+36
+        sta COLOR_RAM+680+37
 
-        ; Ligne 21 : Légende
+        ; Ligne 19 : Légende Biomes 1
         ldx #0
--       lda txt_legend_line,x
+-       lda txt_legend_b1,x
+        sta SCREEN_RAM+760+2,x
+        lda #COL_WHITE
+        sta COLOR_RAM+760+2,x
+        inx
+        cpx #36
+        bne -
+
+        lda #HUD_MAP_ACTIVE
+        sta SCREEN_RAM+760+11
+        sta SCREEN_RAM+760+20
+        sta SCREEN_RAM+760+30
+        lda #COL_LIGHT_BLUE             ; EAU
+        sta COLOR_RAM+760+11
+        lda #COL_GREEN                  ; FORET
+        sta COLOR_RAM+760+20
+        lda #COL_BROWN                  ; MONTAGNE
+        sta COLOR_RAM+760+30
+
+        ; Ligne 21 : Légende Biomes 2
+        ldx #0
+-       lda txt_legend_b2,x
         sta SCREEN_RAM+840+2,x
         lda #COL_WHITE
         sta COLOR_RAM+840+2,x
@@ -1308,29 +1469,20 @@ draw_page_3_map:
 
         lda #HUD_MAP_ACTIVE
         sta SCREEN_RAM+840+11
-        sta SCREEN_RAM+840+12
-        lda #COL_YELLOW
-        sta COLOR_RAM+840+11
-        sta COLOR_RAM+840+12
-
-        lda #HUD_MAP_VISITED
         sta SCREEN_RAM+840+20
-        sta SCREEN_RAM+840+21
-        lda #COL_LIGHT_GREEN
+        sta SCREEN_RAM+840+30
+        lda #COL_YELLOW                 ; DESERT
+        sta COLOR_RAM+840+11
+        lda #COL_DARK_GREY              ; CIMETIERE
         sta COLOR_RAM+840+20
-        sta COLOR_RAM+840+21
-
-        lda #HUD_MAP_EMPTY
-        sta SCREEN_RAM+840+27
-        lda #COL_DARK_GREY
-        sta COLOR_RAM+840+27
+        lda #COL_LIGHT_GREEN            ; PLAINE
+        sta COLOR_RAM+840+30
         rts
 
 ; ---------------------------------------------------------------------------
 ; draw_page_3_dungeon_map : affiche la carte officielle du donjon en cours
 ; ---------------------------------------------------------------------------
 draw_page_3_dungeon_map:
-        ; Ligne 5 : Titre du Donjon (Ex: "DONJON N1 : AIGLE")
         lda #'0'
         clc
         adc current_dungeon_level
@@ -1365,10 +1517,13 @@ draw_page_3_dungeon_map:
         bne -
 +
         ; Cadre centré 8x8 (Colonnes 11..28, Lignes 6 et 15)
-        lda #'+'
+        lda #CHAR_HERO_TL
         sta SCREEN_RAM+240+11
+        lda #CHAR_HERO_TR
         sta SCREEN_RAM+240+28
+        lda #CHAR_HERO_BL
         sta SCREEN_RAM+600+11
+        lda #CHAR_HERO_BR
         sta SCREEN_RAM+600+28
         lda #COL_BLUE
         sta COLOR_RAM+240+11
@@ -1376,8 +1531,9 @@ draw_page_3_dungeon_map:
         sta COLOR_RAM+600+11
         sta COLOR_RAM+600+28
         ldx #0
--       lda #'-'
+-       lda #CHAR_HERO_TOP
         sta SCREEN_RAM+240+12,x
+        lda #CHAR_HERO_BOT
         sta SCREEN_RAM+600+12,x
         lda #COL_BLUE
         sta COLOR_RAM+240+12,x
@@ -1386,7 +1542,6 @@ draw_page_3_dungeon_map:
         cpx #16
         bne -
 
-        ; Lignes 7..14 : 8 rangées de salles (8 colonnes chacune)
         lda #0
         sta map_ry
 .d_row_loop:
@@ -1400,8 +1555,7 @@ draw_page_3_dungeon_map:
         lda map_row_col_hi,x
         sta ZP_COL+1
 
-        ; Bordures verticales colonnes 11 et 28
-        lda #164
+        lda #CHAR_HERO_VERT
         ldy #11
         sta (ZP_SCR),y
         ldy #28
@@ -1413,9 +1567,8 @@ draw_page_3_dungeon_map:
         sta (ZP_COL),y
 
         lda #0
-        sta map_rx                      ; rel_rx (0..7)
+        sta map_rx
 .d_col_loop:
-        ; Calcule colonne réelle = dung_bank_x + rel_rx
         ldy current_dungeon_level
         dey
         cpy #9
@@ -1424,9 +1577,8 @@ draw_page_3_dungeon_map:
 +       lda dung_bank_x,y
         clc
         adc map_rx
-        sta ZP_TMP                      ; col réelle
+        sta ZP_TMP
 
-        ; Calcule index de salle = map_ry * 16 + col
         lda map_ry
         asl
         asl
@@ -1434,14 +1586,12 @@ draw_page_3_dungeon_map:
         asl
         clc
         adc ZP_TMP
-        tax                             ; X = index salle 0..127
+        tax
 
-        ; Vérifie si la salle existe dans ce donjon ($C016,x != $C016)
         lda $c016,x
         cmp $c016
         beq .d_no_room
 
-        ; La salle existe : est-elle révélée ?
         lda player_has_dungeon_map
         bne .d_room_revealed
         lda visited_uw_rooms,x
@@ -1456,7 +1606,6 @@ draw_page_3_dungeon_map:
         jmp .d_put_cell
 
 .d_room_revealed:
-        ; 1. Link dans cette salle ?
         lda map_ry
         cmp current_room_y
         bne +
@@ -1477,7 +1626,6 @@ draw_page_3_dungeon_map:
         sta ZP_BASE
         jmp .d_put_cell
 +
-        ; 2. Salle Triforce avec Boussole ?
         lda player_has_compass
         beq ++
         ldy current_dungeon_level
@@ -1495,7 +1643,6 @@ draw_page_3_dungeon_map:
         sta ZP_BASE
         jmp .d_put_cell
 ++
-        ; Salle normale explorée
         lda #HUD_MAP_VISITED
         sta ZP_TMP
         sta ZP_TMP+1
@@ -1503,10 +1650,10 @@ draw_page_3_dungeon_map:
         sta ZP_BASE
 
 .d_put_cell:
-        lda map_rx                      ; rel_rx (0..7)
+        lda map_rx
         asl
         clc
-        adc #12                         ; Colonnes 12, 14, 16..26
+        adc #12
         tay
         lda ZP_TMP
         sta (ZP_SCR),y
@@ -1531,8 +1678,7 @@ draw_page_3_dungeon_map:
         beq +
         jmp .d_row_loop
 +
-
-        ; Légende élégante centrée (Ligne 17)
+        ; Légende du donjon (Ligne 17)
         ldx #0
 -       lda txt_dung_legend,x
         beq +
@@ -1583,25 +1729,29 @@ txt_dung_leg_col:
         !byte 0
 
 draw_map_borders:
-        lda #'+'
+        lda #CHAR_HERO_TL
         sta SCREEN_RAM+240+2
-        sta SCREEN_RAM+240+36
+        lda #CHAR_HERO_TR
+        sta SCREEN_RAM+240+37
+        lda #CHAR_HERO_BL
         sta SCREEN_RAM+600+2
-        sta SCREEN_RAM+600+36
+        lda #CHAR_HERO_BR
+        sta SCREEN_RAM+600+37
         lda #COL_BLUE
         sta COLOR_RAM+240+2
-        sta COLOR_RAM+240+36
+        sta COLOR_RAM+240+37
         sta COLOR_RAM+600+2
-        sta COLOR_RAM+600+36
+        sta COLOR_RAM+600+37
         ldx #0
--       lda #'-'
+-       lda #CHAR_HERO_TOP
         sta SCREEN_RAM+240+3,x
+        lda #CHAR_HERO_BOT
         sta SCREEN_RAM+600+3,x
         lda #COL_BLUE
         sta COLOR_RAM+240+3,x
         sta COLOR_RAM+600+3,x
         inx
-        cpx #33
+        cpx #34
         bne -
         rts
 
@@ -1619,10 +1769,38 @@ calc_visited_count:
         rts
 
 ; ===========================================================================
+; TABLE DES VRAIES COULEURS DE BIOMES DE L'OVERWORLD (128 SALLES)
+; ===========================================================================
+ow_room_biome_colors:
+        ; Rangée 1 (A-1 à P-1) : Montagne de la Mort & Océan Est
+        !byte COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN
+        !byte COL_BROWN, COL_BROWN, COL_LIGHT_BLUE, COL_BROWN, COL_BROWN, COL_BROWN, COL_LIGHT_BLUE, COL_LIGHT_BLUE
+        ; Rangée 2 (A-2 à P-2) : Roches volcaniques & Côte
+        !byte COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN
+        !byte COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_BROWN, COL_LIGHT_BLUE, COL_BROWN
+        ; Rangée 3 (A-3 à P-3) : Cimetière, Plaines, Rivière & Désert
+        !byte COL_DARK_GREY, COL_DARK_GREY, COL_BROWN, COL_BROWN, COL_LIGHT_GREEN, COL_LIGHT_GREEN, COL_LIGHT_BLUE, COL_LIGHT_BLUE
+        !byte COL_LIGHT_BLUE, COL_YELLOW, COL_YELLOW, COL_YELLOW, COL_BROWN, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_BROWN
+        ; Rangée 4 (A-4 à P-4) : Cimetière, Lac Hylia, Désert & Bois
+        !byte COL_DARK_GREY, COL_DARK_GREY, COL_BROWN, COL_BROWN, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE
+        !byte COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_YELLOW, COL_YELLOW, COL_BROWN, COL_GREEN, COL_LIGHT_BLUE, COL_LIGHT_BLUE
+        ; Rangée 5 (A-5 à P-5) : Cimetière, Grand Lac, Clairière & Forêt Est
+        !byte COL_DARK_GREY, COL_DARK_GREY, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE
+        !byte COL_LIGHT_BLUE, COL_GREEN, COL_LIGHT_GREEN, COL_GREEN, COL_BROWN, COL_GREEN, COL_GREEN, COL_LIGHT_BLUE
+        ; Rangée 6 (A-6 à P-6) : Bois Perdus, Fleuve & Forêts
+        !byte COL_BROWN, COL_GREEN, COL_GREEN, COL_GREEN, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_GREEN
+        !byte COL_GREEN, COL_GREEN, COL_LIGHT_BLUE, COL_GREEN, COL_GREEN, COL_GREEN, COL_BROWN, COL_LIGHT_BLUE
+        ; Rangée 7 (A-7 à P-7) : Bois Perdus, Traversée du fleuve & Plaines
+        !byte COL_GREEN, COL_GREEN, COL_GREEN, COL_GREEN, COL_LIGHT_GREEN, COL_LIGHT_BLUE, COL_BROWN, COL_BROWN
+        !byte COL_GREEN, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_GREEN, COL_GREEN, COL_GREEN, COL_GREEN, COL_LIGHT_BLUE
+        ; Rangée 8 (A-8 à P-8) : Clairière de départ, Forêt du Sud & Océan
+        !byte COL_BROWN, COL_LIGHT_GREEN, COL_GREEN, COL_GREEN, COL_BROWN, COL_LIGHT_BLUE, COL_LIGHT_GREEN, COL_BROWN
+        !byte COL_GREEN, COL_BROWN, COL_BROWN, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_LIGHT_BLUE
+
+; ===========================================================================
 ; TEXTES DU MENU D'INVENTAIRE EN 4 PAGES
 ; ===========================================================================
 
-; En-tête d'onglets unique et tables d'encadrement
 txt_tabs_base:      !text " 1:ITEMS   2:TRIFORCE  3:EQUIP  4:MAP   "
 tab_bracket_pos:    !byte 0, 9,  10, 21,  21, 30,  30, 39
 tab_start:          !byte 0, 10, 22, 31
@@ -1631,16 +1809,12 @@ tab_end:            !byte 10, 22, 31, 40
 txt_footer_help:    !text " [JOY] SELECT  [1-4] PAGE     [B] EXIT  "
 
 ; Textes Page 0
-txt_box_small:      !text "+------+"
-txt_box_p0_grid:    !text "+--------------+"
 txt_p0_equipe:      !text "EQUIP "
-txt_p0_arsenal:     !text "WEAPONS"
-txt_p0_active:      !text "ITEM   B"
-txt_p0_slot_b:      !text "EQUIPPED"
+txt_p0_arsenal:     !text "  WEAPONS"
+txt_p0_active:      !text " ITEM B "
 txt_p0_stock_line:  !text "RUPEES:     KEYS:       BOMBS:      "
-txt_p0_tip:         !text "[LEFT/RIGHT] SELECT      [A] EQUIP  "
+txt_p0_tip:         !text "[JOY] SELECT            [A] EQUIP   "
 
-; Descriptifs des 8 armes (exactement 36 caractères)
 p0_desc_lo:
         !byte <desc_boom, <desc_bomb, <desc_bow, <desc_cand, <desc_food, <desc_potion, <desc_whistle, <desc_wand
 p0_desc_hi:
@@ -1656,26 +1830,25 @@ desc_whistle:       !text "RECORDER", 0
 desc_wand:          !text "MAGICAL ROD", 0
 
 ; Textes Page 1 (Triforce)
-txt_p1_title:       !text "   THE TRIFORCE OF WISDOM     "
-txt_tri_all:
-        !text "           /\\           "
-        !text "          /  \\          "
-        !text "         / 12 \\         "
-        !text "        /------\\        "
-        !text "       /\\ 3  4 /\\       "
-        !text "      / 5\\ /\\ /6 \\      "
-        !text "     / 7 \\/--\\/ 8 \\     "
-        !text "    /--------------\\    "
+txt_p1_title:       !text "   THE TRIFORCE OF WISDOM       "
+txt_tri_pedestal:
+        !text "              .  .              "
+        !text "             . 1  2 .           "
+        !text "            ..........          "
+        !text "          .  .      .  .        "
+        !text "         . 3  .    .  6 .       "
+        !text "        . 4  5 .  . 7  8 .      "
+        !text "       ....................     "
 txt_p1_counter:     !text "    TRIFORCE PIECES : 0 / 8 "
 txt_p1_dungeons_line: !text "LEVELS : [1][2][3][4][5][6][7][8] "
 txt_p1_msg_seek:    !text "    FIND THE 8 TRIFORCE PIECES!     "
 txt_p1_msg_full:    !text "   THE TRIFORCE IS COMPLETE!        "
 
 ; Textes Page 2 (Équipement)
-txt_p2_title:       !text "         LINK'S EQUIPMENT           "
-txt_p2_tip:         !text "    PASSIVE ITEMS AND RELICS        "
+txt_p2_title:       !text "    LINK'S EQUIPMENT & RELICS     "
+txt_p2_tip:         !text " PASSIVE RELICS & PERMANENT UPGRADES"
 
 ; Textes Page 3 (Carte du Monde)
-txt_room_line:      !text "CURRENT ROOM   : A-1  (X:  , Y:  )  "
-txt_expl_line:      !text "EXPLORED  :    0 / 128 ROOMS        "
-txt_legend_line:    !text "LEGEND :    LINK     SEEN  - UNKNOWN"
+txt_room_line:      !text "LOCATION : A-1         EXPLORED:   0"
+txt_legend_b1:      !text "BIOMES :   WATER    FOREST    ROCK  "
+txt_legend_b2:      !text "           DESERT   GRAVE     PLAIN "

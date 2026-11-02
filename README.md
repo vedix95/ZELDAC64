@@ -14,9 +14,9 @@ Une récréation fidèle et authentique du chef-d'œuvre classique **The Legend 
 
 ## 💾 Téléchargement Direct & Releases
 
-### Latest Release (v0.12.1)
+### Latest Release (v0.16)
 
-- **[Télécharger l'image cartouche v0.12.1 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)** - Reorg & cleanup: logs consolidated, docs merged, project structure streamlined
+- **[Télécharger l'image cartouche v0.16 (`zelda.crt`)](https://github.com/vedix95/ZELDAC64/releases/latest)** - Menus Héroïques, Triforce assemblée en Sprites Matériels, Biomes réels sur la Carte du Monde et File Audio Dual SID Stéréo.
 - Previous releases are available in the [GitHub Releases](https://github.com/vedix95/ZELDAC64/releases) section.
 
 ---
@@ -128,7 +128,26 @@ Les musiques du jeu ont été fidèlement retranscrites et synthétisées direct
 
 ---
 
-## Points forts & Fonctionnalités (Nouveautés v0.11.2 — Fidélité 1:1 NES Overworld, Rochers Escargot & Audio Résilient)
+## Points forts & Fonctionnalités (Nouveautés v0.16 — Menus Héroïques, Triforce en Sprites, Biomes Carte & Stéréo Dual SID)
+
+- 👑 **Triforce de la Sagesse Assemblée en Sprites Matériels VIC-II (Page 2: TRIFORCE)** :
+  - **Assemblage physique 1:1 en 8 fragments de sprites** : Éradication complète des anciens caractères ASCII ; chaque fragment de la Triforce de la Sagesse (Donjons 1 à 8) est désormais matérialisé par un fragment de sprite matériel C64 dédié qui s'enclenche au pixel près pour reformer la Grande Triforce dorée étincelante (48×42 pixels hires).
+  - **Dais de pierre taillée & Scintillement dynamique** : Emplacements numérotés [1] à [8] en pierre sombre indiquant les reliques encore manquantes, étincelles d'or pulsantes à 50 Hz et messages de quête dynamiques.
+- 🏛️ **Refonte Visuelle des Écrans d'Inventaire & Équipements Héroïques (Pages 1 & 3)** :
+  - **Fin de l'écrasement des sprites & disposition aérée** : Grilles d'objets et d'équipements restructurées avec un espacement royal de 32 pixels, supprimant toute déformation visuelle.
+  - **Frises architecturales héroïques & cadres de menu dédiés** : Remplacement des bordures ASCII par des glyphes graphiques personnalisés intégrés dans le jeu de caractères (`CHAR_HERO_*` et `CHAR_SLOT_*` : corniche cloutée de diamants, séparateurs doubles, cadres à double gorge).
+  - **Sprites d'objets et reliques dédiés** : Nouvelles silhouettes précises pour l'Épée Blanche/Magique, le Grand Bouclier Magique, l'Anneau Bleu, le Bracelet de Force, le Radeau de Transport, l'Échelle, la Clef Magique et le Livre de Magie.
+- 🗺️ **Carte du Monde Topologique 16×8 aux 6 Biomes Authentiques NES (Page 4: MAP)** :
+  - **Rendu topologique fidèle de l'Overworld (128 salles)** : Remplacement de l'ancien damier monochrome vert par les 6 vraies teintes de biomes officielles extraites directement de `assets/world.txt` et de la ROM originale :
+    - 🌊 **Eau, Lacs & Océan (`COL_LIGHT_BLUE`)** : Rivière Zora, cascades, Lac Hylia et grand océan oriental.
+    - 🌲 **Forêts & Bois Perdus (`COL_GREEN`)** : Frondaisons épaisses et clairières sylvestres.
+    - ⛰️ **Montagne de la Mort & Roches (`COL_BROWN`)** : Pics escarpés et massifs rocheux du nord.
+    - 🏜️ **Désert & Rivages Côtiers (`COL_YELLOW`)** : Étendues de sable chaud.
+    - 🪦 **Cimetière Royal (`COL_DARK_GREY`)** : Les 6 salles sacrées des pierres tombales hantées de Ghinis.
+    - 🌿 **Plaines & Vallées (`COL_LIGHT_GREEN`)** : Clairière de départ, prairies et fontaines des fées.
+  - **Légende couleur sur 2 lignes, coordonnées matricielles (`LOCATION : H-8`) et compteur précis d'exploration (`EXPLORED: 43 / 128`)**.
+- 🎶 **Moteur Audio Dual SID Stéréo ($D420) & File d'Attente Prioritaire Anti-Conflit** :
+  - **Sérialisation absolue des sons simultanés** : Épée, clés et carillon de secret ne se coupent plus mutuellement. Tout son déclenché pendant la lecture d'un autre est automatiquement mis en file d'attente prioritaire (`sfx_pending_idx` / `secret_chime_pending`) et s'exécute immédiatement à la suite sans voler la basse ni corrompre les voix stéréo.
 
 - **Conversion 1:1 Authentique Tuile par Tuile de l'Overworld NES (`assets/world.txt`)** :
   - **Grille exacte 1:1 sans aucune perte** : Mappage direct des 16 colonnes NES (0..15) sur les colonnes 2..17 du C64 et des 8 lignes intérieures NES (1..8) sur les lignes 1..8 du C64. Éradication complète des duplications de colonnes et des suppressions de rangées qui déformaient la carte et décalaient les événements.

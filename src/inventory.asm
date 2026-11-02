@@ -275,6 +275,20 @@ update_items_page:
 ; update_triforce_page : Page 1
 ; ---------------------------------------------------------------------------
 update_triforce_page:
+        inc inv_frame_timer
+        lda inv_frame_timer
+        and #%00001000
+        beq .tri_gold
+        lda #COL_WHITE
+        bne .tri_apply
+.tri_gold:
+        lda #COL_YELLOW
+.tri_apply:
+        ldx #7
+-       sta VIC_SPRITE_COL0,x
+        dex
+        bpl -
+
         lda btn_a_pressed
         beq +
         lda #INV_PAGE_EQUIPMENT

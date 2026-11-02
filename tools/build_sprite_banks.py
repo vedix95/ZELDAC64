@@ -93,7 +93,9 @@ NPC_NAMES = [
     'old_man', 'merchant', 'old_woman', 'moblin_down_0',
     'item_shield', 'item_ring',
     'item_food', 'item_potion', 'item_whistle', 'item_wand',
-    'item_raft', 'item_stepladder'
+    'item_raft', 'item_stepladder',
+    'item_sword', 'item_bracelet', 'item_book',
+    'tri_p1', 'tri_p2', 'tri_p3', 'tri_p4', 'tri_p5'
 ]
 
 def encode_sprite(frame):
@@ -185,6 +187,13 @@ def main():
         sym = f"SPR_DUNG_{name.upper()}"
         inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
 
+    common_syms = set(sym for _, _, sym in COMMON_SLOTS.values())
+    inc_lines.append("\n; --- Sprites PNJ, Objets & Inventaire ($A0..$EF) ---\n")
+    for name, ptr in sorted(npc_ptrs.items()):
+        sym = f"SPR_NPC_{name.upper()}"
+        if sym not in common_syms:
+            inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
+
     inc_lines.append("\n; --- Alias de compatibilité d'adresses (Pointeur * 64) ---\n")
     compat = [
         ("sprite_link_item_triforce", "SPR_COMMON_TRIFORCE"),
@@ -201,6 +210,14 @@ def main():
         ("sprite_link_item_potion", "SPR_NPC_ITEM_POTION"),
         ("sprite_link_item_raft", "SPR_NPC_ITEM_RAFT"),
         ("sprite_link_item_stepladder", "SPR_NPC_ITEM_STEPLADDER"),
+        ("sprite_link_item_sword", "SPR_NPC_ITEM_SWORD"),
+        ("sprite_link_item_bracelet", "SPR_NPC_ITEM_BRACELET"),
+        ("sprite_link_item_book", "SPR_NPC_ITEM_BOOK"),
+        ("sprite_tri_p1", "SPR_NPC_TRI_P1"),
+        ("sprite_tri_p2", "SPR_NPC_TRI_P2"),
+        ("sprite_tri_p3", "SPR_NPC_TRI_P3"),
+        ("sprite_tri_p4", "SPR_NPC_TRI_P4"),
+        ("sprite_tri_p5", "SPR_NPC_TRI_P5"),
         ("sprite_link_item_get", "SPR_COMMON_ITEM_GET"),
         ("sprite_enemies_moblin_down_0", "SPR_NPC_MOBLIN_DOWN_0"),
     ]
