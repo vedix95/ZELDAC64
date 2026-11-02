@@ -64,11 +64,11 @@ room_enemy_idx:
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 0, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 8, 4, 10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 12, 8, 7, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 14, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 9, 5, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 13, 9, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 16, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0
 
 ; Salle ($23 : rx=3, ry=2) - RLE compact (57 octets)
 u_room_23:
@@ -204,38 +204,42 @@ u_room_77:
 dummy_sealed_room:
         !byte 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 65, 255
 
-; Table d'apparition des monstres dédupliquée (15 formations x 24 octets)
+; Table d'apparition des monstres dédupliquée (17 formations x 24 octets)
 map_enemies:
         ; Formation 0
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 1
-        !byte TYPE_GEL          ,  6,  3,   TYPE_GEL          , 14,  3,   TYPE_GEL          ,  8,  6,   TYPE_GEL          , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GEL          ,  4,  3,   TYPE_GEL          , 15,  3,   TYPE_GEL          ,  8,  5,   TYPE_GEL          , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 2
-        !byte TYPE_LIKE_LIKE    ,  6,  3,   TYPE_LIKE_LIKE    , 14,  3,   TYPE_LIKE_LIKE    , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_LIKE_LIKE    ,  6,  2,   TYPE_LIKE_LIKE    , 14,  3,   TYPE_LIKE_LIKE    , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 3
-        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      ,  8,  6,   TYPE_STALFOS      , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GEL          ,  6,  3,   TYPE_GEL          , 14,  3,   TYPE_GEL          ,  8,  5,   TYPE_GEL          , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 4
-        !byte TYPE_DARKNUT_RED  ,  8,  3,   TYPE_DARKNUT_RED  , 12,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 13,  3,   TYPE_STALFOS      ,  8,  5,   TYPE_STALFOS      , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 5
-        !byte TYPE_GANON        , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  8,  3,   TYPE_DARKNUT_RED  , 12,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 6
-        !byte TYPE_STALFOS      , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GANON        , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 7
-        !byte TYPE_WALLMASTER   ,  6,  3,   TYPE_WALLMASTER   , 14,  3,   TYPE_WALLMASTER   ,  6,  6,   TYPE_WALLMASTER   , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 8
-        !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 14,  3,   TYPE_DARKNUT_BLUE ,  8,  6,   TYPE_DARKNUT_BLUE , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_WALLMASTER   ,  6,  3,   TYPE_WALLMASTER   , 14,  3,   TYPE_WALLMASTER   ,  6,  6,   TYPE_WALLMASTER   , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 9
-        !byte TYPE_WIZZROBE_BLUE,  8,  3,   TYPE_WIZZROBE_BLUE, 12,  3,   TYPE_WIZZROBE_BLUE, 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 14,  3,   TYPE_DARKNUT_BLUE ,  8,  6,   TYPE_DARKNUT_BLUE , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 10
-        !byte TYPE_DARKNUT_BLUE , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_WIZZROBE_BLUE,  8,  3,   TYPE_WIZZROBE_BLUE, 12,  3,   TYPE_WIZZROBE_BLUE, 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 11
-        !byte TYPE_GORIYA_RED   ,  6,  3,   TYPE_GORIYA_RED   , 14,  3,   TYPE_GORIYA_RED   ,  8,  6,   TYPE_GORIYA_RED   , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_BLUE , 10,  3,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 12
-        !byte TYPE_GORIYA_RED   ,  8,  3,   TYPE_GORIYA_RED   , 12,  3,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GORIYA_RED   ,  6,  3,   TYPE_GORIYA_RED   , 14,  3,   TYPE_GORIYA_RED   ,  8,  5,   TYPE_GORIYA_RED   , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 13
-        !byte TYPE_DARKNUT_RED  , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GORIYA_RED   ,  8,  3,   TYPE_GORIYA_RED   , 12,  3,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 14
-        !byte TYPE_GIBDO        ,  6,  3,   TYPE_GIBDO        , 14,  3,   TYPE_GIBDO        , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_WALLMASTER   ,  6,  2,   TYPE_WALLMASTER   , 14,  2,   TYPE_WALLMASTER   ,  6,  6,   TYPE_WALLMASTER   , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 15
+        !byte TYPE_DARKNUT_RED  , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 16
+        !byte TYPE_GIBDO        ,  6,  3,   TYPE_GIBDO        , 13,  3,   TYPE_GIBDO        ,  8,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
 
 ; ===========================================================================
 ; Jeu de caracteres authentique du donjon (576 octets)

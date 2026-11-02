@@ -288,60 +288,60 @@ map_enemies:
         ; Formation 0
         !byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 1
-        !byte TYPE_LYNEL_RED  ,  10,  4,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_RED  ,  11,  3,   TYPE_LYNEL_RED  ,   3,  6,   TYPE_LYNEL_RED  ,  15,  6,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 2
-        !byte TYPE_LYNEL_RED  ,  10,  4,   TYPE_LYNEL_RED  ,   3,  4,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_RED  ,   9,  5,   TYPE_LYNEL_RED  ,   2,  5,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,  13,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 3
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,   9,  5,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 4
-        !byte TYPE_LYNEL_BLUE ,  10,  4,   TYPE_LYNEL_BLUE ,   3,  7,   TYPE_LYNEL_BLUE ,  16,  7,   TYPE_LYNEL_BLUE ,  15,  2,   TYPE_LYNEL_BLUE ,   6,  4,   TYPE_LYNEL_BLUE ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_BLUE ,  11,  4,   TYPE_LYNEL_BLUE ,   3,  7,   TYPE_LYNEL_BLUE ,  16,  7,   TYPE_LYNEL_BLUE ,  15,  2,   TYPE_LYNEL_BLUE ,   5,  5,   TYPE_LYNEL_BLUE ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 5
-        !byte TYPE_LYNEL_BLUE ,  10,  4,   TYPE_LEEVER_BLUE,   3,  2,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,   5,  7,   TYPE_LEEVER_RED ,  16,  2,   TYPE_LYNEL_RED  ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_BLUE ,  10,  4,   TYPE_LEEVER_BLUE,   2,  3,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,   5,  7,   TYPE_LEEVER_RED ,  15,  2,   TYPE_LYNEL_RED  ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 6
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  4,   TYPE_LYNEL_RED  ,  16,  4,   TYPE_LYNEL_BLUE ,   7,  2,   TYPE_LYNEL_RED  ,   7,  6,   TYPE_LYNEL_BLUE ,  11,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   2,  5,   TYPE_LYNEL_RED  ,  15,  5,   TYPE_LYNEL_BLUE ,   6,  3,   TYPE_LYNEL_RED  ,   7,  6,   TYPE_LYNEL_BLUE ,  11,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 7
         !byte TYPE_LYNEL_RED  ,  10,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 8
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  4,   TYPE_TEKTITE_RED,  16,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   2,  5,   TYPE_TEKTITE_RED,  15,  5,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 9
-        !byte TYPE_LYNEL_BLUE ,  10,  6,   TYPE_ZORA       ,  10,  4,   TYPE_ZORA       ,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_BLUE ,   9,  7,   TYPE_ZORA       ,  10,  4,   TYPE_ZORA       ,   5,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 10
-        !byte TYPE_LEEVER_RED ,  10,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LEEVER_RED ,  11,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 11
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,  16,  3,   TYPE_TEKTITE_RED,  14,  7,   TYPE_TEKTITE_RED,   6,  4,   TYPE_TEKTITE_RED,  13,  2,   TYPE_TEKTITE_RED,  10,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,  16,  3,   TYPE_TEKTITE_RED,  13,  6,   TYPE_TEKTITE_RED,   7,  5,   TYPE_TEKTITE_RED,  13,  2,   TYPE_TEKTITE_RED,  10,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 12
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  2,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,   6,  6,   TYPE_TEKTITE_RED,  14,  3,   TYPE_TEKTITE_RED,   7,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  2,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,   6,  6,   TYPE_TEKTITE_RED,  13,  4,   TYPE_TEKTITE_RED,   8,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 13
         !byte TYPE_ZORA       ,  13,  4,   TYPE_ZORA       ,  17,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 14
-        !byte TYPE_ZORA       ,  19,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_ZORA       ,  18,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 15
         !byte TYPE_LYNEL_BLUE ,  10,  3,   TYPE_LYNEL_BLUE ,   3,  6,   TYPE_LYNEL_BLUE ,  16,  7,   TYPE_LYNEL_BLUE ,  15,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 16
         !byte TYPE_PEAHAT     ,  10,  3,   TYPE_PEAHAT     ,   3,  7,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,   5,  2,   TYPE_LYNEL_RED  ,  15,  2,   TYPE_LYNEL_BLUE ,   8,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 17
-        !byte TYPE_LYNEL_BLUE ,  10,  4,   TYPE_LYNEL_BLUE ,   3,  7,   TYPE_LYNEL_BLUE ,  16,  7,   TYPE_LYNEL_BLUE ,  15,  2,   TYPE_LYNEL_BLUE ,   6,  4,   TYPE_LYNEL_BLUE ,   8,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_BLUE ,  10,  4,   TYPE_LYNEL_BLUE ,   3,  7,   TYPE_LYNEL_BLUE ,  17,  6,   TYPE_LYNEL_BLUE ,  15,  2,   TYPE_LYNEL_BLUE ,   5,  3,   TYPE_LYNEL_BLUE ,   8,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 18
-        !byte TYPE_LYNEL_BLUE ,  10,  4,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_BLUE ,  16,  7,   TYPE_LYNEL_RED  ,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_LYNEL_BLUE ,   9,  5,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_BLUE ,  16,  7,   TYPE_LYNEL_RED  ,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 19
         !byte TYPE_LYNEL_RED  ,  10,  4,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 20
         !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  6,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_BLUE ,  15,  2,   TYPE_LYNEL_RED  ,   7,  6,   TYPE_LYNEL_BLUE ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 21
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,   9,  3,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 22
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  7,   TYPE_ZORA       ,  10,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,   9,  5,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  7,   TYPE_ZORA       ,   8,  4,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 23
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  5,   TYPE_ZORA       ,  10,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,   9,  5,   TYPE_TEKTITE_RED,   3,  7,   TYPE_TEKTITE_RED,  16,  5,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 24
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  5,   TYPE_TEKTITE_RED,  16,  5,   TYPE_ZORA       ,  10,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,   9,  5,   TYPE_TEKTITE_RED,   3,  5,   TYPE_TEKTITE_RED,  16,  5,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 25
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  5,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,  14,  4,   TYPE_TEKTITE_RED,   7,  5,   TYPE_ZORA       ,   8,  2,   TYPE_NONE       ,   0,  0
+        !byte TYPE_TEKTITE_RED,   9,  5,   TYPE_TEKTITE_RED,   3,  5,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,  15,  3,   TYPE_TEKTITE_RED,   7,  5,   TYPE_ZORA       ,   8,  2,   TYPE_NONE       ,   0,  0
         ; Formation 26
-        !byte TYPE_ARMOS      ,   9,  4,   TYPE_ARMOS      ,  11,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,  15,  4,   TYPE_ARMOS      ,   9,  6,   TYPE_ARMOS      ,  11,  6,   TYPE_ARMOS      ,  13,  6,   TYPE_ARMOS      ,  15,  6
+        !byte TYPE_ARMOS      ,   8,  3,   TYPE_ARMOS      ,  10,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,  14,  3,   TYPE_ARMOS      ,   8,  5,   TYPE_ARMOS      ,  10,  5,   TYPE_ARMOS      ,  12,  5,   TYPE_ARMOS      ,  14,  5
         ; Formation 27
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  3,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   9,  7,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  12,  5,   TYPE_ZORA       ,  17,  7
+        !byte TYPE_PEAHAT     ,   9,  5,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  15,  2,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   9,  7,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Formation 28
-        !byte TYPE_TEKTITE_RED,  10,  4,   TYPE_TEKTITE_RED,   3,  3,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  15,  2,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,   7,  3,   TYPE_ZORA       ,   8,  5,   TYPE_ZORA       ,   2,  7
+        !byte TYPE_TEKTITE_RED,  11,  3,   TYPE_TEKTITE_RED,   2,  4,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  15,  2,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,   7,  3,   TYPE_ZORA       ,   7,  6,   TYPE_ZORA       ,   2,  7
         ; Formation 29
-        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  16,  7,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,  16,  2,   TYPE_PEAHAT     ,   7,  7,   TYPE_ZORA       ,  19,  4,   TYPE_NONE       ,   0,  0
+        !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  15,  6,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,  15,  2,   TYPE_PEAHAT     ,   8,  6,   TYPE_ZORA       ,  18,  3,   TYPE_NONE       ,   0,  0

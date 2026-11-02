@@ -247,6 +247,7 @@ main_loop:
 
 .in_cellar:
         jsr cellar_update
+        jsr items_update
         jsr cellar_draw
         jmp main_loop
 
@@ -293,21 +294,26 @@ target_room_buf      = $ce00           ; 200 octets en zone haute dynamique ($ce
 ; $4000..$7FFF est toujours 100% RAM en modes CPU_PORT $36 et $37.
 * = $4000
 
+current_cart_bank: !byte 0
+
 ; ---------------------------------------------------------------------------
 ; cart_stream_copy : Copie rapide de pages ROM ($8000..) vers ZP_DST en RAM
 ; Entrée : A = Banque cartouche, X = Nombre de pages (256 o), ZP_DST = Adresse RAM cible
 ; ---------------------------------------------------------------------------
 cart_stream_copy:
-        sta CART_REG            ; Sélectionne la banque cartouche à $DE00
+        sta current_cart_bank
         php
-        sei
-        lda #$37
-        sta CPU_PORT            ; Active LORAM=1 pour lire la ROM cartouche à $8000
-
         lda #<$8000
         sta ZP_SRC
         lda #>$8000
         sta ZP_SRC+1
+
+.csc_page_loop:
+        sei
+        lda current_cart_bank
+        sta CART_REG            ; Sélectionne la banque cartouche à $DE00
+        lda #$37
+        sta CPU_PORT            ; Active LORAM=1 pour lire la ROM cartouche à $8000
 
         ldy #0
 -       lda (ZP_SRC),y
@@ -316,23 +322,25 @@ cart_stream_copy:
         bne -
         inc ZP_SRC+1
         inc ZP_DST+1
-        dex
-        bne -
 
         lda #$36
         sta CPU_PORT            ; Rétablit le mode RAM de jeu sous BASIC
         lda #CART_DISABLE
         sta CART_REG            ; Déconnecte la cartouche
+        cli                     ; Laisse passer les interruptions raster et audio
+        nop
+        nop
+
+        dex
+        bne .csc_page_loop
+
         plp
         rts
 
 ; cart_copy_to_c000 : Rétro-compatibilité pour les chunks et donjons
 cart_copy_to_c000:
+        sta current_cart_bank
         php
-        sei
-        lda #$37
-        sta CPU_PORT            ; Active LORAM=1 pour lire la ROM cartouche à $8000
-
         ldx #13                 ; 13 pages = 3328 octets ($C000..$CCFF)
         lda #<$8000
         sta ZP_SRC
@@ -342,6 +350,14 @@ cart_copy_to_c000:
         sta ZP_DST
         lda #>$c000
         sta ZP_DST+1
+
+.c0_page_loop:
+        sei
+        lda current_cart_bank
+        sta CART_REG            ; Active la banque cartouche
+        lda #$37
+        sta CPU_PORT            ; Active LORAM=1 pour lire la ROM cartouche à $8000
+
         ldy #0
 -       lda (ZP_SRC),y
         sta (ZP_DST),y
@@ -349,11 +365,18 @@ cart_copy_to_c000:
         bne -
         inc ZP_SRC+1
         inc ZP_DST+1
-        dex
-        bne -
 
         lda #$36
         sta CPU_PORT            ; Rétablit le mode RAM de jeu sous BASIC
+        lda #CART_DISABLE
+        sta CART_REG            ; Déconnecte la cartouche
+        cli                     ; Laisse passer les interruptions raster et audio
+        nop
+        nop
+
+        dex
+        bne .c0_page_loop
+
         plp
         rts
 

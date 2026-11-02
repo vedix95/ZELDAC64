@@ -160,6 +160,8 @@ music_play:
         sta music_step
         sta music_delay
         sta sfx_timer
+        sta sfx_voice
+        sta secret_chime_active
         sta cur_music_v1_note
         sta cur_music_v2_note
         sta cur_music_v3_note
@@ -176,6 +178,14 @@ music_play:
 
 .init_overworld_inst:
         ; --- Instruments Overworld Authentiques ---
+        ; Couper d'abord le Gate pour garantir le réarmement ADSR 0 -> 1
+        lda #%01000000                  ; Pulse Gate OFF
+        sta SID1_V1_CTRL
+        lda #%00100000                  ; Sawtooth Gate OFF
+        sta SID1_V2_CTRL
+        lda #%00010000                  ; Triangle Gate OFF
+        sta SID1_V3_CTRL
+
         ; Voix 1 : Cuivre / Lead héroïque (Pulse 50%)
         lda #$00
         sta SID1_V1_PW_LO
@@ -234,6 +244,14 @@ music_play:
 
 .init_dungeon_inst:
         ; --- Instruments Underworld (Dungeon) Authentiques ---
+        ; Couper d'abord le Gate sur les 3 voix pour garantir le réarmement ADSR 0 -> 1
+        lda #%01000000                  ; Pulse Gate OFF
+        sta SID1_V1_CTRL
+        lda #%00000000                  ; Gate OFF
+        sta SID1_V2_CTRL
+        lda #%00010000                  ; Triangle Gate OFF
+        sta SID1_V3_CTRL
+
         ; Voix 1 : Pulse 50% ($0800), arpeggio lead
         lda #$00
         sta SID1_V1_PW_LO
@@ -321,25 +339,120 @@ music_stop:
 ; restore_music_voice : Rétablit proprement la voix SID occupée par un SFX
 ; ---------------------------------------------------------------------------
 restore_music_voice:
-        lda current_music
-        bne +
-        ; Pas de musique active : coupe la voix
         lda sfx_voice
         cmp #2
-        beq .kill_v2
-        lda #%00010000                  ; Voice 3 Triangle Gate OFF
-        sta SID1_V3_CTRL
-        rts
-.kill_v2:
+        beq restore_music_voice_2
+        jmp restore_music_voice_3
+
+; ---------------------------------------------------------------------------
+; restore_music_voice_2 : Rétablissement dédié et indépendant de la Voix 2
+; ---------------------------------------------------------------------------
+restore_music_voice_2:
+        lda current_music
+        bne +
+        ; Pas de musique active : coupe la voix 2
         lda #%00000000                  ; Voice 2 Gate OFF
         sta SID1_V2_CTRL
+        lda dual_sid_enabled
+        beq .r2_rts
+        sta SID2_V2_CTRL
+.r2_rts:
         rts
 
-+       lda sfx_voice
-        cmp #2
-        beq .restore_v2
-        ; Sinon par défaut Voice 3
-        ; 1. Rétablir ADSR de la Voix 3
++       lda current_music
+        cmp #MUSIC_DUNGEON
+        bcc +
+        jmp .res_v2_uw
+
++       ; Overworld : Sawtooth
+        lda #$07
+        sta SID1_V2_AD
+        lda #$a2
+        sta SID1_V2_SR
+        ldx cur_music_v2_note
+        bne +
+        jmp .mute_v2
++       lda music_note_freq_lo,x
+        sta SID1_V2_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID1_V2_FREQ_HI
+        lda #%00100000
+        sta SID1_V2_CTRL
+        lda #%00100001                  ; Sawtooth Gate ON
+        sta SID1_V2_CTRL
+        lda dual_sid_enabled
+        beq +
+        lda music_note_freq_lo,x
+        clc
+        adc #2
+        sta SID2_V2_FREQ_LO
+        lda music_note_freq_hi,x
+        adc #0
+        sta SID2_V2_FREQ_HI
+        lda #%00100000
+        sta SID2_V2_CTRL
+        lda #%00100001
+        sta SID2_V2_CTRL
++       rts
+
+.res_v2_uw:
+        lda #$00
+        sta SID1_V2_PW_LO
+        lda #$08
+        sta SID1_V2_PW_HI
+        lda #$09
+        sta SID1_V2_AD
+        lda #$c0
+        sta SID1_V2_SR
+        ldx cur_music_v2_note
+        beq .mute_v2
+        lda music_note_freq_lo,x
+        sta SID1_V2_FREQ_LO
+        lda music_note_freq_hi,x
+        sta SID1_V2_FREQ_HI
+        lda #%01000000                  ; Gate OFF
+        sta SID1_V2_CTRL
+        lda #%01000001                  ; Pulse Gate ON
+        sta SID1_V2_CTRL
+        lda dual_sid_enabled
+        beq +
+        lda music_note_freq_lo,x
+        clc
+        adc #2
+        sta SID2_V2_FREQ_LO
+        lda music_note_freq_hi,x
+        adc #0
+        sta SID2_V2_FREQ_HI
+        lda #%01000000
+        sta SID2_V2_CTRL
+        lda #%01000001
+        sta SID2_V2_CTRL
++       rts
+
+.mute_v2:
+        lda #%00000000
+        sta SID1_V2_CTRL
+        lda dual_sid_enabled
+        beq +
+        sta SID2_V2_CTRL
++       rts
+
+; ---------------------------------------------------------------------------
+; restore_music_voice_3 : Rétablissement dédié et indépendant de la Voix 3
+; ---------------------------------------------------------------------------
+restore_music_voice_3:
+        lda current_music
+        bne +
+        ; Pas de musique active : coupe la voix 3
+        lda #%00010000                  ; Voice 3 Triangle Gate OFF
+        sta SID1_V3_CTRL
+        lda dual_sid_enabled
+        beq .r3_rts
+        sta SID2_V3_CTRL
+.r3_rts:
+        rts
+
++       ; 1. Rétablir ADSR de la Voix 3
         lda #$09
         sta SID1_V3_AD
         lda #$e2
@@ -379,52 +492,6 @@ restore_music_voice:
         beq +
         sta SID2_V3_CTRL
 +       rts
-
-.restore_v2:
-        lda current_music
-        cmp #MUSIC_DUNGEON
-        beq .res_v2_uw
-        ; Overworld : Sawtooth
-        lda #$07
-        sta SID1_V2_AD
-        lda #$a2
-        sta SID1_V2_SR
-        ldx cur_music_v2_note
-        beq .mute_v2
-        lda music_note_freq_lo,x
-        sta SID1_V2_FREQ_LO
-        lda music_note_freq_hi,x
-        sta SID1_V2_FREQ_HI
-        lda #%00100000
-        sta SID1_V2_CTRL
-        lda #%00100001                  ; Sawtooth Gate ON
-        sta SID1_V2_CTRL
-        rts
-
-.res_v2_uw:
-        lda #$00
-        sta SID1_V2_PW_LO
-        lda #$08
-        sta SID1_V2_PW_HI
-        lda #$09
-        sta SID1_V2_AD
-        lda #$c0
-        sta SID1_V2_SR
-        ldx cur_music_v2_note
-        beq .mute_v2
-        lda music_note_freq_lo,x
-        sta SID1_V2_FREQ_LO
-        lda music_note_freq_hi,x
-        sta SID1_V2_FREQ_HI
-        lda #%01000000
-        sta SID1_V2_CTRL
-        lda #%01000001                  ; Pulse Gate ON
-        sta SID1_V2_CTRL
-        rts
-
-.mute_v2:
-        lda #%00000000
-        sta SID1_V2_CTRL
         rts
 
 ; ---------------------------------------------------------------------------
@@ -438,6 +505,8 @@ music_update:
         bne .check_delay
         ; Fin de l'effet sonore : restaure intégralement la voix de musique
         jsr restore_music_voice
+        lda #0
+        sta sfx_voice
 
 .check_delay:
         ; 2. Pas de musique active ?
@@ -476,6 +545,10 @@ music_update:
         ; Fin de la fanfare d'objet : reprend la musique de fond sauvegardée
         lda #MUSIC_NONE
         sta current_music
+        lda #0
+        sta secret_chime_active
+        sta sfx_timer
+        sta sfx_voice
         lda saved_bg_music
         beq .stop_fanfare
         jmp music_play
@@ -951,6 +1024,10 @@ sound_boss_roar:
         jmp play_sfx_v3
 
 sound_item_fanfare:
+        lda #0
+        sta secret_chime_active
+        sta sfx_timer
+        sta sfx_voice
         lda current_music
         cmp #MUSIC_ITEM_FANFARE
         beq +

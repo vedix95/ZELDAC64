@@ -66,9 +66,9 @@ room_enemy_idx:
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 3, 9, 10, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 5, 9, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 10, 11, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 10, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0
 
 ; Salle ($3a : rx=10, ry=3) - RLE compact (43 octets)
 u_room_3a:
@@ -169,7 +169,7 @@ u_room_7c:
 dummy_sealed_room:
         !byte 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 65, 255
 
-; Table d'apparition des monstres dédupliquée (13 formations x 24 octets)
+; Table d'apparition des monstres dédupliquée (15 formations x 24 octets)
 map_enemies:
         ; Formation 0
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
@@ -178,9 +178,9 @@ map_enemies:
         ; Formation 2
         !byte TYPE_DARKNUT_RED  ,  6,  3,   TYPE_DARKNUT_RED  , 14,  3,   TYPE_DARKNUT_RED  ,  6,  6,   TYPE_DARKNUT_RED  , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 3
-        !byte TYPE_DARKNUT_RED  ,  7,  3,   TYPE_DARKNUT_RED  , 13,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  7,  3,   TYPE_DARKNUT_RED  , 12,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 4
-        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  6,  2,   TYPE_STALFOS      , 14,  2,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 5
         !byte TYPE_GORIYA_RED   ,  8,  3,   TYPE_GORIYA_RED   , 12,  3,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 6
@@ -190,12 +190,16 @@ map_enemies:
         ; Formation 8
         !byte TYPE_ZOL          ,  8,  3,   TYPE_ZOL          , 12,  3,   TYPE_ZOL          , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 9
-        !byte TYPE_DARKNUT_RED  ,  6,  3,   TYPE_DARKNUT_RED  , 14,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  7,  3,   TYPE_DARKNUT_RED  , 13,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 10
-        !byte TYPE_KEESE_RED    ,  6,  2,   TYPE_KEESE_RED    , 14,  2,   TYPE_KEESE_RED    ,  6,  6,   TYPE_KEESE_RED    , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  6,  3,   TYPE_DARKNUT_RED  , 14,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 11
-        !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 10,  3,   TYPE_DARKNUT_BLUE ,  6,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_KEESE_RED    ,  6,  2,   TYPE_KEESE_RED    , 14,  2,   TYPE_KEESE_RED    ,  6,  6,   TYPE_KEESE_RED    , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 12
+        !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 10,  3,   TYPE_DARKNUT_BLUE ,  6,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 13
+        !byte TYPE_GORIYA_RED   ,  8,  2,   TYPE_GORIYA_RED   , 12,  3,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 14
         !byte TYPE_GORIYA_RED   ,  6,  3,   TYPE_GORIYA_RED   , 14,  3,   TYPE_GORIYA_RED   ,  8,  6,   TYPE_GORIYA_RED   , 12,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
 
 ; ===========================================================================

@@ -70,6 +70,8 @@ sort_tmp_y:             !byte 0
 split_y3:               !byte 0
 split_y4:               !byte 0
 multiplex_split_line:   !byte 145
+multiplex_needed:       !byte 0
+multiplex_frame_toggle: !byte 0
 frame_ready:            !byte 0
 
 ; Projectile ennemi (1 seul actif à la fois, Sprite 7)
@@ -583,6 +585,80 @@ init_slot_from_table:
         adc #80
         ldx en_idx
         sta en_y,x
+
+        ; Garde-fou runtime : vérifie si le point central de l'ennemi touche un bloc solide
+        lda en_type,x
+        cmp #TYPE_NONE
+        beq .spawn_early_rts
+        cmp #TYPE_KEESE_BLUE
+        beq .spawn_early_rts
+        cmp #TYPE_KEESE_RED
+        beq .spawn_early_rts
+        cmp #TYPE_PEAHAT
+        beq .spawn_early_rts            ; Peahat survole les blocs
+        cmp #TYPE_ZORA
+        beq .spawn_early_rts            ; Zora apparaît dans l'eau
+        jmp +
+.spawn_early_rts:
+        rts
++
+
+        ; Calcul coordonnées de collision centrale
+        txa
+        asl
+        tay                             ; Y = en_idx * 2
+        lda en_x,y
+        clc
+        adc #8
+        sta col_x
+        lda en_x+1,y
+        adc #0
+        sta col_x+1
+        lda en_y,x
+        clc
+        adc #8
+        sta col_y
+        jsr check_point_solid
+        bcc .spawn_done
+
+        ; Si solide, tente un décalage vers la droite (+16px) ou la gauche (-16px)
+        clc
+        lda en_x,y
+        adc #16
+        sta col_x
+        lda en_x+1,y
+        adc #0
+        sta col_x+1
+        jsr check_point_solid
+        bcs .try_left
+        lda col_x
+        sec
+        sbc #8
+        sta en_x,y
+        lda col_x+1
+        sbc #0
+        sta en_x+1,y
+        jmp .spawn_done
+
+.try_left:
+        sec
+        lda en_x,y
+        sbc #16
+        sta col_x
+        lda en_x+1,y
+        sbc #0
+        sta col_x+1
+        jsr check_point_solid
+        bcs .spawn_done
+        lda col_x
+        sec
+        sbc #8
+        sta en_x,y
+        lda col_x+1
+        sbc #0
+        sta en_x+1,y
+
+.spawn_done:
         rts
 
 ; ---------------------------------------------------------------------------
@@ -2874,25 +2950,31 @@ sort_enemies_y:
 ; calc_split_line : calcule la ligne de séparation raster optimale
 ; ---------------------------------------------------------------------------
 calc_split_line:
-        lda sort_idx+3
-        tax
-        lda sort_eff_y,x
-        cmp #$ff
-        bne +
-        lda #230
-        sta multiplex_split_line
-        rts
-+       sta split_y3
-
         lda sort_idx+4
         tax
         lda sort_eff_y,x
         cmp #$ff
-        bne +
-        lda #230
-        sta multiplex_split_line
+        bne .need_split
+
+        ; Moins de 5 ennemis actifs : AUCUN split nécessaire !
+        ; Les sprites 3..6 restent actifs en continu jusqu'au VBlank.
+        lda #0
+        sta multiplex_needed
         rts
-+       sta split_y4
+
+.need_split:
+        lda #1
+        sta multiplex_needed
+
+        lda sort_idx+3
+        tax
+        lda sort_eff_y,x
+        sta split_y3
+
+        lda sort_idx+4
+        tax
+        lda sort_eff_y,x
+        sta split_y4
 
         ; Y3 + 22
         lda split_y3
@@ -2901,8 +2983,17 @@ calc_split_line:
         cmp split_y4
         bcc .use_gap
         beq .use_y4
-        ; Chevauchement : on coupe au début de Y4
+
+        ; Chevauchement : entrelacement propre 50 Hz (alternance frame paire/impaire)
+        inc multiplex_frame_toggle
+        lda multiplex_frame_toggle
+        and #1
+        beq +
         lda split_y4
+        jmp .clamp
++       lda split_y3
+        clc
+        adc #21
         jmp .clamp
 
 .use_gap:
@@ -2989,26 +3080,26 @@ irq_top:
 .check_playing:
         cmp #STATE_PLAYING
         bne .skip_top
-        lda current_world_type
-        cmp #WORLD_DUNGEON
-        bne +
-        lda current_room_idx
-        cmp #$41
-        beq .skip_top
-+
-
-        lda item_active
-        cmp #ITEM_BOMB
-        bne .do_top
-        lda item_state
-        bne .skip_top
 
 .do_top:
 
         jsr apply_top_sprites
         jsr apply_proj_sprite7
 
-        lda multiplex_split_line
+        lda multiplex_needed
+        bne +
+
+        ; Passe unique : pas d'irq_mid à raster 230, programmation directe du VBlank
+        lda #250
+        sta VIC_RASTER
+        lda #< irq_bottom
+        sta $0314
+        lda #> irq_bottom
+        sta $0315
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
++       lda multiplex_split_line
         sta VIC_RASTER
         lda #< irq_mid
         sta $0314

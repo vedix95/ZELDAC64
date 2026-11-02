@@ -25,6 +25,8 @@ trans_override_target:  !byte 0
 trans_target_rx:        !byte 0
 trans_target_ry:        !byte 0
 trans_target_room_idx:  !byte 0
+target_zone:            !byte 0
+target_tile_color:      !fill 16, 0
 
 apply_trans_override_end:
         lda trans_override_target
@@ -357,6 +359,64 @@ check_ow_specials_ext:
 ; ---------------------------------------------------------------------------
 !zone transition_right
 
+; ---------------------------------------------------------------------------
+; restore_target_secrets : Restauration des grottes secrètes dans target_room_buf
+; ---------------------------------------------------------------------------
+restore_target_secrets:
+        lda current_world_type
+        bne .no_sec_tgt
+        ldx target_room_idx
+        txa
+        lsr
+        lsr
+        lsr
+        tax
+        lda target_room_idx
+        and #7
+        tay
+        lda bit_powers,y
+        and overworld_secrets_opened,x
+        beq .no_sec_tgt
+
+        ldx #9
+-       lda sec_rooms_tbl,x
+        cmp target_room_idx
+        bne +
+        ldy sec_tiles_tbl,x
+        lda #TILE_CAVE
+        sta target_room_buf,y
+        lda target_room_idx
+        cmp #66
+        bne .chk_std_tgt
+        ldy #0
+.dry_c5_tgt:
+        lda target_room_buf,y
+        cmp #TILE_WATER
+        bne .sk_dry_tgt
+        lda #TILE_GRASS
+        sta target_room_buf,y
+.sk_dry_tgt:
+        iny
+        cpy #200
+        bcc .dry_c5_tgt
+        jmp .chk_std_tgt
++       dex
+        bpl -
+
+.chk_std_tgt:
+        ldy #0
+-       lda target_room_buf,y
+        cmp #TILE_WALL_BOMB
+        bne .sk_bomb_tgt
+        lda #TILE_CAVE
+        sta target_room_buf,y
+.sk_bomb_tgt:
+        iny
+        cpy #200
+        bcc -
+.no_sec_tgt:
+        rts
+
 trans_setup_target:
         stx target_room_idx
         lda current_world_type
@@ -376,6 +436,35 @@ trans_setup_target:
         sta ZP_SRC+1
         jsr decompress_room_target
         jsr dungeon_apply_room_state_target
+        jsr restore_target_secrets
+
+        ; Prépare la palette de la salle cible dans target_tile_color
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        bne .tst_dungeon_colors
+        ldx target_room_idx
+        lda room_zone_palette,x
+        sta target_zone
+        tax
+        lda zone_color_lo,x
+        sta ZP_SRC
+        lda zone_color_hi,x
+        sta ZP_SRC+1
+        ldy #15
+-       lda (ZP_SRC),y
+        sta target_tile_color,y
+        dey
+        bpl -
+        jmp .tst_ptrs
+
+.tst_dungeon_colors:
+        lda #14
+        ldy #15
+-       sta target_tile_color,y
+        dey
+        bpl -
+
+.tst_ptrs:
         lda #<target_room_buf
         sta ZP_TGT
         lda #>target_room_buf
@@ -384,8 +473,70 @@ trans_setup_target:
         sta ZP_STEP
         rts
 
+trans_finalize_room:
+        lda #$ff
+        sta ladder_tile_idx
+
+        ; Mémorise la salle courante
+        lda target_room_idx
+        sta current_room_idx
+
+        ; Copie target_room_buf (200 octets) vers room_buf
+        ldx #0
+-       lda target_room_buf,x
+        sta room_buf,x
+        inx
+        cpx #200
+        bcc -
+
+        ; Met à jour le pointeur ZP_MAP vers room_buf
+        lda #<room_buf
+        sta ZP_MAP
+        lda #>room_buf
+        sta ZP_MAP+1
+
+        ; Copie les 16 couleurs de tuiles actives
+        ldy #15
+-       lda target_tile_color,y
+        sta active_tile_color,y
+        dey
+        bpl -
+
+        ; Met à jour la zone et les couleurs actives
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        bne .tfr_dungeon
+
+        lda target_zone
+        sta current_zone
+        tax
+        lda zone_bg_color,x
+        sta active_bg_color
+
+        ; Attend le VBlank pour changer MC1 et MC2 sans glitch visuel
+        jsr wait_frame
+        ldx current_zone
+        lda zone_mc1_color,x
+        sta VIC_BG_MC1
+        lda zone_mc2_color,x
+        sta VIC_BG_MC2
+        rts
+
+.tfr_dungeon:
+        jsr wait_frame
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcc +
+        ldx #0
++       lda dungeon_mc1_table,x
+        sta VIC_BG_MC1
+        lda #14
+        sta VIC_BG_MC2
+        rts
+
 trans_finish:
-        jsr load_room
+        jsr trans_finalize_room
         jsr hud_render
         jsr player_draw
         jsr enemies_room_init
@@ -480,7 +631,7 @@ transition_right:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda active_tile_color,x
+        lda target_tile_color,x
         sta ZP_TMP                      ; couleur
         lda tile_char_base,x
         sta ZP_BASE
@@ -633,7 +784,7 @@ transition_left:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda active_tile_color,x
+        lda target_tile_color,x
         sta ZP_TMP
         lda tile_char_base,x
         sta ZP_BASE
@@ -764,7 +915,7 @@ transition_down:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda active_tile_color,x
+        lda target_tile_color,x
         sta ZP_ROW                      ; couleur temporaire
         lda tile_char_base,x
         sta ZP_BASE                     ; caractère de base
@@ -903,7 +1054,7 @@ transition_up:
         tay
         lda (ZP_TGT),y                  ; Tuile ID
         tax
-        lda active_tile_color,x
+        lda target_tile_color,x
         sta ZP_ROW
         lda tile_char_base,x
         sta ZP_BASE

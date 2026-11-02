@@ -1424,6 +1424,47 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
 
     return decoded
 
+def find_nearest_free_tile(grid, start_x, start_y, occupied):
+    """Recherche en spirale la tuile de sol la plus proche exempte de bloc, statue ou mur."""
+    for dist in range(1, 15):
+        candidates = []
+        for dy in range(-dist, dist + 1):
+            dx1 = dist - abs(dy)
+            for dx in set([-dx1, dx1]):
+                nx, ny = start_x + dx, start_y + dy
+                if 2 <= nx <= 17 and 2 <= ny <= 7:
+                    if grid[ny][nx] == 0 and (nx, ny) not in occupied:
+                        candidates.append((nx, ny))
+        if candidates:
+            candidates.sort(key=lambda p: (abs(p[0]-start_x) + abs(p[1]-start_y), p[1], p[0]))
+            return candidates[0]
+    return start_x, start_y
+
+def sanitize_enemy_spawns(enemies_table, decoded_rooms, dungeon_rooms):
+    """Valide que tous les ennemis spawnent sur une dalle libre (tuile 0) sans conflit."""
+    for r in dungeon_rooms:
+        if r not in decoded_rooms:
+            continue
+        grid = decoded_rooms[r]
+        occupied = set()
+        new_slots = []
+        for slot in enemies_table[r]:
+            parts = [p.strip() for p in slot.split(",")]
+            etype = parts[0]
+            if etype == "TYPE_NONE":
+                new_slots.append(slot)
+                continue
+            tx, ty = int(parts[1]), int(parts[2])
+            if grid[ty][tx] != 0 or (tx, ty) in occupied:
+                nx, ny = find_nearest_free_tile(grid, tx, ty, occupied)
+                occupied.add((nx, ny))
+                new_slots.append(f"{etype:<18}, {nx:2d}, {ny:2d}")
+            else:
+                occupied.add((tx, ty))
+                new_slots.append(slot)
+        enemies_table[r] = new_slots
+    return enemies_table
+
 def build_dungeon_asm(lvl):
     meta = DUNGEON_METADATA[lvl]
     ent = meta['ent']
@@ -1457,6 +1498,9 @@ def build_dungeon_asm(lvl):
         enemies_table = build_level8_enemies_table()
     elif lvl == 9:
         enemies_table = build_level9_enemies_table()
+
+    # Assainit les positions de spawn d'ennemis pour garantir qu'aucun monstre ne spawn dans un bloc ou statue
+    enemies_table = sanitize_enemy_spawns(enemies_table, decoded_rooms, dungeon_rooms)
 
     # Deduplicate enemy formations
     empty_slot = "TYPE_NONE         ,  0,  0"

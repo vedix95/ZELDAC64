@@ -46,9 +46,12 @@ disk_ensure_ow_chunk_a:
         sta CART_REG
 
 .ow_chunk_loaded:
-        ; Restaure le jeu de caractères Overworld ($2000, $2540, $2640) et tables
+        ; Restaure le jeu de caractères Overworld ($2000, $2540, $2640) uniquement hors Overworld
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        beq +
         jsr copy_map_charset
-        jsr set_overworld_tables
++       jsr set_overworld_tables
 
         lda MAP_ENEMIES_PTR
         sta map_enemies_ptr

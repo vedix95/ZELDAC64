@@ -31,12 +31,13 @@ boom_ptrs:
         !byte < (sprite_link_proj_boom_2 / 64)
         !byte < (sprite_link_proj_boom_3 / 64)
 
-; Couleurs scintillantes de l'explosion 3x3
+; Couleurs scintillantes de l'explosion
 exp_colors:
         !byte COL_WHITE, COL_YELLOW, COL_LIGHT_RED, COL_ORANGE
-
-bmb_msb_w:      !byte 0
-bmb_msb_e:      !byte 0
+bomb_jitter_x:
+        !byte 0, 1, 255, 0
+bomb_jitter_y:
+        !byte 0, 255, 0, 1
 
 ; ---------------------------------------------------------------------------
 ; items_init : réinitialise l'état des projectiles et masque les sprites 2..6
@@ -53,6 +54,12 @@ items_init:
         lda VIC_SPRITE_EN
         and #%10000011                  ; préserve Link (0) et Épée (1)
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_EXP_X
+        and #%11111011
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11111011
+        sta VIC_SPRITE_EXP_Y
         lda VIC_SPRITE_MSB
         and #%10000011
         sta VIC_SPRITE_MSB
@@ -540,15 +547,21 @@ update_bomb:
         rts
 
 .bomb_explode:
-        ; --- PHASE 1 : SOUFFLE D'EXPLOSION 3x3 ---
+        ; --- PHASE 1 : SOUFFLE D'EXPLOSION ---
         dec item_timer
         bne .exp_done
         lda #ITEM_NONE
         sta item_active
-        ; Éteint les sprites 2..6 de l'explosion
+        ; Éteint le sprite 2 de l'explosion et réinitialise l'expansion
         lda VIC_SPRITE_EN
-        and #%10000011
+        and #%11111011                  ; désactive Sprite 2 seul
         sta VIC_SPRITE_EN
+        lda VIC_SPRITE_EXP_X
+        and #%11111011
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11111011
+        sta VIC_SPRITE_EXP_Y
 .exp_done:
         rts
 
@@ -908,16 +921,7 @@ items_draw:
         rts
 
 .draw_item:
-        ; Cas spécial : Bombe en déflagration 3x3 -> utilise 5 sprites simultanés
-        lda item_active
-        cmp #ITEM_BOMB
-        bne .single_item_draw
-        lda item_state
-        beq .single_item_draw
-        jmp .draw_bomb_3x3
-
-.single_item_draw:
-        ; Pour les autres armes ou la bombe posée : utilise Sprite 2 seul
+        ; Pour toutes les armes ou la bombe (posée ou explosion) : utilise Sprite 2 seul
         lda item_x
         sta VIC_SPRITE_X2
         lda item_y
@@ -933,6 +937,14 @@ items_draw:
         asl                             ; bit 2
         ora ZP_TMP
         sta VIC_SPRITE_MSB
+
+        ; S'assure que Sprite 2 n'est jamais étiré matériellement
+        lda VIC_SPRITE_EXP_X
+        and #%11111011
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11111011
+        sta VIC_SPRITE_EXP_Y
 
         lda item_active
         cmp #ITEM_BOOMERANG
@@ -958,13 +970,75 @@ items_draw:
 
 .drw_bomb_single:
         cmp #ITEM_BOMB
-        bne .drw_bow
+        beq +
+        jmp .drw_bow
++
 
-        ; Bombe posée (mèche)
+        lda item_state
+        bne .drw_bomb_blast
+
+        ; Phase 0 : Bombe posée (mèche)
         lda #< (sprite_link_item_bomb / 64)
         sta SPRITE_PTR2
         lda #COL_BLUE
         sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.drw_bomb_blast:
+        ; Animation authentique NES en 3 phases selon item_timer (24..1) :
+        ; Phase 3 (6..1)   : Anneau de dispersion de fumée (SPR_COMMON_DEATH_1)
+        ; Phase 2 (16..7)  : Pleine déflagration turbulente (sprite_link_proj_explosion + jitter)
+        ; Phase 1 (24..17) : Déflagration vive au centre (sprite_link_proj_explosion)
+
+        lda item_timer
+        cmp #7
+        bcs .bmb_stage_blast
+
+        ; --- PHASE 3 : Anneau de dispersion de fumée ---
+        lda #SPR_COMMON_DEATH_1
+        sta SPRITE_PTR2
+        lda #COL_LIGHT_RED
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.bmb_stage_blast:
+        lda #< (sprite_link_proj_explosion / 64)
+        sta SPRITE_PTR2
+
+        lda item_timer
+        cmp #20
+        bcc .bmb_stage_turbulent
+
+        ; --- PHASE 1 : Déflagration vive (Flash Blanc / Jaune) ---
+        lda item_timer
+        and #1
+        beq +
+        lda #COL_WHITE
+        bne ++
++       lda #COL_YELLOW
+++      sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.bmb_stage_turbulent:
+        ; --- PHASE 2 : Pleine explosion tourbillonnante aux 7 nuages ---
+        lda item_anim
+        and #3
+        tax
+        lda exp_colors,x
+        sta VIC_SPRITE_COL2
+
+        ; Vibration subtile simulant le tourbillonnement des 6 satellites
+        lda item_timer
+        and #3
+        tax
+        clc
+        lda item_x
+        adc bomb_jitter_x,x
+        sta VIC_SPRITE_X2
+        clc
+        lda item_y
+        adc bomb_jitter_y,x
+        sta VIC_SPRITE_Y2
         jmp .enable_spr2
 
 .drw_bow:
@@ -1017,116 +1091,6 @@ items_draw:
         sta VIC_SPRITE_EN
         lda VIC_SPRITE_MC
         ora #%00000100                  ; multicolore
-        sta VIC_SPRITE_MC
-        rts
-
-; ---------------------------------------------------------------------------
-; .draw_bomb_3x3 : Déflagration 3x3 géante avec 5 sprites (Centre, N, S, O, E)
-;   Sprite 2 : Centre (item_x, item_y)
-;   Sprite 3 : Nord   (item_x, item_y - 14)
-;   Sprite 4 : Sud    (item_x, item_y + 14)
-;   Sprite 5 : Ouest  (item_x - 14, item_y)
-;   Sprite 6 : Est    (item_x + 14, item_y)
-; ---------------------------------------------------------------------------
-.draw_bomb_3x3:
-        ; Pointeur de nuage d'explosion pour les 5 sprites
-        lda #< (sprite_link_proj_explosion / 64)
-        sta SPRITE_PTR2
-        sta SPRITE_PTR3
-        sta SPRITE_PTR4
-        sta SPRITE_PTR5
-        sta SPRITE_PTR6
-
-        ; Couleurs scintillantes décalées pour un effet de blast tourbillonnant
-        lda item_anim
-        and #3
-        tax
-        lda exp_colors,x
-        sta VIC_SPRITE_COL2
-        inx
-        txa
-        and #3
-        tax
-        lda exp_colors,x
-        sta VIC_SPRITE_COL3
-        sta VIC_SPRITE_COL5
-        inx
-        txa
-        and #3
-        tax
-        lda exp_colors,x
-        sta VIC_SPRITE_COL4
-        sta VIC_SPRITE_COL6
-
-        ; Coordonnées Y
-        lda item_y
-        sta VIC_SPRITE_Y2               ; Centre
-        sta VIC_SPRITE_Y5               ; Ouest
-        sta VIC_SPRITE_Y6               ; Est
-        sec
-        sbc #14
-        sta VIC_SPRITE_Y3               ; Nord
-        lda item_y
-        clc
-        adc #14
-        sta VIC_SPRITE_Y4               ; Sud
-
-        ; Coordonnées X de base (Centre, Nord, Sud)
-        lda item_x
-        sta VIC_SPRITE_X2
-        sta VIC_SPRITE_X3
-        sta VIC_SPRITE_X4
-
-        ; Coordonnée X Ouest (item_x - 14) sur 16 bits
-        sec
-        lda item_x
-        sbc #14
-        sta VIC_SPRITE_X5
-        lda item_x+1
-        sbc #0
-        sta bmb_msb_w
-
-        ; Coordonnée X Est (item_x + 14) sur 16 bits
-        clc
-        lda item_x
-        adc #14
-        sta VIC_SPRITE_X6
-        lda item_x+1
-        adc #0
-        sta bmb_msb_e
-
-        ; MSB pour Sprites 2..6
-        lda VIC_SPRITE_MSB
-        and #%10000011                  ; efface bits 2..6
-        sta ZP_TMP
-
-        lda item_x+1
-        beq +
-        lda ZP_TMP
-        ora #%00011100                  ; bits 2, 3, 4 (Centre, Nord, Sud)
-        sta ZP_TMP
-+
-        lda bmb_msb_w
-        beq +
-        lda ZP_TMP
-        ora #%00100000                  ; bit 5 (Ouest)
-        sta ZP_TMP
-+
-        lda bmb_msb_e
-        beq +
-        lda ZP_TMP
-        ora #%01000000                  ; bit 6 (Est)
-        sta ZP_TMP
-+
-        lda ZP_TMP
-        sta VIC_SPRITE_MSB
-
-        ; Active les sprites 2, 3, 4, 5, 6 en multicolore
-        lda VIC_SPRITE_EN
-        ora #%01111100
-        sta VIC_SPRITE_EN
-        lda VIC_SPRITE_MC
-        ora #%01111100
         sta VIC_SPRITE_MC
         rts
 
@@ -1202,12 +1166,7 @@ update_secret_chime:
         sta SID_V2_CTRL
         lda #0
         sta secret_chime_active
-        ; Ne pas écraser sfx_voice si un SFX tourne sur Voice 3
-        lda sfx_timer
-        bne .chime_done
-        lda #2
-        sta sfx_voice
-        jsr restore_music_voice
+        jsr restore_music_voice_2
 .chime_done:
         rts
 

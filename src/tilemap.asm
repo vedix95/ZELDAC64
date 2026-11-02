@@ -89,73 +89,8 @@ load_room:
         sta ZP_SRC+1
         jsr decompress_room_main
         jsr dungeon_apply_room_state_active
+        jsr restore_room_secrets
 
-        ; Restauration des grottes secrètes déjà ouvertes à la bombe ou à la flûte
-        lda current_world_type
-        bne .no_secret_restored
-        ldx current_room_idx
-        txa
-        lsr
-        lsr
-        lsr
-        tax
-        lda current_room_idx
-        and #7
-        tay
-        lda bit_powers,y
-        and overworld_secrets_opened,x
-        beq .no_secret_restored
-
-        ; Si Salle 66 (C-5) : étang asséché du Donjon 7
-        ; Restauration des secrets permanents ouverts
-        lda current_world_type
-        bne .check_std_sec
-
-        ldx #9
--       lda .sec_rooms,x
-        cmp current_room_idx
-        bne +
-        ldy .sec_tiles,x
-        lda #TILE_CAVE
-        sta room_buf,y
-        cmp #0                          ; toujours non-zéro
-        lda current_room_idx
-        cmp #66
-        bne .check_std_sec
-        ldy #0
-.dry_c5_loop:
-        lda room_buf,y
-        cmp #TILE_WATER
-        bne .sk_dry_c5
-        lda #TILE_GRASS
-        sta room_buf,y
-.sk_dry_c5:
-        iny
-        cpy #200
-        bcc .dry_c5_loop
-        jmp .check_std_sec
-+       dex
-        bpl -
-        jmp .check_std_sec
-
-.sec_rooms:
-        !byte 33, 51, 35, 73, 121, 29, 109, 107, 82, 66
-.sec_tiles:
-        !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90
-
-.check_std_sec:
-        ldy #0
--       lda room_buf,y
-        cmp #TILE_WALL_BOMB
-        bne .sk_bomb_conv
-        lda #TILE_CAVE
-        sta room_buf,y
-.sk_bomb_conv:
-        iny
-        cpy #200
-        bcc -
-.no_secret_restored:
-+
         ; Application des couleurs de la zone active
         lda current_world_type
         bne .lr_dungeon
@@ -167,7 +102,6 @@ load_room:
         tax
         lda zone_bg_color,x
         sta active_bg_color
-        sta VIC_BACKGROUND
         lda zone_mc1_color,x
         sta VIC_BG_MC1
         lda zone_mc2_color,x
@@ -197,6 +131,69 @@ load_room:
         sta ZP_MAP+1
         jsr draw_map
         rts
+
+; ---------------------------------------------------------------------------
+; restore_room_secrets : Restauration des grottes secrètes dans room_buf
+; ---------------------------------------------------------------------------
+restore_room_secrets:
+        lda current_world_type
+        bne .no_secret_restored
+        ldx current_room_idx
+        txa
+        lsr
+        lsr
+        lsr
+        tax
+        lda current_room_idx
+        and #7
+        tay
+        lda bit_powers,y
+        and overworld_secrets_opened,x
+        beq .no_secret_restored
+
+        ldx #9
+-       lda sec_rooms_tbl,x
+        cmp current_room_idx
+        bne +
+        ldy sec_tiles_tbl,x
+        lda #TILE_CAVE
+        sta room_buf,y
+        lda current_room_idx
+        cmp #66
+        bne .check_std_sec
+        ldy #0
+.dry_c5_loop:
+        lda room_buf,y
+        cmp #TILE_WATER
+        bne .sk_dry_c5
+        lda #TILE_GRASS
+        sta room_buf,y
+.sk_dry_c5:
+        iny
+        cpy #200
+        bcc .dry_c5_loop
+        jmp .check_std_sec
++       dex
+        bpl -
+
+.check_std_sec:
+        ldy #0
+-       lda room_buf,y
+        cmp #TILE_WALL_BOMB
+        bne .sk_bomb_conv
+        lda #TILE_CAVE
+        sta room_buf,y
+.sk_bomb_conv:
+        iny
+        cpy #200
+        bcc -
+.no_secret_restored:
+        rts
+
+sec_rooms_tbl:
+        !byte 33, 51, 35, 73, 121, 29, 109, 107, 82, 66
+sec_tiles_tbl:
+        !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90
 
 ; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).
 ; ZP_SCR / ZP_COL pointent sur la ligne 4 de texte (écran / couleur) :

@@ -1472,7 +1472,6 @@ dungeon_update:
 PUSH_FRAMES             = 60            ; ~1,2 s de poussée continue (50 Hz)
 PUSH_FX_STAIRS          = 0             ; salle 0x22 : révèle l'escalier du Bow
 PUSH_FX_HERMIT          = 1             ; salle 0x42 : ouvre le passage vers l'ermite
-PUSH_ENTRY_GENERIC      = $ff           ; bloc d'une salle à volets fermés : ouvre les volets
 
 dungeon_push_entry:     !byte 0
 push_block_idx:         !byte 0         ; index (ty*20+tx) du bloc touché
@@ -1548,16 +1547,26 @@ push_find_block:
 ; Sortie : Carry = 1 si oui (dungeon_push_entry et push_block_idx renseignés)
 ; ---------------------------------------------------------------------------
 check_link_pushing_block:
+        ; 1. Seules les salles nettoyées d'ennemis autorisent la poussée de bloc secret
+        ldy current_room_idx
+        lda dungeon_room_state,y
+        and #DUNG_ROOM_CLEARED
+        beq .clp_no
+        ; 2. Si le secret a déjà été révélé, le bloc ne bouge plus
+        lda dungeon_room_state,y
+        and #DUNG_SECRET_REVEALED
+        bne .clp_no
+
         jsr push_find_block
         bcc .clp_no
         sty push_block_idx
 
-        ; Cherche (salle, bloc) dans la table des blocs poussables
+        ; 3. Cherche (salle, bloc) dans la table stricte des blocs poussables
         ldx #0
 .clp_scan:
         lda push_tbl,x
         cmp #$ff
-        beq .clp_generic
+        beq .clp_no
         cmp current_room_idx
         bne .clp_next
         lda push_tbl+1,x
@@ -1576,15 +1585,6 @@ check_link_pushing_block:
         lda push_dirbit,y
         and push_tbl+2,x
         beq .clp_no
-        ; Passage de l'ermite : n'est poussable qu'une fois la salle nettoyée
-        lda push_tbl+3,x
-        cmp #PUSH_FX_HERMIT
-        bne .clp_dest
-        ldy current_room_idx
-        lda dungeon_room_state,y
-        and #DUNG_ROOM_CLEARED
-        beq .clp_no
-.clp_dest:
         ; La case d'arrivée doit être une dalle libre (jamais de blocage définitif)
         ldy player_dir
         lda push_block_idx
@@ -1598,18 +1598,6 @@ check_link_pushing_block:
         sec
         rts
 
-.clp_generic:
-        ; Salle ordinaire à volets fermés : Link pousse un bloc vers le haut (ouvre les volets)
-        lda dungeon_shutter_closed
-        beq .clp_no
-        lda player_dir
-        cmp #DIR_UP
-        bne .clp_no
-        lda #PUSH_ENTRY_GENERIC
-        sta dungeon_push_entry
-        sec
-        rts
-
 .clp_no:
         clc
         rts
@@ -1618,10 +1606,6 @@ check_link_pushing_block:
 ; dungeon_do_push_block : déplace le bloc d'une case et applique l'effet
 ; ---------------------------------------------------------------------------
 dungeon_do_push_block:
-        lda dungeon_push_entry
-        cmp #PUSH_ENTRY_GENERIC
-        beq .dpb_generic
-
         ; L'ancienne case redevient du sol
         ldy push_block_idx
         lda #TILE_DUNG_FLOOR
@@ -1646,7 +1630,7 @@ dungeon_do_push_block:
         cmp #PUSH_FX_HERMIT
         beq .dpb_hermit
 
-        ; --- Salle 0x22 : l'escalier central apparaît ---
+        ; --- Effet STAIRS : l'escalier central apparaît (salle 0x22) ---
         ldx current_room_idx
         lda dungeon_room_state,x
         ora #DUNG_SECRET_REVEALED
@@ -1656,16 +1640,14 @@ dungeon_do_push_block:
         ora #DUNG_BLOCK_DOWN
 +       sta dungeon_room_state,x
         
-        ; --- Salle 0x22 : ne pas afficher les escaliers immédiatement ---
-        ; Le bloc doit être poussé correctement avant que l'escalier apparaisse
-        ; On ne redessine pas ici l'escalier pour attendre la poussée correcte
-        
-        ldx dungeon_push_entry
-        lda push_tbl+3,x
-        cmp #PUSH_FX_HERMIT
-        beq .dpb_hermit
-
-        rts
+        cpx #$22
+        bne +
+        ldy #90
+        lda #TILE_DUNG_STAIRS
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
++       rts
 
 .dpb_hermit:
         ; --- Salle 0x42 : le volet Ouest s'ouvre vers l'ermite (0x41) ---
@@ -1686,16 +1668,6 @@ dungeon_do_push_block:
         lda #TILE_DUNG_DOOR_OPEN
         sta (ZP_MAP),y
         sta room_buf,y
-        jsr redraw_single_tile
-        rts
-
-.dpb_generic:
-        lda dungeon_shutter_closed
-        beq +
-        lda #0
-        sta dungeon_shutter_closed
-        jsr dungeon_open_shutters
-+       ldy push_block_idx              ; le bloc retrouve sa couleur normale
         jsr redraw_single_tile
         rts
 
@@ -1843,7 +1815,7 @@ dungeon_collect_drop:
         bne +
         inc hud_keys
         jsr hud_render
-        jsr sound_item_fanfare
+        jsr sound_rupee
         lda #0
         sta dungeon_drop_active
         rts
@@ -1864,7 +1836,7 @@ dungeon_collect_drop:
         lda #1
         sta player_has_compass
         jsr hud_render
-        jsr sound_item_fanfare
+        jsr sound_rupee
         lda #0
         sta dungeon_drop_active
         rts
@@ -1874,7 +1846,7 @@ dungeon_collect_drop:
         lda #1
         sta player_has_dungeon_map
         jsr hud_render
-        jsr sound_item_fanfare
+        jsr sound_rupee
         lda #0
         sta dungeon_drop_active
         rts
