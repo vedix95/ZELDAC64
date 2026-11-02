@@ -32,6 +32,25 @@ def load_labels(vs_path):
                 labels[name] = addr
     return labels
 
+def read_hw_regs(bin_path):
+    with open(bin_path, "rb") as f:
+        raw = f.read()
+    data = raw[2:]
+    sid1 = data[0:25]
+    sid2 = data[32:57]
+    return {
+        'sid1_vol': sid1[24],
+        'sid2_vol': sid2[24],
+        'sid1_v1_ctrl': sid1[4],
+        'sid1_v2_ctrl': sid1[11],
+        'sid1_v3_ctrl': sid1[18],
+        'sid2_v1_ctrl': sid2[4],
+        'sid2_v2_ctrl': sid2[11],
+        'sid2_v3_ctrl': sid2[18],
+        'sid1_v3_freq': (sid1[15] << 8) | sid1[14],
+        'sid2_v3_freq': (sid2[15] << 8) | sid2[14],
+    }
+
 def read_audio_state(bin_path):
     with open(bin_path, "rb") as f:
         raw = f.read()
@@ -110,6 +129,7 @@ def run_test():
 
         # DUMP 1 : Vérifier dual_sid_enabled == 1 et musique de donjon active
         f.write(f's "{dumps[0]}" 0 {audio_base:04x} {audio_base+11:04x}\n')
+        f.write('s "/tmp/dual_sid_hw_1.bin" 0 d400 d438\n')
 
         # 5. Déclencher le son de l'épée (sound_sword via hook 8 arg 4)
         f.write(f"> {arg_addr:04x} 04\n")
@@ -118,6 +138,7 @@ def run_test():
 
         # DUMP 2 : Immédiatement après sound_sword
         f.write(f's "{dumps[1]}" 0 {audio_base:04x} {audio_base+11:04x}\n')
+        f.write('s "/tmp/dual_sid_hw_2.bin" 0 d400 d438\n')
 
         # Avancer de 6 frames (durée complète du son d'épée)
         for _ in range(6):
@@ -125,6 +146,7 @@ def run_test():
 
         # DUMP 3 : Après l'épée, la Voix 3 doit être restaurée au BGM
         f.write(f's "{dumps[2]}" 0 {audio_base:04x} {audio_base+11:04x}\n')
+        f.write('s "/tmp/dual_sid_hw_3.bin" 0 d400 d438\n')
 
         # 6. SCÉNARIO CONFLIT : Déclenchement simultané Clé + Carillon (hook 8 arg 3)
         f.write(f"> {arg_addr:04x} 03\n")
@@ -203,6 +225,14 @@ def run_test():
     print(f"  cur_music_v1_note:   ${s1['cur_music_v1_note']:02X} (Attendu: != 0)")
     assert s1['dual_sid_enabled'] == 1, "Dual SID non activé !"
     assert s1['cur_music_v1_note'] != 0, "Musique donjon non démarrée !"
+    hw1 = read_hw_regs("/tmp/dual_sid_hw_1.bin")
+    print(f"  SID1_VOL: {hw1['sid1_vol']} (Attendu: 15), SID2_VOL: {hw1['sid2_vol']} (Attendu: 15)")
+    print(f"  SID2_V1_CTRL: ${hw1['sid2_v1_ctrl']:02X}, SID2_V2_CTRL: ${hw1['sid2_v2_ctrl']:02X}, SID2_V3_CTRL: ${hw1['sid2_v3_ctrl']:02X}")
+    assert hw1['sid1_vol'] == 15, "SID1 volume incorrect !"
+    assert hw1['sid2_vol'] == 15, f"SID2 volume incorrect: {hw1['sid2_vol']} !"
+    assert hw1['sid2_v1_ctrl'] & 0x40 != 0, "SID2 Voix 1 (Pulse) inactive !"
+    assert hw1['sid2_v2_ctrl'] & 0x40 != 0, "SID2 Voix 2 (Pulse) inactive !"
+    assert hw1['sid2_v3_ctrl'] & 0x10 != 0, "SID2 Voix 3 (Triangle) inactive !"
     print("  ✓ PASS : Mode Dual SID Stéréo actif avec musique de donjon en cours !")
 
     print("\n[DUMP 2] Attaque à l'épée déclenchée (sound_sword) :")
@@ -210,6 +240,14 @@ def run_test():
     print(f"  sfx_voice:           {s2['sfx_voice']} (Attendu: 3)")
     assert s2['sfx_timer'] == 6, f"sfx_timer incorrect: {s2['sfx_timer']}"
     assert s2['sfx_voice'] == 3, f"sfx_voice incorrect: {s2['sfx_voice']}"
+    hw2 = read_hw_regs("/tmp/dual_sid_hw_2.bin")
+    print(f"  SID1_V3_CTRL: ${hw2['sid1_v3_ctrl']:02X}, SID2_V3_CTRL: ${hw2['sid2_v3_ctrl']:02X} (Attendu: $81 Noise)")
+    print(f"  SID1_V3_FREQ: ${hw2['sid1_v3_freq']:04X}, SID2_V3_FREQ: ${hw2['sid2_v3_freq']:04X} (Attendu: $4800)")
+    assert hw2['sid1_v3_ctrl'] == 0x81, "SID1 sword SFX non activé !"
+    assert hw2['sid2_v3_ctrl'] == 0x81, "SID2 sword SFX non activé !"
+    assert hw2['sid1_v3_freq'] == 0x4800, "SID1 sword freq incorrecte !"
+    assert hw2['sid2_v3_freq'] == 0x4800, "SID2 sword freq incorrecte !"
+    assert hw2['sid1_vol'] == 15 and hw2['sid2_vol'] == 15, "Volume SID non préservé pendant le SFX !"
     print("  ✓ PASS : Le son d'épée est correctement programmé sur Voix 3 pour 6 frames !")
 
     print("\n[DUMP 3] Fin de l'attaque à l'épée (après 6 frames) :")
@@ -218,6 +256,11 @@ def run_test():
     print(f"  cur_music_v3_note:   ${s3['cur_music_v3_note']:02X}")
     assert s3['sfx_timer'] == 0, f"sfx_timer non expiré: {s3['sfx_timer']}"
     assert s3['sfx_voice'] == 0, f"sfx_voice non libéré: {s3['sfx_voice']}"
+    hw3 = read_hw_regs("/tmp/dual_sid_hw_3.bin")
+    print(f"  Restauration Voix 3 SID1: ${hw3['sid1_v3_ctrl']:02X}, SID2: ${hw3['sid2_v3_ctrl']:02X} (Attendu: $11 Triangle)")
+    assert hw3['sid1_v3_ctrl'] == 0x11, "SID1 Voix 3 non restaurée en Triangle !"
+    assert hw3['sid2_v3_ctrl'] == 0x11, "SID2 Voix 3 non restaurée en Triangle !"
+    assert hw3['sid2_vol'] == 15, "SID2 volume altéré !"
     print("  ✓ PASS : Voix 3 libérée et restaurée au BGM sur les 2 puces SID !")
 
     print("\n[DUMP 4] Déclenchement simultané Clé + Porte secrète en Dual SID :")

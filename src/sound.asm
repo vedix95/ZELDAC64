@@ -248,7 +248,7 @@ music_play:
 
         lda #15
         sta SID1_VOLUME
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_VOLUME
 +
@@ -454,7 +454,7 @@ restore_music_voice_2:
         ; Pas de musique active : coupe la voix 2
         lda #%00000000                  ; Voice 2 Gate OFF
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq .r2_rts
         sta SID2_V2_CTRL
 .r2_rts:
@@ -573,7 +573,7 @@ restore_music_voice_2:
 .mute_v2:
         lda #%00000000
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_V2_CTRL
 +       rts
@@ -587,7 +587,7 @@ restore_music_voice_3:
         ; Pas de musique active : coupe la voix 3
         lda #%00010000                  ; Voice 3 Triangle Gate OFF
         sta SID1_V3_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq .r3_rts
         sta SID2_V3_CTRL
 .r3_rts:
@@ -649,7 +649,7 @@ restore_music_voice_3:
 .mute_v3:
         lda #%00010000                  ; Gate OFF
         sta SID1_V3_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_V3_CTRL
 +       rts
@@ -923,7 +923,7 @@ music_update:
 .v1_mute:
         lda #%01000000                  ; Gate OFF
         sta SID1_V1_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq .skip_v1
         sta SID2_V1_CTRL
 .skip_v1:
@@ -950,7 +950,7 @@ music_update:
         bne .v2_play
         lda #%00000000                  ; Gate OFF
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_V2_CTRL
 +       jmp .skip_v2
@@ -968,14 +968,14 @@ music_update:
         bcs .v2_hold_uw
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_V2_CTRL
 +       jmp .skip_v2
 .v2_hold_uw:
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_V2_CTRL
 +       jmp .skip_v2
@@ -1097,7 +1097,7 @@ music_update:
         beq .to_skip_v3                 ; Percussion n'est pas maintenue
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq .to_skip_v3
         sta SID2_V3_CTRL
 .to_skip_v3:
@@ -1177,7 +1177,7 @@ music_update:
 .v3_mute:
         lda #%00010000                  ; Gate OFF
         sta SID1_V3_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq .skip_v3
         sta SID2_V3_CTRL
 .skip_v3:
@@ -1501,7 +1501,7 @@ update_secret_chime:
 .stop_chime:
         lda #%00010000                  ; Gate OFF
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         sta SID2_V2_CTRL
 +       lda #0
