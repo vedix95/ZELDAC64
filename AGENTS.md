@@ -77,5 +77,15 @@ Avant toute modification ou ajout de code, consulter le registre des anomalies d
 - Toujours maintenir l'assertion ACME `!if * > OVERLAY_RAM_ADDR { !error ... }` dans `src/main.asm`.
 - La banque cartouche 31 (`CART_BANK_AUDIO`) est allouée au stockage et au streaming de pistes audio volumineuses (ex: thème étendu du Donjon 9 `MUSIC_DUNGEON_FINAL`). Tout streaming audio vers `bgm_track_buffer` doit s'exécuter via `cart_stream_copy_from` avec découpage par page et masquage d'interruption découplé (`CLI`).
 
+## 14. Extraction CHR des Sprites de Donjons et Routage Couleur Propre (`g`)
+- Lors de l'extraction des monstres de donjons depuis `zelda.nes` :
+  - Les sprites composites (ex: Keese 16x16) doivent obligatoirement assembler les tuiles NES correspondantes (tuiles 0, 2, 1, 3 en pose ailes déployées) sans miroir horizontal tronqué.
+  - Le pixel principal de teinte (pixel 3 de la ROM NES) doit impérativement être routé sur la lettre `g` dans le convertisseur pour alimenter la couleur dynamique propre du sprite (`VIC_SPRITE_COL0..COL7`), permettant l'application fidèle de `en_base_color` (Stalfos blanc $01, Keese rouge/bleu, Zol/Gel vert $05, Trap cyan $03).
+
+## 15. Détection des Salles Scellées et En-têtes de Donjons ($C012..$C013)
+- Ne jamais tester une adresse absolue arbitraire de table de salle (ex: `cmp $c016`) pour déterminer si une salle est scellée ou vide : `$C016` correspond à l'adresse de la salle 00 du Donjon 4, ce qui efface cette salle et génère jusqu'à 108 salles fantômes sur la carte.
+- Toute détection d'une salle scellée dans les moteurs d'affichage (HUD ou Inventaire Page 3) doit s'effectuer par comparaison 16-bit rigoureuse avec le pointeur stocké dans l'en-tête du donjon actif à `$C012..$C013` (`dummy_sealed_room_ptr`).
+
+
 
 

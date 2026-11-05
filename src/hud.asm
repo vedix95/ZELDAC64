@@ -86,110 +86,53 @@ hud_init:
         cpx #160                        ; 4 lignes x 40 colonnes = 160 octets
         bne .clear_hud
 
-        ; Ligne 0 : Titres dynamiques gérés par hud_render (LEVEL-N / HYRULE)
+        ; Copie des chaînes statiques du HUD
+        ldx #0
+.str_loop:
+        ldy .hud_strings,x
+        bmi .str_done
+        inx
+        lda .hud_strings,x
+        inx
+        sta .str_len
+-       lda .hud_strings,x
+        sta SCREEN_RAM,y
+        inx
+        iny
+        dec .str_len
+        bne -
+        beq .str_loop
 
-        ; "RUPEES"
-        lda #'R'
-        sta SCREEN_RAM+9
-        lda #'U'
-        sta SCREEN_RAM+10
-        lda #'P'
-        sta SCREEN_RAM+11
-        lda #'E'
-        sta SCREEN_RAM+12
-        lda #'E'
-        sta SCREEN_RAM+13
-        lda #'S'
-        sta SCREEN_RAM+14
+.hud_strings:
+        !byte 9, 6
+        !text "RUPEES"
+        !byte 21, 3
+        !text "[A]"
+        !byte 27, 3
+        !text "[X]"
+        !byte 32, 6
+        !text "-LIFE-"
+        !byte 49, 4
+        !text "KEYS"
+        !byte 89, 5
+        !text "BOMBS"
+        !byte $ff
+.str_len:
+        !byte 0
 
-        ; Boîte [A] (Arme secondaire)
-        lda #'['
-        sta SCREEN_RAM+21
-        lda #'A'
-        sta SCREEN_RAM+22
-        lda #']'
-        sta SCREEN_RAM+23
-
-        ; Boîte [X] (Épée)
-        lda #'['
-        sta SCREEN_RAM+27
-        lda #'X'
-        sta SCREEN_RAM+28
-        lda #']'
-        sta SCREEN_RAM+29
-
-        ; "-LIFE-" (Cols 32..37 de la Ligne 0, centré au-dessus des 8 cœurs)
-        lda #'-'
-        sta SCREEN_RAM+32
-        lda #'L'
-        sta SCREEN_RAM+33
-        lda #'I'
-        sta SCREEN_RAM+34
-        lda #'F'
-        sta SCREEN_RAM+35
-        lda #'E'
-        sta SCREEN_RAM+36
-        lda #'-'
-        sta SCREEN_RAM+37
+.str_done:
+        ; Couleur jaune pour "-LIFE-"
         lda #COL_YELLOW
-        sta COLOR_RAM+32
-        sta COLOR_RAM+33
-        sta COLOR_RAM+34
-        sta COLOR_RAM+35
-        sta COLOR_RAM+36
-        sta COLOR_RAM+37
-
-        ; Ligne 1 : Labels
-        lda #'K'
-        sta SCREEN_RAM+40+9
-        lda #'E'
-        sta SCREEN_RAM+40+10
-        lda #'Y'
-        sta SCREEN_RAM+40+11
-        lda #'S'
-        sta SCREEN_RAM+40+12
-
-        ; Ligne 2 : Labels
-        lda #'B'
-        sta SCREEN_RAM+80+9
-        lda #'O'
-        sta SCREEN_RAM+80+10
-        lda #'M'
-        sta SCREEN_RAM+80+11
-        lda #'B'
-        sta SCREEN_RAM+80+12
-        lda #'S'
-        sta SCREEN_RAM+80+13
+        ldx #5
+-       sta COLOR_RAM+32,x
+        dex
+        bpl -
 
         ; Épée dans le slot X : dynamique selon player_has_sword
         jsr hud_update_sword
 
         ; Minimap sur Ligne 1 et Ligne 2 (colonnes 2..5) : 4x2 caractères = 32x16 pixels
         jsr hud_setup_map_cells
-
-        ; Espaces noirs autour de la minimap
-        lda #32
-        sta SCREEN_RAM+40+0
-        sta SCREEN_RAM+40+1
-        sta SCREEN_RAM+40+6
-        sta SCREEN_RAM+40+7
-        sta SCREEN_RAM+40+8
-        sta SCREEN_RAM+80+0
-        sta SCREEN_RAM+80+1
-        sta SCREEN_RAM+80+6
-        sta SCREEN_RAM+80+7
-        sta SCREEN_RAM+80+8
-        lda #COL_BLACK
-        sta COLOR_RAM+40+0
-        sta COLOR_RAM+40+1
-        sta COLOR_RAM+40+6
-        sta COLOR_RAM+40+7
-        sta COLOR_RAM+40+8
-        sta COLOR_RAM+80+0
-        sta COLOR_RAM+80+1
-        sta COLOR_RAM+80+6
-        sta COLOR_RAM+80+7
-        sta COLOR_RAM+80+8
 
         ; Ligne 3 : Entièrement noire et vide (séparation propre sans aucun trait)
         ldx #0
@@ -232,61 +175,30 @@ hud_render:
         ; --- En-tête Ligne 0 (Cols 1..7) ---
         lda current_world_type
         cmp #WORLD_DUNGEON
-        bne .hud_hdr_ow
+        beq .hud_hdr_dung
 
-        ; Donjon : "LEVEL-X" (ex: LEVEL-1)
-        lda #'L'
-        sta SCREEN_RAM+1
-        lda #'E'
-        sta SCREEN_RAM+2
-        lda #'V'
-        sta SCREEN_RAM+3
-        lda #'E'
-        sta SCREEN_RAM+4
-        lda #'L'
-        sta SCREEN_RAM+5
-        lda #'-'
-        sta SCREEN_RAM+6
-        lda #'0'
-        clc
-        adc current_dungeon_level
-        sta SCREEN_RAM+7
-
-        lda #COL_WHITE
-        sta COLOR_RAM+1
-        sta COLOR_RAM+2
-        sta COLOR_RAM+3
-        sta COLOR_RAM+4
-        sta COLOR_RAM+5
-        sta COLOR_RAM+6
-        sta COLOR_RAM+7
-        jmp .render_map_cells
-
-.hud_hdr_ow:
         ; Overworld : "HYRULE "
-        lda #'H'
-        sta SCREEN_RAM+1
-        lda #'Y'
-        sta SCREEN_RAM+2
-        lda #'R'
-        sta SCREEN_RAM+3
-        lda #'U'
-        sta SCREEN_RAM+4
-        lda #'L'
-        sta SCREEN_RAM+5
-        lda #'E'
-        sta SCREEN_RAM+6
-        lda #' '
-        sta SCREEN_RAM+7
+        ldx #6
+-       lda .str_hyrule,x
+        sta SCREEN_RAM+1,x
+        dex
+        bpl -
+        bmi .render_map_cells
 
-        lda #COL_WHITE
-        sta COLOR_RAM+1
-        sta COLOR_RAM+2
-        sta COLOR_RAM+3
-        sta COLOR_RAM+4
-        sta COLOR_RAM+5
-        sta COLOR_RAM+6
-        sta COLOR_RAM+7
+.hud_hdr_dung:
+        ; Donjon : "LEVEL-X" (ex: LEVEL-1)
+        ldx #5
+-       lda .str_level,x
+        sta SCREEN_RAM+1,x
+        dex
+        bpl -
+        lda current_dungeon_level
+        ora #'0'
+        sta SCREEN_RAM+7
+        bne .render_map_cells
+
+.str_hyrule: !text "HYRULE "
+.str_level:  !text "LEVEL-"
 
 .render_map_cells:
         ; Garantit que les 8 caractères minimap sont en place sur Lignes 1 & 2 (cols 2..5)
@@ -348,9 +260,12 @@ hud_render:
 
 .uw_has_map_check:
         ; Avec carte : affiche toutes les salles réelles du donjon
-        ; (room_tbl_lo à $C016 : salle valide si != salle $00)
+        ; ($C012..$C013 pointe vers dummy_sealed_room)
         lda $c016,x
-        cmp $c016                       ; salle $00 = dummy_sealed_room
+        cmp $c012
+        bne .uw_draw_one_room
+        lda $c096,x
+        cmp $c013
         beq .uw_room_next
 
 .uw_draw_one_room:
@@ -707,24 +622,19 @@ hud_update_sword:
         lda player_has_sword
         bne .show_sword
         lda #32                         ; espace
-        sta SCREEN_RAM+40+27
-        sta SCREEN_RAM+40+28
-        sta SCREEN_RAM+40+29
-        sta SCREEN_RAM+40+30
+        ldx #3
+-       sta SCREEN_RAM+40+27,x
+        dex
+        bpl -
         rts
 .show_sword:
-        lda #'S'
-        sta SCREEN_RAM+40+27
-        lda #'W'
-        sta SCREEN_RAM+40+28
-        lda #'O'
-        sta SCREEN_RAM+40+29
-        lda #'R'
-        sta SCREEN_RAM+40+30
+        ldx #3
+-       lda .swor_txt,x
+        sta SCREEN_RAM+40+27,x
         lda #COL_CYAN
-        sta COLOR_RAM+40+27
-        sta COLOR_RAM+40+28
-        sta COLOR_RAM+40+29
-        sta COLOR_RAM+40+30
+        sta COLOR_RAM+40+27,x
+        dex
+        bpl -
         rts
+.swor_txt: !text "SWOR"
 

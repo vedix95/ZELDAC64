@@ -1460,7 +1460,7 @@ dungeon_update:
         rts
 
 .cellar_rooms:
-        !byte $22, $6a, $04, $36, $08, $4a, $6f, $23, $45
+        !byte $22, $6a, $32, $36, $08, $4a, $6f, $23, $45
 
 ; ===========================================================================
 ; BLOCS POUSSABLES (toutes les salles de donjon)
@@ -1481,7 +1481,8 @@ push_pdy:               !byte 0
 
 ; Table : salle, index du bloc, sens autorisés (bit = 1<<DIR : bas, haut, gauche, droite), effet
 push_tbl:
-        !byte $22, 88, %0011, PUSH_FX_STAIRS    ; bloc gauche du losange : vers le haut ou le bas
+        !byte $22, 88, %0011, PUSH_FX_STAIRS    ; bloc gauche du losange (Donjon 1) : vers le haut ou le bas
+        !byte $32, 88, %0011, PUSH_FX_STAIRS    ; bloc gauche Like-Likes (Donjon 4 Échelle) : vers le haut ou le bas
         !byte $42, 89, %0100, PUSH_FX_HERMIT    ; bloc du passage de l'ermite : vers la gauche
         !byte $ff
 
@@ -1641,13 +1642,16 @@ dungeon_do_push_block:
 +       sta dungeon_room_state,x
         
         cpx #$22
-        bne +
-        ldy #90
+        beq +
+        cpx #$32
+        bne .dpb_no_stairs
++       ldy #90
         lda #TILE_DUNG_STAIRS
         sta (ZP_MAP),y
         sta room_buf,y
         jsr redraw_single_tile
-+       rts
+.dpb_no_stairs:
+        rts
 
 .dpb_hermit:
         ; --- Salle 0x42 : le volet Ouest s'ouvre vers l'ermite (0x41) ---
@@ -2030,16 +2034,23 @@ dungeon_apply_room_state_internal:
         ldy #100
         sta (ZP_DST),y
 
-+       ; Escalier secret salle 0x22 si déjà révélé
++       ; Escalier secret salle 0x22 ou 0x32 si déjà révélé
         lda ZP_IDX
         cmp #$22
+        beq .apply_secret_stairs
+        cmp #$32
         bne .done_apply
+.apply_secret_stairs:
         lda ZP_TMP
         and #DUNG_SECRET_REVEALED
         beq .done_apply
 
         ldy #68
-        lda #TILE_DUNG_BLOCK
+        lda ZP_TMP
+        and #DUNG_BLOCK_DOWN
+        beq +
+        ldy #108
++       lda #TILE_DUNG_BLOCK
         sta (ZP_DST),y
         ldy #88
         lda #TILE_DUNG_FLOOR
@@ -2807,7 +2818,7 @@ cellar_update:
 
 .chk_ladder_pickup:
         ; --- Donjon 4 : Échelle (salle 0x04) ---
-        ldx #$04
+        ldx #$32
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
         bne +
@@ -2818,7 +2829,7 @@ cellar_update:
         bcs +
         lda #1
         sta player_has_stepladder
-        ldx #$04
+        ldx #$32
         lda dungeon_room_state,x
         ora #DUNG_ITEM_COLLECTED
         sta dungeon_room_state,x
@@ -3098,7 +3109,7 @@ cellar_draw:
         jmp .place_pedestal_spr
 
 .draw_ladder_pedestal:
-        ldx #$04
+        ldx #$32
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
         bne .no_bow_pedestal

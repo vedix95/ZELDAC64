@@ -24,7 +24,10 @@ map_charset_ptr:
 ; Pointeur vers la table des ennemis ($C010..$C011)
 map_enemies_ptr_hdr:
         !word map_enemies
-        !fill 4, 0                          ; Alignement à $C015
+; Pointeur vers la salle scellee dummy ($C012..$C013)
+dummy_sealed_room_ptr:
+        !word dummy_sealed_room
+        !fill 2, 0                          ; Alignement à $C015
 
 ; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)
 room_tbl_lo:

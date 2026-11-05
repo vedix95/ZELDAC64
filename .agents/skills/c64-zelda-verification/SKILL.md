@@ -86,6 +86,16 @@ main_addr   = zelda_labels['main_loop']          # Boucle de jeu
 x64sc -default -cartcrt build/zelda.crt -warp -limitcycles 200000000 -moncommands /tmp/script.mon
 ```
 
+### Séquence d'Avancement Frame par Frame Sécurisée :
+Pour éviter tout blocage indéfini ou timeout dans les scripts de moniteur batch, toujours encadrer chaque étape d'avancement :
+```text
+bk main_addr
+g
+del
+```
+Ne jamais émettre `g` sans point d'arrêt actif. Terminer systématiquement les scripts moniteur par la commande `quit`.
+
+
 ---
 
 ## 4. Post-Traitement des Captures d'Écran

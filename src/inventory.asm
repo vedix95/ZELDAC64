@@ -58,7 +58,11 @@ ovl_inventory_open:
         sta VIC_CTRL2
 
         lda #0
-        sta inv_page
+        ldy current_world_type
+        cpy #WORLD_DUNGEON
+        bne +
+        lda #3                          ; En donjon : atterrissage direct sur la Carte du Donjon !
++       sta inv_page
         jsr inv_display_current_page
         rts
 

@@ -1181,24 +1181,96 @@ update_single_enemy:
 +       rts
 
 ; ===========================================================================
-; IA : AI_TELEPORT (Wizzrobe)
+; IA : AI_TELEPORT (Wizzrobe Rouge & Bleu)
 ; ===========================================================================
 .exec_ai_teleport:
+        lda en_type,x
+        cmp #TYPE_WIZZROBE_BLUE
+        bne .wizz_red_logic
+
+        ; --- WIZZROBE BLEU : Fantôme glissant à travers les murs ---
+        dec en_timer,x
+        bne .wizz_blue_move
+        lda #60
+        sta en_timer,x
+        jsr ai_calc_dir_to_player
+        sta en_dir,x
+        jsr spawn_enemy_magic_proj
+        rts
+
+.wizz_blue_move:
+        lda #1
+        sta en_step_px
+        jsr calc_step_candidate
+        jsr check_bounds_only
+        bcc +
+        lda en_dir,x
+        eor #1
+        sta en_dir,x
+        rts
++       jmp commit_step
+
+.wizz_red_logic:
+        ; --- WIZZROBE ROUGE : Téléportation sur dalle libre ---
         dec en_timer,x
         bne +
         lda en_anim,x
         eor #1
         sta en_anim,x
         bne .wizz_emerge
-        ; Disparaît : 30 frames
-        lda #30
+
+        ; Disparaît : 35 frames et choisit un nouvel emplacement libre
+        lda #35
         sta en_timer,x
+        jsr .wizz_pick_new_spot
         rts
+
 .wizz_emerge:
-        ; Apparaît et tire
-        lda #40
+        ; Apparaît, s'oriente vers Link et tire
+        lda #45
         sta en_timer,x
+        jsr ai_calc_dir_to_player
+        sta en_dir,x
         jsr spawn_enemy_magic_proj
++       rts
+
+.wizz_pick_new_spot:
+        jsr get_rand
+        and #$0f
+        clc
+        adc #3                          ; tx = 3..18
+        sta en_cand_x
+        jsr get_rand
+        and #$07
+        clc
+        adc #2                          ; ty = 2..7
+        tax
+        lda tile_row_offset,x
+        clc
+        adc en_cand_x
+        tay
+        lda room_buf,y
+        bne +                           ; si tuile solide, conserve le spot
+        lda en_cand_x
+        asl
+        asl
+        asl
+        asl
+        clc
+        adc #24
+        sta en_cand_x
+        lda #0
+        adc #0
+        sta en_cand_x+1
+        txa
+        asl
+        asl
+        asl
+        asl
+        clc
+        adc #72
+        sta en_cand_y
+        jmp commit_step
 +       rts
 
 spawn_enemy_magic_proj:
@@ -1208,16 +1280,16 @@ spawn_enemy_magic_proj:
         sta en_proj_active
         lda #PROJ_MAGIC
         sta en_proj_type
-        lda player_dir
+        ldx en_idx
+        lda en_dir,x
         sta en_proj_dir
-        lda en_idx
+        txa
         asl
         tay
         lda en_x,y
         sta en_proj_x
         lda en_x+1,y
         sta en_proj_x+1
-        ldx en_idx
         lda en_y,x
         sta en_proj_y
         jsr sound_enemy_shoot

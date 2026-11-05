@@ -534,6 +534,38 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
      - Validation intégrale des planches [atlas_all_assets.png](file:///home/vedix/Documents/C64/zelda/atlas_all_assets.png) et `sheet_sprites_enemies.png`.
      - Tous les tests automatisés (`test_rules_audit.py`, `test_export_assets.py`, `test_verified_bugs.py`) passent avec succès.
 
+---
+
+### [2026-11-05] Anomalie 16 : Donjons Décalés (Salles Fantômes Niv 4), Sprites Scindés/Mirroités (Keese, Zol, Gel, Trap), Couleurs Inauthentiques, IA Wizzrobe Inactive & Débordement Haute RAM ($A000)
+* **Symptômes** :
+  1. Le Donjon 4 (Snake) contenait des salles fantômes (0x60, 0x41, 0x04) non conformes à la quête originale NES (20 salles authentiques au lieu de 23).
+  2. L'escalier menant à l'échelle (Stepladder) était placé dans la fausse salle 0x04 au lieu de la salle 0x32 avec son bloc secret à pousser.
+  3. Sprites de donjons scindés ou asymétriques : Keese à ailes tronquées, Zol affichant la tête du vieil ermite (Old Man), Blade Trap désaligné.
+  4. Couleurs de corps des monstres non conformes (pixels du corps routés sur MC1 partagé au lieu de la couleur propre VIC-II).
+  5. Fantômes Wizzrobe totalement immobiles ou sans logique de traversée des murs.
+  6. Minimap HUD et carte d'inventaire Page 3 effaçant la salle 00 du Niveau 4 et dessinant jusqu'à 108 salles fantômes.
+  7. Débordement de la haute RAM résidente au-delà de `$A000` ($A024), risquant l'écrasement par les overlays cartouches.
+
+* **Causes racines** :
+  1. Tables de donjons issues d'un générateur obsolète avec des salles surnuméraires et des portes adjacentes asymétriques.
+  2. Indices CHR erronés dans `tools/extract_all_nes_sprites.py` (Zol pointant sur les tuiles 12..15 du vieil ermite ; Keese sans assemblage 2x2 des tuiles 0, 2, 1, 3).
+  3. Tables de couleurs mappant le pixel 3 NES sur `s` (MC1 partagé $D025) au lieu de `g` (`VIC_SPRITE_COLx`).
+  4. Routine `AI_TELEPORT` incomplète ne gérant ni la relocalisation libre (`room_buf == 0`) du Wizzrobe Rouge ni le vol mural du Wizzrobe Bleu.
+  5. Test buggué `cmp $c016` pour détecter les salles scellées (or `$C016` contient le pointeur de la salle 00 du Niveau 4 !).
+  6. Multiples chaînes statiques décompressées en instructions directes unrollées dans `src/hud.asm`.
+
+* **Correctif appliqué** :
+  1. `tools/build_dungeons.py` : Reconstruction intégrale des 9 donjons (Niveau 4 borné à ses 20 salles authentiques, cohérence parfaite des portes vérifiée par script).
+  2. `src/dungeon.asm` : Déplacement de l'échelle en salle 0x32 avec bloc 88 déclaré dans `push_tbl` et révélation d'escalier à l'index 90.
+  3. `tools/extract_all_nes_sprites.py` : Correction de toutes les tuiles de donjon et mappage du pixel 3 vers la couleur propre `g` (Zol vert $05, Stalfos blanc osseux $01, Keese rouge/bleu, Wallmaster orange $08, Pols Voice rouge clair $0A, Trap cyan $03).
+  4. `src/enemies.asm` : IA Wizzrobe Rouge (téléportation aléatoire sur sol praticable + visée Link) et Bleu (glissement à travers les murs avec rebond sur bords d'écran).
+  5. `src/hud.asm` & `src/inventory_draw.asm` : Stockage du pointeur `dummy_sealed_room` en `$C012..$C013` et comparaison 16-bit stricte. Carte interactive avec boussole (icônes ◆ or pour secrets non collectés, ■ cyan pour salles nettoyées, ▲ rouge Triforce, ● jaune Link).
+  6. `src/hud.asm` : Factorisation de l'affichage statique par tables de chaînes et boucles d'index, ramenant la haute RAM résidente à `$9F3C` (marge de sécurité de 196 octets sous `$A000`).
+* **Règles anti-régression** :
+  - Toujours préserver l'en-tête de donjon à `$C012..$C013` pour identifier les salles scellées.
+  - Ne jamais dépasser `$9FFF` en mémoire haute résidente (maintenir l'assertion `!if * > OVERLAY_RAM_ADDR { !error ... }`).
+
+
 
 
 

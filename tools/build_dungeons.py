@@ -100,7 +100,7 @@ DUNGEON_ROOMS = {
     1: DUNGEON_1_ROOMS,
     2: {0x7d, 0x6d, 0x6e, 0x6f, 0x5e, 0x5f, 0x4e, 0x4f, 0x3e, 0x3f, 0x2e, 0x2f, 0x1e, 0x1f, 0x0d, 0x0e},
     3: {0x7b, 0x7c, 0x6a, 0x6b, 0x6c, 0x5a, 0x5b, 0x5c, 0x5d, 0x4a, 0x4b, 0x4c, 0x4d, 0x3a, 0x3b, 0x3c, 0x3d},
-    4: {0x70, 0x71, 0x60, 0x61, 0x62, 0x50, 0x51, 0x40, 0x41, 0x30, 0x31, 0x32, 0x20, 0x21, 0x10, 0x11, 0x12, 0x13, 0x00, 0x01, 0x02, 0x03, 0x04},
+    4: {0x70, 0x71, 0x61, 0x62, 0x50, 0x51, 0x40, 0x30, 0x31, 0x32, 0x20, 0x21, 0x10, 0x11, 0x12, 0x13, 0x00, 0x01, 0x02, 0x03},
     5: {0x76, 0x77, 0x65, 0x66, 0x67, 0x55, 0x56, 0x57, 0x45, 0x46, 0x47, 0x35, 0x36, 0x37, 0x24, 0x25, 0x26, 0x14, 0x15, 0x16},
     6: {0x78, 0x79, 0x7a, 0x68, 0x69, 0x6a, 0x58, 0x59, 0x5a, 0x48, 0x49, 0x4a, 0x38, 0x39, 0x3a, 0x28, 0x29, 0x2a, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x08, 0x09, 0x0a, 0x0b, 0x0c},
     7: {0x78, 0x79, 0x7a, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x48, 0x49, 0x4a, 0x38, 0x39, 0x3a, 0x28, 0x29, 0x2a, 0x2b, 0x18, 0x19, 0x1a},
@@ -487,7 +487,7 @@ def build_level4_enemies_table():
         "TYPE_VIRE         , 10,  5",
         empty, empty, empty, empty, empty
     ]
-    # Zols (0x61, 0x31, 0x41, 0x51)
+    # Zols (0x61, 0x31, 0x51)
     tbl[0x61] = [
         "TYPE_ZOL          ,  8,  3",
         "TYPE_ZOL          , 12,  3",
@@ -497,12 +497,6 @@ def build_level4_enemies_table():
     tbl[0x31] = [
         "TYPE_ZOL          ,  7,  3",
         "TYPE_ZOL          , 13,  3",
-        "TYPE_ZOL          , 10,  5",
-        empty, empty, empty, empty, empty
-    ]
-    tbl[0x41] = [
-        "TYPE_ZOL          ,  8,  3",
-        "TYPE_ZOL          , 12,  3",
         "TYPE_ZOL          , 10,  5",
         empty, empty, empty, empty, empty
     ]
@@ -1333,8 +1327,6 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
         elif lvl == 4:
             if r == 0x13 and nd != 1: nd = 7 # North shutter to Triforce
             if r == 0x03: sd = 0            # Open back to Gleeok
-            if r == 0x40 and ed == 4: ed = 7
-            if r == 0x41 and wd == 4: wd = 7
             if r == 0x31 and nd == 4: nd = 7
         elif lvl == 5:
             if r == 0x24 and wd != 1: wd = 7 # West shutter to Triforce
@@ -1355,6 +1347,7 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
             if r == 0x2B: wd = 0            # Open back to Boss
             if r == 0x6A and nd == 4: nd = 7
             if r == 0x5A and sd == 4: sd = 7
+            if r == 0x4A: nd = 1; wd = 4    # Mur au Nord, porte bombe a l Ouest vers 0x49
         elif lvl == 8:
             if r == 0x3C and nd != 1: nd = 7 # North shutter to Triforce
             if r == 0x2C: sd = 0            # Open back to Boss
@@ -1367,6 +1360,7 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
             if r == 0x42: ed = 4            # Bomb door East into 0x43
             if r == 0x53: sd = 4            # Bomb door South into 0x63
             if r == 0x63: nd = 4            # Bomb door North into 0x53
+            if r == 0x76: wd = 0; ed = 4    # Entree Ouest ouverte (vers 0x75), Est bombe (vers 0x77)
 
         n_tile = door_code_to_tile(nd, True)
         s_tile = door_code_to_tile(sd, True)
@@ -1405,8 +1399,8 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
             grid[4][10] = 0 # Hidden under floor until block pushed
         elif lvl == 3 and r == 0x6A:
             grid[4][14] = 7 # Diamond staircase to Raft cellar!
-        elif lvl == 4 and r == 0x04:
-            grid[4][14] = 7 # Diamond staircase to Stepladder cellar!
+        elif lvl == 4 and r == 0x32:
+            grid[4][10] = 0 # Hidden under floor until block pushed (Stepladder cellar!)
         elif lvl == 5 and r == 0x36:
             grid[4][14] = 7 # Diamond staircase to Whistle cellar!
         elif lvl == 6 and r == 0x08:
@@ -1546,7 +1540,10 @@ def build_dungeon_asm(lvl):
     lines.append("; Pointeur vers la table des ennemis ($C010..$C011)")
     lines.append("map_enemies_ptr_hdr:")
     lines.append("        !word map_enemies")
-    lines.append("        !fill 4, 0                          ; Alignement à $C015\n")
+    lines.append("; Pointeur vers la salle scellee dummy ($C012..$C013)")
+    lines.append("dummy_sealed_room_ptr:")
+    lines.append("        !word dummy_sealed_room")
+    lines.append("        !fill 2, 0                          ; Alignement à $C015\n")
 
     # Tables des pointeurs LO / HI
     lines.append("; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)")

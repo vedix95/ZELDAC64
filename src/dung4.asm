@@ -1,7 +1,7 @@
 ; ===========================================================================
 ; dung4.asm - Donjon Niveau 4 : Steer (Gnou) pour Zelda C64
 ; GENERE AUTOMATIQUEMENT par tools/build_dungeons.py - NE PAS MODIFIER
-; Salles étanches : 23 salles
+; Salles étanches : 20 salles
 ; ===========================================================================
 !cpu 6510
 !source "src/enemy_types.inc"
@@ -10,7 +10,7 @@
 ; En-tête Donjon (6 octets : $C000..$C005)
 map_rooms_w:        !byte 16
 map_rooms_h:        !byte 8
-map_rooms_cnt:      !byte 23
+map_rooms_cnt:      !byte 20
 map_bg_col:         !byte 0   ; noir
 map_mc1_col:        !byte 15
 map_mc2_col:        !byte 14  ; bleu clair
@@ -24,26 +24,29 @@ map_charset_ptr:
 ; Pointeur vers la table des ennemis ($C010..$C011)
 map_enemies_ptr_hdr:
         !word map_enemies
-        !fill 4, 0                          ; Alignement à $C015
+; Pointeur vers la salle scellee dummy ($C012..$C013)
+dummy_sealed_room_ptr:
+        !word dummy_sealed_room
+        !fill 2, 0                          ; Alignement à $C015
 
 ; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)
 room_tbl_lo:
-        !byte <u_room_00, <u_room_01, <u_room_02, <u_room_03, <u_room_04, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
+        !byte <u_room_00, <u_room_01, <u_room_02, <u_room_03, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
         !byte <u_room_10, <u_room_11, <u_room_12, <u_room_13, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
         !byte <u_room_20, <u_room_21, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
         !byte <u_room_30, <u_room_31, <u_room_32, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
-        !byte <u_room_40, <u_room_41, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
+        !byte <u_room_40, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
         !byte <u_room_50, <u_room_51, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
-        !byte <u_room_60, <u_room_61, <u_room_62, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
+        !byte <dummy_sealed_room, <u_room_61, <u_room_62, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
         !byte <u_room_70, <u_room_71, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room, <dummy_sealed_room
 room_tbl_hi:
-        !byte >u_room_00, >u_room_01, >u_room_02, >u_room_03, >u_room_04, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
+        !byte >u_room_00, >u_room_01, >u_room_02, >u_room_03, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
         !byte >u_room_10, >u_room_11, >u_room_12, >u_room_13, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
         !byte >u_room_20, >u_room_21, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
         !byte >u_room_30, >u_room_31, >u_room_32, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
-        !byte >u_room_40, >u_room_41, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
+        !byte >u_room_40, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
         !byte >u_room_50, >u_room_51, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
-        !byte >u_room_60, >u_room_61, >u_room_62, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
+        !byte >dummy_sealed_room, >u_room_61, >u_room_62, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
         !byte >u_room_70, >u_room_71, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room, >dummy_sealed_room
 
 ; Métadonnées Donjon & Palette (128 octets : $C116..$C195)
@@ -65,9 +68,9 @@ room_enemy_idx:
         !byte 2, 0, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        !byte 0, 10, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        !byte 0, 11, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         !byte 12, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 ; Salle ($00 : rx=0, ry=0) - RLE compact (42 octets)
@@ -94,13 +97,6 @@ u_room_03:
         !byte 16, 6, 16, 6, 16, 5, 32, 20, 19, 32, 5, 0, 6, 48, 6, 0
         !byte 5, 32, 20, 19, 32, 5, 112, 5, 32, 20, 19, 32, 53, 16, 53, 32
         !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($04 : rx=4, ry=0) - RLE compact (67 octets)
-u_room_04:
-        !byte 8, 225, 33, 9, 19, 16, 21, 176, 20, 19, 16, 21, 64, 5, 0, 37
-        !byte 16, 20, 19, 16, 21, 0, 37, 0, 69, 16, 20, 12, 64, 5, 48, 5
-        !byte 16, 7, 32, 20, 12, 32, 21, 96, 5, 48, 20, 19, 16, 21, 48, 21
-        !byte 0, 5, 48, 20, 19, 16, 21, 176, 20, 19, 224, 0, 20, 10, 114, 17
-        !byte 114, 11, 255
 ; Salle ($10 : rx=0, ry=1) - RLE compact (52 octets)
 u_room_10:
         !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
@@ -159,11 +155,6 @@ u_room_40:
         !byte 19, 32, 5, 112, 5, 32, 20, 19, 32, 5, 0, 85, 0, 5, 32, 20
         !byte 19, 32, 5, 112, 5, 32, 20, 19, 32, 37, 48, 37, 32, 20, 19, 224
         !byte 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($41 : rx=1, ry=4) - RLE compact (42 octets)
-u_room_41:
-        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
 ; Salle ($50 : rx=0, ry=5) - RLE compact (68 octets)
 u_room_50:
         !byte 8, 113, 28, 113, 9, 19, 48, 5, 112, 5, 16, 20, 19, 32, 5, 32
@@ -176,13 +167,6 @@ u_room_51:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 48, 5, 80, 5, 48, 20, 19
         !byte 224, 0, 20, 12, 224, 16, 20, 12, 224, 16, 20, 19, 48, 5, 80, 5
         !byte 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($60 : rx=0, ry=6) - RLE compact (65 octets)
-u_room_60:
-        !byte 8, 225, 33, 9, 19, 16, 21, 176, 20, 19, 16, 21, 64, 5, 0, 37
-        !byte 16, 20, 19, 16, 21, 0, 37, 0, 69, 16, 20, 19, 48, 5, 48, 5
-        !byte 96, 15, 19, 16, 21, 96, 5, 64, 15, 19, 16, 21, 48, 21, 0, 5
-        !byte 48, 20, 19, 16, 21, 176, 20, 19, 224, 0, 20, 10, 114, 31, 114, 11
-        !byte 255
 ; Salle ($61 : rx=1, ry=6) - RLE compact (49 octets)
 u_room_61:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 48, 5
@@ -235,9 +219,9 @@ map_enemies:
         ; Formation 9
         !byte TYPE_VIRE         ,  6,  3,   TYPE_VIRE         , 13,  3,   TYPE_VIRE         ,  8,  5,   TYPE_VIRE         , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 10
-        !byte TYPE_ZOL          ,  8,  3,   TYPE_ZOL          , 12,  3,   TYPE_ZOL          , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
-        ; Formation 11
         !byte TYPE_ZOL          ,  6,  3,   TYPE_ZOL          , 14,  3,   TYPE_ZOL          , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 11
+        !byte TYPE_ZOL          ,  8,  3,   TYPE_ZOL          , 12,  3,   TYPE_ZOL          , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 12
         !byte TYPE_VIRE         ,  6,  3,   TYPE_VIRE         , 14,  3,   TYPE_VIRE         , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 13

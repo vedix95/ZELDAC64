@@ -1680,10 +1680,15 @@ draw_page_3_dungeon_map:
         adc ZP_TMP
         tax
 
+        ; Vérifie si la salle est scellée ($C012..$C013 pointe vers dummy_sealed_room)
         lda $c016,x
-        cmp $c016
+        cmp $c012
+        bne .d_room_check_vis
+        lda $c096,x
+        cmp $c013
         beq .d_no_room
 
+.d_room_check_vis:
         lda player_has_dungeon_map
         bne .d_room_revealed
         lda visited_uw_rooms,x
@@ -1719,7 +1724,7 @@ draw_page_3_dungeon_map:
         jmp .d_put_cell
 +
         lda player_has_compass
-        beq ++
+        beq .d_regular_room
         ldy current_dungeon_level
         dey
         cpy #9
@@ -1727,14 +1732,62 @@ draw_page_3_dungeon_map:
         ldy #0
 +++     txa
         cmp dungeon_tri_rooms,y
-        bne ++
+        bne .check_room_secret
         lda #HUD_MAP_ACTIVE
         sta ZP_TMP
         sta ZP_TMP+1
         lda #COL_LIGHT_RED
         sta ZP_BASE
         jmp .d_put_cell
-++
+
+.check_room_secret:
+        ; Vérifie si un drop existe dans la salle et s'il est ramassé
+        txa
+        ldy current_room_idx
+        sty inv_saved_rid
+        sta current_room_idx
+        jsr dungeon_get_room_drop_type
+        ldy inv_saved_rid
+        sty current_room_idx
+        cmp #DROP_NONE
+        beq .chk_cellar_sec
+        ; A un drop : est-il déjà ramassé ?
+        lda dungeon_room_state,x
+        and #DUNG_ITEM_COLLECTED
+        beq .has_secret_gem
+        jmp .d_regular_room
+
+.chk_cellar_sec:
+        ; Vérifie si la salle héberge un cellier ou bloc secret
+        ldy #8
+-       txa
+        cmp d_cellar_rooms,y
+        beq .test_cellar_collected
+        dey
+        bpl -
+        cpx #$42                        ; Salle ermite Donjon 1
+        bne .d_regular_room
+        lda dungeon_room_state,x
+        and #DUNG_SECRET_REVEALED
+        beq .has_secret_gem
+        jmp .d_regular_room
+
+.test_cellar_collected:
+        lda dungeon_room_state,x
+        and #(DUNG_ITEM_COLLECTED | DUNG_SECRET_REVEALED)
+        cmp #(DUNG_ITEM_COLLECTED | DUNG_SECRET_REVEALED)
+        bne .has_secret_gem
+        jmp .d_regular_room
+
+.has_secret_gem:
+        lda #87                         ; Diamant PETSCII '◆'
+        sta ZP_TMP
+        sta ZP_TMP+1
+        lda #COL_YELLOW
+        sta ZP_BASE
+        jmp .d_put_cell
+
+.d_regular_room:
         lda #HUD_MAP_VISITED
         sta ZP_TMP
         sta ZP_TMP+1
@@ -1787,6 +1840,11 @@ dung_bank_x:
 dungeon_tri_rooms:
         !byte $36, $0d, $3d, $03, $14, $0c, $2b, $2c, $32
 
+inv_saved_rid:
+        !byte 0
+d_cellar_rooms:
+        !byte $22, $6a, $32, $36, $08, $4a, $6f, $23, $45
+
 p3_dung_names_lo:
         !byte <p3_d1, <p3_d2, <p3_d3, <p3_d4, <p3_d5, <p3_d6, <p3_d7, <p3_d8, <p3_d9
 p3_dung_names_hi:
@@ -1804,20 +1862,20 @@ p3_d8:  !text "LION", 0
 p3_d9:  !text "DEATH MOUNTAIN", 0
 
 txt_dung_legend:
+        !byte 87
+        !text " SECRET  "
         !byte HUD_MAP_ACTIVE
-        !text " TRIFORCE  "
+        !text " TRI  "
         !byte HUD_MAP_ACTIVE
-        !text " LINK  "
-        !byte HUD_MAP_VISITED
-        !text " SEEN  ", 0
+        !text " LINK", 0
 
 txt_dung_leg_col:
-        !byte COL_LIGHT_RED
-        !fill 11, COL_WHITE
         !byte COL_YELLOW
-        !fill 7, COL_WHITE
-        !byte COL_CYAN
-        !fill 7, COL_WHITE
+        !fill 9, COL_WHITE
+        !byte COL_LIGHT_RED
+        !fill 6, COL_WHITE
+        !byte COL_YELLOW
+        !fill 5, COL_WHITE
         !byte 0
 
 draw_map_borders:

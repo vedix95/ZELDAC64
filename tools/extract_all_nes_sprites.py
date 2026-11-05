@@ -251,55 +251,60 @@ def extract_all():
     frames["lynel_1"] = frames["lynel_down_1"]
 
     print("2. Extraction des ennemis communs de donjon (uw_com)...")
-    # Keese (ailes symétriques)
-    frames["keese_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_com", 0), hflip_tile(tile("uw_com", 0)), tile("uw_com", 1), hflip_tile(tile("uw_com", 1))))
-    frames["keese_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_com", 2), hflip_tile(tile("uw_com", 2)), tile("uw_com", 3), hflip_tile(tile("uw_com", 3))))
+    # Keese : ailes déployées (t0, t2, t1, t3) et ailes repliées (t4, t5)
+    cm_keese = {0: ".", 1: "g", 2: "b", 3: "g"}
+    k0 = assemble_16x16(tile("uw_com", 0), tile("uw_com", 2), tile("uw_com", 1), tile("uw_com", 3))
+    k1 = assemble_16x16(tile("uw_com", 4), hflip_tile(tile("uw_com", 4)), tile("uw_com", 5), hflip_tile(tile("uw_com", 5)))
+    frames["keese_0"] = convert_16x16_to_8x16(k0, cm_keese)
+    frames["keese_1"] = convert_16x16_to_8x16(k1, cm_keese)
 
     # Zol / Gel
-    frames["zol_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_com", 8), hflip_tile(tile("uw_com", 8)), tile("uw_com", 9), hflip_tile(tile("uw_com", 9))))
-    frames["zol_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_com", 10), hflip_tile(tile("uw_com", 10)), tile("uw_com", 11), hflip_tile(tile("uw_com", 11))))
-    # Gel (8x8 centré)
-    t_gel = tile("uw_com", 12)
-    gel_rows = []
-    for y in range(8):
-        row = ""
-        for k in range(4):
-            p0, p1 = t_gel[y][2*k], t_gel[y][2*k+1]
-            c = max(p0, p1)
-            row += ".sgb"[c] if c < 4 else "."
-        gel_rows.append(".." + row + "..")
-    frames["gel"] = ["........"]*4 + gel_rows + ["........"]*4
+    cm_zol = {0: ".", 1: "g", 2: "s", 3: "b"}
+    z0 = assemble_16x16(tile("uw_com", 12), hflip_tile(tile("uw_com", 12)), tile("uw_com", 13), hflip_tile(tile("uw_com", 13)))
+    z1 = assemble_16x16(tile("uw_com", 14), hflip_tile(tile("uw_com", 14)), tile("uw_com", 15), hflip_tile(tile("uw_com", 15)))
+    frames["zol_0"] = convert_16x16_to_8x16(z0, cm_zol)
+    frames["zol_1"] = convert_16x16_to_8x16(z1, cm_zol)
 
-    # Blade Trap
-    frames["trap"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_com", 6), hflip_tile(tile("uw_com", 6)), tile("uw_com", 7), hflip_tile(tile("uw_com", 7))))
+    # Gel (8x8 centré)
+    t_gel = [[0]*8]*4 + tile("uw_com", 14)[4:]
+    gel_16 = assemble_16x16(t_gel, hflip_tile(t_gel), [[0]*8]*8, [[0]*8]*8)
+    frames["gel"] = convert_16x16_to_8x16(gel_16, cm_zol)
+
+    # Blade Trap (Tiles 8, 9 avec spikes 4 directions)
+    cm_trap = {0: ".", 1: "s", 2: "b", 3: "g"}
+    trap_16 = assemble_16x16(tile("uw_com", 8), hflip_tile(tile("uw_com", 8)), tile("uw_com", 9), hflip_tile(tile("uw_com", 9)))
+    frames["trap"] = convert_16x16_to_8x16(trap_16, cm_trap)
 
     print("3. Extraction Donjon 1, 2, 7 (Rope, Stalfos, Goriya, Wallmaster)...")
-    # Rope (Tiles 2,4,3,5 et 6,8,7,9)
-    frames["rope_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_127", 2), tile("uw_127", 4), tile("uw_127", 3), tile("uw_127", 5)))
-    frames["rope_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_127", 6), tile("uw_127", 8), tile("uw_127", 7), tile("uw_127", 9)))
+    cm_dung = {0: ".", 1: "s", 2: "b", 3: "g"}
 
-    # Stalfos (Tiles 10,12,11,13)
+    # Rope (Tiles 2,4,3,5 et 6,8,7,9)
+    frames["rope_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_127", 2), tile("uw_127", 4), tile("uw_127", 3), tile("uw_127", 5)), cm_dung)
+    frames["rope_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_127", 6), tile("uw_127", 8), tile("uw_127", 7), tile("uw_127", 9)), cm_dung)
+
+    # Stalfos (Tiles 10,12,11,13 - squelette blanc pur)
     stalfos_s16 = assemble_16x16(tile("uw_127", 10), tile("uw_127", 12), tile("uw_127", 11), tile("uw_127", 13))
-    frames["stalfos_0"] = convert_16x16_to_8x16(stalfos_s16)
-    frames["stalfos_1"] = convert_16x16_to_8x16(hflip_16x16(stalfos_s16))
+    frames["stalfos_0"] = convert_16x16_to_8x16(stalfos_s16, cm_dung)
+    frames["stalfos_1"] = convert_16x16_to_8x16(hflip_16x16(stalfos_s16), cm_dung)
 
     # Wallmaster (Tiles 14,16,15,17)
     wm_s16 = assemble_16x16(tile("uw_127", 14), tile("uw_127", 16), tile("uw_127", 15), tile("uw_127", 17))
-    frames["wallmaster_0"] = convert_16x16_to_8x16(wm_s16)
-    frames["wallmaster_1"] = convert_16x16_to_8x16(hflip_16x16(wm_s16))
+    frames["wallmaster_0"] = convert_16x16_to_8x16(wm_s16, cm_dung)
+    frames["wallmaster_1"] = convert_16x16_to_8x16(hflip_16x16(wm_s16), cm_dung)
 
-    # Goriya (4 directions authentiques NES !)
+    # Goriya (4 directions authentiques NES - corps 'g', museau 's', ombres 'b')
+    cm_goriya = {0: ".", 1: "b", 2: "g", 3: "s"}
     g_d0 = assemble_16x16(tile("uw_127", 18), tile("uw_127", 20), tile("uw_127", 19), tile("uw_127", 21))
     g_u0 = assemble_16x16(tile("uw_127", 22), tile("uw_127", 24), tile("uw_127", 23), tile("uw_127", 25))
     g_l0 = assemble_16x16(tile("uw_127", 26), tile("uw_127", 28), tile("uw_127", 27), tile("uw_127", 29))
     g_l1 = assemble_16x16(tile("uw_127", 30), tile("uw_127", 32), tile("uw_127", 31), tile("uw_127", 33))
 
-    frames["goriya_down_0"] = convert_16x16_to_8x16(g_d0)
-    frames["goriya_down_1"] = convert_16x16_to_8x16(hflip_16x16(g_d0))
-    frames["goriya_up_0"]   = convert_16x16_to_8x16(g_u0)
-    frames["goriya_up_1"]   = convert_16x16_to_8x16(hflip_16x16(g_u0))
-    frames["goriya_left_0"] = convert_16x16_to_8x16(g_l0)
-    frames["goriya_left_1"] = convert_16x16_to_8x16(g_l1)
+    frames["goriya_down_0"] = convert_16x16_to_8x16(g_d0, cm_goriya)
+    frames["goriya_down_1"] = convert_16x16_to_8x16(hflip_16x16(g_d0), cm_goriya)
+    frames["goriya_up_0"]   = convert_16x16_to_8x16(g_u0, cm_goriya)
+    frames["goriya_up_1"]   = convert_16x16_to_8x16(hflip_16x16(g_u0), cm_goriya)
+    frames["goriya_left_0"] = convert_16x16_to_8x16(g_l0, cm_goriya)
+    frames["goriya_left_1"] = convert_16x16_to_8x16(g_l1, cm_goriya)
     frames["goriya_right_0"] = {"mirror": "goriya_left_0"}
     frames["goriya_right_1"] = {"mirror": "goriya_left_1"}
     directives["goriya_right_0"] = "mirror goriya_left_0"
@@ -307,32 +312,33 @@ def extract_all():
 
     print("4. Extraction Donjon 3, 5, 8 (Darknut, Bubble, Pols Voice, Gibdo)...")
     # Bubble (Tiles 2..5)
-    frames["bubble_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_358", 2), hflip_tile(tile("uw_358", 2)), tile("uw_358", 3), hflip_tile(tile("uw_358", 3))))
-    frames["bubble_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_358", 4), hflip_tile(tile("uw_358", 4)), tile("uw_358", 5), hflip_tile(tile("uw_358", 5))))
+    frames["bubble_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_358", 2), hflip_tile(tile("uw_358", 2)), tile("uw_358", 3), hflip_tile(tile("uw_358", 3))), cm_dung)
+    frames["bubble_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_358", 4), hflip_tile(tile("uw_358", 4)), tile("uw_358", 5), hflip_tile(tile("uw_358", 5))), cm_dung)
 
     # Pols Voice (Tiles 6,8,7,9)
     pv_s16 = assemble_16x16(tile("uw_358", 6), tile("uw_358", 8), tile("uw_358", 7), tile("uw_358", 9))
-    frames["polsvoice_0"] = convert_16x16_to_8x16(pv_s16)
-    frames["polsvoice_1"] = convert_16x16_to_8x16(hflip_16x16(pv_s16))
+    frames["polsvoice_0"] = convert_16x16_to_8x16(pv_s16, cm_dung)
+    frames["polsvoice_1"] = convert_16x16_to_8x16(hflip_16x16(pv_s16), cm_dung)
 
     # Gibdo (Tiles 10,12,11,13)
     gb_s16 = assemble_16x16(tile("uw_358", 10), tile("uw_358", 12), tile("uw_358", 11), tile("uw_358", 13))
-    frames["gibdo_0"] = convert_16x16_to_8x16(gb_s16)
-    frames["gibdo_1"] = convert_16x16_to_8x16(hflip_16x16(gb_s16))
+    frames["gibdo_0"] = convert_16x16_to_8x16(gb_s16, cm_dung)
+    frames["gibdo_1"] = convert_16x16_to_8x16(hflip_16x16(gb_s16), cm_dung)
 
-    # Darknut (Tiles 14..33)
+    # Darknut (Tiles 14..33 - armure 'g' = rouge/bleu, bouclier 'b' = bronze)
+    cm_darknut = {0: ".", 1: "s", 2: "g", 3: "b"}
     dn_d0 = assemble_16x16(tile("uw_358", 14), tile("uw_358", 16), tile("uw_358", 15), tile("uw_358", 17))
     dn_d1 = assemble_16x16(tile("uw_358", 18), tile("uw_358", 20), tile("uw_358", 19), tile("uw_358", 21))
     dn_u0 = assemble_16x16(tile("uw_358", 22), tile("uw_358", 24), tile("uw_358", 23), tile("uw_358", 25))
     dn_l0 = assemble_16x16(tile("uw_358", 26), tile("uw_358", 28), tile("uw_358", 27), tile("uw_358", 29))
     dn_l1 = assemble_16x16(tile("uw_358", 30), tile("uw_358", 32), tile("uw_358", 31), tile("uw_358", 33))
 
-    frames["darknut_down_0"] = convert_16x16_to_8x16(dn_d0)
-    frames["darknut_down_1"] = convert_16x16_to_8x16(dn_d1)
-    frames["darknut_up_0"]   = convert_16x16_to_8x16(dn_u0)
-    frames["darknut_up_1"]   = convert_16x16_to_8x16(hflip_16x16(dn_u0))
-    frames["darknut_left_0"] = convert_16x16_to_8x16(dn_l0)
-    frames["darknut_left_1"] = convert_16x16_to_8x16(dn_l1)
+    frames["darknut_down_0"] = convert_16x16_to_8x16(dn_d0, cm_darknut)
+    frames["darknut_down_1"] = convert_16x16_to_8x16(dn_d1, cm_darknut)
+    frames["darknut_up_0"]   = convert_16x16_to_8x16(dn_u0, cm_darknut)
+    frames["darknut_up_1"]   = convert_16x16_to_8x16(hflip_16x16(dn_u0), cm_darknut)
+    frames["darknut_left_0"] = convert_16x16_to_8x16(dn_l0, cm_darknut)
+    frames["darknut_left_1"] = convert_16x16_to_8x16(dn_l1, cm_darknut)
     frames["darknut_right_0"] = {"mirror": "darknut_left_0"}
     frames["darknut_right_1"] = {"mirror": "darknut_left_1"}
     directives["darknut_right_0"] = "mirror darknut_left_0"
@@ -366,16 +372,17 @@ def extract_all():
     frames["lanmola_body"] = make_lanmola_sprite(tile("uw_469", 2), tile("uw_469", 3))
 
     # Like Like (Tiles 4..11)
-    frames["likelike_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 4), tile("uw_469", 6), tile("uw_469", 5), tile("uw_469", 7)))
-    frames["likelike_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 8), tile("uw_469", 10), tile("uw_469", 9), tile("uw_469", 11)))
+    frames["likelike_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 4), tile("uw_469", 6), tile("uw_469", 5), tile("uw_469", 7)), cm_dung)
+    frames["likelike_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 8), tile("uw_469", 10), tile("uw_469", 9), tile("uw_469", 11)), cm_dung)
 
     # Vire (Tiles 14..21)
-    frames["vire_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 14), tile("uw_469", 16), tile("uw_469", 15), tile("uw_469", 17)))
-    frames["vire_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 18), tile("uw_469", 20), tile("uw_469", 19), tile("uw_469", 21)))
+    frames["vire_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 14), tile("uw_469", 16), tile("uw_469", 15), tile("uw_469", 17)), cm_dung)
+    frames["vire_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 18), tile("uw_469", 20), tile("uw_469", 19), tile("uw_469", 21)), cm_dung)
 
-    # Wizzrobe (Tiles 22..29)
-    frames["wizzrobe_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 22), tile("uw_469", 24), tile("uw_469", 23), tile("uw_469", 25)))
-    frames["wizzrobe_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 26), tile("uw_469", 28), tile("uw_469", 27), tile("uw_469", 29)))
+    # Wizzrobe (Tiles 22..29 - robe 'g' = rouge/bleu, gemme 's', ombre 'b')
+    cm_wizz = {0: ".", 1: "b", 2: "g", 3: "s"}
+    frames["wizzrobe_0"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 22), tile("uw_469", 24), tile("uw_469", 23), tile("uw_469", 25)), cm_wizz)
+    frames["wizzrobe_1"] = convert_16x16_to_8x16(assemble_16x16(tile("uw_469", 26), tile("uw_469", 28), tile("uw_469", 27), tile("uw_469", 29)), cm_wizz)
 
     print("6. Extraction des Bosses multi-sprites NES...")
     # -------------------------------------------------------------

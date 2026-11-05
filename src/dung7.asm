@@ -24,7 +24,10 @@ map_charset_ptr:
 ; Pointeur vers la table des ennemis ($C010..$C011)
 map_enemies_ptr_hdr:
         !word map_enemies
-        !fill 4, 0                          ; Alignement à $C015
+; Pointeur vers la salle scellee dummy ($C012..$C013)
+dummy_sealed_room_ptr:
+        !word dummy_sealed_room
+        !fill 2, 0                          ; Alignement à $C015
 
 ; Tables des pointeurs (128 octets LO : $C016..$C095 / 128 octets HI : $C096..$C115)
 room_tbl_lo:
@@ -138,13 +141,13 @@ u_room_49:
         !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 16, 181
         !byte 16, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224
         !byte 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($4a : rx=10, ry=4) - RLE compact (68 octets)
+; Salle ($4a : rx=10, ry=4) - RLE compact (67 octets)
 u_room_4a:
-        !byte 8, 113, 28, 113, 9, 19, 16, 21, 176, 20, 19, 16, 21, 64, 5, 0
-        !byte 37, 16, 20, 19, 16, 21, 0, 37, 0, 69, 16, 20, 12, 64, 5, 48
-        !byte 5, 16, 7, 32, 20, 12, 32, 21, 96, 5, 48, 20, 19, 16, 21, 48
-        !byte 21, 0, 5, 48, 20, 19, 16, 21, 176, 20, 19, 224, 0, 20, 10, 114
-        !byte 17, 114, 11, 255
+        !byte 8, 225, 33, 9, 19, 16, 21, 176, 20, 19, 16, 21, 64, 5, 0, 37
+        !byte 16, 20, 19, 16, 21, 0, 37, 0, 69, 16, 20, 15, 64, 5, 48, 5
+        !byte 16, 7, 32, 20, 15, 32, 21, 96, 5, 48, 20, 19, 16, 21, 48, 21
+        !byte 0, 5, 48, 20, 19, 16, 21, 176, 20, 19, 224, 0, 20, 10, 114, 17
+        !byte 114, 11, 255
 ; Salle ($58 : rx=8, ry=5) - RLE compact (43 octets)
 u_room_58:
         !byte 8, 113, 29, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
