@@ -40,7 +40,42 @@ Avant toute modification ou ajout de code, consulter le registre des anomalies d
 - **Maintien des Canaux Stéréo sur Pas de Maintien (`HOLD $FE`)** : Sur un pas de maintien musical (`$FE`), programmer systématiquement le maintien Gate ON sur les deux puces SID (`SID1` et `SID2`) pour les voix d'harmonie (Voix 2) et de basse (Voix 3), évitant l'extinction asymétrique de la seconde puce SID.
 - **Restauration Intégrale des Registres Stéréo SID2** : Lors de la restauration d'une voix après un SFX ou un carillon (`restore_music_voice_2`, `restore_music_voice_3`), reprogrammer intégralement la largeur d'impulsion (PW) et l'enveloppe ADSR sur `SID2` tout comme sur `SID1`.
 - **Préservation de l'Accumulateur sur Détection Dual SID (`ldy dual_sid_enabled`)** : Ne jamais tester `dual_sid_enabled` avec `lda` immédiatement avant un stockage dans un registre matériel SID2 (`sta SID2_*`). L'instruction `lda dual_sid_enabled` écrase l'accumulateur avec la valeur 1, ce qui corrompt le volume (`SID2_VOLUME = 1` au lieu de 15) et désactive les formes d'onde (`SID2_CTRL = $01` : Gate ON sans triangle/pulse/sawtooth/noise). Toujours tester via `ldy dual_sid_enabled` pour conserver intacte la valeur de `A`.
+- **Maintien du Bit de Forme d'Onde sur Gate OFF** : Lors de l'extinction ou d'un silence d'une voix SID (`Gate=0`), ne jamais écrire `CTRL = 0`. Toujours conserver le bit de forme d'onde actif (`%01000000` Pulse / `%00100000` Sawtooth) avec le bit 0 à 0, pour éviter les réinitialisations brutales d'oscillateur et les bruits parasites au réarmement.
+- **Indexation 8-bits des Séquences Sonores ($\le 255$ Pas)** : Le registre d'index 6502 étant limité à 8 bits (0..255), toute piste doit être contenue dans un index 8-bit (ex: Donjon 9, 124 pas authentiques), ou obligatoirement scindée en deux volets indexables (ex: Overworld `p1` et `p2`) avec bascule `music_part` si elle dépassait 255 pas, pour éviter tout débordement d'index lors des comparaisons `cpx`.
 
 ## 7. Plafond Mémoire des Sprites Link ($1000)
 - `src/sprites.asm` (généré depuis `assets/link.txt`) commence sous `$0800` et s'achève exactement à `$1000`, adresse à laquelle commence la ROM des caractères (chargen) pour le VIC-II en banque 0.
 - Ne jamais ajouter de sprites bruts dans `assets/link.txt` sans réallouer un slot existant ou déporter les graphismes dans les banques de streaming cartouche sous peine de corrompre la mémoire vidéo.
+
+## 8. Plafond Mémoire du Charset ($2000) et Espace Haute RAM ($4000)
+- Le jeu de caractères multicolores résident est implanté à l'adresse fixe `$2000` (`CHARSET_ADDR`).
+- Le segment de code et de données résidant sous `$2000` (`tiles_data.asm`, `input.asm`, `player.asm`) ne doit sous aucun prétexte déborder au-delà de `$2000`.
+- Tout module volumineux ou déplaçable (ex: `tilemap.asm`) doit être positionné dans la zone de haute RAM au-delà de `$4000` (`* = $4000`), qui bénéficie d'une marge de sécurité de plus de 8 Ko avant la zone de streaming cartouche (`$C000`).
+- Ne jamais stocker de glyphes d'interface persistants dans la plage `$2540..$25FF` (caractères 168..199), réservée à la copie des fontes de donjons lors du streaming de salle.
+
+## 9. Déploiement de l'Échelle (Stepladder) et Intégrité de `room_buf`
+- L'échelle de Link ne doit jamais modifier le tampon de salle `room_buf` (aucune écriture de `TILE_BRIDGE_H` ou `TILE_BRIDGE_V`).
+- L'affichage de l'échelle est délégué à une entité autonome (Sprite 2 du VIC-II, `COL_BROWN`).
+- `check_point_solid` n'autorise que le franchissement temporaire de l'index d'eau `ladder_tile_idx` ; dès que Link quitte l'eau pour revenir sur une terre ferme (`ladder_stepped_on == 1`), l'échelle doit se rétracter automatiquement (`ladder_tile_idx = $FF`), préservant ainsi les ponts préexistants sur la carte.
+
+## 10. Confinement des Ennemis en Donjon ($Y \in [88, 208]$)
+- Dans `check_bounds_only` ([src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm)), tout ennemi en mode donjon (`current_world_type != WORLD_OVERWORLD`) doit obligatoirement être borné à `88 <= en_cand_y < 208`.
+- Ne jamais autoriser `en_cand_y < 88` en donjon : la rangée 0 de tuiles (Y=80..95) étant un mur de pierre solide, la boîte de collision de l'ennemi (`col_y + 8 < 96`) pénétrerait dans le mur, bloquant simultanément les mouvements vers le haut, la gauche et la droite.
+
+## 11. Isolation des Modules Assembleur (`!zone`)
+- Tout module source autonome inclus dans `main.asm` (`items.asm`, `enemies.asm`, `player.asm`, etc.) doit obligatoirement débuter par une directive `!zone <nom_du_module>`.
+- Cela prévient toute collision entre labels locaux préfixés par un point (`.wait`, `.return`, etc.) entre deux modules distincts, évitant les erreurs de branchement hors-portée inter-fichiers dans l'assembleur ACME.
+
+## 12. Résolution Dynamique des Symboles pour les Tests VICE
+- Dans tout script de test ou de capture via le moniteur VICE (`x64sc -moncommands`), ne jamais coder en dur d'adresses absolues issues d'un ancien build (ex: `g 55c2`).
+- Toujours extraire dynamiquement les adresses de points d'arrêt depuis `build/intro.vs` et `build/zelda.vs` (`load_labels`).
+- Gérer systématiquement la conversion des captures PCX brutes émises par VICE (`magick <fichier>.png.pcx <fichier>.png && rm <fichier>.png.pcx`).
+
+## 13. Plafond Mémoire Résidente ($A000 - OVERLAY_RAM_ADDR) et Streaming Audio (Banque 31)
+- Le segment de code et données résidents du moteur de jeu (`src/main.asm`, `sound.asm`, `hud.asm`, etc.) ne doit **sous aucun prétexte déborder au-delà de `$9FFF`**.
+- L'adresse `$A000` (`OVERLAY_RAM_ADDR`) marque le début de la zone d'écrasement dynamique par les modules d'overlay cartouche (inventaire Bank 27, grottes Bank 28, items Bank 29, debug Bank 30). Tout octet résident placé au-delà de `$A000` sera irrémédiablement écrasé par du code machine lors de l'activation d'un overlay.
+- Toujours maintenir l'assertion ACME `!if * > OVERLAY_RAM_ADDR { !error ... }` dans `src/main.asm`.
+- La banque cartouche 31 (`CART_BANK_AUDIO`) est allouée au stockage et au streaming de pistes audio volumineuses (ex: thème étendu du Donjon 9 `MUSIC_DUNGEON_FINAL`). Tout streaming audio vers `bgm_track_buffer` doit s'exécuter via `cart_stream_copy_from` avec découpage par page et masquage d'interruption découplé (`CLI`).
+
+
+

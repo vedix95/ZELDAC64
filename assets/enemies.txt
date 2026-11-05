@@ -750,43 +750,43 @@ gggggggg
 # 12. ROPE (Serpent rapide à charge frontale)
 # ---------------------------------------------------------------------------
 [rope_0]
-...gg...
-...gg...
-...gg...
-..gggg..
-..gggg..
-..gggg..
-..gggg..
-..gggg..
-...gg...
-..g..g..
-..gggg..
-g.gggg.g
-.gsggsg.
-.gsggsg.
-.gsggsg.
+........
+........
+........
+.gggg...
+gssssg..
+gsbbsg..
+gssssggg
+.ggggggg
+..gggggg
+...ggggg
+....gggg
+.....ggg
+......bb
+........
+........
 ........
 
 
 
 
 [rope_1]
-.......g
-g......g
-gg.....g
-ggg...gg
-ggg...gg
-ggg...gg
-gbg...gg
-ggg...gg
-ggg....g
-ggg...g.
-ggb...gg
-ggb.g.gg
-ggb..gsg
-gb...gsg
-bb...gsg
-b.......
+........
+........
+........
+.gggg...
+gssssg..
+gsbbsg..
+gssssg..
+.ggggggg
+..gggggg
+.ggggggg
+gggg....
+ggg.....
+bb......
+........
+........
+........
 
 
 
@@ -839,44 +839,116 @@ ggg..ggg
 # ---------------------------------------------------------------------------
 # 14. GORIYA (Démon chien lanceur de boomerang rouge & bleu)
 # ---------------------------------------------------------------------------
-[goriya_0]
+[goriya_down_0]
+..gggg..
+.gssssg.
+gssssssg
+gsbbsbbg
+gssssssg
+.gssssg.
+.gggggg.
+.ggggggb
+bggggggb
+.bbbbbb.
+..gggg..
+.gg..gg.
+.gg..gg.
+.bb..bb.
+.bb.....
 ........
+
+[goriya_down_1]
+..gggg..
+.gssssg.
+gssssssg
+gsbbsbbg
+gssssssg
+.gssssg.
 .gggggg.
-.gggggg.
-.gggggg.
-gggggggg
-sggggggs
-gggssggg
-ssggggss
-gggggggg
-sgsggsgs
-gggggggg
-sssggsss
-gggggggg
-gsgssgsg
-.gsggsg.
-..gbbg..
-
-
-
-
-[goriya_1]
-gg......
-gg..ggg.
-gb..ggg.
-gbb.ggb.
-ggg.ggbb
-g.s.gggg
-gbbbgg.s
-ggg.gg..
-gg..gggg
-gb..ggg.
-ss...gb.
-gg...gs.
-ss..ggbb
-gg..ggss
-sg..ggb.
+bgggggg.
+bggggggb
+.bbbbbb.
+..gggg..
+.gg..gg.
+.gg..gg.
+.bb..bb.
+.....bb.
 ........
+
+[goriya_up_0]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+gggggggg
+.gggggg.
+.gggggg.
+bgggggg.
+bggggggb
+.bbbbbb.
+..gggg..
+.gg..gg.
+.gg..gg.
+.bb..bb.
+.bb.....
+........
+
+[goriya_up_1]
+..gggg..
+.gggggg.
+gggggggg
+gggggggg
+gggggggg
+.gggggg.
+.gggggg.
+.ggggggb
+bggggggb
+.bbbbbb.
+..gggg..
+.gg..gg.
+.gg..gg.
+.bb..bb.
+.....bb.
+........
+
+[goriya_left_0]
+....gg..
+...ggs..
+.gssssg.
+gsssbsg.
+ggggssg.
+..bgggg.
+bbggggg.
+.bggggg.
+bbggggg.
+..bgggg.
+..gggg..
+..gg.gg.
+..gg.gg.
+..bb.bb.
+.bb...b.
+........
+
+[goriya_left_1]
+....gg..
+...ggs..
+.gssssg.
+gsssbsg.
+ggggssg.
+..bgggg.
+bbggggg.
+.bggggg.
+bbggggg.
+..bgggg.
+..gggg..
+..gg.gg.
+..gg.gg.
+..bb.bb.
+..b...bb
+........
+
+[goriya_right_0] mirror goriya_left_0
+[goriya_right_1] mirror goriya_left_1
 
 
 
@@ -885,43 +957,43 @@ sg..ggb.
 # 15. DARKNUT (Chevalier en armure à bouclier frontal invincible)
 # ---------------------------------------------------------------------------
 [darknut_0]
-..sbbs..
-..sggs..
-..sggs..
-..gbbg..
-..gggg..
-..gggg..
-gggbbggg
-gggggggg
-gbggggbg
-gggbbggg
-gggggggg
-gggbbggg
-gggggggg
-bbbggbbb
 ..bbbb..
-..bbbb..
+.bggggb.
+.bssssb.
+.bsbbsb.
+.bssssb.
+.bbbbbb.
+bssssssb
+bssssssb
+bssssssb
+.bbbbbb.
+.bggggb.
+.bggggb.
+.bggggb.
+.bb..bb.
+.bb..bb.
+........
 
 
 
 
 [darknut_1]
-bs....sb
-gs....sg
-gs....sg
-bg....gb
-gg....gg
-gg....gg
-bss..ssb
-ggs..sgg
-ggg..ggg
-ggbbbbgg
-bssbbssb
-gss..ssg
-gss..ssg
-gss..ssg
-bss..ssb
-..s..s..
+..bbbb..
+.bggggb.
+.bssssb.
+.bsbbsb.
+.bssssb.
+.bbbbbb.
+bssssssb
+bssssssb
+bssssssb
+.bbbbbb.
+.bggggb.
+..bggb..
+.bggggb.
+.bb..bb.
+..b..b..
+........
 
 
 
@@ -975,43 +1047,43 @@ gsgbbgsg
 # 17. WALLMASTER (Main spectrale des murs)
 # ---------------------------------------------------------------------------
 [wallmaster_0]
-g......g
-gg....gg
-gg.bb.gg
-sggbbggs
-bbgssgbb
-bbgssgbb
-ggg..ggg
-ggg..ggg
-bgg..ggb
-bbg..gbb
-bgg..ggb
-ggg..ggg
-ggg..ggg
-ggg..ggg
-gggggggg
-gggggggg
+..b..b..
+.bb..bb.
+.bb..bb.
+.bb..bb.
+.bbbbbb.
+.bggggb.
+bggggggb
+bggggggb
+bggggggb
+.bggggb.
+.bggggb.
+..bbbb..
+...bb...
+........
+........
+........
 
 
 
 
 [wallmaster_1]
 ........
-g......g
-gg....gg
-gg.bb.gg
-sggbbggs
-bbgssgbb
-bbgssgbb
-ggg..ggg
-ggg..ggg
-bgg..ggb
-bbg..gbb
-bgg..ggb
-ggg..ggg
-ggg..ggg
-ggg..ggg
-gggggggg
+..bbbb..
+.bbbbbb.
+.bggggb.
+bggggggb
+bggggggb
+bggggggb
+.bggggb.
+.bggggb.
+..bbbb..
+...bb...
+........
+........
+........
+........
+........
 
 
 
@@ -1269,43 +1341,43 @@ s......s
 # 24. LANMOLA (Mille-pattes géant segmenté)
 # ---------------------------------------------------------------------------
 [lanmola_head]
-...gg...
-...gg...
-...gg...
-..gggg..
-..gggg..
-..gggg..
-..gggg..
-..gggg..
-...gg...
-..g..g..
-..gggg..
-g.gggg.g
-.gsggsg.
-.gsggsg.
-.gsggsg.
+..bbbb..
+.bggggb.
+bggssggb
+bgsbbsgb
+bgsbbsgb
+bggssggb
+.bggggb.
+..bbbb..
+.b....b.
+b......b
+........
+........
+........
+........
+........
 ........
 
 
 
 
 [lanmola_body]
+..bbbb..
+.bggggb.
+bggggggb
+bggssggb
+bggssggb
+bggggggb
+.bggggb.
+..bbbb..
 ........
-g......g
-gg....gg
-ggg..ggg
-ggg..ggg
-ggg..ggg
-gbg..gbg
-ggg..ggg
-ggg..ggg
-ggg..ggg
-ggb..bgg
-ggb..bgg
-ggb..bgg
-gb....bg
-bb....bb
-b......b
+........
+........
+........
+........
+........
+........
+........
 
 
 
@@ -1368,54 +1440,44 @@ b.bgs..gggg.
 # ---------------------------------------------------------------------------
 # 26. DODONGO (Dinosaure blindé mangeur de bombes)
 # ---------------------------------------------------------------------------
-[dodongo_0] pad 0 0
-............
-............
-.....ggg....
-....gggb.s..
-..ggggggss..
-..gggggggs..
-.ggggggggg..
-.ggggggggb..
-ggggggggg...
-ggggggbggg..
-gbggb.......
-.......g....
-.....ggg....
-...ggggb.s..
-..gggggg.s..
-..gggggggs..
-.ggggggggg..
-.ggggggggb..
-ggggggggb...
-ggbggssggg..
-....bbb.....
+[dodongo_0]
+..gggg..
+.gggggg.
+.gssssg.
+.gsbbsg.
+.gssssg.
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+.bbbbbb.
+.gg..gg.
+.gg..gg.
+.gg..gg.
+.bb..bb.
+.bb..bb.
+........
 
 
 
 
-[dodongo_1] pad 0 0
-............
-............
-....ggg.....
-..s.bggg....
-..ssgggggg..
-..sggggggg..
-..ggggggggg.
-..bgggggggg.
-...ggggggggg
-..gggbgggggg
-.......bggbg
-....g.......
-....ggg.....
-..s.bgggg...
-..s.gggggg..
-..sggggggg..
-..ggggggggg.
-..bgggggggg.
-...bgggggggg
-..gggssggbgg
-.....bbb....
+[dodongo_1]
+..gggg..
+.gggggg.
+.gssssg.
+.gsbbsg.
+.gssssg.
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+.bbbbbb.
+..gggg..
+..gggg..
+.gg..gg.
+.bb..bb.
+..b..b..
+........
 
 
 
@@ -1424,20 +1486,20 @@ ggbggssggg..
 # 27. MANHANDLA (Plante carnivore géante à 4 mâchoires)
 # ---------------------------------------------------------------------------
 [manhandla_core]
-ggg..ggg
-ggsggsgg
-ggsggsgg
-ggsggsgg
-ggsggsgg
-gssggssg
-gssggssg
-gsggggsg
-gggggggg
-gssssssg
-gbbbbbbg
-gggggggg
-gggggggg
-gsggggsg
+..bbbb..
+.bggggb.
+bggggggb
+bggssggb
+bggssggb
+bggggggb
+.bggggb.
+..bbbb..
+........
+........
+........
+........
+........
+........
 ........
 ........
 
@@ -1445,22 +1507,22 @@ gsggggsg
 
 
 [manhandla_jaw]
-g......g
-bg....gb
-bg....gb
-sg....gs
-sg....gs
-gg....gg
-gg....gg
-gg.bb.gg
-gg.bb.gg
-g.bbbb.g
-bbbbbbbb
-bbb..bbb
-bbb..bbb
-bb....bb
-bbg..gbb
-bgg..ggb
+.g....g.
+.gg..gg.
+gssssssg
+gssbbssg
+gssbbssg
+gssssssg
+.gggggg.
+..bbbb..
+........
+........
+........
+........
+........
+........
+........
+........
 
 
 
@@ -1628,53 +1690,53 @@ gggggggg
 # 32. GANON (Seigneur Démon Cochon - Boss Final)
 # ---------------------------------------------------------------------------
 [ganon_0] pad 0 0
-g....gggg...
-g....gggg...
-ggss.gggggss
-gggg.ggggggg
-ggsb.gggggsb
-sgsg.gggsgsg
-gsgg.ggggsgg
-gggb.ggggggb
-gggb.ggggggb
-gggggggggggg
-gggggg.ggggg
-ssgg.ggsssgg
-gsss...sgsss
-gsbb...sgsbb
-gsbb...sgsbb
-gsgb..gggsgb
-gggg..gggggg
-gggg.ggggggg
-gggg.sgggggg
-ggggsbssgggg
-ggggssssgggg
+.bb......bb.
+.bgb....bgb.
+bbggbbbbggbb
+bggggggggggb
+bgsbbsgssbgb
+bgsbbsgssbgb
+bggggssssggb
+bgggsssssggb
+bbggggggggbb
+.bggggggggb.
+bssssssssssb
+bssssssssssb
+bggggggggggb
+bggggggggggb
+bbbbbbbbbbbb
+.bssssssssb.
+.bggggggggb.
+.bggggggggb.
+.bbbb..bbbb.
+..bb....bb..
+............
 
 
 
 
 [ganon_1] pad 0 0
-sggg.gggsggg
-ssgg.gggssgg
-sssb.gggsssb
-sgbs.gggsgbs
-ggbb.gggggbb
-gggb.ggggggb
-gggg.ggggggg
-gggg.ggggggg
-ggsg.gggggsg
-g.ssggggg.ss
-s..sgg.gs..s
-ssgg.ggsssgg
-gsss...sgsss
-gsbb...sgsbb
-gsbb...sgsbb
-gsgb..gggsgb
-gggg..gggggg
-gggg.ggggggg
-gggg.sgggggg
-ggggsbssgggg
-ggggssssgggg
+.bb......bb.
+.bgb....bgb.
+bbggbbbbggbb
+bggggggggggb
+bgsbbsgssbgb
+bgsbbsgssbgb
+bggggssssggb
+bgggsssssggb
+bbggggggggbb
+.bggggggggb.
+bssssssssssb
+bssssssssssb
+bggggggggggb
+bggggggggggb
+bbbbbbbbbbbb
+.bssssssssb.
+.bggggggggb.
+.bggggggggb.
+..bbbbbbbb..
+...bb..bb...
+............
 
 
 
@@ -1707,13 +1769,27 @@ gggggg
 
 
 [proj_boom_en] pad 0 0
-....bb....
-...bbbb...
-..bb..bb..
-.bb....bb.
-..bb..bb..
-...bbbb...
-....bb....
+............
+............
+...bbbb.....
+..bssssb....
+.bssssb.....
+.bssssb.....
+..bssssbb...
+...bsssssb..
+....bbbbbb..
+............
+............
+............
+............
+............
+............
+............
+............
+............
+............
+............
+............
 
 
 

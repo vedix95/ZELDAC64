@@ -921,8 +921,7 @@ debug_do_warp_dungeon:
         sta player_walk_anim
         sta player_walk_tick
 
-        lda #MUSIC_DUNGEON
-        jsr music_play
+        jsr sound_play_dungeon_music
         jsr load_room
         jsr hud_init
         jsr enemies_room_init
@@ -965,7 +964,11 @@ debug_do_warp_overworld:
         sta player_walk_anim
         sta player_walk_tick
 
-        lda #MUSIC_OVERWORLD
+        lda current_dungeon_level
+        cmp #9
+        bne +
+        jsr sound_restore_standard_bgm
++       lda #MUSIC_OVERWORLD
         jsr music_play
         jsr load_room
         jsr hud_init

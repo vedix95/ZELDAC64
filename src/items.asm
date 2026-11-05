@@ -907,6 +907,32 @@ items_draw:
         jmp .enable_spr2
 +
 .no_drop_to_draw:
+        ; Vérifie si l'échelle autonome est déployée sur l'eau
+        lda ladder_tile_idx
+        cmp #$ff
+        beq .no_ladder_to_draw
+
+        ; Affiche le sprite de l'échelle sur Sprite 2 (indépendant des ponts)
+        lda ladder_spr_x
+        sta VIC_SPRITE_X2
+        lda ladder_spr_y
+        sta VIC_SPRITE_Y2
+
+        ; MSB horizontal (bit 2)
+        lda VIC_SPRITE_MSB
+        and #%11111011
+        ldx ladder_spr_x+1
+        beq +
+        ora #%00000100
++       sta VIC_SPRITE_MSB
+
+        lda #< (sprite_link_item_stepladder / 64)
+        sta SPRITE_PTR2
+        lda #COL_BROWN
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.no_ladder_to_draw:
         ; Aucun objet : désactive Sprite 2
         lda VIC_SPRITE_EN
         and #%11111011                  ; désactive Sprite 2 seul (préserve Link, épée, ennemis)

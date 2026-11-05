@@ -1,3 +1,5 @@
+!zone enemies
+
 ; ---------------------------------------------------------------------------
 ; enemies.asm : Système complet d'ennemis Zelda (Octorok et Moblin)
 ;
@@ -80,6 +82,9 @@ en_proj_type:           !byte 0         ; TYPE_OCTO (rocher) ou TYPE_MOBLIN (lan
 en_proj_x:              !word 0
 en_proj_y:              !byte 0
 en_proj_dir:            !byte 0
+en_proj_timer:          !byte 0
+en_proj_returning:      !byte 0
+en_proj_owner:          !byte 0
 
 ; Variables temporaires locales
 en_idx:                 !byte 0
@@ -213,14 +218,14 @@ stalfos_ptrs:
         !byte SPR_DUNG_STALFOS_0, SPR_DUNG_STALFOS_1
 
 goriya_ptrs:
-        !byte SPR_DUNG_GORIYA_0, SPR_DUNG_GORIYA_0
-        !byte SPR_DUNG_GORIYA_0, SPR_DUNG_GORIYA_0
-        !byte SPR_DUNG_GORIYA_1, SPR_DUNG_GORIYA_1
-        !byte SPR_DUNG_GORIYA_1, SPR_DUNG_GORIYA_1
+        !byte SPR_DUNG_GORIYA_DOWN_0, SPR_DUNG_GORIYA_DOWN_1
+        !byte SPR_DUNG_GORIYA_UP_0, SPR_DUNG_GORIYA_UP_1
+        !byte SPR_DUNG_GORIYA_LEFT_0, SPR_DUNG_GORIYA_LEFT_1
+        !byte SPR_DUNG_GORIYA_RIGHT_0, SPR_DUNG_GORIYA_RIGHT_1
 
 darknut_ptrs:
-        !byte SPR_DUNG_DARKNUT_1, SPR_DUNG_DARKNUT_1
-        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_0
+        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
+        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
         !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
         !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
 
@@ -1583,6 +1588,9 @@ armos_reveal_secret:
         cpy #TYPE_OCTO_RED
         beq .roam_half_speed
         cpy #TYPE_MOBLIN_RED
+        beq .roam_half_speed
+        cpy #TYPE_GORIYA_RED
+        beq .roam_half_speed
         bne .roam_full_speed
 .roam_half_speed:
         lda en_global_frame
@@ -1605,7 +1613,7 @@ armos_reveal_secret:
 
         ; 5. Décompte de la marche dans cette direction
         dec en_timer,x
-        bne .roam_anim
+        bne .roam_chk_goriya
 
         ; Fin du cycle de marche droite : chance de tirer un projectile !
         lda en_proj_active
@@ -1635,6 +1643,15 @@ armos_reveal_secret:
         ; Obstacle rencontré : ne pénètre pas le mur !
         ; Choisit une direction libre différente de l'obstacle
         jsr pick_unblocked_dir
+
+.roam_chk_goriya:
+        ldy en_type,x
+        lda en_proj_type_tbl,y
+        cmp #PROJ_BOOMERANG
+        bne .roam_anim
+        lda en_proj_active
+        bne .roam_anim
+        jsr goriya_check_align_and_shoot
 
 .roam_anim:
 .roam_anim_only:
@@ -1729,12 +1746,22 @@ commit_step:
 ; Sortie : Carry = 0 si OK, Carry = 1 si hors limites
 ; ---------------------------------------------------------------------------
 check_bounds_only:
+        lda current_world_type
+        beq .cbo_ow
+        lda en_cand_y
+        cmp #88
+        bcc .cbo_bad
+        cmp #208
+        bcs .cbo_bad
+        jmp .cbo_chk_x
+.cbo_ow:
         lda en_cand_y
         cmp #PLAYER_Y_MIN
         bcc .cbo_bad
         cmp #PLAYER_Y_MAX
         bcs .cbo_bad
 
+.cbo_chk_x:
         lda en_cand_x+1
         beq .cbo_x_lo
         cmp #1
@@ -1974,6 +2001,97 @@ ai_calc_dir_to_player:
         rts
 
 ; ---------------------------------------------------------------------------
+; goriya_check_align_and_shoot : tire si Link traverse le couloir de Goriya
+; ---------------------------------------------------------------------------
+goriya_check_align_and_shoot:
+        lda en_global_frame
+        and #7
+        beq +
+        rts
++
+
+        ; Distance Y (axe 8 bits)
+        ldx en_idx
+        lda en_y,x
+        sec
+        sbc player_y
+        bpl +
+        eor #$ff
+        clc
+        adc #1
++       cmp #10                         ; dans le même couloir horizontal (±10 px) ?
+        bcs .gcas_chk_vert
+
+        ; Même ligne horizontale : regarde et tire vers la gauche ou vers la droite !
+        ldx en_idx
+        txa
+        asl
+        tay
+        lda en_x+1,y
+        cmp player_x+1
+        bcc .shoot_right
+        bne .shoot_left
+        lda en_x,y
+        cmp player_x
+        bcc .shoot_right
+.shoot_left:
+        lda #DIR_LEFT
+        sta en_dir,x
+        jmp .do_gcas_shoot
+.shoot_right:
+        lda #DIR_RIGHT
+        sta en_dir,x
+        jmp .do_gcas_shoot
+
+.gcas_chk_vert:
+        ; Distance X (axe 16 bits)
+        ldx en_idx
+        txa
+        asl
+        tay
+        sec
+        lda en_x,y
+        sbc player_x
+        sta ZP_TMP
+        lda en_x+1,y
+        sbc player_x+1
+        beq .gcas_x_pos
+        cmp #$ff
+        beq .gcas_x_neg
+        rts                             ; trop loin en X
+.gcas_x_pos:
+        lda ZP_TMP
+        cmp #10
+        bcs .gcas_end
+        jmp .gcas_in_vert_col
+.gcas_x_neg:
+        lda ZP_TMP
+        cmp #$f6
+        bcc .gcas_end
+
+.gcas_in_vert_col:
+        ; Même colonne verticale : regarde et tire vers le haut ou vers le bas !
+        ldx en_idx
+        lda en_y,x
+        cmp player_y
+        bcc .shoot_down
+.shoot_up:
+        lda #DIR_UP
+        sta en_dir,x
+        jmp .do_gcas_shoot
+.shoot_down:
+        lda #DIR_DOWN
+        sta en_dir,x
+
+.do_gcas_shoot:
+        jsr enemy_shoot
+        ldx en_idx
+        lda #20
+        sta en_timer,x
+.gcas_end:
+        rts
+
+; ---------------------------------------------------------------------------
 ; enemy_shoot : fait tirer l'ennemi courant (index dans en_idx)
 ; ---------------------------------------------------------------------------
 enemy_shoot:
@@ -1986,6 +2104,12 @@ enemy_shoot:
         sta en_proj_active
         lda en_dir,x
         sta en_proj_dir
+
+        stx en_proj_owner
+        lda #0
+        sta en_proj_returning
+        lda #28
+        sta en_proj_timer
 
         lda en_idx
         asl
@@ -2015,7 +2139,12 @@ update_enemy_projectile:
         lda en_proj_active
         bne +
         rts
-+
++       lda en_proj_type
+        cmp #PROJ_BOOMERANG
+        bne .update_standard_proj
+        jmp update_goriya_boomerang
+
+.update_standard_proj:
         lda en_proj_dir
         cmp #DIR_UP
         beq .pj_up
@@ -2109,6 +2238,206 @@ update_enemy_projectile:
         sta en_proj_active
         rts
 
+update_goriya_boomerang:
+        lda en_proj_returning
+        beq +
+        jmp .gb_return
++
+
+        ; --- PHASE 0 : VOL ALLER ---
+        lda en_proj_dir
+        cmp #DIR_UP
+        beq .gb_fwd_up
+        cmp #DIR_DOWN
+        beq .gb_fwd_dn
+        cmp #DIR_LEFT
+        beq .gb_fwd_lf
+
+        ; Droite (+2 px)
+        clc
+        lda en_proj_x
+        adc #2
+        sta en_proj_x
+        lda en_proj_x+1
+        adc #0
+        sta en_proj_x+1
+        jmp .gb_fwd_chk
+
+.gb_fwd_lf:
+        sec
+        lda en_proj_x
+        sbc #2
+        sta en_proj_x
+        lda en_proj_x+1
+        sbc #0
+        sta en_proj_x+1
+        jmp .gb_fwd_chk
+
+.gb_fwd_up:
+        sec
+        lda en_proj_y
+        sbc #2
+        sta en_proj_y
+        jmp .gb_fwd_chk
+
+.gb_fwd_dn:
+        clc
+        lda en_proj_y
+        adc #2
+        sta en_proj_y
+
+.gb_fwd_chk:
+        ; Décompte de la portée aller (28 pas ~ 56 px)
+        dec en_proj_timer
+        beq .gb_turnaround
+
+        ; Teste si hors écran
+        lda en_proj_x+1
+        beq +
+        lda en_proj_x
+        cmp #<PLAYER_X_MAX
+        bcs .gb_turnaround
+        jmp ++
++       lda en_proj_x
+        cmp #PLAYER_X_MIN
+        bcc .gb_turnaround
+++      lda en_proj_y
+        cmp #PLAYER_Y_MIN
+        bcc .gb_turnaround
+        cmp #PLAYER_Y_MAX
+        bcs .gb_turnaround
+
+        ; Mur solide ?
+        lda en_proj_x
+        clc
+        adc #4
+        sta col_x
+        lda en_proj_x+1
+        adc #0
+        sta col_x+1
+        lda en_proj_y
+        clc
+        adc #4
+        sta col_y
+        jsr check_point_solid
+        bcs .gb_turnaround
+
+        ; Teste collision avec Link
+        jsr check_projectile_hit_link
+        rts
+
+.gb_turnaround:
+        lda #1
+        sta en_proj_returning
+        rts
+
+.gb_return:
+        ; --- PHASE 1 : RETOUR VERS GORIYA (en_proj_owner) ---
+        ldx en_proj_owner
+        lda en_state,x
+        beq .kill_boom                  ; Goriya vaincu -> disparition
+        cmp #EN_STATE_DYING
+        beq .kill_boom
+        cmp #EN_STATE_DEAD
+        bne +
+.kill_boom:
+        lda #0
+        sta en_proj_active
+        rts
++
+
+        ; Rapprochement sur X vers lanceur (2 px / frame)
+        txa
+        asl
+        tay
+        lda en_proj_x+1
+        cmp en_x+1,y
+        bcc .gb_ret_r
+        bne .gb_ret_l
+        lda en_proj_x
+        cmp en_x,y
+        bcc .gb_ret_r
+        beq .gb_ret_y                   ; X aligné
+.gb_ret_l:
+        sec
+        lda en_proj_x
+        sbc #2
+        sta en_proj_x
+        lda en_proj_x+1
+        sbc #0
+        sta en_proj_x+1
+        jmp .gb_ret_y
+.gb_ret_r:
+        clc
+        lda en_proj_x
+        adc #2
+        sta en_proj_x
+        lda en_proj_x+1
+        adc #0
+        sta en_proj_x+1
+
+.gb_ret_y:
+        ; Rapprochement sur Y vers lanceur (2 px / frame)
+        ldx en_proj_owner
+        lda en_proj_y
+        cmp en_y,x
+        bcc .gb_ret_dn
+        beq .gb_chk_catch
+        sec
+        lda en_proj_y
+        sbc #2
+        sta en_proj_y
+        jmp .gb_chk_catch
+.gb_ret_dn:
+        clc
+        lda en_proj_y
+        adc #2
+        sta en_proj_y
+
+.gb_chk_catch:
+        ; Teste si Goriya attrape son boomerang (distance < 10 px)
+        ldx en_proj_owner
+        txa
+        asl
+        tay
+        sec
+        lda en_proj_x
+        sbc en_x,y
+        sta ZP_TMP
+        lda en_proj_x+1
+        sbc en_x+1,y
+        bne +
+        lda ZP_TMP
+        cmp #10
+        bcs .gb_ret_hit_link
+        jmp .chk_catch_y
++       cmp #$ff
+        bne .gb_ret_hit_link
+        lda ZP_TMP
+        cmp #$f6
+        bcc .gb_ret_hit_link
+
+.chk_catch_y:
+        ldx en_proj_owner
+        sec
+        lda en_proj_y
+        sbc en_y,x
+        bpl +
+        eor #$ff
+        clc
+        adc #1
++       cmp #10
+        bcs .gb_ret_hit_link
+
+        ; Attrapé par Goriya !
+        lda #0
+        sta en_proj_active
+        rts
+
+.gb_ret_hit_link:
+        jsr check_projectile_hit_link
+        rts
+
 
 ; ---------------------------------------------------------------------------
 ; check_projectile_hit_link : parade au bouclier ou blessure de Link
@@ -2172,13 +2501,27 @@ check_projectile_hit_link:
 
 .do_shield_block:
         ; PARÉ AU BOUCLIER !
-        lda #0
+        lda en_proj_type
+        cmp #PROJ_BOOMERANG
+        bne +
+        lda #1
+        sta en_proj_returning
+        jsr sound_shield_block
+        rts
++       lda #0
         sta en_proj_active
         jsr sound_shield_block
         rts
 
 .link_takes_proj_hit:
-        lda #0
+        lda en_proj_type
+        cmp #PROJ_BOOMERANG
+        bne +
+        lda #1
+        sta en_proj_returning
+        jsr hurt_link
+        rts
++       lda #0
         sta en_proj_active
         jsr hurt_link
 .pj_no_hit:

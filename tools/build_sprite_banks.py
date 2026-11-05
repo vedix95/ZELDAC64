@@ -62,7 +62,11 @@ OW_NAMES = [
 DUNG_NAMES = [
     'keese_0', 'keese_1', 'zol_0', 'zol_1', 'gel',
     'rope_0', 'rope_1', 'stalfos_0', 'stalfos_1',
-    'goriya_0', 'goriya_1', 'darknut_0', 'darknut_1',
+    'goriya_down_0', 'goriya_down_1',
+    'goriya_up_0', 'goriya_up_1',
+    'goriya_left_0', 'goriya_left_1',
+    'goriya_right_0', 'goriya_right_1',
+    'darknut_0', 'darknut_1',
     'wizzrobe_0', 'wizzrobe_1', 'wallmaster_0', 'wallmaster_1',
     'likelike_0', 'likelike_1', 'polsvoice_0', 'polsvoice_1',
     'gibdo_0', 'gibdo_1', 'vire_0', 'vire_1', 'bubble_0', 'bubble_1', 'trap',

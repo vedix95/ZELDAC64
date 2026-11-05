@@ -47,12 +47,17 @@ def read_audio_state(bin_path):
 
 def run_test():
     vs_path = os.path.join(BASE_DIR, "build", "zelda.vs")
+    intro_vs = os.path.join(BASE_DIR, "build", "intro.vs")
     labels = load_labels(vs_path)
+    i_labels = load_labels(intro_vs)
 
     cmd_addr = labels['debug_hook_cmd']
     arg_addr = labels['debug_hook_arg']
     main_addr = labels['main_loop']
     audio_base = labels['dual_sid_enabled']
+
+    sid_menu_addr = i_labels.get('sid_setup_menu_loop', 0x573a)
+    intro_update_addr = i_labels.get('intro_update', 0x299b)
 
     print("=================================================================")
     print("   TEST AUTOMATISÉ : SÉRIALISATION AUDIO & FILE D'ATTENTE SID   ")
@@ -70,11 +75,11 @@ def run_test():
     mon_file = "/tmp/test_audio_queue.mon"
     with open(mon_file, "w") as f:
         # Passer le menu audio (Mono par défaut) et l'intro
-        f.write("bk 5628\n")
+        f.write(f"bk {sid_menu_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
         f.write("> 0816 01\n")
-        f.write("bk 299b\n")
+        f.write(f"bk {intro_update_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
         f.write("> 0816 01\n")

@@ -10,6 +10,7 @@ MUSIC_OVERWORLD         = 1
 MUSIC_DUNGEON           = 2
 MUSIC_ITEM_FANFARE      = 3
 MUSIC_TRIFORCE          = 4
+MUSIC_DUNGEON_FINAL     = 5
 
 SID1_BASE               = $d400
 SID2_BASE               = $d420                 ; Adresse standard Stereo SID
@@ -239,6 +240,49 @@ sound_detect_dual_sid:
         rts
 
 ; ---------------------------------------------------------------------------
+; sound_play_dungeon_music : Lance la musique appropriée selon le niveau de Donjon (1..9)
+; ---------------------------------------------------------------------------
+sound_play_dungeon_music:
+        lda current_dungeon_level
+        cmp #9
+        bne .play_std_dungeon
+
+        ; Niveau 9 (Montagne de la Mort) : Streame la partition Donjon 9 depuis Banque 31 ($8800)
+        lda #<bgm_track_buffer
+        sta ZP_DST
+        lda #>bgm_track_buffer
+        sta ZP_DST+1
+        lda #<$8800
+        sta ZP_SRC
+        lda #>$8800
+        sta ZP_SRC+1
+        lda #CART_BANK_AUDIO
+        ldx #2                  ; 2 pages (512 octets, partition 496 octets)
+        jsr cart_stream_copy_from
+        lda #MUSIC_DUNGEON_FINAL
+        jmp music_play
+
+.play_std_dungeon:
+        lda #MUSIC_DUNGEON
+        jmp music_play
+
+; ---------------------------------------------------------------------------
+; sound_restore_standard_bgm : Restaure la partition Standard BGM depuis Banque 31 ($8000)
+; ---------------------------------------------------------------------------
+sound_restore_standard_bgm:
+        lda #<bgm_track_buffer
+        sta ZP_DST
+        lda #>bgm_track_buffer
+        sta ZP_DST+1
+        lda #<$8000
+        sta ZP_SRC
+        lda #>$8000
+        sta ZP_SRC+1
+        lda #CART_BANK_AUDIO
+        ldx #6                  ; 6 pages (1364 octets)
+        jmp cart_stream_copy_from
+
+; ---------------------------------------------------------------------------
 ; music_play : Lance la lecture d'un morceau (A = MUSIC_OVERWORLD / MUSIC_DUNGEON)
 ; ---------------------------------------------------------------------------
 music_play:
@@ -272,9 +316,7 @@ music_play:
         cmp #MUSIC_OVERWORLD
         beq .init_overworld_inst
         cmp #MUSIC_DUNGEON
-        bcc .already_playing
-        jmp .init_dungeon_inst
-
+        bcs .init_dungeon_inst
 .already_playing:
         rts
 
@@ -462,18 +504,22 @@ restore_music_voice_2:
 
 +       lda current_music
         cmp #MUSIC_DUNGEON
-        bcc +
-        jmp .res_v2_uw
+        bcs .res_v2_uw
 
-+       ; Overworld : Sawtooth
+        ; Overworld : Sawtooth
         lda #$07
         sta SID1_V2_AD
         lda #$a2
         sta SID1_V2_SR
-        ldx cur_music_v2_note
-        bne +
-        jmp .mute_v2
-+       lda music_note_freq_lo,x
+        ldy dual_sid_enabled
+        beq +
+        lda #$07
+        sta SID2_V2_AD
+        lda #$a2
+        sta SID2_V2_SR
++       ldx cur_music_v2_note
+        beq .mute_v2_ow
+        lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
         sta SID1_V2_FREQ_HI
@@ -489,7 +535,7 @@ restore_music_voice_2:
         nop
         lda #%00100001                  ; Sawtooth Gate ON
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         lda music_note_freq_lo,x
         clc
@@ -512,6 +558,14 @@ restore_music_voice_2:
         sta SID2_V2_CTRL
 +       rts
 
+.mute_v2_ow:
+        lda #%00100000                  ; Sawtooth Gate OFF
+        sta SID1_V2_CTRL
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_V2_CTRL
++       rts
+
 .res_v2_uw:
         lda #$00
         sta SID1_V2_PW_LO
@@ -521,8 +575,19 @@ restore_music_voice_2:
         sta SID1_V2_AD
         lda #$c0
         sta SID1_V2_SR
-        ldx cur_music_v2_note
-        beq .mute_v2
+
+        ldy dual_sid_enabled
+        beq +
+        lda #$00
+        sta SID2_V2_PW_LO
+        lda #$08
+        sta SID2_V2_PW_HI
+        lda #$09
+        sta SID2_V2_AD
+        lda #$c0
+        sta SID2_V2_SR
++       ldx cur_music_v2_note
+        beq .mute_v2_uw
         lda music_note_freq_lo,x
         sta SID1_V2_FREQ_LO
         lda music_note_freq_hi,x
@@ -539,7 +604,7 @@ restore_music_voice_2:
         nop
         lda #%01000001                  ; Pulse Gate ON
         sta SID1_V2_CTRL
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
         lda #$00
         sta SID2_V2_PW_LO
@@ -570,8 +635,8 @@ restore_music_voice_2:
         sta SID2_V2_CTRL
 +       rts
 
-.mute_v2:
-        lda #%00000000
+.mute_v2_uw:
+        lda #%01000000                  ; Pulse Gate OFF
         sta SID1_V2_CTRL
         ldy dual_sid_enabled
         beq +
@@ -598,7 +663,13 @@ restore_music_voice_3:
         sta SID1_V3_AD
         lda #$e2
         sta SID1_V3_SR
-
+        ldy dual_sid_enabled
+        beq +
+        lda #$09
+        sta SID2_V3_AD
+        lda #$e2
+        sta SID2_V3_SR
++
         ; 2. Rétablir la note de basse si une note était active
         ldx cur_music_v3_note
         beq .mute_v3
@@ -622,12 +693,8 @@ restore_music_voice_3:
         lda #%00010001                  ; Triangle Gate ON
         sta SID1_V3_CTRL
 
-        lda dual_sid_enabled
+        ldy dual_sid_enabled
         beq +
-        lda #$09
-        sta SID2_V3_AD
-        lda #$e2
-        sta SID2_V3_SR
         lda music_note_freq_lo,x
         sta SID2_V3_FREQ_LO
         lda music_note_freq_hi,x
@@ -701,6 +768,9 @@ music_update:
 +       cmp #MUSIC_DUNGEON
         bne +
         jmp .step_dungeon
++       cmp #MUSIC_DUNGEON_FINAL
+        bne +
+        jmp .step_dungeon_final
 +       cmp #MUSIC_ITEM_FANFARE
         beq .step_item_fanfare
         cmp #MUSIC_TRIFORCE
@@ -816,7 +886,7 @@ music_update:
         jmp .apply_music_step
 
 ; ---------------------------------------------------------------------------
-; Déroulement Underworld / Dungeon
+; Déroulement Underworld / Dungeon (Niveaux 1 à 8)
 ; ---------------------------------------------------------------------------
 .step_dungeon:
         ldx music_step
@@ -826,7 +896,7 @@ music_update:
         ldx #0
         stx music_step
 .uw_read:
-        lda music_uw_dur,x
+        lda #8                          ; Durée constante Underworld D1..D8 (8 frames = 160ms)
         sta music_delay
         lda music_uw_v1,x
         sta temp_v1
@@ -835,6 +905,30 @@ music_update:
         lda music_uw_v3,x
         sta temp_v3
         inc music_step
+        jmp .apply_music_step
+
+; ---------------------------------------------------------------------------
+; Déroulement Donjon 9 (SongScriptLastLevel0 - Death Mountain, 124 Pas)
+; ---------------------------------------------------------------------------
+.step_dungeon_final:
+        ldx music_step
+        cpx #MUSIC_D9_LEN
+        bcc .d9_read
+        ; Boucle : retour au début
+        ldx #0
+        stx music_step
+
+.d9_read:
+        lda music_d9_dur,x
+        sta music_delay
+        lda music_d9_v1,x
+        sta temp_v1
+        lda music_d9_v2,x
+        sta temp_v2
+        lda music_d9_v3,x
+        sta temp_v3
+        inc music_step
+        jmp .apply_music_step
 
 ; ---------------------------------------------------------------------------
 ; Application des notes aux registres SID
@@ -948,8 +1042,13 @@ music_update:
 +
         ldx temp_v2
         bne .v2_play
-        lda #%00000000                  ; Gate OFF
-        sta SID1_V2_CTRL
+        lda current_music
+        cmp #MUSIC_DUNGEON
+        bcs +
+        lda #%00100000                  ; Sawtooth Gate OFF (Overworld)
+        jmp ++
++       lda #%01000000                  ; Pulse Gate OFF (Dungeons & Fanfares)
+++      sta SID1_V2_CTRL
         ldy dual_sid_enabled
         beq +
         sta SID2_V2_CTRL
@@ -1058,6 +1157,14 @@ music_update:
         sta SID2_V2_CTRL
         jmp .skip_v2
 .v2_dual_pulse:
+        lda #$00
+        sta SID2_V2_PW_LO
+        lda #$08
+        sta SID2_V2_PW_HI
+        lda #$09
+        sta SID2_V2_AD
+        lda #$c0
+        sta SID2_V2_SR
         lda #%01000000
         sta SID2_V2_CTRL
         nop

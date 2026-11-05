@@ -1595,8 +1595,32 @@ intro_copy_monster_sprite_frame:
         rts
 
 ; ===========================================================================
-; MOTEUR SONORE ET MUSIQUE AUTHENTIQUE DE ZELDA 1 (SID 3 VOIX)
+; MOTEUR SONORE ET MUSIQUE AUTHENTIQUE DE ZELDA 1 (SID 3 VOIX + DUAL SID)
 ; ===========================================================================
+INTRO_SID2_BASE         = $d420
+INTRO_SID2_V1_FREQ_LO   = INTRO_SID2_BASE + $00
+INTRO_SID2_V1_FREQ_HI   = INTRO_SID2_BASE + $01
+INTRO_SID2_V1_PW_LO     = INTRO_SID2_BASE + $02
+INTRO_SID2_V1_PW_HI     = INTRO_SID2_BASE + $03
+INTRO_SID2_V1_CTRL      = INTRO_SID2_BASE + $04
+INTRO_SID2_V1_AD        = INTRO_SID2_BASE + $05
+INTRO_SID2_V1_SR        = INTRO_SID2_BASE + $06
+INTRO_SID2_V2_FREQ_LO   = INTRO_SID2_BASE + $07
+INTRO_SID2_V2_FREQ_HI   = INTRO_SID2_BASE + $08
+INTRO_SID2_V2_PW_LO     = INTRO_SID2_BASE + $09
+INTRO_SID2_V2_PW_HI     = INTRO_SID2_BASE + $0a
+INTRO_SID2_V2_CTRL      = INTRO_SID2_BASE + $0b
+INTRO_SID2_V2_AD        = INTRO_SID2_BASE + $0c
+INTRO_SID2_V2_SR        = INTRO_SID2_BASE + $0d
+INTRO_SID2_V3_FREQ_LO   = INTRO_SID2_BASE + $0e
+INTRO_SID2_V3_FREQ_HI   = INTRO_SID2_BASE + $0f
+INTRO_SID2_V3_CTRL      = INTRO_SID2_BASE + $12
+INTRO_SID2_V3_AD        = INTRO_SID2_BASE + $13
+INTRO_SID2_V3_SR        = INTRO_SID2_BASE + $14
+INTRO_SID2_VOLUME       = INTRO_SID2_BASE + $18
+
+intro_music_code_start:
+
 intro_music_init:
         lda #15
         sta SID_VOLUME
@@ -1620,7 +1644,30 @@ intro_music_init:
         sta intro_music_part
         sta intro_music_step
         sta intro_music_delay
-        rts
+
+        ; Si Dual SID activé, initialise et relocalise SID 2
+        ldy selected_dual_sid
+        beq +
+        jsr intro_reloc_sid2
+        lda #15
+        sta INTRO_SID2_VOLUME
+        lda #$00
+        sta INTRO_SID2_V1_PW_LO
+        lda #$08
+        sta INTRO_SID2_V1_PW_HI
+        lda #$08
+        sta INTRO_SID2_V1_AD
+        lda #$c2
+        sta INTRO_SID2_V1_SR
+        lda #$07
+        sta INTRO_SID2_V2_AD
+        lda #$a2
+        sta INTRO_SID2_V2_SR
+        lda #$03
+        sta INTRO_SID2_V3_AD
+        lda #$00
+        sta INTRO_SID2_V3_SR
++       rts
 
 intro_music_stop:
         lda #%01000000
@@ -1629,7 +1676,15 @@ intro_music_stop:
         sta SID_V2_CTRL
         lda #%10000000
         sta SID_V3_CTRL
-        rts
+        ldy selected_dual_sid
+        beq +
+        lda #%01000000
+        sta INTRO_SID2_V1_CTRL
+        lda #%00100000
+        sta INTRO_SID2_V2_CTRL
+        lda #%10000000
+        sta INTRO_SID2_V3_CTRL
++       rts
 
 intro_music_update:
         lda intro_music_delay
@@ -1710,10 +1765,31 @@ intro_music_update:
         sta SID_V1_CTRL
 +       lda #%01000001
         sta SID_V1_CTRL
+
+        ; Dual SID : Voix 1 chorus (+2 detune)
+        ldy selected_dual_sid
+        beq ++
+        lda music_cur_v1_lo
+        clc
+        adc #2
+        sta INTRO_SID2_V1_FREQ_LO
+        lda music_cur_v1_hi
+        adc #0
+        sta INTRO_SID2_V1_FREQ_HI
+        lda music_cur_v1_trig
+        beq +
+        lda #%01000000
+        sta INTRO_SID2_V1_CTRL
++       lda #%01000001
+        sta INTRO_SID2_V1_CTRL
         jmp ++
+
 .v1_mute:
         lda #%01000000
         sta SID_V1_CTRL
+        ldy selected_dual_sid
+        beq ++
+        sta INTRO_SID2_V1_CTRL
 ++
 
         lda music_cur_v2_hi
@@ -1727,10 +1803,31 @@ intro_music_update:
         sta SID_V2_CTRL
 +       lda #%00100001
         sta SID_V2_CTRL
+
+        ; Dual SID : Voix 2 detune (+2)
+        ldy selected_dual_sid
+        beq ++
+        lda music_cur_v2_lo
+        clc
+        adc #2
+        sta INTRO_SID2_V2_FREQ_LO
+        lda music_cur_v2_hi
+        adc #0
+        sta INTRO_SID2_V2_FREQ_HI
+        lda music_cur_v2_trig
+        beq +
+        lda #%00100000
+        sta INTRO_SID2_V2_CTRL
++       lda #%00100001
+        sta INTRO_SID2_V2_CTRL
         jmp ++
+
 .v2_mute:
         lda #%00100000
         sta SID_V2_CTRL
+        ldy selected_dual_sid
+        beq ++
+        sta INTRO_SID2_V2_CTRL
 ++
 
         lda music_cur_v3_perc
@@ -1743,11 +1840,85 @@ intro_music_update:
         sta SID_V3_CTRL
         lda #%10000001
         sta SID_V3_CTRL
+
+        ldy selected_dual_sid
+        beq +++
+        lda #$80
+        sta INTRO_SID2_V3_FREQ_LO
+        lda #$28
+        sta INTRO_SID2_V3_FREQ_HI
+        lda #%10000000
+        sta INTRO_SID2_V3_CTRL
+        lda #%10000001
+        sta INTRO_SID2_V3_CTRL
         rts
+
 .v3_mute:
         lda #%10000000
         sta SID_V3_CTRL
+        ldy selected_dual_sid
+        beq +++
+        sta INTRO_SID2_V3_CTRL
++++     rts
+
+; ---------------------------------------------------------------------------
+; intro_reloc_sid2 : Relocalise dynamiquement INTRO_SID2 ($D420) vers $D500 ou $DF00
+; ---------------------------------------------------------------------------
+intro_reloc_sid2:
+        ldx selected_sid2_addr_idx
+        cpx #3
+        bcc +
+        ldx #0
++       lda .intro_sid2_lo_tbl,x
+        sta .i_reloc_lo
+        lda .intro_sid2_hi_tbl,x
+        sta .i_reloc_hi
+
+        lda #<intro_music_code_start
+        sta ZP_SRC
+        lda #>intro_music_code_start
+        sta ZP_SRC+1
+
+.i_reloc_loop:
+        ldy #2
+        lda (ZP_SRC),y
+        cmp #$d4
+        bne .i_reloc_next
+        dey
+        lda (ZP_SRC),y
+        cmp #$20
+        bcc .i_reloc_next
+        cmp #$39
+        bcs .i_reloc_next
+
+        sec
+        sbc #$20
+        clc
+.i_reloc_lo = * + 1
+        adc #$20
+        sta (ZP_SRC),y
+        iny
+.i_reloc_hi = * + 1
+        lda #$d4
+        sta (ZP_SRC),y
+
+.i_reloc_next:
+        inc ZP_SRC
+        bne +
+        inc ZP_SRC+1
++       lda ZP_SRC
+        cmp #<intro_music_code_end
+        lda ZP_SRC+1
+        sbc #>intro_music_code_end
+        bcc .i_reloc_loop
         rts
+
+.intro_sid2_lo_tbl:
+        !byte $20, $00, $00
+.intro_sid2_hi_tbl:
+        !byte $d4, $d5, $df
+
+intro_music_code_end:
 
 music_cur_v1_hi:     !byte 0
 music_cur_v1_lo:     !byte 0

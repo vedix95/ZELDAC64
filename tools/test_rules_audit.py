@@ -30,7 +30,17 @@ def load_labels(vs_path):
                 labels[name] = addr
     return labels
 
+def convert_pcx_if_needed(target_png):
+    pcx = target_png + ".pcx"
+    if os.path.exists(pcx):
+        subprocess.run(["magick", pcx, target_png], check=True)
+        os.remove(pcx)
+
 labels = load_labels(os.path.join(BASE_DIR, "build", "zelda.vs"))
+intro_labels = load_labels(os.path.join(BASE_DIR, "build", "intro.vs"))
+sid_menu_addr = intro_labels.get('sid_setup_menu_loop', 0x573a)
+intro_update_addr = intro_labels.get('intro_update', 0x299b)
+
 cmd_addr = labels['debug_hook_cmd']
 arg_addr = labels['debug_hook_arg']
 arg2_addr = labels['debug_hook_arg2']
@@ -59,8 +69,8 @@ else:
 # 1.2 Test dynamique sous VICE : Warp Donjon 4, salle $41
 mon_file_d4 = "/tmp/test_dungeon4_41.mon"
 with open(mon_file_d4, "w") as f:
-    f.write("bk 5628\ng\ndel 1\n> 0816 01\n") # Pass SID setup menu
-    f.write("bk 299b\ng\ndel 2\n> 0816 01\n") # Pass intro
+    f.write(f"bk {sid_menu_addr:04x}\ng\ndel 1\n> 0816 01\n") # Pass SID setup menu
+    f.write(f"bk {intro_update_addr:04x}\ng\ndel 2\n> 0816 01\n") # Pass intro
     f.write(f"bk {main_addr:04x}\ng\ndel 3\n") # Reach main_loop
     # Warp vers Donjon 4 (arg=4), Salle $41 (arg2=$41)
     f.write(f"> {arg_addr:04x} 04\n")
@@ -82,8 +92,10 @@ res = subprocess.run([
     "-cartcrt", os.path.join(BASE_DIR, "build", "zelda.crt")
 ], capture_output=True, text=True, timeout=25)
 
-if os.path.exists(os.path.join(OUT_DIR, "11_dungeon4_room41_zols.png")):
-    size = os.path.getsize(os.path.join(OUT_DIR, "11_dungeon4_room41_zols.png"))
+p11 = os.path.join(OUT_DIR, "11_dungeon4_room41_zols.png")
+convert_pcx_if_needed(p11)
+if os.path.exists(p11):
+    size = os.path.getsize(p11)
     print(f"  [PASS] apply_top_sprites exécuté en salle 0x41 du Donjon 4 ! Capture validée ({size} octets).")
 else:
     print("  [FAIL] La capture de la salle 0x41 a échoué.")
@@ -94,8 +106,8 @@ print("\n[TEST 2] Rendu visuel de la bombe en 3 phases & Hardware scaling désac
 
 mon_file_bomb = "/tmp/test_bomb_phases.mon"
 with open(mon_file_bomb, "w") as f:
-    f.write("bk 5628\ng\ndel 1\n> 0816 01\n") # Pass SID setup menu
-    f.write("bk 299b\ng\ndel 2\n> 0816 01\n") # Pass intro
+    f.write(f"bk {sid_menu_addr:04x}\ng\ndel 1\n> 0816 01\n") # Pass SID setup menu
+    f.write(f"bk {intro_update_addr:04x}\ng\ndel 2\n> 0816 01\n") # Pass intro
     f.write(f"bk {main_addr:04x}\ng\ndel 3\n") # Reach main_loop
     f.write(f"> {cmd_addr:04x} 07\n") # All gear
     f.write("g\n")
@@ -126,6 +138,7 @@ res = subprocess.run([
 
 for p in ["12_bomb_phase1_init.png", "13_bomb_phase2_full.png", "14_bomb_phase3_fade.png"]:
     fpath = os.path.join(OUT_DIR, p)
+    convert_pcx_if_needed(fpath)
     if os.path.exists(fpath):
         print(f"  [PASS] {p} capturé avec succès ({os.path.getsize(fpath)} octets).")
     else:

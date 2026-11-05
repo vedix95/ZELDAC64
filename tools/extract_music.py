@@ -100,6 +100,16 @@ def extract_music_data(rom_path=DEFAULT_ROM):
         'bytes': list(b0[tri_off : tri_off + 0x59])
     }
 
+    # 7. Thème authentique du Donjon 9 (Niveau 9 - Montagne de la Mort : SongScriptLastLevel0 à $91FD)
+    d9_off = 0x91FD - 0x8000
+    dungeon_final = {
+        'addr': 0x91FD,
+        'sq0_off': 0x53,
+        'trg_off': 0xA5,
+        'end_off': 0xCD,
+        'bytes': list(b0[d9_off : d9_off + 0xCD])
+    }
+
     data = {
         "_description": "Partitions musicales authentiques de The Legend of Zelda (NES, Banque 0)",
         "_generator": "tools/extract_music.py",
@@ -109,7 +119,8 @@ def extract_music_data(rom_path=DEFAULT_ROM):
         "ow_scripts": ow_scripts,
         "uw_scripts": uw_scripts,
         "item_fanfare": item_fanfare,
-        "triforce_fanfare": triforce_fanfare
+        "triforce_fanfare": triforce_fanfare,
+        "dungeon_final": dungeon_final
     }
 
     return data
@@ -135,6 +146,7 @@ def main():
         print(f"    - Phrases Underworld   : {list(music_data['uw_scripts'].keys())}")
         print(f"    - Fanfare Objet        : {len(music_data['item_fanfare']['bytes'])} octets")
         print(f"    - Fanfare Triforce     : {len(music_data['triforce_fanfare']['bytes'])} octets")
+        print(f"    - Thème Donjon 9 (Final) : {len(music_data['dungeon_final']['bytes'])} octets")
     except Exception as e:
         sys.exit(f"Erreur lors de l'extraction : {e}")
 

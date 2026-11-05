@@ -84,6 +84,8 @@ def run_test():
     audio_base = z_labels['dual_sid_enabled']
 
     cursor_addr = i_labels.get('menu_cursor_idx', 0x09D5)
+    sid_menu_addr = i_labels.get('sid_setup_menu_loop', 0x573a)
+    intro_update_addr = i_labels.get('intro_update', 0x299b)
 
     print("=================================================================")
     print("   TEST AUTOMATISÉ : DUAL SID STÉRÉO ($D420) & ÉPÉE EN DONJON   ")
@@ -101,14 +103,14 @@ def run_test():
     mon_file = "/tmp/test_dual_sid_dungeon.mon"
     with open(mon_file, "w") as f:
         # 1. Sélectionner Option 2 (2 SID - Stereo $D420) au boot
-        f.write("bk 5628\n")
+        f.write(f"bk {sid_menu_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
         f.write(f"> {cursor_addr:04x} 01\n") # Sélection Option 2
         f.write("> 0816 01\n")               # Valider menu
 
         # 2. Passer l'intro
-        f.write("bk 299b\n")
+        f.write(f"bk {intro_update_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
         f.write("> 0816 01\n")

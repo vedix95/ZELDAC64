@@ -16,10 +16,12 @@ def load_labels(vs_path):
     return labels
 
 labels = load_labels("build/zelda.vs")
+intro_labels = load_labels("build/intro.vs")
 cmd_addr = labels['debug_hook_cmd']
 arg_addr = labels['debug_hook_arg']
 arg2_addr = labels['debug_hook_arg2']
 main_addr = labels['main_loop']
+launch_addr = intro_labels['launch_zelda_game']
 ladder_addr = labels['player_has_stepladder']
 raft_addr = labels['player_has_raft']
 whistle_addr = labels['player_has_whistle']
@@ -29,13 +31,13 @@ py_addr = labels['player_y']
 pdir_addr = labels['player_dir']
 joy_addr = labels['joy']
 
-OUT_DIR = "/home/vedix/.gemini/antigravity-cli/brain/07be3fc7-1193-4966-9496-feffbd9d596f"
+OUT_DIR = "/home/vedix/.gemini/antigravity-cli/brain/a6d08525-71dd-4726-825e-d39e15960261"
 
 # 1. Test Stepladder in Room 95 (P-6)
 # Link positions on dock next to water, deploys ladder
 mon_ladder = f"""break 080d
 g
-g 55c2
+g {launch_addr:04x}
 break {main_addr:04x}
 > {arg2_addr:04x} 00
 > {arg_addr:04x} 5f
@@ -73,7 +75,7 @@ print("  -> Stepladder screenshot exists:", os.path.exists(os.path.join(OUT_DIR,
 # Link stands on dock looking UP with Raft in inventory -> STATE_RAFT
 mon_raft = f"""break 080d
 g
-g 55c2
+g {launch_addr:04x}
 break {main_addr:04x}
 > {arg2_addr:04x} 00
 > {arg_addr:04x} 55

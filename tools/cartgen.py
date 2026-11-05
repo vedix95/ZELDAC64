@@ -166,7 +166,19 @@ def main():
             print(f"  [!] Banque {len(banks):02d} : {desc} (non trouvé, initialisé vide)")
         banks.append(b_ovl)
 
-    # Remplir jusqu'à TOTAL_BANKS (32 banques = 256 Ko)
+    # Banque 31 : Musiques et sons étendus (CART_BANK_AUDIO)
+    audio_path = os.path.join(BLD_DIR, "cart_audio.bin")
+    b_audio = bytearray(BANK_SIZE)
+    if os.path.exists(audio_path):
+        with open(audio_path, "rb") as f:
+            a_data = f.read()
+        b_audio[:len(a_data)] = a_data[:BANK_SIZE]
+        print(f"  [+] Banque {len(banks):02d} : Musiques et sons étendus CART_BANK_AUDIO ({len(a_data)} octets)")
+    else:
+        print(f"  [!] Banque {len(banks):02d} : cart_audio.bin non trouvé, initialisé vide")
+    banks.append(b_audio)
+
+    # Remplir jusqu'à TOTAL_BANKS (64 banques = 512 Ko)
     while len(banks) < TOTAL_BANKS:
         banks.append(bytearray(BANK_SIZE))
 

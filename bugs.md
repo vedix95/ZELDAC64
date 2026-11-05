@@ -289,3 +289,162 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Les sprites d'inventaire dans un cadre doivent obligatoirement respecter une marge interne minimale de 4 pixels de chaque côté pour éviter tout clippage avec les bordures de caractères VIC-II.
   - Sur la carte 16x8, une salle ne doit jamais occuper plus d'un bloc de caractère actif afin de préserver l'indépendance visuelle de chaque case lors du clignotement de la position de Link.
 
+---
+
+## 18. Inventaire : Débordement de l'Objet Sélectionné et Sprites Aplaties Décentrés (001.png)
+* **Fichiers concernés** : [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm), [assets/link.txt](file:///home/vedix/Documents/C64/zelda/assets/link.txt), [assets/extra.txt](file:///home/vedix/Documents/C64/zelda/assets/extra.txt)
+* **Symptômes** :
+  1. Le sprite de l'objet équipé ("USE B BUTTON FOR THIS") était positionné trop haut à `(X=52, Y=100)`, débordant sur la bordure supérieure du cadre.
+  2. Les icônes d'objets dans la grille 4x2 étaient aplaties verticalement (seulement 7 à 9 lignes actives au lieu de 14-15) et décentrées vers le haut de leurs cases 16x16.
+* **Causes racines** :
+  1. Les coordonnées de placement VIC-II du Sprite 0 dans `setup_p0_b_item_sprite` avaient été calées sur l'ancien layout d'inventaire de 26 colonnes au lieu du cadre recentré.
+  2. Les motifs ASCII d'armes dans `assets/link.txt` et `assets/extra.txt` avaient été tronqués en hauteur lors d'une extraction préliminaire.
+* **Correctif appliqué** :
+  1. Recalage exact du Sprite 0 dans [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm) à `VIC_SPRITE_X0 = 64`, `VIC_SPRITE_Y0 = 120`.
+  2. Redessin complet et centrage des 8 sprites d'objets secondaires (hauteur 13 à 15 lignes, pad `(2, 2)`) : Boomerang, Bombe, Arc, Bougie, Nourriture, Potion, Flûte, Baguette.
+* **Règle anti-régression** :
+  - Toujours vérifier que les coordonnées d'un sprite matériel affiché dans un cadre textuel tiennent compte de l'origine de l'écran VIC-II (X=24..344, Y=50..250) et maintiennent une marge interne $\ge 4$ pixels.
+
+---
+
+## 19. Triforce : Déformation en Piliers Discontinus et Désalignement du Socle (002.png)
+* **Fichiers concernés** : [assets/extra.txt](file:///home/vedix/Documents/C64/zelda/assets/extra.txt), [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm)
+* **Symptômes** :
+  1. La Triforce sur la Page 1 d'inventaire ressemblait à 8 piliers rectangulaires verticaux disjoints au lieu d'une pyramide triangulaire dorée.
+  2. Le cadre textuel inférieur `+----------+` était décalé verticalement par rapport à la base des sprites.
+* **Causes racines** :
+  1. Les sprites `tri_p1` à `tri_p8` dans `assets/extra.txt` utilisaient des bandes verticales monochromes de même largeur sans biseau diagonal.
+  2. La routine `draw_p1_pyramid_frame` traçait le socle à la ligne 12 au lieu de la ligne 11 (raster Y=138), laissant un vide de 8 pixels sous les sprites.
+* **Correctif appliqué** :
+  1. Remplacement des 8 fragments par 4 étages biseautés formant un triangle équilatéral plein et jointif : sommet pointu (largeur 8 px par aile), étage supérieur (16 px), étage médian (24 px) et base élargie (32 px).
+  2. Réalignement des coordonnées matérielles des sprites dans [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm) (gauche à X=160, droite à X=184, étages à Y=106, 114, 122, 130).
+  3. Recalage du cadre textuel sur les lignes 7 à 11 avec la barre `+----------+` venant supporter immédiatement le pied du triangle.
+* **Règle anti-régression** :
+  - Tout motif géométrique multi-sprites doit être modélisé avec des biseaux continus assurant la continuité visuelle entre étages adjacents.
+
+---
+
+## 20. Reliques Passives : Écrasement en Donjon et Mauvaise Attribution (003.png)
+* **Fichiers concernés** : [src/charset.asm](file:///home/vedix/Documents/C64/zelda/src/charset.asm), [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm)
+* **Symptômes** :
+  1. Lorsque le joueur possédait tout l'équipement en donjon, le Livre de magie et l'Anneau disparaissaient ou affichaient des caractères corrompus.
+  2. Le Bracelet de force était représenté sous la forme d'un anneau au lieu d'un gantelet.
+* **Causes racines** :
+  1. Le moteur de donjon (`dung1.asm`..`dung9.asm`) recopie dynamiquement 256 octets de caractères spécifiques à l'adresse `$2540` (`$2000 + 168*8`), écrasant systématiquement les caractères 168..199. Les reliques passives qui y étaient placées étaient donc détruites lors de l'entrée en donjon.
+  2. L'icône du Bracelet réutilisait le glyphe de l'Anneau.
+* **Correctif appliqué** :
+  1. Réaffectation des 6 reliques passives dans la plage de caractères sécurisée et persistante 120..125 de [src/charset.asm](file:///home/vedix/Documents/C64/zelda/src/charset.asm) : 120 Radeau, 121 Échelle, 122 Gantelet/Bracelet, 123 Livre magique (croix mystique), 124 Anneau (joyau central), 125 Clé magique (tête en trèfle).
+  2. `draw_p0_passive_relics` pointe désormais exclusivement sur cette plage protégée et gère la coloration dynamique de l'Anneau (`COL_RED` si Anneau Rouge, `COL_CYAN` si Anneau Bleu).
+* **Règle anti-régression** :
+  - Ne jamais stocker de caractères d'interface persistants dans la plage `$2540..$25FF` (caractères 168..199), réservée au streaming des fontes de donjons.
+
+---
+
+## 21. Échelle : Conflit et Blocage avec les Ponts Existants (004.png)
+* **Fichiers concernés** : [src/player.asm](file:///home/vedix/Documents/C64/zelda/src/player.asm), [src/items.asm](file:///home/vedix/Documents/C64/zelda/src/items.asm), [src/transition.asm](file:///home/vedix/Documents/C64/zelda/src/transition.asm), [src/tilemap.asm](file:///home/vedix/Documents/C64/zelda/src/tilemap.asm)
+* **Symptômes** :
+  1. Lorsqu'un pont existait déjà sur la carte, l'échelle se bloquait indéfiniment lors du franchissement d'un ruisseau.
+  2. Le franchissement modifiait les tuiles de décor et pouvait corrompre ou figer les ponts naturels de la zone.
+* **Causes racines** :
+  1. L'ancienne routine écrivait `TILE_BRIDGE_H` ou `TILE_BRIDGE_V` directement dans le tampon de salle `room_buf`, écrasant la structure de tuiles et causant des désynchronisations de collision.
+  2. Aucune logique de suivi de marche (montée sur l'échelle puis débarquement sur la berge opposée) n'était implémentée.
+* **Correctif appliqué** :
+  1. Suppression intégrale de toute écriture de tuile dans `room_buf` lors de l'utilisation de l'échelle.
+  2. Rendu de l'échelle par une entité sprite autonome (Sprite 2) dans [src/items.asm](file:///home/vedix/Documents/C64/zelda/src/items.asm) à `(ladder_spr_x, ladder_spr_y)`.
+  3. Gestion dynamique du franchissement dans [src/player.asm](file:///home/vedix/Documents/C64/zelda/src/player.asm) : autorisation de marche sur la tuile d'eau `ladder_tile_idx`, détection de prise d'appui (`ladder_stepped_on = 1`), et extinction/rétraction automatique dès que Link foule la terre ferme.
+  4. Réinitialisation à `$FF` lors des changements de salle dans `transition.asm` et `tilemap.asm`.
+* **Règle anti-régression** :
+  - L'échelle de Link doit être gérée exclusivement comme un objet/sprite indépendant sans altérer le tampon `room_buf`.
+
+---
+
+## 22. Goriya : Frame Brisée, Blocage Mur Nord et Absence d'IA Boomerang (005.png)
+* **Fichiers concernés** : [assets/enemies.txt](file:///home/vedix/Documents/C64/zelda/assets/enemies.txt), [src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm), [tools/build_sprite_banks.py](file:///home/vedix/Documents/C64/zelda/tools/build_sprite_banks.py), [src/main.asm](file:///home/vedix/Documents/C64/zelda/src/main.asm)
+* **Symptômes** :
+  1. Le sprite du Goriya dans le Donjon 1 (Salle $23) utilisait une frame corrompue et décalée verticalement.
+  2. Le Goriya restait coincé indéfiniment au contact du mur nord de la salle.
+  3. Le Goriya n'avait pas son comportement officiel : tirs rares en ligne droite infinie sans jamais récupérer le boomerang.
+* **Causes racines** :
+  1. Dans `assets/enemies.txt`, `goriya_1` ne comportait que 12 lignes au lieu de 16 avec des caractères de décalage corrompus.
+  2. `check_bounds_only` autorisait les ennemis à monter jusqu'à `PLAYER_Y_MIN = 80`. Or en donjon, la rangée 0 de tuiles (Y=80..95) est un mur plein : dès que l'ennemi atteignait Y < 88, son hitbox (`col_y + 8 < 96`) pénétrait dans le mur, bloquant simultanément les directions Haut, Gauche et Droite.
+  3. Aucune routine de ciblage en couloir ni de trajectoire aller-retour en tête chercheuse n'était programmée pour le projectile `PROJ_BOOMERANG`.
+* **Correctif appliqué** :
+  1. Restauration des 8 frames officielles et symétriques du Goriya (4 directions x 2 pas) dans `assets/enemies.txt` et mise à jour de `build_sprite_banks.py`.
+  2. Garde-fou de confinement donjon dans `check_bounds_only` ([src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm)) restreignant strictement `Y` entre 88 et 208 (lignes 1 à 8 jouables).
+  3. Détection de couloir de Link (`goriya_check_align_and_shoot`) : Goriya pivote face au joueur et décoche son boomerang dès qu'il traverse sa ligne de mire (±10 px).
+  4. IA du boomerang ennemi (`update_goriya_boomerang`) : vol aller sur 28 pas (~56 px) puis retour en tête chercheuse vers `en_proj_owner`, qui rattrape son arme au contact.
+  5. Relocalisation de `tilemap.asm` au-delà de `$4000` dans [src/main.asm](file:///home/vedix/Documents/C64/zelda/src/main.asm), libérant plus de 2,2 Ko sous le plafond `$2000` du jeu de caractères tout en préservant 8,4 Ko de marge sous `$C000`.
+* **Règle anti-régression** :
+  - En donjon, borner impérativement les coordonnées Y des monstres à `[88, 208]` pour éviter toute pénétration de hitbox dans les murs nord/sud.
+  - Le boomerang de Goriya doit toujours disposer d'une référence à son propriétaire (`en_proj_owner`) pour garantir son retour et sa réinitialisation.
+
+---
+
+## 23. Audio Donjons : Détérioration Progressive de la Musique, Écrasement des Tables BGM par les Overlays et Absence du Thème du Donjon 9
+* **Fichiers concernés** : [src/main.asm](file:///home/vedix/Documents/C64/zelda/src/main.asm), [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm), [src/intro.asm](file:///home/vedix/Documents/C64/zelda/src/intro.asm), [src/hud.asm](file:///home/vedix/Documents/C64/zelda/src/hud.asm), [src/overlay_trampolines.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_trampolines.asm), [src/tilemap.asm](file:///home/vedix/Documents/C64/zelda/src/tilemap.asm), [src/debug.asm](file:///home/vedix/Documents/C64/zelda/src/debug.asm), [tools/extract_music.py](file:///home/vedix/Documents/C64/zelda/tools/extract_music.py), [tools/generate_game_audio.py](file:///home/vedix/Documents/C64/zelda/tools/generate_game_audio.py), [tools/cartgen.py](file:///home/vedix/Documents/C64/zelda/tools/cartgen.py)
+* **Symptômes** :
+  1. En explorant les donjons, la musique de fond se dégradait au fil du temps : des notes fausses apparaissaient, des voix se coupaient, et la musique finissait par se désynchroniser ou se figer après l'ouverture de l'inventaire, l'allumage d'une bougie, ou la visite d'un cellier.
+  2. Le Donjon 9 (Death Mountain) jouait le même thème générique que les autres donjons, manquant la musique originale plus sombre et haletante de la NES.
+  3. L'intro cinématographique et l'écran titre ne tiraient pas parti de la seconde puce SID en mode Dual SID ($D420 / $D500 / $DF00).
+* **Causes racines** :
+  1. **Collision Mémoire Résidente / Zone de Streaming Overlay (`$A000`)** : La zone résidente compilée de `main.asm` s'étendait jusqu'à `$A189`. Or, la zone de streaming cartouche pour les overlays d'inventaire, de celliers, de bougie et de debug commence exactement à `$A000` (`OVERLAY_RAM_ADDR`). Chaque chargement d'overlay (ex: ouverture de l'inventaire via Bank 27) écrasait 393 octets de tables musicales BGM résidant entre `$A000` et `$A189` avec du code machine 6502 (`$8D, $A0, $20`), corrompant irrémédiablement les pointeurs de pas, les fréquences et les compteurs de boucle.
+  2. **Restauration Incomplète des Registres SID et Désynchronisation Dual SID** :
+     - Lors de la restauration d'une voix après un SFX ou un carillon (`restore_music_voice_2`, `restore_music_voice_3`), les registres de forme d'onde, de largeur d'impulsion (PW) et d'enveloppe ADSR n'étaient pas réécrits symétriquement sur SID2.
+     - L'extinction d'une note coupait la forme d'onde (`CTRL = 0`) au lieu de relâcher seulement le Gate (`Gate=0`), causant des clics et des artefacts lors du réarmement.
+  3. **Absence du Thème du Donjon 9 dans la Cartouche** : La musique `SongScriptLastLevel0` de la ROM NES originale n'avait pas été extraite ni intégrée dans la banque cartouche.
+* **Correctif appliqué** :
+  1. **Re-zonage Mémoire sous `$2000` & Plafond `$A000` Garanti** :
+     - Déplacement des tampons résidents `visited_rooms`, `visited_ow_rooms`, `visited_uw_rooms`, `cave_room_cleared` (4 × 128 o) et inclusion de `src/music_data_low.inc` (fréquences et jingles courts) dans la plage basse `$1BF8..$1ED4` (< `$2000`).
+     - La fin de la mémoire résidente a été ramenée de `$A189` à `$9F80`, offrant une marge de sécurité absolue de 128 octets sous `$A000`.
+     - Ajout de l'assertion ACME stricte `!if * > OVERLAY_RAM_ADDR { !error ... }` dans `src/main.asm`.
+  2. **Extraction & Intégration du Thème du Donjon 9 (Banque 31 Cartouche)** :
+     - Extraction de `SongScriptLastLevel0` ($91FD, header `$8E0D` de la ROM NES) via `tools/extract_music.py`.
+     - Décodage des 3 voix (Square 1, Square 2, ostinato Triangle) avec scission en deux volets 8 bits indexables (`d9_p1` : 158 pas, `d9_p2` : 159 pas = 317 pas au total, 1268 octets).
+     - Intégration dans la banque cartouche 31 (`CART_BANK_AUDIO`, 8 Ko, offset `$8800`).
+     - Streaming dynamique dans `bgm_track_buffer` via `sound_play_dungeon_music` lors de l'entrée dans le Donjon 9 (`enter_dungeon`), et restauration automatique du thème de l'Overworld à la sortie (`exit_dungeon`).
+  3. **Généralisation du Mode Dual SID (Intro & Jeu)** :
+     - Dans `src/intro.asm`, activation complète du second SID avec chorus stéréo (+2 de désaccord de fréquence entre SID1 et SID2 sur Voix 1 et 2, percussion Noise sur Voix 3).
+     - Restauration intégrale de la forme d'onde, de PW et ADSR sur SID1 et SID2 dans `restore_music_voice_2` et `restore_music_voice_3`.
+     - Conservation du bit de waveform lors de l'extinction Gate OFF (`%01000000` Pulse / `%00100000` Sawtooth) pour un son propre et sans clics.
+* **Règles anti-régression** :
+  - La zone résidente du moteur de jeu (`main.asm`) ne doit JAMAIS dépasser `$A000` (`OVERLAY_RAM_ADDR`). Tout nouveau code ou buffer résident doit respecter le plafond `$9FFF`.
+  - La banque 31 de la cartouche Magic Desk (`CART_BANK_AUDIO`) est réservée au streaming des musiques étendues.
+  - Toute extinction ou silence musical sur une voix active doit conserver le bit de forme d'onde actif avec `Gate=0` au lieu de forcer `CTRL = 0`.
+
+---
+
+### [2026-11-05] Anomalie 11 : Ralentissement et Désynchronisation du Thème Audio Donjon 9 (Death Mountain)
+* **Symptômes** : La musique du Niveau 9 semblait bugguée, se ralentissait fortement au fil de la lecture et subissait des pauses démesurées.
+* **Cause racine** :
+  - Dans la ROM NES originale, `SongHeaderLastLevel0` ($8E0D) commence par l'octet `$10`, spécifiant l'usage de la **Table 2** (`$9FD1 + $10` = `[6, 12, 8, 24, 36, 48, 72, 16]`).
+  - `tools/generate_game_audio.py` utilisait par erreur `uw_durs` (Table 0 = `[3, 10, 1, 20, 5, 40, 60, 112]`), où l'index 7 vaut 112 ticks au lieu de 16 ticks. Chaque double croche rapide du thème était ainsi étirée d'un facteur 7, générant un faux tempo lent et 317 micro-pas artificiels.
+* **Correctif appliqué** :
+  1. Décodage de `d9_sc` avec `ow_durs` (Table 2 authentique) : les 3 voix (Square 1, Square 0, Triangle) s'alignent parfaitement sur **1344 ticks** chacune.
+  2. Compilation chronologique propre en une boucle de **124 pas** (22,4 secondes, durée exacte de la boucle NES originale).
+  3. Simplification de `.step_dungeon_final` dans [src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm) en une passe unique 8 bits indexable de 0 à `MUSIC_D9_LEN - 1`.
+  4. Réduction de la taille streamée depuis Banque 31 à 2 pages (512 octets pour 496 octets de partition).
+  5. Validation automatique via [tools/test_dungeon9_audio.py](file:///home/vedix/Documents/C64/zelda/tools/test_dungeon9_audio.py) : progression frame par frame fluide sans pause ni décélération.
+
+---
+
+### [2026-11-05] Anomalie 12 : Sprites Défectueux (Darknut scindé, Dodongo dédoublé, Bosses et Monstres ajourés)
+* **Symptômes** :
+  - Le chevalier Darknut apparaissait scindé en deux moitiés déconnectées avec un vide vertical au milieu.
+  - Le Dodongo apparaissait comme deux mini-dinosaures empilés verticalement l'un sur l'autre au lieu d'une entité unique.
+  - Lanmola clignotait entre une tige de 2 pixels et un cercle ajouré ; le Wallmaster avait la paume percée sans vraie pose d'animation ; le Rope était difforme ; Manhandla et Ganon avaient de grands vides transparents au centre ; les boomerangs étaient des anneaux creux statiques.
+* **Cause racine** :
+  - `darknut_1` dans `assets/enemies.txt` avait les colonnes 2..5 vidées en `....`, et `darknut_ptrs` figeait la direction basse sur cette frame.
+  - `dodongo_0` et `dodongo_1` contenaient deux mini-Dodongos dessinés l'un sur l'autre (lignes 3..11 et 13..20) dans le même bloc de sprite 12x21.
+  - `ganon_0` et `ganon_1` comportaient 3 colonnes de vide transparent au centre de la hure et du torse.
+  - `lanmola_head` et `lanmola_body` étaient creux, et `lanmola_ptrs` alternait tête et corps sur un seul slot.
+* **Correctif appliqué** :
+  1. **Darknut** : Réintégration des frames complètes avec heaume, grand bouclier frontal couvrant le torse, cotte de mailles et jambières articulées. Correction de `darknut_ptrs` dans [src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm) pour alterner les poses de pas sur les 4 directions.
+  2. **Dodongo** : Redessiné en un grand dinosaure cuirassé massif unique de profil occupant toute la hauteur du sprite. Vérification de l'instanciation autonome de chaque Dodongo dans les salles multiples (Donjon 2 et 8).
+  3. **Ganon** : Suppression de la fente médiane vide ; refonte en Démon Cochon colossal (défenses d'ivoire, hure menaçante, yeux de braise, cape et toge magique).
+  4. **Lanmola & Wallmaster & Rope** : Tête à mandibules et corps chitineux plein pour Lanmola ; main ouverte descendante et poing agrippant au sol pour Wallmaster ; serpent en S ondulant avec tête et langue pour Rope.
+  5. **Boomerangs** : Remplacement des anneaux creux par des lames aérodynamiques pleines avec rotation dynamique fluide 4 directions pour Link et les monstres Goriya.
+  6. **Régénération des Banques & Atlas** : Recompilation des banques cartouche 10, 11, 12, 13 via `tools/build_sprite_banks.py` et mise à jour complète de l'atlas graphique (`make atlas`). Captures d'écran en jeu validées sous VICE.
+
+
+
+

@@ -476,6 +476,8 @@ trans_setup_target:
 trans_finalize_room:
         lda #$ff
         sta ladder_tile_idx
+        lda #0
+        sta ladder_stepped_on
 
         ; Mémorise la salle courante
         lda target_room_idx

@@ -100,16 +100,19 @@ SCENARIOS = [
 
 def main():
     labels = load_labels("build/zelda.vs")
+    intro_labels = load_labels("build/intro.vs")
     cmd_addr = labels['debug_hook_cmd']
     arg_addr = labels['debug_hook_arg']
     arg2_addr = labels['debug_hook_arg2']
     main_addr = labels['main_loop']
+    launch_addr = intro_labels['launch_zelda_game']
 
     print(f"Loaded symbols from build/zelda.vs:")
-    print(f"  main_loop:      ${main_addr:04X}")
-    print(f"  debug_hook_cmd: ${cmd_addr:04X}")
-    print(f"  debug_hook_arg: ${arg_addr:04X}")
-    print(f"  debug_hook_arg2:${arg2_addr:04X}")
+    print(f"  main_loop:         ${main_addr:04X}")
+    print(f"  debug_hook_cmd:    ${cmd_addr:04X}")
+    print(f"  debug_hook_arg:    ${arg_addr:04X}")
+    print(f"  debug_hook_arg2:   ${arg2_addr:04X}")
+    print(f"  launch_zelda_game: ${launch_addr:04X}")
 
     print(f"\nGenerating monitor command script for all {len(SCENARIOS)} screenshots...")
     mon_file = "/tmp/zelda_50_shots.mon"
@@ -117,7 +120,7 @@ def main():
         # Initial breakpoint at main_loop ($1045)
         f.write("break 080d\n")
         f.write("g\n")
-        f.write("g 55c2\n")
+        f.write(f"g {launch_addr:04x}\n")
         f.write(f"break {main_addr:04x}\n")
         f.write("g\n")
 

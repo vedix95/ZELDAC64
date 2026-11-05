@@ -18,8 +18,7 @@ debug_hook_arg:         !byte 0         ; Argument 1 du hook
 debug_hook_arg2:        !byte 0         ; Argument 2 du hook
 current_cave_type:      !byte 0         ; Type de la caverne en cours de visite
 
-; Persistance des 128 salles de cavernes (bit 7 = déjà visitée / pillée)
-cave_room_cleared:      !fill 128, 0
+; Persistance des 128 salles de cavernes (allouée en basse RAM résidente sous $2000 dans main.asm)
 
 ; Table de mapping des 128 salles Overworld vers leur type de caverne (1ère Quête NES)
 room_cave_types:

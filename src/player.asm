@@ -44,6 +44,8 @@ player_has_raft:       !byte 0          ; 1 = radeau
 player_has_stepladder: !byte 0          ; 1 = échelle
 ladder_tile_idx:       !byte $ff        ; $ff = inactive, 0..199 = tuile d'eau où l'échelle est posée
 ladder_stepped_on:     !byte 0          ; 0 = posée mais pas encore dessus, 1 = Link est monté dessus
+ladder_spr_x:          !word 0          ; position écran X du sprite d'échelle
+ladder_spr_y:          !byte 0          ; position écran Y du sprite d'échelle
 player_has_magic_key:  !byte 0          ; 1 = clef magique
 
 ; Objets d'inventaire Slot B
@@ -164,39 +166,58 @@ player_update:
         rts
 
 .handle_movement:
-        ; Détection de sortie de l'eau pour ranger l'échelle
+        ; Détection de sortie de l'eau pour ranger l'échelle (autonome, indépendante des ponts)
         lda ladder_tile_idx
         cmp #$ff
         beq .ladder_check_done
         lda player_y
         clc
-        adc #12
+        adc #10
         sta col_y
         lda player_x
         clc
-        adc #12
+        adc #10
         sta col_x
         lda player_x+1
         adc #0
         sta col_x+1
         jsr get_tile_at_point
-        cmp #TILE_BRIDGE_H
-        beq .on_ladder
-        cmp #TILE_BRIDGE_V
-        beq .on_ladder
-        cmp #TILE_WATER
+        cpy ladder_tile_idx
         beq .on_ladder
 
         ; Link n'est pas sur la tuile de l'échelle.
-        ; S'il n'est pas encore monté dessus, on la laisse en place !
+        ; S'il est monté dessus et vient de poser le pied sur la rive : ranger l'échelle !
         lda ladder_stepped_on
+        beq .chk_ladder_dist
+        ; Link a traversé : rétracter l'échelle sans toucher room_buf
+        lda #$ff
+        sta ladder_tile_idx
+        lda #0
+        sta ladder_stepped_on
         beq .ladder_check_done
 
-        ; Link est monté dessus et vient de poser le pied sur la rive : ranger l'échelle !
-        ldy ladder_tile_idx
-        lda #TILE_WATER
-        sta room_buf,y
-        jsr redraw_single_tile
+.chk_ladder_dist:
+        ; Link est sur la berge et n'est pas encore monté dessus.
+        ; S'il s'éloigne (distance > 24 px), ranger l'échelle
+        sec
+        lda col_y
+        sbc ladder_spr_y
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #26
+        bcs .retract_ladder
+
+        sec
+        lda col_x
+        sbc ladder_spr_x
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #26
+        bcc .ladder_check_done
+
+.retract_ladder:
         lda #$ff
         sta ladder_tile_idx
         lda #0
@@ -883,28 +904,11 @@ check_point_solid:
         ; Link possède l'échelle : Y contient l'offset de la tuile d'eau
         lda ladder_tile_idx
         cmp #$ff
-        beq .deploy_ladder
+        beq +
         cpy ladder_tile_idx
         beq .ladder_free
         bne .water_solid
-.deploy_ladder:
-        sty ladder_tile_idx
-        lda #0
-        sta ladder_stepped_on           ; Link est encore sur la berge
-        lda player_dir
-        cmp #DIR_LEFT
-        beq .hl
-        cmp #DIR_RIGHT
-        beq .hl
-        lda #TILE_BRIDGE_V
-        bne +
-.hl:    lda #TILE_BRIDGE_H
-+       sta room_buf,y
-        tya
-        pha
-        jsr redraw_single_tile
-        pla
-        tay
++       jsr deploy_ladder
 .ladder_free:
         clc
         rts
@@ -916,8 +920,16 @@ check_point_solid:
         cmp #TILE_WATER
         bne .not_water
         lda player_has_stepladder
-        bne .free
+        beq .water_solid
+        lda ladder_tile_idx
+        cmp #$ff
+        beq +
+        cpy ladder_tile_idx
+        beq .ladder_free
         sec
+        rts
++       jsr deploy_ladder
+        clc
         rts
 
 .not_water:
@@ -931,6 +943,53 @@ check_point_solid:
 .free_pt:
 .free:
         clc                             ; Libre !
+        rts
+
+deploy_ladder:
+        sty ladder_tile_idx
+        lda #0
+        sta ladder_stepped_on           ; Link est encore sur la berge
+
+        ; Calcule tx = Y % 20, ty = Y / 20
+        tya
+        ldx #0
+-       cmp #20
+        bcc +
+        sbc #20
+        inx
+        bne -
++       ; A = tx (0..19), X = ty (0..9)
+        pha                             ; sauve tx
+        ; ladder_spr_y = 80 + ty * 16
+        txa
+        asl
+        asl
+        asl
+        asl
+        clc
+        adc #80
+        sta ladder_spr_y
+
+        ; ladder_spr_x = 24 + tx * 16
+        pla                             ; restaure tx
+        sta ZP_TMP
+        lda #0
+        sta ladder_spr_x+1
+        lda ZP_TMP
+        asl
+        rol ladder_spr_x+1
+        asl
+        rol ladder_spr_x+1
+        asl
+        rol ladder_spr_x+1
+        asl
+        rol ladder_spr_x+1
+        clc
+        adc #24
+        sta ladder_spr_x
+        lda ladder_spr_x+1
+        adc #0
+        sta ladder_spr_x+1
         rts
 
 ; Bruitage d'attaque à l'épée via le synthétiseur SID (bruit blanc + déclin percussif)

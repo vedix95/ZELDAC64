@@ -29,7 +29,7 @@ CRT     := $(BLD_DIR)/$(NAME).crt
 LABELS  := $(BLD_DIR)/$(NAME).vs
 REPORT  := $(BLD_DIR)/$(NAME).rep
 
-.PHONY: all run run-game run-crt debug crt clean distclean check preview maps extract-music
+.PHONY: all run run-game run-crt debug crt clean distclean check preview maps extract-music atlas assets-sheet
 
 all: $(CRT)
 
@@ -45,8 +45,8 @@ $(SRC_DIR)/sprites_enemies.asm: assets/enemies.txt tools/sprgen.py
 $(SRC_DIR)/sprites_extra.asm: assets/extra.txt tools/sprgen.py
 	$(PYTHON) tools/sprgen.py assets/extra.txt --prefix link -o $@
 
-# music_data.inc est généré depuis assets/music_data.json
-$(SRC_DIR)/music_data.inc: assets/music_data.json tools/generate_game_audio.py
+# music_data.inc, music_data_low.inc et cart_audio.bin sont générés depuis assets/music_data.json
+$(SRC_DIR)/music_data.inc $(SRC_DIR)/music_data_low.inc $(BUILD_DIR)/cart_audio.bin &: assets/music_data.json tools/generate_game_audio.py
 	$(PYTHON) tools/generate_game_audio.py
 
 # Extraction des partitions authentiques depuis zelda.nes (optionnel pour dev local)
@@ -136,6 +136,13 @@ preview: | $(BLD_DIR)
 # Génération des cartes complètes PNG de l'Overworld et des 9 Donjons
 maps: | $(BLD_DIR)
 	$(PYTHON) tools/render_maps.py
+
+# Extraction et génération de l'atlas graphique complet et des planches de contact PNG
+atlas: | $(BLD_DIR)
+	$(PYTHON) tools/export_assets_sheet.py --all
+	@echo "Atlas graphique généré dans $(BLD_DIR)/atlas_all_assets.png"
+
+assets-sheet: atlas
 
 clean:
 	rm -rf $(BLD_DIR)

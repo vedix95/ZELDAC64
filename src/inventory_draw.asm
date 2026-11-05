@@ -328,7 +328,7 @@ draw_page_0_items:
 
 draw_p0_passive_relics:
         ; Radeau (Col 14)
-        lda #120                        ; CHAR_RAFT
+        lda #120                        ; CHAR_RAFT (Radeau)
         sta SCREEN_RAM+240+14
         lda player_has_raft
         bne +
@@ -337,8 +337,8 @@ draw_p0_passive_relics:
 +       lda #COL_BROWN
 ++      sta COLOR_RAM+240+14
 
-        ; Livre (Col 17)
-        lda #175                        ; CHAR_BOOK
+        ; Livre de Magie (Col 17)
+        lda #123                        ; CHAR_BOOK (Livre protégé donjon)
         sta SCREEN_RAM+240+17
         lda player_has_book
         bne +
@@ -348,17 +348,24 @@ draw_p0_passive_relics:
 ++      sta COLOR_RAM+240+17
 
         ; Anneau (Col 20)
-        lda #173                        ; CHAR_RING
+        lda #124                        ; CHAR_RING (Anneau protégé donjon)
         sta SCREEN_RAM+240+20
         lda player_has_blue_ring
-        bne +
+        bne .has_ring
         lda #COL_DARK_GREY
-        bne ++
-+       lda #COL_LIGHT_BLUE
-++      sta COLOR_RAM+240+20
+        jmp .set_ring_col
+.has_ring:
+        cmp #2
+        beq .red_ring
+        lda #COL_LIGHT_BLUE
+        jmp .set_ring_col
+.red_ring:
+        lda #COL_RED
+.set_ring_col:
+        sta COLOR_RAM+240+20
 
         ; Échelle (Col 23)
-        lda #121                        ; CHAR_LADDER
+        lda #121                        ; CHAR_LADDER (Échelle)
         sta SCREEN_RAM+240+23
         lda player_has_stepladder
         bne +
@@ -368,7 +375,7 @@ draw_p0_passive_relics:
 ++      sta COLOR_RAM+240+23
 
         ; Clé Magique (Col 26)
-        lda #99                         ; CHAR_KEY
+        lda #125                        ; CHAR_MAGIC_KEY (Clé magique ornée)
         sta SCREEN_RAM+240+26
         lda player_has_magic_key
         bne +
@@ -378,7 +385,7 @@ draw_p0_passive_relics:
 ++      sta COLOR_RAM+240+26
 
         ; Bracelet (Col 29)
-        lda #122                        ; CHAR_BRACELET
+        lda #122                        ; CHAR_BRACELET (Gourmette de force)
         sta SCREEN_RAM+240+29
         lda player_has_bracelet
         bne +
@@ -398,15 +405,15 @@ setup_p0_sprites:
         lda #COL_WHITE
         sta VIC_SPRITE_MC2
 
-        ; Sprite 0 : Arme actuellement équipée dans le cadre gauche (X=52, Y=100)
+        ; Sprite 0 : Arme actuellement équipée dans le cadre gauche (X=64, Y=120)
         ldx hud_selected_b
         lda item_sprite_ptrs,x
         sta SPRITE_PTR0
         lda item_colors,x
         sta VIC_SPRITE_COL0
-        lda #52
+        lda #64
         sta VIC_SPRITE_X0
-        lda #100
+        lda #120
         sta VIC_SPRITE_Y0
 
         ; Initialise la rangée 1 pour le démarrage
@@ -641,10 +648,10 @@ draw_page_1_triforce:
         rts
 
 draw_p1_pyramid_frame:
-        ; Lignes 7..12 (SCREEN_RAM+280 .. +480)
+        ; Lignes 7..11 (SCREEN_RAM+280 .. +440)
         lda #'/'
         sta SCREEN_RAM+280+19
-        lda #92
+        lda #92                         ; '\'
         sta SCREEN_RAM+280+20
         lda #'/'
         sta SCREEN_RAM+320+18
@@ -658,18 +665,14 @@ draw_p1_pyramid_frame:
         sta SCREEN_RAM+400+16
         lda #92
         sta SCREEN_RAM+400+23
-        lda #'/'
-        sta SCREEN_RAM+440+15
-        lda #92
-        sta SCREEN_RAM+440+24
         lda #'+'
-        sta SCREEN_RAM+480+14
-        sta SCREEN_RAM+480+25
-        ldx #9
+        sta SCREEN_RAM+440+15
+        sta SCREEN_RAM+440+24
+        ldx #7
 -       lda #'-'
-        sta SCREEN_RAM+480+15,x
+        sta SCREEN_RAM+440+16,x
         lda #COL_DARK_GREY
-        sta COLOR_RAM+480+15,x
+        sta COLOR_RAM+440+16,x
         dex
         bpl -
         lda #COL_DARK_GREY
@@ -683,8 +686,6 @@ draw_p1_pyramid_frame:
         sta COLOR_RAM+400+23
         sta COLOR_RAM+440+15
         sta COLOR_RAM+440+24
-        sta COLOR_RAM+480+14
-        sta COLOR_RAM+480+25
         rts
 
 setup_p1_triforce_sprites:
@@ -696,22 +697,22 @@ setup_p1_triforce_sprites:
         lda #%11111111
         sta VIC_SPRITE_MC
 
-        ; Pointeurs des 8 sprites de fragments
-        lda #(sprite_tri_p1 / 64)       ; Piece 1 : Apex Sup Gauche
+        ; Pointeurs des 8 sprites de fragments (4 étages de 2 fragments)
+        lda #(sprite_tri_p1 / 64)       ; Piece 1 : Étage 0 Gauche
         sta SPRITE_PTR0
-        lda #(sprite_tri_p2 / 64)       ; Piece 2 : Apex Sup Droit
+        lda #(sprite_tri_p2 / 64)       ; Piece 2 : Étage 0 Droit
         sta SPRITE_PTR1
-        lda #(sprite_tri_p3 / 64)       ; Piece 3 : Base Inf Gauche Ext
+        lda #(sprite_tri_p3 / 64)       ; Piece 3 : Étage 1 Gauche
         sta SPRITE_PTR2
-        lda #(sprite_tri_p4 / 64)       ; Piece 4 : Base Inf Droit Ext
+        lda #(sprite_tri_p4 / 64)       ; Piece 4 : Étage 1 Droit
         sta SPRITE_PTR3
-        lda #(sprite_tri_p5 / 64)       ; Piece 5 : Base Inf Gauche Int A
+        lda #(sprite_tri_p5 / 64)       ; Piece 5 : Étage 2 Gauche
         sta SPRITE_PTR4
-        lda #(sprite_tri_p6 / 64)       ; Piece 6 : Base Inf Gauche Int B
+        lda #(sprite_tri_p6 / 64)       ; Piece 6 : Étage 2 Droit
         sta SPRITE_PTR5
-        lda #(sprite_tri_p7 / 64)       ; Piece 7 : Base Inf Droit Int A
+        lda #(sprite_tri_p7 / 64)       ; Piece 7 : Étage 3 Gauche
         sta SPRITE_PTR6
-        lda #(sprite_tri_p8 / 64)       ; Piece 8 : Base Inf Droit Int B
+        lda #(sprite_tri_p8 / 64)       ; Piece 8 : Étage 3 Droit
         sta SPRITE_PTR7
 
         ; Couleur d'or étincelant pour tous les 8 sprites
@@ -721,35 +722,38 @@ setup_p1_triforce_sprites:
         dex
         bpl -
 
-        ; Coordonnées X et Y des 8 fragments (Grand triangle 96x42 centré à X=184)
-        ; Rangée Supérieure (Y=90)
+        ; Coordonnées X et Y des 8 fragments (Grand triangle 48x32 centré à X=184)
+        ; Tous les fragments gauches (0, 2, 4, 6) à X=160
         lda #160
         sta VIC_SPRITE_X0
+        sta VIC_SPRITE_X2
+        sta VIC_SPRITE_X4
+        sta VIC_SPRITE_X6
+
+        ; Tous les fragments droits (1, 3, 5, 7) à X=184
         lda #184
         sta VIC_SPRITE_X1
-        lda #90
+        sta VIC_SPRITE_X3
+        sta VIC_SPRITE_X5
+        sta VIC_SPRITE_X7
+
+        ; Étage 0 (Sommet, Ligne 7 : Y=106)
+        lda #106
         sta VIC_SPRITE_Y0
         sta VIC_SPRITE_Y1
 
-        ; Rangée Inférieure (Y=111)
-        lda #136
-        sta VIC_SPRITE_X2
-        lda #160
-        sta VIC_SPRITE_X4
-        lda #172
-        sta VIC_SPRITE_X5
-        lda #184
-        sta VIC_SPRITE_X6
-        lda #196
-        sta VIC_SPRITE_X7
-        lda #208
-        sta VIC_SPRITE_X3
-
-        lda #111
+        ; Étage 1 (Ligne 8 : Y=114)
+        lda #114
         sta VIC_SPRITE_Y2
         sta VIC_SPRITE_Y3
+
+        ; Étage 2 (Ligne 9 : Y=122)
+        lda #122
         sta VIC_SPRITE_Y4
         sta VIC_SPRITE_Y5
+
+        ; Étage 3 (Base, Ligne 10 : Y=130)
+        lda #130
         sta VIC_SPRITE_Y6
         sta VIC_SPRITE_Y7
 

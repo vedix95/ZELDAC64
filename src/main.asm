@@ -278,12 +278,20 @@ wait_frame:
 !source "src/tiles_data.asm"
 !source "src/input.asm"
 !source "src/player.asm"
-!source "src/tilemap.asm"
 
 ; Buffers de travail résidents non volatils
 dungeon_room_state   = $033c           ; 128 octets en tampon cassette ($033c..$03bb)
 room_buf             = $cd00           ; 200 octets en zone haute ($cd00..$cdc7)
 target_room_buf      = $ce00           ; 200 octets en zone haute dynamique ($ce00..$cec7)
+
+; Tampons d'état persistants sous $2000 ($1BF8..$1FFF = 1032 octets libres)
+visited_rooms:
+visited_ow_rooms:    !fill 128, 0
+visited_uw_rooms:    !fill 128, 0
+cave_room_cleared:   !fill 128, 0
+
+; Tables de fréquences audio et fanfares ponctuelles sous $2000
+!source "src/music_data_low.inc"
 
 ; Le jeu de caractères est à une adresse fixe ($2000)
 !if * > CHARSET_ADDR {
@@ -313,6 +321,13 @@ cart_stream_copy:
         sta ZP_SRC
         lda #>$8000
         sta ZP_SRC+1
+        jmp .csc_page_loop
+
+; cart_stream_copy_from : Copie rapide depuis ZP_SRC vers ZP_DST en RAM
+; Entrée : A = Banque cartouche, X = Nombre de pages, ZP_SRC, ZP_DST
+cart_stream_copy_from:
+        sta current_cart_bank
+        php
 
 .csc_page_loop:
         sei
@@ -433,6 +448,7 @@ cart_load_overlay:
         pla
         jmp cart_stream_copy
 
+!source "src/tilemap.asm"
 !source "src/transition.asm"
 !source "src/items.asm"
 !source "src/enemies.asm"
@@ -448,8 +464,8 @@ cart_load_overlay:
 ; Moteur Audio et partitions (Single SID + Dual SID)
 !source "src/sound.asm"
 
-!if * > MAP_DATA_ADDR {
-        !error "Le programme resident deborde sur la zone des cartes ($C000)"
+!if * > OVERLAY_RAM_ADDR {
+        !error "Le programme resident deborde sur la zone des overlays ($A000)"
 }
 
 

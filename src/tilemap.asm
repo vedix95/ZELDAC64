@@ -74,6 +74,8 @@ clear_screen:
 load_room:
         lda #$ff
         sta ladder_tile_idx
+        lda #0
+        sta ladder_stepped_on
         lda current_world_type
         bne +
         jsr disk_ensure_ow_chunk
@@ -408,8 +410,7 @@ enter_dungeon:
         sta player_walk_tick
 
         ; Lance la musique authentique du Donjon (Underworld)
-        lda #MUSIC_DUNGEON
-        jsr music_play
+        jsr sound_play_dungeon_music
 
         ; 5. Afficher la salle et les ennemis
         jsr load_room
@@ -459,6 +460,12 @@ exit_dungeon:
         sta player_walk_anim
         sta player_walk_tick
 
+        ; Si Link sortait du Donjon 9, restaure la partition Standard BGM depuis Banque 31 ($8000)
+        lda current_dungeon_level
+        cmp #9
+        bne +
+        jsr sound_restore_standard_bgm
++
         ; Relance la musique héroïque de l'Overworld
         lda #MUSIC_OVERWORLD
         jsr music_play

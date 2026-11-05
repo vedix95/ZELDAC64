@@ -36,10 +36,7 @@ hud_max_hearts:   !byte 3               ; 3 cœurs max
 hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
 hud_selected_b:   !byte 0               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
 
-; Salles visitées (128 octets pour Overworld et 128 octets pour Donjons)
-visited_rooms:
-visited_ow_rooms: !fill 128, 0
-visited_uw_rooms: !fill 128, 0
+; Salles visitées (allouées en basse RAM résidente sous $2000 dans main.asm)
 
 hud_blink_tick:   !byte 0
 minimap_rx:       !byte 0
