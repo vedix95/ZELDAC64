@@ -16,129 +16,135 @@
 # ---------------------------------------------------------------------------
 # Marche face : 2 frames (tête à 2 lobes, yeux tan/pupilles marron, trompe cracheuse)
 [octo_down_0]
-..gssg..
-.gsggsg.
-gggggggg
-gggssggg
-.gsggsg.
-ggbggbgg
-gbbbbbbg
-.bbbbbb.
-ggbbbbgg
-ggbbbbgg
-.ggbbgg.
-.gggggg.
-...gg...
-...gg...
-...gg...
-..gggg..
+.gsgggs.
+.gggggbb
+..gbbgbb
+..gbbgbb
+bbbgggsb
+bbbsssgb
+bbbggggb
+bbbggggs
+bbbgggss
+bbbssggs
+bbbggssb
+bbbssggb
+bbbggggb
+bbbggggb
+ssss.ggb
+.ggg...b
+
 
 
 
 
 [octo_down_1]
-..gssg..
-ggsggsgg
-gsggggsg
-.ggssgg.
-ggsggsgg
-ggbggbgg
-.bbbbbb.
-gbbbbbbg
-ggbbbbgg
-.gbbbbg.
-.ggbbgg.
-.g.gg.g.
-..gggg..
-..gggg..
-........
-........
+.gsgggs.
+.gggggbb
+..gbbgbb
+..gbbgbb
+bbbgggsb
+bbbsssgb
+bbbggggb
+bbbggggs
+ssgggbbb
+sggssbbb
+bssggbbb
+bggssbbb
+bggggbbb
+bggggbbb
+bgg.ssss
+b...ggg.
+
 
 
 
 
 # Marche dos : 2 frames (arrière du dôme à deux lobes, tentacules en marche)
 [octo_up_0]
-..gggg..
-.gggggg.
-gggggggg
-gggggggg
-.gggggg.
-gggggggg
-gggggggg
-.gggggg.
-gggggggg
-gggggggg
-.gggggg.
-.gggggg.
-...gg...
-...gg...
-...gg...
-..gggg..
+.gsgggbb
+.gggggbb
+..gbbgbb
+..gbbg.b
+bbbgggsb
+bbbsssgb
+bbbggggs
+bbbgggss
+bbbggggs
+bbbssggb
+bbbggsgb
+bbbssggb
+bbbggggb
+bbbggggb
+ssss.ggb
+.....gg.
+
 
 
 
 
 [octo_up_1]
-..gggg..
-gggggggg
-gggggggg
-.gggggg.
-gggggggg
-gggggggg
-.gggggg.
-gggggggg
-gggggggg
-.gggggg.
-.gggggg.
-.g.gg.g.
-..gggg..
-..gggg..
-........
-........
+.gsgggbb
+.gggggbb
+..gbbgbb
+..gbbg.b
+bbbgggsb
+bbbsssgb
+bbbggggs
+bbbgggss
+sggggbbb
+bggssbbb
+bgsggbbb
+bggssbbb
+bggggbbb
+bggggbbb
+bgg.ssss
+.gg.....
+
 
 
 
 
 # Profil gauche : 2 frames (trompe allongée vers l'avant, oeil latéral)
 [octo_left_0]
-.....gg.
-...gggg.
-...gggg.
-..ggbggg
-g.gbbbgg
-g.gbgbgs
-ggbgbgsg
-ggbbbggs
-ggbbbggs
-ggbgbgsg
-g.gbgbgs
-g.gbbbgg
-..ggbggg
-...gggg.
-...gggg.
-.....gg.
+..bb....
+.bbb....
+.bbg.gb.
+.gbgbbb.
+.gbgbbbb
+.bbgbgbb
+.bbbbbbb
+bbbbgbbb
+bbssggbb
+bgssbgbb
+bggbbbbb
+ggbb.bb.
+ggsb....
+.bbs....
+.bbb....
+..b.....
+
 
 
 
 
 [octo_left_1]
-...g.g.g
-...ggggg
-..ggggg.
-..ggbggg
-.ggbbbgg
-.ggbgbgs
-.gbgbgsg
-.gbbbggs
-.gbbbggs
-.gbgbgsg
-.ggbgbgs
-.ggbbbgg
-..ggbggg
-..ggggg.
-...ggggg
-...g.g.g
+..bb....
+.bbb....
+.bbg.gb.
+.gbgbbb.
+.gbgbbbb
+.bbgbgbb
+.bbbbbbb
+bbbbgbbb
+bbggssbb
+bbgbssgb
+bbbbbggb
+.bb.bbgg
+....bsgg
+....sbb.
+....bbb.
+.....b..
+
 
 
 
@@ -149,10 +155,23 @@ g.gbbbgg
 
 # Rocher volant craché par l'Octorok (boulder 8x8 circulaire texturé)
 [octo_rock] pad 0 0
-....
-.gg.
-.gg.
-....
+..bb..
+.bsb..
+.bbb..
+......
+......
+......
+......
+......
+......
+......
+......
+......
+......
+......
+......
+......
+
 
 
 
@@ -162,129 +181,135 @@ g.gbbbgg
 # ---------------------------------------------------------------------------
 # Marche face : 2 frames (oreilles pointues, bajoues, lance tenue à droite)
 [moblin_down_0]
-...sss..
-...ssss.
-..ggsbs.
-.ggssbbg
-.ggsssss
-.gggssbg
-ggssssbs
-bgssssss
-gbssgsss
-ggssgsss
-bbbsbbb.
-ggssggs.
-sggggg..
-.ssggg..
-.sssgss.
-.ssbssb.
+.gsgggs.
+bbgbggs.
+bbbggs..
+bbbggs..
+b.gggsbb
+b.sssbgb
+bggggsgb
+ggbggsgg
+ggbggssg
+gggggssb
+gssssssb
+gggggssb
+sggggsbb
+bggggsbb
+bgg.ssss
+b...ggs.
+
 
 
 
 
 [moblin_down_1]
-........
-...sss..
-...ssss.
-..ggsbs.
-.ggssbbg
-.ggsssss
-.gggssbg
-ggssssbs
-bgssssss
-gbssssss
-gggsssss
-gbbbsbbb
-ggggsss.
-sggssg..
-.gssss..
-..sssb..
+bbsgggs.
+bbgbggs.
+bbbggs..
+b.bggs..
+b.gggsbb
+b.sssbgb
+gggggsgb
+ggbggsgg
+ggbggssg
+gggggssb
+gssssssb
+bggggssb
+bggggsbb
+bggggsbb
+bss.ggss
+.gg.....
+
 
 
 
 
 # Marche dos : 2 frames (oreilles visibles de dos, dos de tunique, lance)
 [moblin_up_0]
-...ggg..
-...gggg.
-..ggggg.
-.ggggggg
-.ggggggg
-.ggggggg
-gggggggg
-gggggggg
-gggggggg
-gggggggg
-bbbsbbb.
-ggssggs.
-sggggg..
-.ssggg..
-.sssgss.
-.ssbssb.
+.sgggsg.
+.sggbgbb
+..sggbbb
+..sggbbb
+bbsggg.b
+bgbsss.b
+bgsggggb
+ggsggbgg
+gssggbgg
+bssggggg
+bssssssg
+bssggggg
+bbsggggs
+bbsggggb
+ssss.ggb
+.sgg...b
+
 
 
 
 
 [moblin_up_1]
-........
-...ggg..
-...gggg.
-..ggggg.
-.ggggggg
-.ggggggg
-.ggggggg
-gggggggg
-gggggggg
-gggggggg
-gggsssss
-gbbbsbbb
-ggggsss.
-sggssg..
-.gssss..
-..sssb..
+.sgggsbb
+.sggbgbb
+..sggbbb
+..sggb.b
+bbsggg.b
+bgbsss.b
+bgsggggg
+ggsggbgg
+gssggbgg
+bssggggg
+bssssssg
+bssggggb
+bbsggggb
+bbsggggb
+ssgg.ssb
+.....gg.
+
 
 
 
 
 # Profil gauche : 2 frames (groin/museau avancé, lance et pas alternés)
 [moblin_left_0]
-.ss..ss.
-.gssssb.
-..bssb..
-bgbbbb..
-bssssss.
-ssbssbsb
-ssbggbss
-ssssssss
-ssssssss
-bsssssss
-bgssssss
-bbggggss
-.gbggbbs
-.ssbbbb.
-sssggsbs
-bbb.....
+.gsgggs.
+bbgbggs.
+bbbggs..
+bbbggs..
+b.gggsbb
+b.sssbgb
+bggggsgb
+ggbggsgg
+ggbggssg
+gggggssb
+gssssssb
+gggggssb
+sggggsbb
+bggggsbb
+bgg.ssss
+b...ggs.
+
 
 
 
 
 [moblin_left_1]
-.ss..ss.
-.ssssss.
-..ssss..
-.bsggs..
-.sggggb.
-ssggggs.
-ssggggss
-sgggggss
-sgggggss
-bgggggss
-bbbggbsb
-bgbbbggb
-.ggggggb
-.sssggsb
-.ssgggss
-.ss.....
+bbsgggs.
+bbgbggs.
+bbbggs..
+b.bggs..
+b.gggsbb
+b.sssbgb
+gggggsgb
+ggbggsgg
+ggbggssg
+gggggssb
+gssssssb
+bggggssb
+bggggsbb
+bggggsbb
+bss.ggss
+.gg.....
+
 
 
 
@@ -324,43 +349,45 @@ bbbbbbbb
 # 3. TEKTITE (Araignée sauteuse rouge & bleue)
 # ---------------------------------------------------------------------------
 [tektite_0]
-........
-........
-........
-........
-sg.bb.gs
-ggbbbbgg
-gbbbbbbg
-gbbbbbbg
-gbbbbbbg
-.bbbbbb.
-sgssssgs
-ggssssgg
-g.bssb.g
-g.bbbb.g
-g..ss..g
-g......g
+..gggg..
+..bbbb..
+..gggg..
+..gggg..
+..bggb..
+.sbbbbs.
+.sb..bs.
+sbbbbbbs
+gbsbbsbg
+gssbbssg
+gssbbssg
+ssssssss
+ssssssss
+.ssssss.
+..ssss..
+.sggggs.
+
 
 
 
 
 [tektite_1]
-........
-...bb...
-..bbbb..
-.gbbbbg.
-.bbbbbb.
-sbbbbbbs
-gbbbbbbg
-gbssssbg
-ggssssgg
-.gbssbg.
-ggbbbbgg
-s..ss..s
-g......g
-g......g
-g......g
-g......g
+..ssss..
+..sbbs..
+.sbbbbs.
+.sbggbs.
+.sbggbs.
+.sbggbs.
+.sbggbs.
+.sbggbs.
+ssbggbss
+sgbggbgs
+sgssssgs
+sssbbsss
+sssbbsss
+ssssssss
+.ssssss.
+.sggggs.
+
 
 
 
@@ -369,43 +396,45 @@ g......g
 # 4. LEEVER (Créature fouisseuse rotative rouge & bleue)
 # ---------------------------------------------------------------------------
 [leever_0]
-..b..b..
-..bbbb..
-..bggb..
-..bggb..
-..bggb..
-..bggb..
-..bggb..
-..bggb..
-..bggb..
-.gsggsg.
-.ggssgg.
-ssggggss
-.gsggsg.
-gsgssgsg
-ggsggsgg
-.gsggsg.
+..sggs..
+.sgssgs.
+ssssssss
+sssggsss
+.sgssgs.
+ssbssbss
+sbbbbbbs
+.bbbbbb.
+ssbbbbss
+ssbbbbss
+.ssbbss.
+.ssssss.
+...ss...
+...ss...
+...ss...
+..ssss..
+
 
 
 
 
 [leever_1]
-...bb...
-.b.bb.b.
-.b.gg.b.
-.bgbbgb.
+..sggs..
+ssgssgss
+sgssssgs
+.ssggss.
+ssgssgss
+ssbssbss
 .bbbbbb.
-.bbbbbb.
-.bbbbbb.
-..bbbb..
-..gbbg..
-.gsbbsg.
-.ggssgg.
-gsggggsg
-sggssggs
-ggsggsgg
-.sgssgs.
-..gggg..
+sbbbbbbs
+ssbbbbss
+.sbbbbs.
+.ssbbss.
+.s.ss.s.
+..ssss..
+..ssss..
+........
+........
+
 
 
 
@@ -414,43 +443,45 @@ ggsggsgg
 # 5. PEAHAT (Plante carnivore hélicoptère)
 # ---------------------------------------------------------------------------
 [peahat_0]
-...bb...
-...bb...
-...bb...
-bbbggbbb
-bbbbbbbb
-bbbbbbbb
-..gbbg..
-.ggbbgg.
-sggbbggs
-.ggbbgg.
-.ggbbgg.
-.sggggs.
-..gggg..
-.sggggs.
+........
 ...ss...
 ...ss...
+..ssss..
+s.sbbs.s
+s.sbbs.s
+ssbssbss
+ssbbbbss
+ssbbbbss
+ssbssbss
+s.sbbs.s
+s.sbbs.s
+..ssss..
+...ss...
+...ss...
+........
+
 
 
 
 
 [peahat_1]
 ........
-.bb..bb.
-bbbssbbb
-.bbbbbb.
-..gbbg..
-..bbbb..
-.bbbbbb.
-.bbggbb.
-.bbggbb.
-bbbggbbb
-.gggggg.
-.sggggs.
-.sggggs.
-..gggg..
+...ss...
+...ss...
+..ssss..
+s.sbbs.s
+s.sbbs.s
+ssbssbss
+ssbbbbss
+ssbbbbss
+ssbssbss
+s.sbbs.s
+s.sbbs.s
 ..ssss..
 ...ss...
+...ss...
+........
+
 
 
 
@@ -459,43 +490,45 @@ bbbggbbb
 # 6. ARMOS (Guerrier de pierre endormi)
 # ---------------------------------------------------------------------------
 [armos_0]
-.gbgggb.
-.gggggss
-..gssgss
-..gssgss
-sssgggbs
-sssbbbgs
-sssggggs
-sssggggb
-sssgggbb
-sssbbggb
-sssggbbs
-sssbbggs
-sssggggs
-sssggggs
-bbbb.ggs
-.ggg...s
+.ss..ss.
+sss..sss
+sss..sss
+bssssssb
+bbssssbb
+sbsggsbs
+bsgssgsb
+bssggssb
+bssggssb
+bsgssgsb
+sbsggsbs
+bbssssbb
+bssssssb
+sss..sss
+sss..sss
+.ss..ss.
+
 
 
 
 
 [armos_1]
-.gbgggss
-.gggggss
-..gssgss
-..gssg.s
-sssgggbs
-sssbbbgs
-sssggggb
-sssgggbb
-sssggggb
-sssbbggs
-sssggbgs
-sssbbggs
-sssggggs
-sssggggs
-bbbb.ggs
-.....gg.
+...ss...
+...ss...
+..ssss..
+..ssss..
+.ssbbss.
+.ssbbss.
+.sbssbs.
+.sbbbbs.
+.sbbbbs.
+.sbssbs.
+.ssbbss.
+.ssbbss.
+..ssss..
+..ssss..
+...ss...
+...ss...
+
 
 
 
@@ -504,43 +537,45 @@ bbbb.ggs
 # 7. GHINI (Fantôme à œil unique du cimetière)
 # ---------------------------------------------------------------------------
 [ghini_0]
-..bbbb..
-bgggbbg.
-bgsggb.b
-bgsgbgbg
-bbbbbbb.
-bggsbbg.
-ssssbbg.
-sssssb..
-sbbssb..
-.bbbbb..
-.bbbbbg.
-..bbbbg.
-...bbbb.
-.ssssbbg
-.sssssss
-..ssssss
+.s.ss.s.
+ssssssss
+sss..sss
+bssssssb
+bbssssbb
+sbsggsbs
+bsgssgsb
+bssggssb
+bssggssb
+bsgssgsb
+sbsggsbs
+bbssssbb
+bssssssb
+sss..sss
+ssssssss
+.s.ss.s.
+
 
 
 
 
 [ghini_1]
-...bbg..
-..bbbbg.
-bbbbbbbb
-bbbbbbbb
-bbbbbbbg
-.bbbbbb.
-.bbbbbb.
-.bbbbbg.
-.bbbbbg.
-.bbbbb..
-.bbbbb..
-bbbbbg..
-bbbbg...
-bbggss..
-sssssss.
-ssssss..
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+...gg...
+..gggg..
+.gggggg.
+..gggg..
+........
+
 
 
 
@@ -549,43 +584,45 @@ ssssss..
 # 8. ZORA (Monstre des rivières cracheur de feu)
 # ---------------------------------------------------------------------------
 [zora_0]
-g..gg..g
-gbbggbbg
-ggsggsgg
-ggssssgg
-ggssssgg
-ggsggsgg
-ggsggsgg
-ggssssgg
-gsggggsg
-gsgbbgsg
-gsgbbgsg
-gsggggsg
-bssssssb
-bsbssbsb
-.ssbbss.
-.bssssb.
+........
+........
+........
+........
+........
+........
+........
+........
+........
+........
+...gg...
+..gggg..
+..gggg..
+.gggggg.
+..gggg..
+........
+
 
 
 
 
 [zora_1]
-g..gg..g
-gbbggbbg
-ggsggsgg
-ggsggsgg
-ggsggsgg
-ggsggsgg
-ggsggsgg
-ggsggsgg
-gggggggg
-gggggggg
-ggsggsgg
-gssggssg
-bssggssb
-bsbggbsb
-.ssbbss.
-.bssssb.
+........
+........
+........
+........
+........
+..b..b..
+..bbbb..
+..bssb..
+..bssb..
+..bssb..
+..bssb..
+.gbssbg.
+.gbssbg.
+ggbggbgg
+.gggggg.
+..gggg..
+
 
 
 
@@ -594,43 +631,45 @@ bsbggbsb
 # 9. LYNEL (Centaure lion redoutable rouge & bleu)
 # ---------------------------------------------------------------------------
 [lynel_0]
-.sgggs..
-.sgggs..
-.sgbbs..
-..sbbg..
-..sssss.
-.ssgsss.
-sssssss.
-sssgssgg
-ssssssbg
-ggssgsb.
-bbggggb.
-bbggggb.
-bbggggb.
-bbggggb.
-bbg.ggg.
-b...gg..
+..b....b
+..bb.b.b
+..bs.b.s
+..bs.bsb
+..bs.bbb
+..bs.bbb
+..bs.bbb
+..bs..bb
+..bs..sb
+.sgs.sgb
+.ssg.ssg
+ggsssgss
+.sgsgssg
+sgsgssgs
+ssgs.gsg
+.sgs..ss
+
 
 
 
 
 [lynel_1]
-.ggsgg..
-..gsgb..
-..gssbs.
-...sss..
-..gsss..
-g..ssbbb
-g.gssbbb
-gggssbbb
-gggggg..
-gggggg..
-.gggggg.
-ggggggg.
-ggggggg.
-ggbbbgg.
-.g...g..
-........
+...b....
+...b.bb.
+...bbbbs
+bbbg.bbb
+bbbb..gb
+bbbb..bb
+..gb.bbb
+.ggb.bbg
+sggb.bbg
+.ggbbbbg
+.ggb.ggg
+.sgg.sgg
+..gg.sgg
+.sgg..gg
+...s..ss
+...s...s
+
 
 
 
@@ -639,43 +678,45 @@ ggbbbgg.
 # 10. KEESE (Chauve-souris des donjons)
 # ---------------------------------------------------------------------------
 [keese_0]
-........
-........
-........
-........
-..g..g..
+...gg...
+..bggb..
+.sbbbbs.
+.bgbbgb.
+.bsbbsb.
+gsbbbbsg
+bbbbbbbb
+sgbbbbgs
+sbbbbbbs
+bbgbbgbb
+bgbbbbgb
+.bbggbb.
+.sbbbbs.
+.bbggbb.
 ..gssg..
-.gggggg.
-.gggggg.
-gggggggg
-gggggggg
-g.gggg.g
-g..gg..g
-........
-........
-........
-........
+...bb...
+
 
 
 
 
 [keese_1]
-........
-........
-........
-........
-..g..g..
-..gssg..
-..gggg..
-..gggg..
-.gggggg.
-.gggggg.
-.gggggg.
-..g..g..
-..g..g..
-...gg...
-........
-........
+b......b
+bb....bb
+sgg..ggs
+gbb..bbg
+bgg..ggb
+bbbbbbbb
+bbggggbb
+bbsggsbb
+bbbbbbbb
+bggggggb
+bgbssbgb
+bbg..gbb
+bsb..bsb
+ggg..ggg
+bb....bb
+g......g
+
 
 
 
@@ -684,43 +725,45 @@ g..gg..g
 # 11. ZOL & GEL (Slimes des donjons)
 # ---------------------------------------------------------------------------
 [zol_0]
-........
-........
-........
-........
-........
-.gs..sg.
-.gb..bg.
-.gb..bg.
-ggbggbgg
-gggggggg
-gggggggg
-gggggggg
-gggggggg
-........
-........
-........
+...bb...
+...bb...
+...bb...
+...bb...
+..gssg..
+..gssg..
+bbsggsbb
+..sggs..
+..sggs..
+bbsggsbb
+..gssg..
+..gssg..
+...bb...
+...bb...
+...bb...
+...bb...
+
 
 
 
 
 [zol_1]
-........
-........
-........
-........
-.gs..sg.
-.gb..bg.
-.gb..bg.
-ggbggbgg
-gggggggg
-gggggggg
-gggggggg
-gggggggg
-.gg..gg.
-........
-........
-........
+..gggg..
+.gbbbbg.
+.gbggbg.
+..gggg..
+..bggb..
+.sbbbbs.
+.sb..bs.
+sbbbbbbs
+gbsbbsbg
+gssbbssg
+gssbbssg
+ssssssss
+ssssssss
+.ssssss.
+..ssss..
+.sggggs.
+
 
 
 
@@ -732,16 +775,17 @@ gggggggg
 ........
 ........
 ........
-...gg...
-..gssg..
-..gggg..
-...gg...
+........
+........
+....ss..
+...ssg..
+...ssg..
+...sss..
 ........
 ........
 ........
 ........
-........
-........
+
 
 
 
@@ -750,43 +794,45 @@ gggggggg
 # 12. ROPE (Serpent rapide à charge frontale)
 # ---------------------------------------------------------------------------
 [rope_0]
-........
-........
-........
-.gggg...
-gssssg..
-gsbbsg..
-gssssggg
-.ggggggg
-..gggggg
-...ggggg
-....gggg
-.....ggg
-......bb
-........
-........
-........
+.......g
+g......g
+gg.....g
+ggg...gg
+ggg...gg
+ggg...gg
+gsg...gg
+ggg...gg
+ggg....g
+ggg...g.
+ggs...gg
+ggs.g.gg
+ggs..gbg
+gs...gbg
+ss...gbg
+s.......
+
 
 
 
 
 [rope_1]
-........
-........
-........
-.gggg...
-gssssg..
-gsbbsg..
-gssssg..
-.ggggggg
-..gggggg
-.ggggggg
-gggg....
-ggg.....
+gg......
+gg......
+gs......
+gss.....
+ggg....g
+g.b....g
+gsss...g
+ggg....g
+gg.....g
+gs......
 bb......
+gg....gg
+bb....gg
+gg..gggg
+bg...g..
 ........
-........
-........
+
 
 
 
@@ -795,43 +841,45 @@ bb......
 # 13. STALFOS (Guerrier squelette à double épée)
 # ---------------------------------------------------------------------------
 [stalfos_0]
-..gggg..
-.g.gg.g.
-.g.gg.g.
-..g..g..
-...gg...
-..gssg..
-.gggggg.
-gbsggsbg
-gs.gg.sg
-gsggggsg
-.gg..gg.
-..g..g..
-.gg..gg.
-ggg..ggg
+......bb
+ggg...bb
+ggg...bb
+ggs...bb
+ggss..bb
+gggg..bg
+gg.b.bbb
+gg..bsgb
+ggggbggb
+ggg.bgbb
+.gs..bbb
+.gb...bb
+ggss.bb.
+ggbbbbb.
+ggs.....
 ........
-........
+
 
 
 
 
 [stalfos_1]
-..gggg..
-.g.gg.g.
-.g.gg.g.
-..g..g..
-...gg...
-..gssg..
-g.gggg.g
-gbsggsbg
-.s.gg.s.
-.sggggs.
-.gg..gg.
-..gg....
-....gg..
-ggg..ggg
+bb......
+bb...ggg
+bb...ggg
+bb...sgg
+bb..ssgg
+gb..gggg
+bbb.b.gg
+bgsb..gg
+bggbgggg
+bbgb.ggg
+bbb..sg.
+bb...bg.
+.bb.ssgg
+.bbbbbgg
+.....sgg
 ........
-........
+
 
 
 
@@ -840,112 +888,118 @@ ggg..ggg
 # 14. GORIYA (Démon chien lanceur de boomerang rouge & bleu)
 # ---------------------------------------------------------------------------
 [goriya_down_0]
-..gggg..
-.gssssg.
-gssssssg
-gsbbsbbg
-gssssssg
-.gssssg.
+.gg..ggg
+..gssgg.
+...sss..
+..sbbb..
+..sggss.
+..bbbbs.
+.sbbbbbs
+.sbssgbs
+.sgggggs
+.sbggggs
+.bbgsgg.
+.bbsbsg.
+.bbgsgg.
 .gggggg.
-.ggggggb
-bggggggb
-.bbbbbb.
-..gggg..
-.gg..gg.
-.gg..gg.
-.bb..bb.
-.bb.....
-........
+..ss.ss.
+.....ss.
+
 
 [goriya_down_1]
-..gggg..
-.gssssg.
-gssssssg
-gsbbsbbg
-gssssssg
-.gssssg.
+.gg..ggg
+..gssgg.
+...sss..
+..sbbb..
+..sggss.
+..bbbbs.
+.sbbbbbs
+.sbssgbs
+sgggggs.
+sggggbs.
+.ggsgbb.
+.gsbsbb.
+.ggsgbb.
 .gggggg.
-bgggggg.
-bggggggb
-.bbbbbb.
-..gggg..
-.gg..gg.
-.gg..gg.
-.bb..bb.
-.....bb.
-........
+.ss.ss..
+.ss.....
+
 
 [goriya_up_0]
-..gggg..
+.gg..ggg
+..gssgg.
+...sss..
+..ssss..
+..sssss.
+..sgggb.
+..gggggb
+..gggggs
+.sgggggs
+.sgggggs
+.sggggg.
+.sgsssg.
 .gggggg.
-gggggggg
-gggggggg
-gggggggg
-.gggggg.
-.gggggg.
-bgggggg.
-bggggggb
-.bbbbbb.
-..gggg..
-.gg..gg.
-.gg..gg.
-.bb..bb.
-.bb.....
-........
+..ggggg.
+..ss.ss.
+.....ss.
+
 
 [goriya_up_1]
-..gggg..
+.gg..ggg
+..gssgg.
+...sss..
+..ssss..
+..sssss.
+..sgggb.
+..gggggb
+..gggggs
+sgggggs.
+sgggggs.
+.gggggs.
+.gsssgs.
 .gggggg.
-gggggggg
-gggggggg
-gggggggg
-.gggggg.
-.gggggg.
-.ggggggb
-bggggggb
-.bbbbbb.
-..gggg..
-.gg..gg.
-.gg..gg.
-.bb..bb.
-.....bb.
-........
+.ggggg..
+.ss.ss..
+.ss.....
+
 
 [goriya_left_0]
-....gg..
-...ggs..
-.gssssg.
-gsssbsg.
-ggggssg.
-..bgggg.
-bbggggg.
-.bggggg.
-bbggggg.
-..bgggg.
+..ggs...
+..ggss..
+...ssbs.
+..ssssg.
+..ssbbb.
+.gssbbb.
+.ggsbss.
+.gggsg..
+ggssgg..
+ggbbggs.
+ggbbbss.
+.gbbbgs.
+.gggggg.
 ..gggg..
-..gg.gg.
-..gg.gg.
-..bb.bb.
-.bb...b.
-........
+..sss...
+..sss...
+
 
 [goriya_left_1]
-....gg..
-...ggs..
-.gssssg.
-gsssbsg.
-ggggssg.
-..bgggg.
-bbggggg.
-.bggggg.
-bbggggg.
-..bgggg.
-..gggg..
-..gg.gg.
-..gg.gg.
-..bb.bb.
-..b...bb
 ........
+..ggss..
+...ggss.
+...ssbb.
+...sssgg
+..sssbbb
+..gsbbbb
+..ggbss.
+.ggggsg.
+.gggssbb
+.gggssbb
+.gggssbb
+..ggsgg.
+.ssgggg.
+.sgggggs
+.sss.sss
+
 
 [goriya_right_0] mirror goriya_left_0
 [goriya_right_1] mirror goriya_left_1
@@ -957,43 +1011,45 @@ bbggggg.
 # 15. DARKNUT (Chevalier en armure à bouclier frontal invincible)
 # ---------------------------------------------------------------------------
 [darknut_0]
+...bb...
+..sbbs..
+..gbbg..
+..gggg..
+..gggg..
+..gbbg..
 ..bbbb..
-.bggggb.
-.bssssb.
-.bsbbsb.
-.bssssb.
-.bbbbbb.
-bssssssb
-bssssssb
-bssssssb
-.bbbbbb.
-.bggggb.
-.bggggb.
-.bggggb.
-.bb..bb.
-.bb..bb.
-........
+.sggggs.
+.sggggs.
+.ssggss.
+.sgssgs.
+ssggggss
+ssggggss
+ssssssss
+...ss...
+...ss...
+
 
 
 
 
 [darknut_1]
-..bbbb..
-.bggggb.
-.bssssb.
-.bsbbsb.
-.bssssb.
-.bbbbbb.
-bssssssb
-bssssssb
-bssssssb
-.bbbbbb.
-.bggggb.
-..bggb..
-.bggggb.
-.bb..bb.
-..b..b..
 ........
+...bb...
+..sbbs..
+..gbbg..
+..gggg..
+..gggg..
+..gbbg..
+..bbbb..
+.sggggs.
+.sggggs.
+.ssggss.
+ssgssgss
+ssggggss
+.sggggs.
+.ss..ss.
+.ssssss.
+
 
 
 
@@ -1002,43 +1058,45 @@ bssssssb
 # 16. WIZZROBE (Sorcier téléporteur et jeteur de sorts)
 # ---------------------------------------------------------------------------
 [wizzrobe_0]
-..gggg..
+..ggg...
+.ggggg..
+.ggggg.b
+bbggsggb
+bbgsbbgs
+gbgsbbgs
 .gggggg.
 .gggggg.
-ssggggss
-ssgbbgss
-gsgbbgsg
+.gggbgg.
+.gggbbg.
+.gggbgg.
 .gggggg.
-.gggggg.
-.gggggg.
-.gggggg.
-.gggggg.
-.gggggg.
-..gggg..
-..gggg..
-.bggggb.
-.gggggg.
+..ggggg.
+..ggggg.
+.sgggggg
+.ggggggg
+
 
 
 
 
 [wizzrobe_1]
 ........
-..gggg..
+..ggg...
+.ggggg..
+.ggggg.b
+bbggsggb
+bbgsbbgs
+gbgsbbgs
 .gggggg.
 .gggggg.
-ssggggss
-ssgbbgss
-gsgbbgsg
+.gggbgg.
+.gggbbg.
+.gggbgg.
 .gggggg.
-.gggggg.
-.gggggg.
-.gggggg.
-.gggggg.
-.gggggg.
-..gggg..
-..gggg..
-.gggggg.
+..ggggg.
+..ggggg.
+.ggggggg
+
 
 
 
@@ -1047,43 +1105,45 @@ gsgbbgsg
 # 17. WALLMASTER (Main spectrale des murs)
 # ---------------------------------------------------------------------------
 [wallmaster_0]
-..b..b..
-.bb..bb.
-.bb..bb.
-.bb..bb.
-.bbbbbb.
-.bggggb.
-bggggggb
-bggggggb
-bggggggb
-.bggggb.
-.bggggb.
-..bbbb..
-...bb...
-........
-........
-........
+....gggs
+.ggggggg
+.ggggggg
+.ggggggg
+gggggggg
+bggggggs
+gggbgs..
+bbgggsgg
+ggggs.gg
+bgbgs.gg
+ggggsggs
+bbbggggs
+gggggggs
+gbgbggs.
+.gbgss..
+..gss...
+
 
 
 
 
 [wallmaster_1]
-........
-..bbbb..
-.bbbbbb.
-.bggggb.
-bggggggb
-bggggggb
-bggggggb
-.bggggb.
-.bggggb.
-..bbbb..
-...bb...
-........
-........
-........
-........
-........
+....gggs
+.ggggggg
+.ggggggg
+.ggggggg
+gggggggg
+bggggggs
+gggbgs..
+bbgggsgg
+gg.sgggg
+gg.sgbgb
+sggsgggg
+sggggbbb
+sggggggg
+.sggbgbg
+..ssgbg.
+...ssg..
+
 
 
 
@@ -1112,6 +1172,7 @@ gg.gg.gg
 
 
 
+
 [likelike_1]
 ........
 ..gggg..
@@ -1133,55 +1194,11 @@ gb.gg.bg
 
 
 
+
 # ---------------------------------------------------------------------------
 # 19. POLS VOICE (Créature aux grandes oreilles sauteuse)
 # ---------------------------------------------------------------------------
 [polsvoice_0]
-........
-gg....gg
-gg....gg
-ggg..ggg
-gbg..gbg
-gbg..gbg
-ggbbbbgg
-ggbggbgg
-.gbggbg.
-.bggggb.
-.bgbbgb.
-ssgbbgss
-.ggbbgg.
-ssggggss
-bggggggb
-gggggggg
-
-
-
-
-[polsvoice_1]
-g......g
-gg....gg
-ggg..ggg
-gbg..gbg
-gbg..gbg
-ggbbbbgg
-ggbggbgg
-ggbggbgg
-gggggggg
-.bgbbgb.
-ssgbbgss
-.ggbbgg.
-ssggggss
-.bggggb.
-bggggggb
-gg.gg.gg
-
-
-
-
-# ---------------------------------------------------------------------------
-# 20. GIBDO (Momie antique)
-# ---------------------------------------------------------------------------
-[gibdo_0]
 ...bb...
 g.gssg.g
 bbgbbgbb
@@ -1202,7 +1219,8 @@ ggg..ggg
 
 
 
-[gibdo_1]
+
+[polsvoice_1]
 b..bb..b
 gggggggg
 bbbbbbbb
@@ -1219,6 +1237,54 @@ ggbbbbgg
 .bggggb.
 ........
 ........
+
+
+
+
+
+# ---------------------------------------------------------------------------
+# 20. GIBDO (Momie antique)
+# ---------------------------------------------------------------------------
+[gibdo_0]
+..bssb..
+..bggb..
+..bggb..
+..gssg..
+..gggg..
+..gggg..
+gggssbb.
+ggggggb.
+gsggggg.
+gggsggss
+ggggsbbs
+gggsgbb.
+gggggbb.
+sssggbb.
+..sssbb.
+..ss..b.
+
+
+
+
+
+[gibdo_1]
+..b.s.b.
+..bgggb.
+..bgggb.
+..gssg..
+..gggg..
+..sggbb.
+gggssgb.
+gggggggg
+gsggggss
+gggssgbb
+gggsgsbb
+gggssgbb
+ggggggbb
+ssssggbb
+..ssssb.
+....ss..
+
 
 
 
@@ -1247,6 +1313,7 @@ gggggggg
 
 
 
+
 [vire_1]
 ........
 .sg..gs.
@@ -1268,47 +1335,50 @@ gggggggg
 
 
 
+
 # ---------------------------------------------------------------------------
 # 22. BUBBLE (Crâne étincelant bloquant l'épée)
 # ---------------------------------------------------------------------------
 [bubble_0]
-...gg...
-..bggb..
-.sbbbbs.
+........
+gg....gg
+gg....gg
+ggg..ggg
+gbg..gbg
+gbg..gbg
+ggbbbbgg
+ggbggbgg
+.gbggbg.
+.bggggb.
 .bgbbgb.
-.bsbbsb.
-gsbbbbsg
-bbbbbbbb
-sgbbbbgs
-sbbbbbbs
-bbgbbgbb
-bgbbbbgb
-.bbggbb.
-.sbbbbs.
-.bbggbb.
-..gssg..
-...bb...
+ssgbbgss
+.ggbbgg.
+ssggggss
+bggggggb
+gggggggg
+
 
 
 
 
 [bubble_1]
-...gg...
-..bggb..
-.sbbbbs.
+g......g
+gg....gg
+ggg..ggg
+gbg..gbg
+gbg..gbg
+ggbbbbgg
+ggbggbgg
+ggbggbgg
+gggggggg
 .bgbbgb.
-.bsbbsb.
-gsbbbbsg
-bbbbbbbb
-sgbbbbgs
-sbbbbbbs
-bbgbbgbb
-bgbbbbgb
-.bbggbb.
-.sbbbbs.
-.bbggbb.
-..gssg..
-...bb...
+ssgbbgss
+.ggbbgg.
+ssggggss
+.bggggb.
+bggggggb
+gg.gg.gg
+
 
 
 
@@ -1317,22 +1387,23 @@ bgbbbbgb
 # 23. BLADE TRAP (Piège métallique à lames rétractables)
 # ---------------------------------------------------------------------------
 [trap]
-b......b
-bb....bb
-gss..ssg
-sbb..bbs
-bss..ssb
-bbbbbbbb
-bbssssbb
-bbgssgbb
-bbbbbbbb
-bssssssb
-bsbggbsb
-bbs..sbb
-bgb..bgb
-sss..sss
-bb....bb
-s......s
+........
+........
+........
+........
+.sg..gs.
+.sb..bs.
+.sb..bs.
+ssbssbss
+ssssssss
+ssssssss
+ssssssss
+ssssssss
+.ss..ss.
+........
+........
+........
+
 
 
 
@@ -1341,43 +1412,45 @@ s......s
 # 24. LANMOLA (Mille-pattes géant segmenté)
 # ---------------------------------------------------------------------------
 [lanmola_head]
-..bbbb..
-.bggggb.
-bggssggb
-bgsbbsgb
-bgsbbsgb
-bggssggb
-.bggggb.
-..bbbb..
-.b....b.
-b......b
 ........
-........
-........
-........
-........
-........
+g......g
+gg....gg
+ggg..ggg
+ggg..ggg
+ggg..ggg
+gsg..gsg
+ggg..ggg
+ggg..ggg
+ggg..ggg
+ggs..sgg
+ggs..sgg
+ggs..sgg
+gs....sg
+ss....ss
+s......s
+
 
 
 
 
 [lanmola_body]
-..bbbb..
-.bggggb.
-bggggggb
-bggssggb
-bggssggb
-bggggggb
-.bggggb.
-..bbbb..
+...gg...
+...gg...
+...gg...
+..gggg..
+..gggg..
+..gggg..
+..gggg..
+..gggg..
+...gg...
+..g..g..
+..gggg..
+g.gggg.g
+.gbggbg.
+.gbggbg.
+.gbggbg.
 ........
-........
-........
-........
-........
-........
-........
-........
+
 
 
 
@@ -1386,53 +1459,55 @@ bggggggb
 # 25. AQUAMENTUS (Dragon cornu à crachat triple)
 # ---------------------------------------------------------------------------
 [aquamentus_0] pad 0 0
-b......g.gg.
-b.....bbggg.
-.bbb.bbgggb.
-.bgb.bbgggb.
-gggg.bbggggb
-gggg.bbggggb
-gggg.bbgbgg.
-b.b..sbgsgb.
-.......gsgb.
-.......gbg..
-...b..ggggb.
-....ggggsggg
-....gggggggg
-....gggggggg
-....gggggggg
-....gggggggg
-....gggggggg
-....gbbbbggg
-..g.gbbbbggg
-..bggg..gggs
-b.bgg....ss.
+b....gg.....
+b...ggg.....
+.bgggg......
+.bbbggb.....
+.bgbggb.....
+.gggggg.....
+gggggggb....
+gggggggb....
+gggggggb....
+gg.gbgg.....
+bg..sgb.....
+b...bgbb..g.
+....sgb...bg
+....bg....bg
+...sggb....g
+...bggb.b.bg
+............
+............
+............
+............
+............
+
 
 
 
 
 [aquamentus_1] pad 0 0
-b......g.gg.
-b.....bgggg.
-.bbb.bbgggb.
-.bgb.sggggb.
-gggg.bbggggb
-gggg.sgggggb
-gg.g.bggbgg.
-bg....ggsgb.
-.....gggsgb.
-.....gggbg..
-...b..ssggb.
-....ggggsggg
-....ggggssgg
-....ggggssss
-....gggggggg
-....gggggggg
-....gggggggg
-....gbbbgggg
-..g.bbbbgggg
-..bgs...ggg.
-b.bgs..gggg.
+b....gg.....
+b...ggg.....
+.bgggg......
+.bbbggb.....
+.bgbggb.....
+.gggggg.....
+gggggggb....
+gggggggb....
+gggggggb....
+gg.gbgg.....
+bg..sgb.....
+b...bgbb..g.
+....sgb...bg
+....bg....bg
+...sggb....g
+...bggb.b.bg
+............
+............
+............
+............
+............
+
 
 
 
@@ -1441,43 +1516,45 @@ b.bgs..gggg.
 # 26. DODONGO (Dinosaure blindé mangeur de bombes)
 # ---------------------------------------------------------------------------
 [dodongo_0]
-..gggg..
-.gggggg.
-.gssssg.
-.gsbbsg.
-.gssssg.
-gggggggg
-gggggggg
-gggggggg
-gggggggg
-.bbbbbb.
-.gg..gg.
-.gg..gg.
-.gg..gg.
-.bb..bb.
-.bb..bb.
 ........
+........
+.......g
+.....ggg
+....gggs
+...ggggs
+..gggggg
+..gggggg
+.ggggggg
+.ggggggg
+.ggggggg
+.ggggggg
+gggggggg
+ggggggsg
+ggggsssg
+gsggs...
+
 
 
 
 
 [dodongo_1]
-..gggg..
-.gggggg.
-.gssssg.
-.gsbbsg.
-.gssssg.
-gggggggg
-gggggggg
-gggggggg
-gggggggg
-.bbbbbb.
-..gggg..
-..gggg..
-.gg..gg.
-.bb..bb.
-..b..b..
 ........
+.......g
+.....ggg
+....gggs
+...ggggs
+..gggggg
+..gggggg
+..gggggg
+.ggggggg
+.ggggggg
+.ggggggg
+gggggggg
+gggggssg
+ggsggbbg
+gs.ggssg
+....sss.
+
 
 
 
@@ -1486,43 +1563,45 @@ gggggggg
 # 27. MANHANDLA (Plante carnivore géante à 4 mâchoires)
 # ---------------------------------------------------------------------------
 [manhandla_core]
-..bbbb..
-.bggggb.
-bggggggb
-bggssggb
-bggssggb
-bggggggb
-.bggggb.
-..bbbb..
-........
-........
-........
-........
-........
-........
-........
-........
+....sbbg
+....sbbs
+....sbss
+....bssb
+..bbbssb
+..bbbbsb
+..sssbbg
+.sbsssbs
+sssssbbg
+sssssbbg
+sbsssggg
+sbbsgggg
+sbbsgggg
+ssssgggg
+sssggggg
+sbbggggg
+
 
 
 
 
 [manhandla_jaw]
-.g....g.
-.gg..gg.
-gssssssg
-gssbbssg
-gssbbssg
-gssssssg
-.gggggg.
-..bbbb..
-........
-........
-........
-........
-........
-........
-........
-........
+....b...
+....bb..
+....bbbb
+.....bbb
+.....bbb
+......bb
+......bb
+b....ssb
+.ssssgss
+.ssssgss
+.ssssgss
+gsssssgs
+gssssggs
+gsssssgs
+sgssssgg
+sgsssbbb
+
 
 
 
@@ -1531,22 +1610,23 @@ gssssssg
 # 28. GLEEOK (Hydre draconique multi-têtes)
 # ---------------------------------------------------------------------------
 [gleeok_0]
-.ssssss.
-.ssssss.
-.ssssss.
-gssssssg
-gssssssg
-gssssssg
-sgssssgs
-sgssssgs
-sgssssgs
-sgssssgs
-sgssssgs
-ssgssgss
-sggssggs
-ssgssgss
-ssggggss
-sbbbbbbs
+g...ggg.
+bg..ggsg
+bg..ggsg
+sg..ggsg
+sg..ggsg
+gg..gssg
+gg..gssg
+gg.bgsgg
+gg.bgggg
+g.bbgsss
+bbbbgbbb
+bbb.gggg
+bbb.gggg
+bb..gsgg
+bbg.....
+bgg.....
+
 
 
 
@@ -1554,20 +1634,21 @@ sbbbbbbs
 [gleeok_1]
 ........
 ........
-........
-........
-........
-........
-........
-b......b
-b......b
-bb....bb
-bbbbbbbb
-.bbbbbb.
+.....b..
+....sbbg
+b...ssgb
+bb..sgbb
+bb..ggbb
+.bb.gbb.
+.bb.gbb.
+.bb.gbb.
 .bbbbbb.
 ..bbbb..
 ..bbbb..
-.ssbbss.
+..bbbb..
+..ssggg.
+.sssggg.
+
 
 
 
@@ -1576,22 +1657,23 @@ bbbbbbbb
 # 29. DIGDOGGER (Oursin géant sensible à la flûte)
 # ---------------------------------------------------------------------------
 [digdogger]
-ssssssss
-ssssssss
-sbssssbs
-sbbssbbs
-sbbssbbs
-ssssssss
-sssggsss
-sbbggbbs
-sbbggbbs
-sbbggbbs
-sggggggs
+..gggg..
+.gggggg.
+.gsggsg.
+.ggssgg.
+gggggggg
+gggggggg
+gggbbggg
+sggbbggs
+ggbggbgg
+ggbbbbgg
+gggbbggg
+gggbbggg
 gggggggg
 gggggggg
 gggggggg
-gggggggg
-gggggggg
+gbbggbbg
+
 
 
 
@@ -1600,43 +1682,45 @@ gggggggg
 # 30. GOHMA (Arachnide cuirassé à l'œil vulnérable aux flèches)
 # ---------------------------------------------------------------------------
 [gohma_closed]
-........
-..b..b..
-..b..b..
-..b..b..
-..b..b..
-..b..b..
-..bbbb..
-..bbbb..
-..bbbb..
-..bbbb..
-..bbbb..
-..bbbb..
-..sbbs..
-..ssss..
-..ssss..
-.ssssss.
+....sbbg
+....sbbg
+.bb.sbbg
+bbbbsssg
+bbbbssgg
+bsgb.sg.
+bsgb....
+bssb....
+sbbg.sg.
+sbbg.sg.
+ssgg.sg.
+ssgg.sg.
+bsgb.sg.
+bbbbsssg
+ssggsbbg
+ssgg.sg.
+
 
 
 
 
 [gohma_open]
-........
-........
-........
-........
-..bbbb..
-..bbbb..
-..ssss..
-.sbssbs.
-sbbggbbs
-sbbssbbs
-sbssssbs
-bssbbssb
-bssbbssb
-bbsbbsbb
-sbbggbbs
-ssbssbss
+.gsb.ggs
+.gsb.ggs
+gggs..gs
+gggs.ggs
+.gbs..gs
+.gbb..gs
+.gss..sb
+.ggs...s
+..gg..gg
+.ggg.ggg
+.ggg.ggg
+gsssgggg
+.sssgggg
+.sss.ggg
+..ss.ggg
+..sg..gg
+
 
 
 
@@ -1645,22 +1729,23 @@ ssbssbss
 # 31. PATRA (Boss œil volant et yeux orbitaux)
 # ---------------------------------------------------------------------------
 [patra_center]
-...bb...
-........
-........
-........
-........
-...ss...
-..ssss..
-..ssss..
-.ssssss.
-.ssggss.
-.sggggs.
-.gggggg.
-.gggggg.
+gg....gg
+ggg..ggg
+ggg..ggg
+gggggggg
+sggggggs
+ssggggss
 gggggggg
 gggggggg
 gggggggg
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+ggg..ggg
+ggg..ggg
+gg....gg
+
 
 
 
@@ -1668,20 +1753,21 @@ gggggggg
 [patra_orb]
 ........
 ........
-...gg...
-...gg...
-...gg...
-........
-........
-........
-........
-...ss...
-...ss...
-..ssss..
-..ssss..
-.ssssss.
-.ssssss.
+..gggg..
 .ggssgg.
+.gggggg.
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+.gggggg.
+.gggggg.
+..gggg..
+........
+........
+
 
 
 
@@ -1690,53 +1776,45 @@ gggggggg
 # 32. GANON (Seigneur Démon Cochon - Boss Final)
 # ---------------------------------------------------------------------------
 [ganon_0] pad 0 0
-.bb......bb.
-.bgb....bgb.
-bbggbbbbggbb
-bggggggggggb
-bgsbbsgssbgb
-bgsbbsgssbgb
-bggggssssggb
-bgggsssssggb
-bbggggggggbb
-.bggggggggb.
-bssssssssssb
-bssssssssssb
-bggggggggggb
-bggggggggggb
-bbbbbbbbbbbb
-.bssssssssb.
-.bggggggggb.
-.bggggggggb.
-.bbbb..bbbb.
-..bb....bb..
-............
+........
+........
+...ggg..
+...ggg.s
+...ggggg
+....gggb
+....gggb
+.....gsg
+....ssbs
+...sssgb
+...sssbb
+..sssgbb
+..sssgbb
+.ssssgbb
+.ssssggs
+.ggssggs
+
 
 
 
 
 [ganon_1] pad 0 0
-.bb......bb.
-.bgb....bgb.
-bbggbbbbggbb
-bggggggggggb
-bgsbbsgssbgb
-bgsbbsgssbgb
-bggggssssggb
-bgggsssssggb
-bbggggggggbb
-.bggggggggb.
-bssssssssssb
-bssssssssssb
-bggggggggggb
-bggggggggggb
-bbbbbbbbbbbb
-.bssssssssb.
-.bggggggggb.
-.bggggggggb.
-..bbbbbbbb..
-...bb..bb...
-............
+....g...
+....g...
+....ggss
+....ggss
+....gggg
+...sgggb
+...ssgsb
+..sssgbg
+..sssgbb
+.ssssggb
+.bbssggb
+.bggggbb
+..ggggbb
+.gggggbb
+.ggggggs
+.ggggggs
+
 
 
 
@@ -1822,4 +1900,381 @@ ssssssssss
 
 
 
+
+
+# ---------------------------------------------------------------------------
+# NOUVEAUX SPRITES COMPOSITES ET MULTI-PARTS EXTRAITS NES
+# ---------------------------------------------------------------------------
+[darknut_down_0]
+...bb...
+..sbbs..
+..gbbg..
+..gggg..
+..gggg..
+..gbbg..
+..bbbb..
+.sggggs.
+.sggggs.
+.ssggss.
+.sgssgs.
+ssggggss
+ssggggss
+ssssssss
+...ss...
+...ss...
+
+[darknut_down_1]
+........
+...bb...
+..sbbs..
+..gbbg..
+..gggg..
+..gggg..
+..gbbg..
+..bbbb..
+.sggggs.
+.sggggs.
+.ssggss.
+ssgssgss
+ssggggss
+.sggggs.
+.ss..ss.
+.ssssss.
+
+[darknut_up_0]
+ss....ss
+gg....gg
+gg....gg
+gs....sg
+gg....gg
+ggg..ggg
+bsg..gsb
+ssg..gss
+sbbbbbbs
+sbbbbbbs
+sbbbbbbs
+ggg..ggg
+g.g..g.g
+s.g..g.s
+s......s
+ss....ss
+
+[darknut_up_1]
+........
+ss....ss
+gg....gg
+gg....gg
+gs....sg
+ggg..ggg
+ggg..ggg
+bsg..gsb
+ssg..gss
+sbbbbbbs
+sbbbbbbs
+sbbbbbbs
+ggg..ggg
+gss..ssg
+ss....ss
+ss....ss
+
+[darknut_left_0]
+...bss..
+..sbgg..
+..gbgg..
+..gggs..
+..gggg..
+..gbggg.
+..bbbsg.
+.sggssg.
+.sggsbbb
+.ssgsbbb
+.sgssbbb
+ssggggg.
+ssggg.g.
+sssss.g.
+...ss...
+...sss..
+
+[darknut_left_1]
+........
+...bss..
+..sbgg..
+..gbgg..
+..gggs..
+..ggggg.
+..gbggg.
+..bbbsg.
+.sggssg.
+.sggsbbb
+.ssgsbbb
+ssgssbbb
+ssggggg.
+.sgggss.
+.ss.ss..
+.sssss..
+
+[darknut_right_0] mirror darknut_left_0
+[darknut_right_1] mirror darknut_left_1
+
+[aquamentus_bot_0] pad 0 0
+...gggbsssss
+..bbggggsggg
+..sggggggggg
+.bbggggggggg
+.bbggggggggg
+.sgggggggggg
+.bbggggggggg
+.bbggggggggg
+.sgggggggggg
+.bbggbgggggg
+.sbggbbbbggg
+.sbggbbbbggg
+...ggg..gggs
+...ggg..gggs
+..gggg...sss
+..ggg....ss.
+............
+............
+............
+............
+............
+
+[aquamentus_bot_1] pad 0 0
+...gggbbbbbg
+..bgggggsggg
+..sgggggssgg
+.bbggggssssg
+.sggggggssss
+.bbggggggggg
+.bbggggggggg
+.sgggggggggg
+.bbggggggggg
+.bgggbgggggg
+..gggbbbgggg
+..ggbbbbgggg
+.gggg...ggg.
+.gggs...ggg.
+..sss..gggg.
+..sss..gggg.
+............
+............
+............
+............
+............
+
+[dodongo_back_0]
+........
+gg......
+ggg.....
+gggb....
+ggsb.b..
+gggg.b..
+ggbgbb..
+ggbggb..
+ggbbgg..
+gggggg..
+gggggs..
+ggggs...
+ggggg...
+gggggg..
+gssgg...
+sss.....
+
+[dodongo_back_1]
+gg......
+ggg.....
+gggb....
+ggsb.b..
+gggg.b..
+ggbgbb..
+ggbggb..
+ggbbgg..
+gggggg..
+ggggbg..
+ggggbs..
+gggggg..
+ggggg...
+ggss....
+ggss....
+gg......
+
+[dodongo_bloated_f]
+....ggg.
+...ggggg
+..gggggg
+..gggggg
+.ggggggg
+.ggggggg
+.ggggggg
+.ggggggg
+gggggggg
+gggggggg
+gggggggs
+gggggggs
+gggggggs
+gsggsssb
+gsggbbbb
+s....bbb
+
+[dodongo_bloated_b]
+gg......
+gggbb.b.
+ggs.bbb.
+gggg.b..
+ggbb.b..
+ggbbg...
+ggbbgs..
+ggbbgg..
+ggggss.b
+sgggs.bb
+gsgggg.b
+ggggg...
+gggg....
+bgg.....
+.g......
+........
+
+[ganon_tl_0]
+........
+........
+...ggg..
+...ggg.s
+...ggggg
+....gggb
+....gggb
+.....gsg
+....ssbs
+...sssgb
+...sssbb
+..sssgbb
+..sssgbb
+.ssssgbb
+.ssssggs
+.ggssggs
+
+[ganon_tr_0]
+...bg...
+....g...
+....gg..
+....ggss
+....gggg
+...sgggb
+..ssggsb
+..sssgsg
+.ssssgbb
+.ssggsgg
+.sgggggb
+.ggggggb
+.ggggggb
+gggggggg
+gggggggg
+gggggggg
+
+[ganon_bl_0]
+.gggsggs
+.gggssgg
+.ggggsss
+.ggggsbb
+.ggggsbb
+.ggggsbb
+.ggggsbb
+.ggggsgb
+.ggggggg
+.ggggggg
+.ggggggg
+.ggggggg
+.ggggggg
+gggggggg
+gggggggg
+gg.ggggg
+
+[ganon_br_0]
+ggggsggg
+.ggsssgg
+...sssss
+...ssssb
+...ssgbs
+...ssgbb
+...gggbb
+..gggggb
+..gggggg
+..gggggg
+.ggggggg
+.sgggggg
+.ssgggsg
+sbssg.ss
+sssss.ss
+sssss..s
+
+[ganon_tl_1]
+....g...
+....g...
+....ggss
+....ggss
+....gggg
+...sgggb
+...ssgsb
+..sssgbg
+..sssgbb
+.ssssggb
+.bbssggb
+.bggggbb
+..ggggbb
+.gggggbb
+.ggggggs
+.ggggggs
+
+[ganon_tr_1]
+.ggggssg
+.ggggssg
+.ggggsss
+gggggsbb
+gggggggb
+ggggggsb
+gggggggb
+gggggggb
+gggsgggb
+sggggggg
+ssgggggg
+sssggsgg
+.sssgggg
+sbsssggg
+sssssggg
+sssss...
+
+[ganon_bl_1]
+...ggggg
+....gggb
+.....gsb
+.....gbg
+....sgbb
+...ssggb
+..sssggb
+.sssggbb
+.sssggbb
+.gsssgbb
+.ggssggs
+.gggsggs
+ggggsssg
+ggggssss
+ggggssss
+ggggssbb
+
+[ganon_br_1]
+ggggssbb
+ggggssbb
+gggggsbb
+gggggggb
+gggggggb
+gggggggg
+gggggggg
+gggggggg
+gggggggg
+gggsgggg
+gggsgggg
+.ggsssgg
+...sssss
+....ssss
+..ssssss
+..ssssss
 

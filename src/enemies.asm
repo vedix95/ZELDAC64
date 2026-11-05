@@ -98,6 +98,12 @@ en_global_frame:        !byte 0
 en_cand_x:              !word 0
 en_cand_y:              !byte 0
 en_step_px:             !byte 0
+boss_draw_col:          !byte 0
+boss_base_x:            !byte 0
+boss_base_msb:          !byte 0
+boss_base_y:            !byte 0
+boss_tmp_f:             !byte 0
+boss_tmp_b:             !byte 0
 
 ; Invulnérabilité et clignotement de Link
 player_hurt_timer:      !byte 0
@@ -107,22 +113,9 @@ rand_seed:              !byte $a5
 
 
 ; ---------------------------------------------------------------------------
-; Tables statistiques des 45 types d'ennemis Zelda (1986)
+; Tables statistiques des 45 types d'ennemis Zelda (1986) logees sous $2000
+; (voir src/main.asm : en_base_hp, en_base_damage, en_base_color, en_ai_type, en_proj_type_tbl)
 ; ---------------------------------------------------------------------------
-en_base_hp:
-        !byte 0, 1, 2, 2, 3, 1, 1, 2, 4, 2, 3, 9, 2, 4, 6, 1, 1, 2, 1, 1, 2, 3, 5, 4, 8, 5, 10, 2, 9, 10, 6, 4, 255, 255, 2, 4, 6, 8, 8, 8, 8, 2, 4, 10, 16
-
-en_base_damage:
-        !byte 0, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 2, 1, 4, 4, 1, 1, 2, 1, 1, 1, 1, 2, 2, 4, 2, 4, 1, 2, 2, 2, 2, 0, 2, 2, 4, 1, 2, 2, 2, 2, 2, 2, 2, 4
-
-en_base_color:
-        !byte COL_BLACK, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_BROWN, COL_CYAN, COL_GREEN, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_GREY, COL_WHITE, COL_ORANGE, COL_WHITE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_LRED, COL_ORANGE, COL_WHITE, COL_LGREY, COL_BLUE, COL_PURPLE, COL_GREY, COL_RED, COL_BLUE, COL_GREEN, COL_BROWN, COL_GREEN, COL_GREEN, COL_ORANGE, COL_RED, COL_BLUE, COL_ORANGE, COL_PURPLE
-
-en_ai_type:
-        !byte AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_HOP, AI_HOP, AI_BURROW, AI_BURROW, AI_FLY, AI_STATUE, AI_FLY, AI_WATER, AI_ROAM, AI_ROAM, AI_FLY, AI_FLY, AI_SLIME, AI_SLIME, AI_RUSH, AI_ROAM, AI_ROAM, AI_ROAM, AI_SHIELD, AI_SHIELD, AI_TELEPORT, AI_TELEPORT, AI_ROAM, AI_ROAM, AI_HOP, AI_ROAM, AI_FLY, AI_FLY, AI_RUSH, AI_ROAM, AI_ROAM, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_FLY, AI_BOSS
-
-en_proj_type_tbl:
-        !byte PROJ_NONE, PROJ_ROCK, PROJ_ROCK, PROJ_SPEAR, PROJ_SPEAR, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_BOOMERANG, PROJ_BOOMERANG, PROJ_NONE, PROJ_NONE, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL
 
 en_sprite_tbl_lo:
         !byte <none_ptrs, <octo_ptrs, <octo_ptrs, <moblin_ptrs, <moblin_ptrs, <tektite_ptrs, <tektite_ptrs, <leever_ptrs, <leever_ptrs, <peahat_ptrs, <armos_ptrs, <ghini_ptrs, <zora_ptrs, <lynel_ptrs, <lynel_ptrs, <keese_ptrs, <keese_ptrs, <zol_ptrs, <gel_ptrs, <rope_ptrs, <stalfos_ptrs, <goriya_ptrs, <goriya_ptrs, <darknut_ptrs, <darknut_ptrs, <wizzrobe_ptrs, <wizzrobe_ptrs, <wallmaster_ptrs, <likelike_ptrs, <polsvoice_ptrs, <gibdo_ptrs, <vire_ptrs, <bubble_ptrs, <trap_ptrs, <lanmola_ptrs, <lanmola_ptrs, <aquamentus_ptrs, <dodongo_ptrs, <manhandla_ptrs, <gleeok_ptrs, <digdogger_ptrs, <gohma_ptrs, <gohma_ptrs, <patra_ptrs, <ganon_ptrs
@@ -224,10 +217,10 @@ goriya_ptrs:
         !byte SPR_DUNG_GORIYA_RIGHT_0, SPR_DUNG_GORIYA_RIGHT_1
 
 darknut_ptrs:
-        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
-        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
-        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
-        !byte SPR_DUNG_DARKNUT_0, SPR_DUNG_DARKNUT_1
+        !byte SPR_DUNG_DARKNUT_DOWN_0, SPR_DUNG_DARKNUT_DOWN_1
+        !byte SPR_DUNG_DARKNUT_UP_0, SPR_DUNG_DARKNUT_UP_1
+        !byte SPR_DUNG_DARKNUT_LEFT_0, SPR_DUNG_DARKNUT_LEFT_1
+        !byte SPR_DUNG_DARKNUT_RIGHT_0, SPR_DUNG_DARKNUT_RIGHT_1
 
 wizzrobe_ptrs:
         !byte SPR_DUNG_WIZZROBE_0, SPR_DUNG_WIZZROBE_1
@@ -3507,6 +3500,13 @@ irq_bottom:
 ; ---------------------------------------------------------------------------
 apply_top_sprites:
         ldx sort_idx+0
+        lda en_state,x
+        beq .top_standard
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        bcc .top_standard
+        jmp draw_boss_assembled
+.top_standard:
         jsr draw_virtual_to_spr3
         ldx sort_idx+1
         jsr draw_virtual_to_spr4
@@ -3531,6 +3531,268 @@ apply_bottom_sprites:
         rts
 
 ; ---------------------------------------------------------------------------
+; draw_boss_assembled : affichage multi-sprites haute fidélité pour les boss
+; Entrée : X = sort_idx+0
+; ---------------------------------------------------------------------------
+draw_boss_assembled:
+        lda #0
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+
+        txa
+        asl
+        tay
+        lda en_x,y
+        sta boss_base_x
+        lda en_y,x
+        sta boss_base_y
+
+        lda en_state,x
+        cmp #EN_STATE_DYING
+        beq .boss_dying
+        cmp #EN_STATE_HURT
+        beq .boss_hurt
+        ldy en_type,x
+        lda en_base_color,y
+        sta boss_draw_col
+        jmp .drw_dispatch
+.boss_hurt:
+        lda #COL_WHITE
+        sta boss_draw_col
+
+.drw_dispatch:
+        lda en_type,x
+        cmp #TYPE_AQUAMENTUS
+        beq .drw_aquamentus
+        cmp #TYPE_DODONGO
+        bne +
+        jmp .drw_dodongo
++       cmp #TYPE_GANON
+        bne +
+        jmp .drw_ganon
++       cmp #TYPE_MANHANDLA
+        bne +
+        jmp .drw_manhandla
++
+
+        ; Boss standard (Gohma, Gleeok, Digdogger, Patra)
+        jsr get_enemy_sprite_and_color
+        sta SPRITE_PTR3
+.drw_single_exit:
+        lda boss_base_x
+        sta VIC_SPRITE_X3
+        lda boss_base_y
+        sta VIC_SPRITE_Y3
+        lda boss_draw_col
+        sta VIC_SPRITE_COL3
+        lda VIC_SPRITE_EN
+        ora #%00001000
+        and #%10001111          ; désactive 4, 5, 6
+        sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MC
+        ora #%00001000
+        sta VIC_SPRITE_MC
+        rts
+
+.boss_dying:
+        lda en_timer,x
+        cmp #8
+        lda #SPR_COMMON_DEATH_0
+        bcs +
+        lda #SPR_COMMON_DEATH_1
++       sta SPRITE_PTR3
+        lda #COL_WHITE
+        sta boss_draw_col
+        jmp .drw_single_exit
+
+.drw_aquamentus:
+        lda #SPR_DUNG_AQUAMENTUS_0
+        sta SPRITE_PTR3
+        lda #SPR_DUNG_AQUAMENTUS_BOT_0
+        sta SPRITE_PTR4
+        lda en_anim,x
+        and #1
+        beq +
+        inc SPRITE_PTR3         ; SPR_DUNG_AQUAMENTUS_1
+        inc SPRITE_PTR4         ; SPR_DUNG_AQUAMENTUS_BOT_1
++       lda boss_base_x
+        sta VIC_SPRITE_X3
+        sta VIC_SPRITE_X4
+        lda boss_base_y
+        sta VIC_SPRITE_Y3
+        clc
+        adc #16
+        sta VIC_SPRITE_Y4
+        lda boss_draw_col
+        sta VIC_SPRITE_COL3
+        sta VIC_SPRITE_COL4
+        jmp .drw_spr34_exit
+
+.drw_dodongo:
+        lda #SPR_DUNG_DODONGO_0
+        sta boss_tmp_f
+        lda #SPR_DUNG_DODONGO_BACK_0
+        sta boss_tmp_b
+        lda en_state,x
+        cmp #EN_STATE_HURT
+        bne +
+        lda #SPR_DUNG_DODONGO_BLOATED_F
+        sta boss_tmp_f
+        lda #SPR_DUNG_DODONGO_BLOATED_B
+        sta boss_tmp_b
+        jmp ++
++       lda en_anim,x
+        and #1
+        beq ++
+        inc boss_tmp_f          ; DODONGO_1
+        inc boss_tmp_b          ; DODONGO_BACK_1
+++      lda boss_tmp_f
+        sta SPRITE_PTR3
+        lda boss_tmp_b
+        sta SPRITE_PTR4
+        lda boss_base_x
+        sta VIC_SPRITE_X3
+        clc
+        adc #16
+        sta VIC_SPRITE_X4
+        lda en_dir,x
+        cmp #DIR_RIGHT
+        bne +
+        lda boss_tmp_b
+        sta SPRITE_PTR3
+        lda boss_tmp_f
+        sta SPRITE_PTR4
++       lda boss_base_y
+        sta VIC_SPRITE_Y3
+        sta VIC_SPRITE_Y4
+        lda boss_draw_col
+        sta VIC_SPRITE_COL3
+        sta VIC_SPRITE_COL4
+
+        ; Deuxième Dodongo éventuel (Dungeon 8)
+        ldx sort_idx+1
+        lda en_state,x
+        beq .drw_spr34_exit
+        lda en_type,x
+        cmp #TYPE_DODONGO
+        bne .drw_spr34_exit
+        txa
+        asl
+        tay
+        lda #SPR_DUNG_DODONGO_0
+        sta SPRITE_PTR5
+        lda #SPR_DUNG_DODONGO_BACK_0
+        sta SPRITE_PTR6
+        lda en_x,y
+        sta VIC_SPRITE_X5
+        clc
+        adc #16
+        sta VIC_SPRITE_X6
+        lda en_y,x
+        sta VIC_SPRITE_Y5
+        sta VIC_SPRITE_Y6
+        lda #COL_ORANGE
+        sta VIC_SPRITE_COL5
+        sta VIC_SPRITE_COL6
+        lda VIC_SPRITE_EN
+        ora #%01111000
+        sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MC
+        ora #%01111000
+        sta VIC_SPRITE_MC
+        rts
+
+.drw_spr34_exit:
+        lda VIC_SPRITE_EN
+        ora #%00011000
+        and #%10011111          ; éteint 5 & 6
+        sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MC
+        ora #%00011000
+        sta VIC_SPRITE_MC
+        rts
+
+.drw_ganon:
+        lda #SPR_DUNG_GANON_TL_0
+        ldy en_anim,x
+        tya
+        and #1
+        beq +
+        lda #SPR_DUNG_GANON_TL_1
++       sta SPRITE_PTR3
+        clc
+        adc #1
+        sta SPRITE_PTR4
+        adc #1
+        sta SPRITE_PTR5
+        adc #1
+        sta SPRITE_PTR6
+
+        lda boss_base_x
+        sta VIC_SPRITE_X3
+        sta VIC_SPRITE_X5
+        clc
+        adc #16
+        sta VIC_SPRITE_X4
+        sta VIC_SPRITE_X6
+
+        lda boss_base_y
+        sta VIC_SPRITE_Y3
+        sta VIC_SPRITE_Y4
+        clc
+        adc #16
+        sta VIC_SPRITE_Y5
+        sta VIC_SPRITE_Y6
+
+        lda boss_draw_col
+        sta VIC_SPRITE_COL3
+        sta VIC_SPRITE_COL4
+        sta VIC_SPRITE_COL5
+        sta VIC_SPRITE_COL6
+.drw_all4_exit:
+        lda VIC_SPRITE_EN
+        ora #%01111000
+        sta VIC_SPRITE_EN
+        lda VIC_SPRITE_MC
+        ora #%01111000
+        sta VIC_SPRITE_MC
+        rts
+
+.drw_manhandla:
+        lda #SPR_DUNG_MANHANDLA_CORE
+        sta SPRITE_PTR3
+        lda #SPR_DUNG_MANHANDLA_JAW
+        sta SPRITE_PTR4
+        sta SPRITE_PTR5
+        sta SPRITE_PTR6
+
+        lda boss_base_x
+        sta VIC_SPRITE_X3
+        sta VIC_SPRITE_X4
+        sta VIC_SPRITE_X5
+        clc
+        adc #14
+        sta VIC_SPRITE_X6
+
+        lda boss_base_y
+        sta VIC_SPRITE_Y3
+        sta VIC_SPRITE_Y6
+        sec
+        sbc #14
+        sta VIC_SPRITE_Y4
+        clc
+        lda boss_base_y
+        adc #14
+        sta VIC_SPRITE_Y5
+
+        lda boss_draw_col
+        sta VIC_SPRITE_COL3
+        sta VIC_SPRITE_COL4
+        sta VIC_SPRITE_COL5
+        sta VIC_SPRITE_COL6
+        jmp .drw_all4_exit
+
+; ---------------------------------------------------------------------------
 ; draw_virtual_to_spr3..6 : configure un sprite physique VIC-II
 ; Entrée : X = index virtuel ennemi (0..7)
 ; ---------------------------------------------------------------------------
@@ -3550,12 +3812,6 @@ draw_virtual_to_spr3:
         lda VIC_SPRITE_EN
         and #%11110111
         sta VIC_SPRITE_EN
-        lda VIC_SPRITE_EXP_X
-        and #%11110111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11110111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 .s3_draw:
@@ -3615,23 +3871,6 @@ draw_virtual_to_spr3:
         lda VIC_SPRITE_MC
         ora #%00001000
         sta VIC_SPRITE_MC
-        lda en_type,x
-        cmp #TYPE_AQUAMENTUS
-        bcc .s3_no_exp
-        lda VIC_SPRITE_EXP_X
-        ora #%00001000
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        ora #%00001000
-        sta VIC_SPRITE_EXP_Y
-        rts
-.s3_no_exp:
-        lda VIC_SPRITE_EXP_X
-        and #%11110111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11110111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 draw_virtual_to_spr4:
@@ -3650,12 +3889,6 @@ draw_virtual_to_spr4:
         lda VIC_SPRITE_EN
         and #%11101111
         sta VIC_SPRITE_EN
-        lda VIC_SPRITE_EXP_X
-        and #%11101111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11101111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 .s4_draw:
@@ -3715,23 +3948,6 @@ draw_virtual_to_spr4:
         lda VIC_SPRITE_MC
         ora #%00010000
         sta VIC_SPRITE_MC
-        lda en_type,x
-        cmp #TYPE_AQUAMENTUS
-        bcc .s4_no_exp
-        lda VIC_SPRITE_EXP_X
-        ora #%00010000
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        ora #%00010000
-        sta VIC_SPRITE_EXP_Y
-        rts
-.s4_no_exp:
-        lda VIC_SPRITE_EXP_X
-        and #%11101111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11101111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 draw_virtual_to_spr5:
@@ -3750,12 +3966,6 @@ draw_virtual_to_spr5:
         lda VIC_SPRITE_EN
         and #%11011111
         sta VIC_SPRITE_EN
-        lda VIC_SPRITE_EXP_X
-        and #%11011111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11011111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 .s5_draw:
@@ -3815,23 +4025,6 @@ draw_virtual_to_spr5:
         lda VIC_SPRITE_MC
         ora #%00100000
         sta VIC_SPRITE_MC
-        lda en_type,x
-        cmp #TYPE_AQUAMENTUS
-        bcc .s5_no_exp
-        lda VIC_SPRITE_EXP_X
-        ora #%00100000
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        ora #%00100000
-        sta VIC_SPRITE_EXP_Y
-        rts
-.s5_no_exp:
-        lda VIC_SPRITE_EXP_X
-        and #%11011111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11011111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 draw_virtual_to_spr6:
@@ -3850,12 +4043,6 @@ draw_virtual_to_spr6:
         lda VIC_SPRITE_EN
         and #%10111111
         sta VIC_SPRITE_EN
-        lda VIC_SPRITE_EXP_X
-        and #%10111111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%10111111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 .s6_draw:
@@ -3915,23 +4102,6 @@ draw_virtual_to_spr6:
         lda VIC_SPRITE_MC
         ora #%01000000
         sta VIC_SPRITE_MC
-        lda en_type,x
-        cmp #TYPE_AQUAMENTUS
-        bcc .s6_no_exp
-        lda VIC_SPRITE_EXP_X
-        ora #%01000000
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        ora #%01000000
-        sta VIC_SPRITE_EXP_Y
-        rts
-.s6_no_exp:
-        lda VIC_SPRITE_EXP_X
-        and #%10111111
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%10111111
-        sta VIC_SPRITE_EXP_Y
         rts
 
 ; ---------------------------------------------------------------------------
