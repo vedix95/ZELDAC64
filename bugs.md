@@ -506,6 +506,34 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
      - Atlas mis à jour (125 sprites ennemis exportés dans `sheet_sprites_enemies.png` et `atlas_all_assets.png`).
      - Validation des 16 scénarios d'Overworld via `tools/capture_ow_enemies.py`.
 
+### [2026-11-05] Anomalie 15 : Sprite de l'Octorok en Overworld ressemblant au Chevalier (Armos Knight) & Décalage des Tuiles CHR du Bloc 'ow'
+* **Symptômes** :
+  - Dans l'Overworld, l'Octorok affichait le corps et le bouclier d'un chevalier (Armos Knight) plutôt que le sprite authentique du poulpe cracheur de rochers.
+* **Causes racines** :
+  1. **Décalage d'Indexation dans les 114 Tuiles CHR du Bloc 'ow' NES** :
+     - Dans `tools/extract_all_nes_sprites.py`, l'extraction de l'Octorok ciblait à tort les tuiles 2 et 18 du bloc `Tiles_S_Surface` (`$915B`). Or, les tuiles 18..33 correspondent à l'Armos Knight (statue de chevalier avec heaume et grand bouclier), tandis que le véritable Octorok commence à la tuile 34 (`$937B`) jusqu'à la tuile 45 (`$942B`).
+  2. **Palette Multicolore C64 non Adaptée au Changement de Teinte (Rouge/Bleu)** :
+     - La couleur 1 de la ROM NES (corps de l'Octorok) était convertie en `s` (MC1 partagé `$D025`) au lieu de `g` (couleur propre `$D027..$D02E`), empêchant le corps de virer au bleu pour les Octoroks Bleus.
+* **Correctif appliqué** :
+  1. **Audit des Appels et Pointers Mémoire C64** :
+     - Vérification de la chaîne complète : `octo_ptrs` ($A0..$A7), `get_enemy_sprite_and_color`, `en_sprite_tbl_lo/hi`, `cart_load_sprites_ow` ($2800..$3FFF). Tous les appels mémoire et registres VIC-II sont conformes.
+  2. **Extraction Authentique 1:1 des 114 Tuiles CHR du Bloc 'ow'** :
+     - Octorok : Tuiles 34..45 (Face 34/35 & 36/37, Dos vflip, Profils 38..45, Rocher 47 centré).
+     - Moblin : Tuiles 98..113 (Face 106..109, Dos 110..113, Profils 98..105).
+     - Tektite : Tuiles 6..9 (Sol 6/7, Saut 8/9).
+     - Leever : Tuiles 52..55 (Toupie tournoyante).
+     - Peahat : Tuiles 56..63 (Atterrissage et rotation des pales).
+     - Armos : Tuiles 18..25 (Chevalier de pierre authentique).
+     - Ghini : Tuiles 82..89 (Spectre cimetière).
+     - Zora : Tuiles 90..97 (Nage ondulation surface 94/95 et cracheur émergé 90/91).
+     - Lynel : Tuiles 64..79 (4 directions cardinales).
+  3. **Mappage Dynamique de la Couleur Propre (`g`)** :
+     - Corps de l'Octorok routé sur `g` : rouge vif pour Octorok Rouge (`COL_RED`), bleu pour Octorok Bleu (`COL_BLUE`).
+  4. **Validation Visuelle et Régression** :
+     - Régénération complète des 16 captures d'Overworld sous émulateur VICE (`tools/capture_ow_enemies.py`).
+     - Validation intégrale des planches [atlas_all_assets.png](file:///home/vedix/Documents/C64/zelda/atlas_all_assets.png) et `sheet_sprites_enemies.png`.
+     - Tous les tests automatisés (`test_rules_audit.py`, `test_export_assets.py`, `test_verified_bugs.py`) passent avec succès.
+
 
 
 

@@ -19,33 +19,27 @@ def load_labels(vs_path):
     return labels
 
 labels = load_labels(os.path.join(BASE_DIR, "build", "zelda.vs"))
+intro_labels = load_labels(os.path.join(BASE_DIR, "build", "intro.vs"))
 cmd_addr = labels['debug_hook_cmd']
 arg_addr = labels['debug_hook_arg']
 arg2_addr = labels['debug_hook_arg2']
 main_addr = labels['main_loop']
 px_addr = labels['player_x']
 py_addr = labels['player_y']
+launch_addr = intro_labels['launch_zelda_game']
 
 mon_file = "/tmp/test_zelda_fixes.mon"
 with open(mon_file, "w") as f:
-    # 0. Menu de configuration SID : valider Mono (Option 1)
-    f.write("bk 5628\n")
+    # 0. Démarrage cartouche & passage intro via résolution dynamique
+    f.write("break 080d\n")
     f.write("g\n")
-    f.write("del 1\n")
-    f.write("> 0816 01\n")
+    f.write(f"g {launch_addr:04x}\n")
 
-    # 1. Démarrage cartouche : passer l'intro via btn_a_pressed à $299B
-    f.write("bk 299b\n")
+    # 1. Arrivée dans main_loop
+    f.write(f"break {main_addr:04x}\n")
     f.write("g\n")
-    f.write("del 2\n")
-    f.write("> 0816 01\n")
 
-    # 2. Arrivée dans main_loop ($1045)
-    f.write(f"bk {main_addr:04x}\n")
-    f.write("g\n")
-    f.write("del 3\n")
-
-    # 3. Donner tout l'équipement (bombes, etc.)
+    # 2. Donner tout l'équipement (bombes, etc.)
     f.write(f"> {cmd_addr:04x} 07\n")
     f.write("g\n")
 

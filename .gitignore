@@ -16,6 +16,7 @@ build/
 zelda.nes
 assets/nes/
 tools/*nes*
+!tools/extract_all_nes_sprites.py
 tools/extract_overworld_enemies.py
 1.png
 
