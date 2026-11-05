@@ -951,6 +951,7 @@ debug_do_warp_overworld:
 
         jsr clear_screen
         jsr disk_load_map_overworld
+        jsr cart_load_sprites_ow
 
         lda #184
         sta player_x

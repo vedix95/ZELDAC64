@@ -55,7 +55,9 @@ OW_NAMES = [
     'moblin_left_0', 'moblin_left_1', 'moblin_right_0', 'moblin_right_1',
     'moblin_spear_h', 'moblin_spear_v',
     'tektite_0', 'tektite_1', 'leever_0', 'leever_1', 'peahat_0', 'peahat_1',
-    'armos_0', 'armos_1', 'ghini_0', 'ghini_1', 'zora_0', 'zora_1', 'lynel_0', 'lynel_1',
+    'armos_0', 'armos_1', 'ghini_0', 'ghini_1', 'zora_0', 'zora_1',
+    'lynel_down_0', 'lynel_down_1', 'lynel_up_0', 'lynel_up_1',
+    'lynel_left_0', 'lynel_left_1', 'lynel_right_0', 'lynel_right_1',
     'item_raft',
 ]
 
@@ -202,6 +204,8 @@ def main():
     for name, ptr in sorted(ow_ptrs.items()):
         sym = f"SPR_OW_{name.upper()}"
         inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
+    inc_lines.append(f"{'SPR_OW_LYNEL_0':32s} = SPR_OW_LYNEL_DOWN_0\n")
+    inc_lines.append(f"{'SPR_OW_LYNEL_1':32s} = SPR_OW_LYNEL_DOWN_1\n")
 
     inc_lines.append("\n; --- Sprites Donjons & Bosses ($A0..$EF) ---\n")
     for name, ptr in sorted(dung_ptrs.items()):

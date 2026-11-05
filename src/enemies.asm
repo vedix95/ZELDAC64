@@ -170,10 +170,10 @@ zora_ptrs:
         !byte SPR_OW_ZORA_0, SPR_OW_ZORA_1
 
 lynel_ptrs:
-        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
-        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
-        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
-        !byte SPR_OW_LYNEL_0, SPR_OW_LYNEL_1
+        !byte SPR_OW_LYNEL_DOWN_0, SPR_OW_LYNEL_DOWN_1
+        !byte SPR_OW_LYNEL_UP_0, SPR_OW_LYNEL_UP_1
+        !byte SPR_OW_LYNEL_LEFT_0, SPR_OW_LYNEL_LEFT_1
+        !byte SPR_OW_LYNEL_RIGHT_0, SPR_OW_LYNEL_RIGHT_1
 
 keese_ptrs:
         !byte SPR_DUNG_KEESE_0, SPR_DUNG_KEESE_1

@@ -475,6 +475,38 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
      - Atlas complet exporté (`make atlas`, 117 sprites répertoriés).
      - Captures de confirmation pixel-perfect validées via `tools/test_verify_enemy_sprites.py` pour Dodongo, Manhandla, Darknut, Goriya, Aquamentus et Ropes.
 
+---
+
+### [2026-11-05] Anomalie 14 : Ennemis Overworld Déformés, Tronqués ou Figés (Octorok, Moblin, Tektite, Leever, Peahat, Armos, Ghini, Zora, Lynel 4-dir)
+* **Symptômes** :
+  - Dans l'Overworld, les monstres apparaissaient altérés ("KO") : Octoroks tronqués sans tentacules, Tektites réduits à des aplats statiques, Leevers ressemblant à des bâtons striés verticaux, Armos sans heaume ni épée, Ghinis informes, et Lynels glissant sur le sol sans aucune orientation directionnelle.
+* **Causes racines** :
+  1. **Omission d'Extraction du Bloc 'ow' NES** :
+     - Dans `tools/extract_all_nes_sprites.py`, la section Overworld était copiée passivement depuis une version obsolète d'`assets/enemies.txt` contenant des dessins manuels approximatifs, au lieu d'extraire les 114 tuiles authentiques du bloc `"ow"` de `zelda.nes` (offset `$D15B`).
+  2. **Tables Directionnelles Lynel Incomplètes** :
+     - `lynel_ptrs` dans `src/enemies.asm` répétait les mêmes frames pour les 4 directions, privant le centaure de ses poses de face, dos et profil.
+  3. **Absence de Rechargement de la Banque 10 lors du Warp Overworld** :
+     - `debug_do_warp_overworld` dans `src/debug.asm` omettait d'appeler `cart_load_sprites_ow`, conservant les sprites de donjon en cas de téléportation directe.
+* **Correctif appliqué** :
+  1. **Extraction Automatisée 1:1 NES de tous les Ennemis Overworld** :
+     - Octorok : Face (tuiles 2, 3 et 4, 5), Dos (tuiles 10, 11 et 12, 13) et Profil avec trompe cracheuse (tuiles 18..25).
+     - Moblin : Face, Dos et Profil de marche avec lance (tuiles 26..37 et 38..41).
+     - Tektite : Accroupi et saut déployé (tuiles 50..53).
+     - Leever : Toupie rotative à ailettes (tuiles 56..59).
+     - Peahat : Fleur à hélices tournoyantes (tuiles 60..63).
+     - Armos : Statue de guerrier avec heaume, bouclier et foulée (tuiles 64..71).
+     - Ghini : Spectre à queue sinusoïdale fluide (tuiles 72..77).
+     - Zora : Nage bouche fermée et cracheur bouche ouverte (tuiles 82..85 et 94..97).
+     - Lynel : Animation 4 directions complète (Bas tuiles 106..109, Haut tuiles 110..113, Côté tuiles 82..89).
+  2. **Mise à Jour de la Banque Cartouche 10 & Tables Assembleur** :
+     - Inclusion des frames directionnelles Lynel dans `OW_NAMES` (40 slots sur 75 alloués).
+     - Mise à jour de `lynel_ptrs` dans `src/enemies.asm`.
+     - Ajout de `cart_load_sprites_ow` dans `debug_do_warp_overworld`.
+  3. **Atlas Graphique & Captures Émulateur Validées** :
+     - Atlas mis à jour (125 sprites ennemis exportés dans `sheet_sprites_enemies.png` et `atlas_all_assets.png`).
+     - Validation des 16 scénarios d'Overworld via `tools/capture_ow_enemies.py`.
+
+
 
 
 
