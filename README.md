@@ -54,6 +54,16 @@ Une recréation fidèle, intégrale et spectaculaire du classique **The Legend o
 | :---: | :---: | :---: |
 | ![Triforce](docs/images/gal_inv_triforce.png) | ![Inventaire](docs/images/gal_inv_items.png) | ![Carte Overworld](docs/images/gal_inv_map.png) |
 
+### Bestiaire Authentique & Grands Boss Multi-Sprites
+
+| Boss Dodongo (32×16 px) | Boss Manhandla Quadrilobé | Chevaliers Darknuts (D3) |
+| :---: | :---: | :---: |
+| ![Dodongo](docs/images/shot_test_dodongo.png) | ![Manhandla](docs/images/shot_test_manhandla.png) | ![Darknut](docs/images/shot_test_darknut.png) |
+
+| Goriyas Rouges (D1) | Serpents Ropes (D2) | Dragon Aquamentus (24×32 px) |
+| :---: | :---: | :---: |
+| ![Goriya](docs/images/shot_test_goriya.png) | ![Ropes](docs/images/shot_test_ropes.png) | ![Aquamentus](docs/images/shot_test_aquamentus.png) |
+
 ---
 
 ## 🎨 Atlas Graphique & Planches de Contact
@@ -61,14 +71,14 @@ Une recréation fidèle, intégrale et spectaculaire du classique **The Legend o
 Le jeu intègre un outil d'extraction visuel autonome ([`tools/export_assets_sheet.py`](tools/export_assets_sheet.py)) générant des planches de contact pixel-art haute résolution (mise à l'échelle fidèle 2:1 respectant le ratio d'aspect des pixels multicolores C64) avec métadonnées et cadencements :
 
 ### Planche Maîtresse Consolidée (Master Atlas)
-L'affiche globale rassemble les 16 tuiles mondes, 16 tuiles donjons, 31 sprites du héros Link, 89 monstres et boss, 27 objets et 36 cycles d'animation décomposés :
+L'affiche globale rassemble les 16 tuiles mondes, 16 tuiles donjons, 31 sprites du héros Link, 117 monstres et boss, 27 objets et 36 cycles d'animation décomposés :
 
 [![Atlas Graphique Complet](docs/images/atlas_all_assets.png)](docs/images/atlas_all_assets.png)
 
 ### Planches Dédiées par Catégorie
 * 🗺️ [**Planche des Tuiles (Overworld 4 zones & Donjons)**](docs/images/sheet_tiles.png) : 16 tuiles sous 4 palettes régionales (Plaines, Montagne, Côte, Cimetière) et 16 dalles de donjon avec statuts de collision (`SOLID` / `PASS` / `WATER`).
 * 🗡️ [**Planche de Link & Arsenal**](docs/images/sheet_sprites_link.png) : Déplacements 4 directions, poses d'attaque à l'épée, port d'items, boomerangs 360°, flammes et flèches.
-* 👾 [**Planche du Bestiaire Monstres & Boss**](docs/images/sheet_sprites_enemies.png) : 89 sprites des monstres terrestres, volants, bêtes de donjons et grands boss.
+* 👾 [**Planche du Bestiaire Monstres & Boss**](docs/images/sheet_sprites_enemies.png) : 117 sprites des monstres terrestres, volants, bêtes de donjons et grands boss.
 * 💎 [**Planche des Objets, Reliques & PNJs**](docs/images/sheet_sprites_items.png) : Armes, reliques passives, PNJs et vitrine de la pyramide assemblée de la Triforce.
 * 🎞️ [**Planche des Cycles d'Animation Décomposés**](docs/images/sheet_animations.png) : 36 séquences animées présentées frame par frame avec cadencements (`2 Frames @ 8 FPS`, `3 Phases @ 24 Ticks`).
 

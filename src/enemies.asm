@@ -101,6 +101,7 @@ en_step_px:             !byte 0
 boss_draw_col:          !byte 0
 boss_base_x:            !byte 0
 boss_base_msb:          !byte 0
+boss_tmp_msb4:          !byte 0
 boss_base_y:            !byte 0
 boss_tmp_f:             !byte 0
 boss_tmp_b:             !byte 0
@@ -114,14 +115,8 @@ rand_seed:              !byte $a5
 
 ; ---------------------------------------------------------------------------
 ; Tables statistiques des 45 types d'ennemis Zelda (1986) logees sous $2000
-; (voir src/main.asm : en_base_hp, en_base_damage, en_base_color, en_ai_type, en_proj_type_tbl)
+; (voir src/main.asm : en_base_hp, en_base_damage, en_base_color, en_ai_type, en_proj_type_tbl, en_sprite_tbl_lo/hi)
 ; ---------------------------------------------------------------------------
-
-en_sprite_tbl_lo:
-        !byte <none_ptrs, <octo_ptrs, <octo_ptrs, <moblin_ptrs, <moblin_ptrs, <tektite_ptrs, <tektite_ptrs, <leever_ptrs, <leever_ptrs, <peahat_ptrs, <armos_ptrs, <ghini_ptrs, <zora_ptrs, <lynel_ptrs, <lynel_ptrs, <keese_ptrs, <keese_ptrs, <zol_ptrs, <gel_ptrs, <rope_ptrs, <stalfos_ptrs, <goriya_ptrs, <goriya_ptrs, <darknut_ptrs, <darknut_ptrs, <wizzrobe_ptrs, <wizzrobe_ptrs, <wallmaster_ptrs, <likelike_ptrs, <polsvoice_ptrs, <gibdo_ptrs, <vire_ptrs, <bubble_ptrs, <trap_ptrs, <lanmola_ptrs, <lanmola_ptrs, <aquamentus_ptrs, <dodongo_ptrs, <manhandla_ptrs, <gleeok_ptrs, <digdogger_ptrs, <gohma_ptrs, <gohma_ptrs, <patra_ptrs, <ganon_ptrs
-
-en_sprite_tbl_hi:
-        !byte >none_ptrs, >octo_ptrs, >octo_ptrs, >moblin_ptrs, >moblin_ptrs, >tektite_ptrs, >tektite_ptrs, >leever_ptrs, >leever_ptrs, >peahat_ptrs, >armos_ptrs, >ghini_ptrs, >zora_ptrs, >lynel_ptrs, >lynel_ptrs, >keese_ptrs, >keese_ptrs, >zol_ptrs, >gel_ptrs, >rope_ptrs, >stalfos_ptrs, >goriya_ptrs, >goriya_ptrs, >darknut_ptrs, >darknut_ptrs, >wizzrobe_ptrs, >wizzrobe_ptrs, >wallmaster_ptrs, >likelike_ptrs, >polsvoice_ptrs, >gibdo_ptrs, >vire_ptrs, >bubble_ptrs, >trap_ptrs, >lanmola_ptrs, >lanmola_ptrs, >aquamentus_ptrs, >dodongo_ptrs, >manhandla_ptrs, >gleeok_ptrs, >digdogger_ptrs, >gohma_ptrs, >gohma_ptrs, >patra_ptrs, >ganon_ptrs
 
 sword_cursed_timer:     !byte 0
 
@@ -199,10 +194,10 @@ gel_ptrs:
         !byte SPR_DUNG_GEL, SPR_DUNG_GEL
 
 rope_ptrs:
-        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_0
-        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_0
-        !byte SPR_DUNG_ROPE_1, SPR_DUNG_ROPE_1
-        !byte SPR_DUNG_ROPE_1, SPR_DUNG_ROPE_1
+        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_1
+        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_1
+        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_1
+        !byte SPR_DUNG_ROPE_0, SPR_DUNG_ROPE_1
 
 stalfos_ptrs:
         !byte SPR_DUNG_STALFOS_0, SPR_DUNG_STALFOS_1
@@ -319,10 +314,10 @@ patra_ptrs:
         !byte SPR_DUNG_PATRA_CENTER, SPR_DUNG_PATRA_ORB
 
 ganon_ptrs:
-        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
-        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
-        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
-        !byte SPR_DUNG_GANON_0, SPR_DUNG_GANON_1
+        !byte SPR_DUNG_GANON_TL_0, SPR_DUNG_GANON_TL_1
+        !byte SPR_DUNG_GANON_TL_0, SPR_DUNG_GANON_TL_1
+        !byte SPR_DUNG_GANON_TL_0, SPR_DUNG_GANON_TL_1
+        !byte SPR_DUNG_GANON_TL_0, SPR_DUNG_GANON_TL_1
 
 none_ptrs:
         !byte 0, 0, 0, 0, 0, 0, 0, 0
@@ -3544,6 +3539,8 @@ draw_boss_assembled:
         tay
         lda en_x,y
         sta boss_base_x
+        lda en_x+1,y
+        sta boss_base_msb
         lda en_y,x
         sta boss_base_y
 
@@ -3578,6 +3575,14 @@ draw_boss_assembled:
         ; Boss standard (Gohma, Gleeok, Digdogger, Patra)
         jsr get_enemy_sprite_and_color
         sta SPRITE_PTR3
+.apply_boss_msb:
+        sta boss_tmp_msb4
+        lda VIC_SPRITE_MSB
+        and #%10000111                  ; efface bits 3, 4, 5, 6
+        ora boss_tmp_msb4
+        sta VIC_SPRITE_MSB
+        rts
+
 .drw_single_exit:
         lda boss_base_x
         sta VIC_SPRITE_X3
@@ -3585,9 +3590,15 @@ draw_boss_assembled:
         sta VIC_SPRITE_Y3
         lda boss_draw_col
         sta VIC_SPRITE_COL3
+        ldy #0
+        lda boss_base_msb
+        beq +
+        ldy #%00001000                  ; active bit 3
++       tya
+        jsr .apply_boss_msb
         lda VIC_SPRITE_EN
         ora #%00001000
-        and #%10001111          ; désactive 4, 5, 6
+        and #%10001111                  ; désactive 4, 5, 6
         sta VIC_SPRITE_EN
         lda VIC_SPRITE_MC
         ora #%00001000
@@ -3626,27 +3637,49 @@ draw_boss_assembled:
         lda boss_draw_col
         sta VIC_SPRITE_COL3
         sta VIC_SPRITE_COL4
+        ldy #0
+        lda boss_base_msb
+        beq +
+        ldy #%00011000                  ; bits 3 & 4
++       tya
+        jsr .apply_boss_msb
         jmp .drw_spr34_exit
 
-.drw_dodongo:
-        lda #SPR_DUNG_DODONGO_0
-        sta boss_tmp_f
-        lda #SPR_DUNG_DODONGO_BACK_0
-        sta boss_tmp_b
-        lda en_state,x
-        cmp #EN_STATE_HURT
+dod_f_tbl:  !byte SPR_DUNG_DODONGO_0,       SPR_DUNG_DODONGO_RIGHT_0
+dod_b_tbl:  !byte SPR_DUNG_DODONGO_BACK_0,  SPR_DUNG_DODONGO_RIGHT_F_0
+dod_bf_tbl: !byte SPR_DUNG_DODONGO_BLOATED_F, SPR_DUNG_DODONGO_BLOATED_R_B
+dod_bb_tbl: !byte SPR_DUNG_DODONGO_BLOATED_B, SPR_DUNG_DODONGO_BLOATED_R_F
+
+.get_dodongo_ptrs:
+        ldy #0
+        lda en_dir,x
+        cmp #DIR_RIGHT
         bne +
-        lda #SPR_DUNG_DODONGO_BLOATED_F
+        iny
++       lda en_state,x
+        cmp #EN_STATE_HURT
+        beq .dod_hurt
+        lda dod_f_tbl,y
         sta boss_tmp_f
-        lda #SPR_DUNG_DODONGO_BLOATED_B
+        lda dod_b_tbl,y
         sta boss_tmp_b
-        jmp ++
-+       lda en_anim,x
+        lda en_anim,x
         and #1
-        beq ++
+        beq +
         inc boss_tmp_f          ; DODONGO_1
         inc boss_tmp_b          ; DODONGO_BACK_1
-++      lda boss_tmp_f
++       rts
+.dod_hurt:
+        lda dod_bf_tbl,y
+        sta boss_tmp_f
+        lda dod_bb_tbl,y
+        sta boss_tmp_b
+        rts
+
+.drw_dodongo:
+        ldx sort_idx+0
+        jsr .get_dodongo_ptrs
+        lda boss_tmp_f
         sta SPRITE_PTR3
         lda boss_tmp_b
         sta SPRITE_PTR4
@@ -3655,19 +3688,28 @@ draw_boss_assembled:
         clc
         adc #16
         sta VIC_SPRITE_X4
-        lda en_dir,x
-        cmp #DIR_RIGHT
-        bne +
-        lda boss_tmp_b
-        sta SPRITE_PTR3
-        lda boss_tmp_f
-        sta SPRITE_PTR4
-+       lda boss_base_y
+        lda boss_base_msb
+        adc #0
+        sta boss_tmp_msb4
+        lda boss_base_y
         sta VIC_SPRITE_Y3
         sta VIC_SPRITE_Y4
         lda boss_draw_col
         sta VIC_SPRITE_COL3
         sta VIC_SPRITE_COL4
+
+        ; MSB pour Sprites 3 et 4
+        ldy #0
+        lda boss_base_msb
+        beq +
+        ldy #%00001000                  ; bit 3
++       lda boss_tmp_msb4
+        beq +
+        tya
+        ora #%00010000                  ; bit 4
+        tay
++       tya
+        jsr .apply_boss_msb
 
         ; Deuxième Dodongo éventuel (Dungeon 8)
         ldx sort_idx+1
@@ -3676,24 +3718,41 @@ draw_boss_assembled:
         lda en_type,x
         cmp #TYPE_DODONGO
         bne .drw_spr34_exit
+        jsr .get_dodongo_ptrs
+        lda boss_tmp_f
+        sta SPRITE_PTR5
+        lda boss_tmp_b
+        sta SPRITE_PTR6
+        ldx sort_idx+1
         txa
         asl
         tay
-        lda #SPR_DUNG_DODONGO_0
-        sta SPRITE_PTR5
-        lda #SPR_DUNG_DODONGO_BACK_0
-        sta SPRITE_PTR6
         lda en_x,y
         sta VIC_SPRITE_X5
         clc
         adc #16
         sta VIC_SPRITE_X6
+        lda en_x+1,y
+        adc #0
+        sta boss_tmp_msb4
         lda en_y,x
         sta VIC_SPRITE_Y5
         sta VIC_SPRITE_Y6
         lda #COL_ORANGE
         sta VIC_SPRITE_COL5
         sta VIC_SPRITE_COL6
+
+        ; MSB pour Sprites 5 et 6
+        lda VIC_SPRITE_MSB
+        and #%10011111                  ; efface bits 5 & 6
+        ldx en_x+1,y
+        beq +
+        ora #%00100000                  ; bit 5
++       ldx boss_tmp_msb4
+        beq +
+        ora #%01000000                  ; bit 6
++       sta VIC_SPRITE_MSB
+
         lda VIC_SPRITE_EN
         ora #%01111000
         sta VIC_SPRITE_EN
@@ -3703,9 +3762,12 @@ draw_boss_assembled:
         rts
 
 .drw_spr34_exit:
+        lda VIC_SPRITE_MSB
+        and #%10011111                  ; éteint MSB 5 & 6
+        sta VIC_SPRITE_MSB
         lda VIC_SPRITE_EN
         ora #%00011000
-        and #%10011111          ; éteint 5 & 6
+        and #%10011111                  ; éteint 5 & 6
         sta VIC_SPRITE_EN
         lda VIC_SPRITE_MC
         ora #%00011000
@@ -3735,6 +3797,22 @@ draw_boss_assembled:
         adc #16
         sta VIC_SPRITE_X4
         sta VIC_SPRITE_X6
+        lda boss_base_msb
+        adc #0
+        sta boss_tmp_msb4
+
+        ; Configuration MSB Sprites 3, 4, 5, 6
+        ldy #0
+        lda boss_base_msb
+        beq +
+        ldy #%00101000                  ; bits 3 & 5 (gauche)
++       lda boss_tmp_msb4
+        beq +
+        tya
+        ora #%01010000                  ; bits 4 & 6 (droite)
+        tay
++       tya
+        jsr .apply_boss_msb
 
         lda boss_base_y
         sta VIC_SPRITE_Y3
@@ -3773,6 +3851,22 @@ draw_boss_assembled:
         clc
         adc #14
         sta VIC_SPRITE_X6
+        lda boss_base_msb
+        adc #0
+        sta boss_tmp_msb4
+
+        ; Configuration MSB Sprites 3, 4, 5, 6
+        ldy #0
+        lda boss_base_msb
+        beq +
+        ldy #%00111000                  ; bits 3, 4, 5 (core, haut, bas)
++       lda boss_tmp_msb4
+        beq +
+        tya
+        ora #%01000000                  ; bit 6 (droite)
+        tay
++       tya
+        jsr .apply_boss_msb
 
         lda boss_base_y
         sta VIC_SPRITE_Y3
@@ -3791,6 +3885,31 @@ draw_boss_assembled:
         sta VIC_SPRITE_COL5
         sta VIC_SPRITE_COL6
         jmp .drw_all4_exit
+
+; ---------------------------------------------------------------------------
+; get_spr_ptr_and_col : calcule le pointeur (A) et la couleur (Y) du sprite ennemi
+; Gère l'animation normale, le clignotement blanc (HURT) et la mort (DYING)
+; ---------------------------------------------------------------------------
+get_spr_ptr_and_col:
+        lda en_state,x
+        cmp #EN_STATE_DYING
+        beq .gsp_dying
+        cmp #EN_STATE_HURT
+        beq .gsp_flash
+        jmp get_enemy_sprite_and_color
+.gsp_flash:
+        jsr get_enemy_sprite_and_color
+        ldy #COL_WHITE
+        rts
+.gsp_dying:
+        ldy #COL_WHITE
+        lda en_timer,x
+        cmp #8
+        bcc +
+        lda #SPR_COMMON_DEATH_0
+        rts
++       lda #SPR_COMMON_DEATH_1
+        rts
 
 ; ---------------------------------------------------------------------------
 ; draw_virtual_to_spr3..6 : configure un sprite physique VIC-II
@@ -3833,37 +3952,9 @@ draw_virtual_to_spr3:
         lda VIC_SPRITE_MSB
         and #%11110111
         sta VIC_SPRITE_MSB
-+
-        lda en_state,x
-        cmp #EN_STATE_DYING
-        beq .s3_dying
-        cmp #EN_STATE_HURT
-        beq .s3_flash
-
-        jsr get_enemy_sprite_and_color
++       jsr get_spr_ptr_and_col
         sta SPRITE_PTR3
         sty VIC_SPRITE_COL3
-        jmp .s3_enable
-
-.s3_flash:
-        jsr get_enemy_sprite_and_color
-        sta SPRITE_PTR3
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL3
-        jmp .s3_enable
-
-.s3_dying:
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL3
-        lda en_timer,x
-        cmp #8
-        bcc +
-        lda #SPR_COMMON_DEATH_0
-        sta SPRITE_PTR3
-        jmp .s3_enable
-+       lda #SPR_COMMON_DEATH_1
-        sta SPRITE_PTR3
-
 .s3_enable:
         lda VIC_SPRITE_EN
         ora #%00001000
@@ -3910,37 +4001,9 @@ draw_virtual_to_spr4:
         lda VIC_SPRITE_MSB
         and #%11101111
         sta VIC_SPRITE_MSB
-+
-        lda en_state,x
-        cmp #EN_STATE_DYING
-        beq .s4_dying
-        cmp #EN_STATE_HURT
-        beq .s4_flash
-
-        jsr get_enemy_sprite_and_color
++       jsr get_spr_ptr_and_col
         sta SPRITE_PTR4
         sty VIC_SPRITE_COL4
-        jmp .s4_enable
-
-.s4_flash:
-        jsr get_enemy_sprite_and_color
-        sta SPRITE_PTR4
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL4
-        jmp .s4_enable
-
-.s4_dying:
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL4
-        lda en_timer,x
-        cmp #8
-        bcc +
-        lda #SPR_COMMON_DEATH_0
-        sta SPRITE_PTR4
-        jmp .s4_enable
-+       lda #SPR_COMMON_DEATH_1
-        sta SPRITE_PTR4
-
 .s4_enable:
         lda VIC_SPRITE_EN
         ora #%00010000
@@ -3987,37 +4050,9 @@ draw_virtual_to_spr5:
         lda VIC_SPRITE_MSB
         and #%11011111
         sta VIC_SPRITE_MSB
-+
-        lda en_state,x
-        cmp #EN_STATE_DYING
-        beq .s5_dying
-        cmp #EN_STATE_HURT
-        beq .s5_flash
-
-        jsr get_enemy_sprite_and_color
++       jsr get_spr_ptr_and_col
         sta SPRITE_PTR5
         sty VIC_SPRITE_COL5
-        jmp .s5_enable
-
-.s5_flash:
-        jsr get_enemy_sprite_and_color
-        sta SPRITE_PTR5
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL5
-        jmp .s5_enable
-
-.s5_dying:
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL5
-        lda en_timer,x
-        cmp #8
-        bcc +
-        lda #SPR_COMMON_DEATH_0
-        sta SPRITE_PTR5
-        jmp .s5_enable
-+       lda #SPR_COMMON_DEATH_1
-        sta SPRITE_PTR5
-
 .s5_enable:
         lda VIC_SPRITE_EN
         ora #%00100000
@@ -4064,37 +4099,9 @@ draw_virtual_to_spr6:
         lda VIC_SPRITE_MSB
         and #%10111111
         sta VIC_SPRITE_MSB
-+
-        lda en_state,x
-        cmp #EN_STATE_DYING
-        beq .s6_dying
-        cmp #EN_STATE_HURT
-        beq .s6_flash
-
-        jsr get_enemy_sprite_and_color
++       jsr get_spr_ptr_and_col
         sta SPRITE_PTR6
         sty VIC_SPRITE_COL6
-        jmp .s6_enable
-
-.s6_flash:
-        jsr get_enemy_sprite_and_color
-        sta SPRITE_PTR6
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL6
-        jmp .s6_enable
-
-.s6_dying:
-        lda #COL_WHITE
-        sta VIC_SPRITE_COL6
-        lda en_timer,x
-        cmp #8
-        bcc +
-        lda #SPR_COMMON_DEATH_0
-        sta SPRITE_PTR6
-        jmp .s6_enable
-+       lda #SPR_COMMON_DEATH_1
-        sta SPRITE_PTR6
-
 .s6_enable:
         lda VIC_SPRITE_EN
         ora #%01000000

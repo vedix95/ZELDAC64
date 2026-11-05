@@ -309,6 +309,12 @@ en_ai_type:
 en_proj_type_tbl:
         !byte PROJ_NONE, PROJ_ROCK, PROJ_ROCK, PROJ_SPEAR, PROJ_SPEAR, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_BOOMERANG, PROJ_BOOMERANG, PROJ_NONE, PROJ_NONE, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL
 
+en_sprite_tbl_lo:
+        !byte <none_ptrs, <octo_ptrs, <octo_ptrs, <moblin_ptrs, <moblin_ptrs, <tektite_ptrs, <tektite_ptrs, <leever_ptrs, <leever_ptrs, <peahat_ptrs, <armos_ptrs, <ghini_ptrs, <zora_ptrs, <lynel_ptrs, <lynel_ptrs, <keese_ptrs, <keese_ptrs, <zol_ptrs, <gel_ptrs, <rope_ptrs, <stalfos_ptrs, <goriya_ptrs, <goriya_ptrs, <darknut_ptrs, <darknut_ptrs, <wizzrobe_ptrs, <wizzrobe_ptrs, <wallmaster_ptrs, <likelike_ptrs, <polsvoice_ptrs, <gibdo_ptrs, <vire_ptrs, <bubble_ptrs, <trap_ptrs, <lanmola_ptrs, <lanmola_ptrs, <aquamentus_ptrs, <dodongo_ptrs, <manhandla_ptrs, <gleeok_ptrs, <digdogger_ptrs, <gohma_ptrs, <gohma_ptrs, <patra_ptrs, <ganon_ptrs
+
+en_sprite_tbl_hi:
+        !byte >none_ptrs, >octo_ptrs, >octo_ptrs, >moblin_ptrs, >moblin_ptrs, >tektite_ptrs, >tektite_ptrs, >leever_ptrs, >leever_ptrs, >peahat_ptrs, >armos_ptrs, >ghini_ptrs, >zora_ptrs, >lynel_ptrs, >lynel_ptrs, >keese_ptrs, >keese_ptrs, >zol_ptrs, >gel_ptrs, >rope_ptrs, >stalfos_ptrs, >goriya_ptrs, >goriya_ptrs, >darknut_ptrs, >darknut_ptrs, >wizzrobe_ptrs, >wizzrobe_ptrs, >wallmaster_ptrs, >likelike_ptrs, >polsvoice_ptrs, >gibdo_ptrs, >vire_ptrs, >bubble_ptrs, >trap_ptrs, >lanmola_ptrs, >lanmola_ptrs, >aquamentus_ptrs, >dodongo_ptrs, >manhandla_ptrs, >gleeok_ptrs, >digdogger_ptrs, >gohma_ptrs, >gohma_ptrs, >patra_ptrs, >ganon_ptrs
+
 ; Le jeu de caractères est à une adresse fixe ($2000)
 !if * > CHARSET_ADDR {
         !error "Le code et les buffers debordent sur le jeu de caracteres ($2000)"

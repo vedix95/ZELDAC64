@@ -445,6 +445,37 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   5. **Boomerangs** : Remplacement des anneaux creux par des lames aérodynamiques pleines avec rotation dynamique fluide 4 directions pour Link et les monstres Goriya.
   6. **Régénération des Banques & Atlas** : Recompilation des banques cartouche 10, 11, 12, 13 via `tools/build_sprite_banks.py` et mise à jour complète de l'atlas graphique (`make atlas`). Captures d'écran en jeu validées sous VICE.
 
+---
+
+### [2026-11-05] Anomalie 13 : Décalages & Sprites Scindés en Deux (MSB VIC-II $D010, Dodongo 32×16, Manhandla Quadrilobé, Darknut & Goriyas)
+* **Symptômes** :
+  - Sur certains monstres et boss (Dodongo, Manhandla, Darknut, Goriya), des décalages ou scissions apparaissaient en jeu : sprites coupés en deux moitiés, moitiés de monstres téléportées à l'autre bout de l'écran ou inversées de l'intérieur.
+  - L'atlas graphique exporté ne correspondait pas fidèlement aux formes exactes des sprites de la ROM `zelda.nes`.
+* **Causes racines** :
+  1. **Perte du 9ème Bit de Coordonnée X VIC-II (`$D010` / `VIC_SPRITE_MSB`)** :
+     - Pour les boss assemblés en multi-sprites (Dodongo 32×16, Aquamentus 24×32, Manhandla, Ganon), les coordonnées des sprites secondaires étaient calculées par de simples additions 8 bits (`clc : adc #16`).
+     - Dès que le boss s'approchait de la bordure droite de l'écran ($X \ge 240$ ou $X + 16 \ge 256$), le débordement reportait le 2ème sprite à $X = 0..16$ sur le bord gauche de l'écran au lieu d'activer le bit de poids fort dans `$D010`, donnant l'illusion visuelle que le boss était scindé en deux.
+  2. **Dodongo Inversé de l'Intérieur en Direction Droite** :
+     - L'orientation vers la droite se contentait d'inverser les pointeurs Avant et Arrière sans miroir horizontal, provoquant la rencontre du museau et de la queue au centre face à l'intérieur.
+  3. **Manhandla : Inversion Cœur / Mâchoires et Trou Central de 8 Pixels** :
+     - Le cœur et les mâchoires étaient permutés : le miroir des tuiles 40 & 41 (qui ont des colonnes 4..7 vides) laissait un trou de 8 pixels au centre. Le vrai cœur NES est constitué des tuiles 44 & 45 jointes en miroir (bloc massif), et les 4 mâchoires sont les tuiles 40..43.
+  4. **Extraction Naïve par Miroir Demi-Tuile** :
+     - L'ancienne extraction découpait les tuiles en deux et appliquait un miroir horizontal naïf (`d26 + hflip(d26)`). Sur la NES, le Darknut, le Goriya et le Wallmaster utilisent des tuiles distinctes pour les moitiés gauche et droite ou une inversion de bloc 16×16 complet.
+* **Correctif appliqué** :
+  1. **Gestion Dynamique du MSB VIC-II (`.apply_boss_msb`)** :
+     - Implémentation dans [src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm) du calcul du 9ème bit pour les Sprites VIC 3, 4, 5 et 6 dans toutes les routines de boss assemblés (`.drw_single_exit`, `.drw_aquamentus`, `.drw_dodongo`, `.drw_ganon`, `.drw_manhandla`).
+  2. **Extraction Directe Authentique depuis `zelda.nes` (117 Sprites)** :
+     - Extraction intégrale de l'ensemble des tuiles CHR NES sans altération : Darknut avec motifs asymétriques originaux, Manhandla cœur massif + mâchoires articulées, Dodongo avec frames gauche et droite pré-calculées avec raccord parfait, Lanmola 12×21, Boomerangs centrés.
+  3. **Rendu Dodongo Multi-Sprites 32×16 & 2ème Dodongo** :
+     - Tables de pointeurs `dod_f_tbl`, `dod_b_tbl`, `dod_bf_tbl`, `dod_bb_tbl` gérant direction, animation et état gonflé/blessé.
+     - Gestion complète des deux Dodongos simultanés (Dodongo 1 sur Sprites 3 & 4, Dodongo 2 sur Sprites 5 & 6) avec MSB $D010 propre pour chacun.
+  4. **Optimisation Mémoire Résidente ACME** :
+     - Déplacement de `en_sprite_tbl_lo/hi` (90 octets) sous `$2000` et factorisation de `get_spr_ptr_and_col` (-84 octets en haute RAM), garantissant la fin du code résident à `$9F89` (< `$A000`, 119 octets de sécurité sous `OVERLAY_RAM_ADDR`).
+  5. **Export de l'Atlas & Captures Automatisées sous VICE** :
+     - Atlas complet exporté (`make atlas`, 117 sprites répertoriés).
+     - Captures de confirmation pixel-perfect validées via `tools/test_verify_enemy_sprites.py` pour Dodongo, Manhandla, Darknut, Goriya, Aquamentus et Ropes.
+
+
 
 
 

@@ -66,7 +66,6 @@ DUNG_NAMES = [
     'goriya_up_0', 'goriya_up_1',
     'goriya_left_0', 'goriya_left_1',
     'goriya_right_0', 'goriya_right_1',
-    'darknut_0', 'darknut_1',
     'darknut_down_0', 'darknut_down_1',
     'darknut_up_0', 'darknut_up_1',
     'darknut_left_0', 'darknut_left_1',
@@ -80,13 +79,15 @@ DUNG_NAMES = [
     'aquamentus_bot_0', 'aquamentus_bot_1',
     'dodongo_0', 'dodongo_1',
     'dodongo_back_0', 'dodongo_back_1',
+    'dodongo_right_0', 'dodongo_right_1',
+    'dodongo_right_f_0', 'dodongo_right_f_1',
     'dodongo_bloated_f', 'dodongo_bloated_b',
+    'dodongo_bloated_r_f', 'dodongo_bloated_r_b',
     'manhandla_core', 'manhandla_jaw',
     'gleeok_0', 'gleeok_1',
     'digdogger',
     'gohma_closed', 'gohma_open',
     'patra_center', 'patra_orb',
-    'ganon_0', 'ganon_1',
     'ganon_tl_0', 'ganon_tr_0', 'ganon_bl_0', 'ganon_br_0',
     'ganon_tl_1', 'ganon_tr_1', 'ganon_bl_1', 'ganon_br_1',
 ]
@@ -96,13 +97,15 @@ BOSS_NAMES = [
     'aquamentus_bot_0', 'aquamentus_bot_1',
     'dodongo_0', 'dodongo_1',
     'dodongo_back_0', 'dodongo_back_1',
+    'dodongo_right_0', 'dodongo_right_1',
+    'dodongo_right_f_0', 'dodongo_right_f_1',
     'dodongo_bloated_f', 'dodongo_bloated_b',
+    'dodongo_bloated_r_f', 'dodongo_bloated_r_b',
     'manhandla_core', 'manhandla_jaw',
     'gleeok_0', 'gleeok_1',
     'digdogger',
     'gohma_closed', 'gohma_open',
     'patra_center', 'patra_orb',
-    'ganon_0', 'ganon_1',
     'ganon_tl_0', 'ganon_tr_0', 'ganon_bl_0', 'ganon_br_0',
     'ganon_tl_1', 'ganon_tr_1', 'ganon_bl_1', 'ganon_br_1',
 ]
@@ -204,6 +207,10 @@ def main():
     for name, ptr in sorted(dung_ptrs.items()):
         sym = f"SPR_DUNG_{name.upper()}"
         inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
+    inc_lines.append(f"{'SPR_DUNG_DARKNUT_0':32s} = SPR_DUNG_DARKNUT_DOWN_0\n")
+    inc_lines.append(f"{'SPR_DUNG_DARKNUT_1':32s} = SPR_DUNG_DARKNUT_DOWN_1\n")
+    inc_lines.append(f"{'SPR_DUNG_GANON_0':32s} = SPR_DUNG_GANON_TL_0\n")
+    inc_lines.append(f"{'SPR_DUNG_GANON_1':32s} = SPR_DUNG_GANON_TL_1\n")
 
     common_syms = set(sym for _, _, sym in COMMON_SLOTS.values())
     inc_lines.append("\n; --- Sprites PNJ, Objets & Inventaire ($A0..$EF) ---\n")
