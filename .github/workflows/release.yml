@@ -34,10 +34,11 @@ jobs:
       - name: Check build environment
         run: make check
 
-      - name: Build Cartridge CRT and Maps
+      - name: Build Cartridge CRT, Maps and Graphics Atlas
         run: |
           make
           make maps
+          make atlas
 
       - name: Upload Assets to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -45,6 +46,7 @@ jobs:
         with:
           files: |
             build/zelda.crt
+            build/atlas_all_assets.png
             build/map_overworld.png
             build/map_dungeon_*.png
         env:
