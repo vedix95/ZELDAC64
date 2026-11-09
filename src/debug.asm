@@ -931,10 +931,8 @@ debug_do_warp_dungeon:
 debug_do_warp_overworld:
         lda #STATE_PLAYING
         sta game_state
+        jsr enemies_clear
         lda #0
-        sta en_type
-        sta en_type+1
-        sta en_proj_active
         sta item_active
         sta player_attacking
 

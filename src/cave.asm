@@ -47,6 +47,7 @@ cave_price_col_cur:     !byte 0
 cave_p_c:               !byte 0
 cave_p_d:               !byte 0
 cave_p_u:               !byte 0
+cave_active_slot_idx:   !byte 0
 
 ; État des 3 emplacements de la salle active
 cave_slot1_active:      !byte 0
@@ -951,6 +952,21 @@ ovl_cave_update:
         sta player_walk_anim
 .anim_cave_done:
 
+        ; Seuil de sortie inconditionnel (X ~ 166..196, Y >= 214)
+        lda player_x+1
+        bne +
+        lda player_x
+        cmp #166
+        bcc +
+        cmp #196
+        bcs +
+        lda player_y
+        cmp #214
+        bcc +
+        jsr cave_exit
+        rts
++
+
         ; -------------------------------------------------------------------
         ; Test de ramassage / achat des 3 objets (Y ~ 140..174)
         ; -------------------------------------------------------------------
@@ -1013,6 +1029,7 @@ cave_buy_slot3:
         ldx #10
 
 cave_buy_slot_x:
+        stx cave_active_slot_idx
         ; Si grotte de téléportation (CAVE_TYPE_WARP) : téléporte Link immédiatement !
         lda current_cave_type
         cmp #CAVE_TYPE_WARP
@@ -1054,7 +1071,9 @@ warp_dest_idx:  !byte 35, 73, 29, 121
         bne .std_buy_slot
         lda hud_rupees
         cmp #10
-        bcc .cant_afford
+        bcs +
+        jmp .cant_afford
++
         ; Gain de +40 rubis nets (+50 - 10 de mise)
         clc
         adc #40
@@ -1082,23 +1101,25 @@ warp_dest_idx:  !byte 35, 73, 29, 121
         sbc cave_slot1_price,x
         sta hud_rupees
         jsr hud_render
+        ldx cave_active_slot_idx
 
 .take_slot_x:
-        lda cave_slot1_type,x
-        jsr cave_grant_item
+        ; 1. Désactivation immédiate de l'emplacement (X garanti = 0, 5 ou 10)
         lda #0
         sta cave_slot1_active,x
 
-        ; Si Choix Vital : efface l'autre slot
+        ; 2. Si Choix Vital : efface l'autre slot (slot 1 ou 3)
         lda current_cave_type
         cmp #CAVE_TYPE_HEART_CHOICE
         bne +
+        lda #0
         cpx #0
         bne ++
         sta cave_slot3_active
         jmp +
 ++      sta cave_slot1_active
 +
+        ; 3. Marquer le slot comme collecté dans cave_room_cleared
         cpx #0
         bne ++
         lda #1
@@ -1111,6 +1132,10 @@ warp_dest_idx:  !byte 35, 73, 29, 121
 +++     ldy current_room_idx
         ora cave_room_cleared,y
         sta cave_room_cleared,y
+
+        ; 4. Attribution de l'objet et début de la célébration
+        lda cave_slot1_type,x
+        jsr cave_grant_item
 
         jsr cave_start_celebration
         jsr cave_render_prices

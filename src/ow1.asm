@@ -302,9 +302,9 @@ map_enemies:
         ; Formation 4
         !byte TYPE_LYNEL_RED  ,   9,  4,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_RED  ,  14,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 5
-        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   6,  3,   TYPE_ARMOS      ,   9,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,  15,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   9,  5,   TYPE_ARMOS      ,  15,  5
+        !byte TYPE_ARMOS      ,   4,  4,   TYPE_ARMOS      ,   7,  4,   TYPE_ARMOS      ,  10,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,  16,  4,   TYPE_ARMOS      ,   4,  6,   TYPE_ARMOS      ,  10,  6,   TYPE_ARMOS      ,  16,  6
         ; Formation 6
-        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   6,  3,   TYPE_ARMOS      ,   9,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   6,  5,   TYPE_ARMOS      ,   9,  5,   TYPE_ARMOS      ,  12,  5
+        !byte TYPE_ARMOS      ,   4,  4,   TYPE_ARMOS      ,   7,  4,   TYPE_ARMOS      ,  10,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,   4,  6,   TYPE_ARMOS      ,   7,  6,   TYPE_ARMOS      ,  10,  6,   TYPE_ARMOS      ,  13,  6
         ; Formation 7
         !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  15,  4,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   7,  6,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Formation 8
@@ -326,7 +326,7 @@ map_enemies:
         ; Formation 16
         !byte TYPE_PEAHAT     ,   9,  3,   TYPE_PEAHAT     ,   4,  3,   TYPE_LYNEL_RED  ,  14,  5,   TYPE_LYNEL_BLUE ,   5,  7,   TYPE_LYNEL_RED  ,  13,  3,   TYPE_LYNEL_BLUE ,  12,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 17
-        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   5,  3,   TYPE_ARMOS      ,   7,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   5,  5,   TYPE_ARMOS      ,   7,  5,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
+        !byte TYPE_ARMOS      ,   4,  4,   TYPE_ARMOS      ,   6,  4,   TYPE_ARMOS      ,   8,  4,   TYPE_ARMOS      ,   4,  6,   TYPE_ARMOS      ,   6,  6,   TYPE_ARMOS      ,   8,  6,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Formation 18
         !byte TYPE_ZORA       ,   9,  6,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 19
@@ -342,7 +342,7 @@ map_enemies:
         ; Formation 24
         !byte TYPE_OCTO_RED   ,  11,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 25
-        !byte TYPE_ARMOS      ,   7,  3,   TYPE_ARMOS      ,  10,  3,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_ARMOS      ,   8,  4,   TYPE_ARMOS      ,  11,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Formation 26
         !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   4,  1,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  7,   TYPE_OCTO_RED   ,   7,  2,   TYPE_ZORA       ,  12,  3,   TYPE_ZORA       ,  17,  2,   TYPE_NONE       ,   0,  0
         ; Formation 27

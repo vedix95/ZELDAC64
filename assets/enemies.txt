@@ -358,38 +358,38 @@ bbbgbbbs
 [tektite_0]
 ........
 ........
-..gggg..
-g......g
-ss....ss
-..ssss..
-...gg...
-sg.ss.gs
-.sggggs.
-.gs..sg.
-.sg..gs.
-...ss...
-.gggggg.
-..gssg..
 ........
-...ss...
+........
+sb.gg.bs
+bbggggbb
+bggggggb
+bggggggb
+bggggggb
+.gggggg.
+sbssssbs
+bbssssbb
+b.gssg.b
+b.gggg.b
+b..ss..b
+b......b
 
 [tektite_1]
-sss..sss
-..ssss..
-.g.ss.g.
-..gssg..
 ........
-..gssg..
-.gsggsg.
-.sg..gs.
-g..gg..g
-ssg..gss
-g.s..s.g
-.sg..gs.
-gg....gg
-sgs..sgs
-gs....sg
-.g....g.
+...gg...
+..gggg..
+.bggggb.
+.gggggg.
+sggggggs
+bggggggb
+bgssssgb
+bbssssbb
+.bgssgb.
+bbggggbb
+s..ss..s
+b......b
+b......b
+b......b
+b......b
 
 # ---------------------------------------------------------------------------
 # LEEVER
@@ -453,21 +453,21 @@ sggbbggs
 
 [peahat_1]
 ........
-...gg...
-..gggg..
-.sggggs.
+.bb..bb.
+bbbssbbb
+.bbbbbb.
+..gbbg..
+..bbbb..
+.bbbbbb.
+.bbggbb.
+.bbggbb.
+bbbggbbb
 .gggggg.
-bggggggb
-sggggggs
-sgbbbbgs
-ssbbbbss
-.sgbbgs.
-ssggggss
-b..bb..b
-s......s
-s......s
-s......s
-s......s
+.sggggs.
+.sggggs.
+..gggg..
+..ssss..
+...ss...
 
 # ---------------------------------------------------------------------------
 # ARMOS

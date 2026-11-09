@@ -99,6 +99,9 @@ def relocate_all():
 
                     if en_type == "TYPE_NONE":
                         new_slots.append((en_type, 0, 0))
+                    elif en_type == "TYPE_ARMOS":
+                        # Les Armos sont ancrés exactement sur les statues de décor (TILE_STATUE)
+                        new_slots.append((en_type, sx, sy))
                     else:
                         is_water_enemy = (en_type == "TYPE_ZORA")
                         # Si l'ennemi est aquatique mais que la salle ne contient pas d'eau, remplacer par TYPE_NONE

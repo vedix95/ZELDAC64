@@ -378,7 +378,7 @@ restore_target_secrets:
         and overworld_secrets_opened,x
         beq .no_sec_tgt
 
-        ldx #9
+        ldx #14
 -       lda sec_rooms_tbl,x
         cmp target_room_idx
         bne +

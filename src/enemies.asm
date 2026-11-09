@@ -88,6 +88,9 @@ en_proj_owner:          !byte 0
 
 ; Variables temporaires locales
 en_idx:                 !byte 0
+en_armos_tx:            !byte 0
+en_armos_ty:            !byte 0
+en_armos_tile:          !byte 0
 en_tmp_loop:            !byte 0
 en_dx:                  !word 0
 en_dy:                  !byte 0
@@ -591,7 +594,31 @@ init_slot_from_table:
         beq .spawn_early_rts            ; Peahat survole les blocs
         cmp #TYPE_ZORA
         beq .spawn_early_rts            ; Zora apparaît dans l'eau
+        cmp #TYPE_ARMOS
+        beq .check_armos_already_open   ; Armos apparaît SUR sa statue (solide)
         jmp +
+
+.check_armos_already_open:
+        ; Si le secret sous cet Armos a déjà été révélé (TILE_CAVE), cet Armos ne réapparaît pas !
+        txa
+        asl
+        tay
+        lda en_x,y
+        clc
+        adc #8
+        sta col_x
+        lda en_x+1,y
+        adc #0
+        sta col_x+1
+        lda en_y,x
+        clc
+        adc #8
+        sta col_y
+        jsr get_tile_at_point
+        cmp #TILE_CAVE
+        bne .spawn_early_rts
+        jmp .dead_slot
+
 .spawn_early_rts:
         rts
 +
@@ -1540,7 +1567,7 @@ spawn_boss_fireball:
         eor #$ff
         clc
         adc #1
-+       cmp #18
++       cmp #20
         bcs .statue_ret
 
         lda player_y
@@ -1550,7 +1577,7 @@ spawn_boss_fireball:
         eor #$ff
         clc
         adc #1
-+       cmp #18
++       cmp #20
         bcs .statue_ret
 
         ; --- RÉVEIL DE L'ARMOS ! ---
@@ -1580,7 +1607,7 @@ armos_reveal_secret:
         lsr
         lsr
         lsr
-        sta ZP_TMP                      ; tx (0..19)
+        sta en_armos_tx                 ; tx (0..19)
 
         ; Calcule ty = (en_y - 80) / 16
         lda en_y,x
@@ -1590,33 +1617,50 @@ armos_reveal_secret:
         lsr
         lsr
         lsr
-        sta ZP_ROW                      ; ty (0..9)
+        sta en_armos_ty                 ; ty (0..9)
 
         ; Tile index = ty * 20 + tx
-        ldx ZP_ROW
+        ldx en_armos_ty
         lda tile_row_offset,x
         clc
-        adc ZP_TMP
-        tay                             ; Y = tile index (0..199)
+        adc en_armos_tx
+        sta en_armos_tile               ; Y = tile index (0..199)
+        tay
 
-        ; Remplace la tuile statique de statue par du sol praticable
+        ; Remplace la tuile statique de statue par du sol praticable (herbe)
         lda #TILE_GRASS
         sta room_buf,y
         jsr redraw_single_tile
 
+        ; Vérifie les 5 secrets authentiques sous Armos
         lda current_room_idx
-        cmp #36                         ; Salle E-3 : Statue en haut à droite (Bracelet)
-        bne .ars_chk_caves
-        ; Si statue en haut à droite (tx >= 12 et ty <= 4)
-        lda ZP_TMP
-        cmp #12
-        bcc .ars_done
-        lda ZP_ROW
-        cmp #5
-        bcs .ars_done
+        cmp #52                         ; Salle E-4 : Boutique Secrète Anneau Bleu
+        bne .chk_r36
+        lda en_armos_tx
+        cmp #6                          ; Statue du milieu rangée haute (tx=6, ty=4)
+        bne .ars_done
+        lda en_armos_ty
+        cmp #4
+        bne .ars_done
+        jmp .reveal_cave
+
+.ars_done:
+        rts
+
+.chk_r36:
+        cmp #36                         ; Salle E-3 : Bracelet de Force
+        bne .chk_r28
+        lda en_armos_tx
+        cmp #16                         ; Statue en haut à droite (tx=16, ty=4)
+        bne .ars_done
+        lda en_armos_ty
+        cmp #4
+        bne .ars_done
+        ldy en_armos_tile
         lda #TILE_CAVE
         sta room_buf,y
         jsr redraw_single_tile
+        jsr record_room_secret_opened
         lda player_has_bracelet
         bne .ars_done
         lda #1
@@ -1625,19 +1669,45 @@ armos_reveal_secret:
         jsr hud_render
         rts
 
-.ars_chk_caves:
-        ldx current_room_idx
-        lda room_cave_types,x
-        beq .ars_done
-        lda ZP_TMP
-        cmp #6
-        bcc .ars_done
+.chk_r28:
+        cmp #28                         ; Salle M-2 : Grotte Indice Vieil Homme
+        bne .chk_r61
+        lda en_armos_tx
+        cmp #13                         ; 3e statue depuis l'ouest rangée haute (tx=13, ty=4)
+        bne .ars_done
+        lda en_armos_ty
+        cmp #4
+        bne .ars_done
+        jmp .reveal_cave
+
+.chk_r61:
+        cmp #61                         ; Salle N-4 : Moblin Secret 30R
+        bne .chk_r78
+        lda en_armos_tx
+        cmp #11                         ; Statue de droite (tx=11, ty=4)
+        bne .ars_done
+        lda en_armos_ty
+        cmp #4
+        bne .ars_done
+        jmp .reveal_cave
+
+.chk_r78:
+        cmp #78                         ; Salle O-5 : Grotte Choix Vital
+        bne .ars_done
+        lda en_armos_tx
+        cmp #12                         ; Statue de droite (tx=12, ty=4)
+        bne .ars_done
+        lda en_armos_ty
+        cmp #4
+        bne .ars_done
+
+.reveal_cave:
+        ldy en_armos_tile
         lda #TILE_CAVE
         sta room_buf,y
         jsr redraw_single_tile
-        jsr record_room_secret_opened
-.ars_done:
-        rts
+        jsr sound_secret_chime
+        jmp record_room_secret_opened
 
 ; ===========================================================================
 ; IA 5 : AI_ROAM (Octorok, Moblin, Lynel, Stalfos, Darknut, etc.)

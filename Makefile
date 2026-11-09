@@ -91,16 +91,16 @@ $(BLD_DIR)/resident_symbols.inc: $(PRG) tools/vs2inc.py | $(BLD_DIR)
 	$(PYTHON) tools/vs2inc.py $(LABELS) $@
 
 $(BLD_DIR)/ovl_inv.dat: $(SRC_DIR)/overlay_inventory.asm $(SRC_DIR)/inventory.asm $(SRC_DIR)/inventory_draw.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
-	$(ACME) -f plain -o $@ $<
+	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_inv.vs -o $@ $<
 
 $(BLD_DIR)/ovl_cave.dat: $(SRC_DIR)/overlay_cave.asm $(SRC_DIR)/cave.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
-	$(ACME) -f plain -o $@ $<
+	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_cave.vs -o $@ $<
 
 $(BLD_DIR)/ovl_items.dat: $(SRC_DIR)/overlay_items.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
-	$(ACME) -f plain -o $@ $<
+	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_items.vs -o $@ $<
 
 $(BLD_DIR)/ovl_debug.dat: $(SRC_DIR)/overlay_debug.asm $(SRC_DIR)/debug.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
-	$(ACME) -f plain -o $@ $<
+	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_debug.vs -o $@ $<
 
 # Image cartouche Magic Desk CRT (512 Ko) avec 64 banques mémoires et streaming instantané
 $(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(SPR_BINS) $(OVL_DATS) $(PRG_INT) tools/cartgen.py src/cart_boot.asm
@@ -143,6 +143,10 @@ atlas: | $(BLD_DIR)
 	@echo "Atlas graphique généré dans $(BLD_DIR)/atlas_all_assets.png"
 
 assets-sheet: atlas
+
+# Exécution du Cahier de Recettes et validation des scénarios sous VICE
+recette: $(CRT)
+	$(PYTHON) tools/run_cahier_recettes.py
 
 clean:
 	rm -rf $(BLD_DIR)

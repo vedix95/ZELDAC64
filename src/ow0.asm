@@ -338,7 +338,7 @@ map_enemies:
         ; Formation 25
         !byte TYPE_TEKTITE_RED,   9,  5,   TYPE_TEKTITE_RED,   3,  5,   TYPE_TEKTITE_RED,  16,  7,   TYPE_TEKTITE_RED,  12,  7,   TYPE_TEKTITE_RED,  15,  3,   TYPE_TEKTITE_RED,   7,  5,   TYPE_ZORA       ,   8,  2,   TYPE_NONE       ,   0,  0
         ; Formation 26
-        !byte TYPE_ARMOS      ,   8,  3,   TYPE_ARMOS      ,  10,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,  14,  3,   TYPE_ARMOS      ,   8,  5,   TYPE_ARMOS      ,  10,  5,   TYPE_ARMOS      ,  12,  5,   TYPE_ARMOS      ,  14,  5
+        !byte TYPE_ARMOS      ,   9,  4,   TYPE_ARMOS      ,  11,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,  15,  4,   TYPE_ARMOS      ,   9,  6,   TYPE_ARMOS      ,  11,  6,   TYPE_ARMOS      ,  13,  6,   TYPE_ARMOS      ,  15,  6
         ; Formation 27
         !byte TYPE_PEAHAT     ,   9,  5,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  15,  2,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   9,  7,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Formation 28

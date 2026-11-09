@@ -153,7 +153,7 @@ restore_room_secrets:
         and overworld_secrets_opened,x
         beq .no_secret_restored
 
-        ldx #9
+        ldx #14
 -       lda sec_rooms_tbl,x
         cmp current_room_idx
         bne +
@@ -193,9 +193,9 @@ restore_room_secrets:
         rts
 
 sec_rooms_tbl:
-        !byte 33, 51, 35, 73, 121, 29, 109, 107, 82, 66
+        !byte 33, 51, 35, 73, 121, 29, 109, 107, 82, 66, 52, 36, 28, 61, 78
 sec_tiles_tbl:
-        !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90
+        !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90, 86, 96, 93, 91, 92
 
 ; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).
 ; ZP_SCR / ZP_COL pointent sur la ligne 4 de texte (écran / couleur) :

@@ -565,9 +565,120 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Toujours préserver l'en-tête de donjon à `$C012..$C013` pour identifier les salles scellées.
   - Ne jamais dépasser `$9FFF` en mémoire haute résidente (maintenir l'assertion `!if * > OVERLAY_RAM_ADDR { !error ... }`).
 
+---
 
+### [2026-11-09] Anomalie 24 : Boucle Infinie de Célébration et Fanfare lors du Ramassage d'Objets en Grotte (Première Épée, Échoppes)
+* **Symptômes** :
+  1. Lorsque Link ramasse la première épée dans la grotte de départ (ou achète/ramasse tout autre objet en caverne ou échoppe), il se retrouve piégé dans une boucle infinie : Link maintient l'objet levé au-dessus de sa tête, l'animation de célébration se relance indéfiniment, et la fanfare sonore d'objet (`sound_item_fanfare`) rejoue en continu sans redonner la main au joueur.
+* **Causes racines** :
+  1. Dans `cave_buy_slot_x` ([src/cave.asm](file:///home/vedix/Documents/C64/zelda/src/cave.asm)), `X` contient le décalage du slot (`0` pour Slot 1, `5` pour Slot 2, `10` pour Slot 3).
+  2. Lors de la prise de l'objet, `cave_buy_slot_x` appelait `cave_grant_item` avant de désactiver le slot (`sta cave_slot1_active,x`).
+  3. `cave_grant_item` appelle `hud_update_sword` (ou `hud_render`), des routines qui détruisent les registres CPU `X` et `Y`. En particulier, `hud_update_sword` effectuait une boucle `ldx #3 ... dex ... bpl`, ressortant avec `X = $FF` (-1).
+  4. À la sortie de `cave_grant_item`, l'instruction `sta cave_slot1_active,x` écrivait `0` à l'adresse corrompue `cave_slot1_active + $FF` au lieu de `cave_slot1_active,x`.
+  5. Par conséquent, l'indicateur actif du slot (`cave_slot2_active`) restait à `1`. De plus, les comparaisons `cpx #0` et `cpx #5` échouaient, écrivant un bit erroné dans `cave_room_cleared`.
+  6. Dès que le minuteur de célébration de 75 frames (`cave_pickup_timer`) expirait, Link se trouvait toujours sur les coordonnées de l'objet avec `cave_slot2_active == 1`. La boucle de mise à jour `ovl_cave_update` redéclenchait immédiatement `cave_buy_slot2`, réarmant le minuteur à 75 et relançant la fanfare musicale en boucle infinie.
+  7. Un problème similaire existait dans `.pay_slot_x`, où `jsr hud_render` écrasait `X` avant la lecture du type d'objet pour les achats payants.
+* **Correctif appliqué** :
+  1. `src/cave.asm` : Sauvegarde immédiate du slot `stx cave_active_slot_idx` à l'entrée de `cave_buy_slot_x`.
+  2. `src/cave.asm` : Restauration de `X` via `ldx cave_active_slot_idx` après `jsr hud_render` dans `.pay_slot_x`.
+  3. `src/cave.asm` : Dans `.take_slot_x`, désactivation **immédiate** du slot (`sta cave_slot1_active,x`), gestion du Choix Vital et mise à jour de `cave_room_cleared` **avant** l'appel à `cave_grant_item`.
+  4. `src/hud.asm` : Sauvegarde et restauration non-destructive de `X` sur la pile (`txa : pha ... pla : tax`) dans `hud_update_sword`.
+  5. `tools/test_cave_sword_pickup.py` : Test de non-régression automatisé sous émulateur VICE vérifiant que `cave_slot2_active` passe à 0 dès la frame 2, que `cave_pickup_timer` s'éteint à la frame 75, que Link reste à l'arrêt sur le slot sans relancer la célébration, et qu'il peut quitter la grotte vers l'Overworld avec l'épée active au HUD.
+* **Règles anti-régression** :
+  - Toujours préserver les registres d'index CPU (`X`, `Y`) lors des appels à des sous-routines d'affichage HUD ou de gestion audio.
+  - Toujours désactiver le drapeau d'activation d'un objet (`cave_slotX_active = 0`, `dungeon_drop_active = 0`) **avant** tout appel externe susceptible d'altérer les registres ou le flux d'exécution.
 
+---
 
-
-
+### [2026-11-09] Anomalie 25 : Comportement des Statues/Ennemis Armos et Décalage des Secrets sous Armos en Overworld (E-4, E-3, M-2, N-4, O-5)
+* **Symptômes** :
+  1. En salle E-4 (salle 52 de l'Overworld) et dans les autres salles contenant des Armos, les statues/ennemis étaient buggués : le sprite de l'Armos apparaissait décalé par rapport à la tuile de décor (`TILE_STATUE`), ou était déplacé de 16 pixels lors de l'apparition.
+  2. Le secret sous l'ennemi n'apparaissait pas sous la statue canonique : soit n'importe quelle statue réveillée faisait apparaître un escalier, soit l'escalier était placé à un mauvais emplacement de mémoire.
+  3. Lors de la ré-entrée dans la salle après avoir visité la boutique ou la grotte secrète, l'escalier disparaissait ou un Armos fantôme réapparaissait par-dessus l'escalier ouvert.
+* **Causes racines** :
+  1. **Décalage d'un cran dans les formations d'ennemis** : Dans `map_overworld_enemies.inc` et les chunks générés `ow0.asm`, `ow1.asm`, `ow2.asm`, les coordonnées des formations Armos étaient décalées de `(-1, -1)` (ex: `(3, 3)` au lieu de `(4, 4)`, `(5, 3)` au lieu de `(6, 4)`).
+  2. **Relocalisation parasite par le filtre de spawn** : `tools/relocate_overworld_spawns.py` et `init_slot_from_table` dans `src/enemies.asm` considéraient la tuile `TILE_STATUE` comme un obstacle solide infranchissable, décalant l'Armos de 16 pixels hors de sa statue lors du spawn.
+  3. **Écrasement du registre Y par le tracé vidéo** : Dans `armos_reveal_secret` ([src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm)), le premier appel à `redraw_single_tile` (qui posait l'herbe) écrasait le registre `Y` (qui valait 1 en sortie). Lors de la révélation du secret, `sta room_buf,y` écrivait `TILE_CAVE` à l'index `room_buf[1]` au lieu de l'emplacement de la statue.
+  4. **Condition de secret trop permissive** : N'importe quelle statue avec `tx >= 6` en salle 52 posait un escalier, créant des escaliers multiples en double.
+  5. **Absence de persistance des secrets Armos** : Les salles 52, 36, 28, 61 et 78 n'étaient pas déclarées dans `sec_rooms_tbl` et `sec_tiles_tbl` ([src/tilemap.asm](file:///home/vedix/Documents/C64/zelda/src/tilemap.asm) et [src/transition.asm](file:///home/vedix/Documents/C64/zelda/src/transition.asm)), empêchant la restauration de l'escalier lors d'un retour dans la salle.
+* **Correctif appliqué** :
+  1. `tools/relocate_overworld_spawns.py` & `src/map_overworld_enemies.inc` : Coordonnées de spawn réalignées au pixel et à la tuile près sur les statues authentiques de `assets/world.txt` (Salles 28, 36, 37, 52, 61, 78).
+  2. `src/enemies.asm` (`init_slot_from_table`) : `TYPE_ARMOS` exempté de l'évitement de tuile solide pour apparaître exactement sur sa statue de pierre.
+  3. `src/enemies.asm` (`.check_armos_already_open`) : Si un escalier (`TILE_CAVE`) est déjà présent sous l'Armos, le slot passe directement à `.dead_slot` pour ne pas faire spawner un Armos sur les marches.
+  4. `src/enemies.asm` (`armos_reveal_secret`) : Sauvegarde explicite de `en_armos_tx`, `en_armos_ty` et `en_armos_tile`. Restriction stricte des 5 secrets canoniques First Quest :
+     - **Salle 52 (E-4)** : Statue du milieu haut `(tx=6, ty=4)` -> Échoppe secrète Anneau Bleu (250R).
+     - **Salle 36 (E-3)** : Statue haut-droite `(tx=16, ty=4)` -> Bracelet de Force.
+     - **Salle 28 (M-2)** : 3e statue haut `(tx=13, ty=4)` -> Grotte Indice.
+     - **Salle 61 (N-4)** : Statue droite `(tx=11, ty=4)` -> Moblin secret 30R.
+     - **Salle 78 (O-5)** : Statue droite `(tx=12, ty=4)` -> Grotte Choix Vital.
+     - Toutes les autres statues se transforment strictement en herbe (`TILE_GRASS`).
+  5. `src/tilemap.asm` & `src/transition.asm` : Extension de `sec_rooms_tbl` et `sec_tiles_tbl` aux 5 salles Armos (indices tuiles 86, 96, 93, 91, 92) et recherche étendue à `ldx #14`.
+  6. `src/cave.asm` : Seuil de sortie inconditionnel lors du contact avec la sortie basse (X ~ 166..196, Y >= 214).
+  7. `tools/test_armos_e4_secret.py` & `tools/test_armos_feature.py` : Tests automatisés sous émulateur VICE intégrés au Cahier de Recettes (`make recette`).
+* **Règles anti-régression** :
+  - Tout ennemi de type `TYPE_ARMOS` doit obligatoirement être ancré sur la tuile `TILE_STATUE` correspondante dans `world.txt`.
+  - Toujours préserver l'index de tuile `en_armos_tile` avant tout appel à `redraw_single_tile`.
+  - Toute nouvelle salle avec secret révélé par interaction d'ennemi doit obligatoirement figurer dans `sec_rooms_tbl` et `sec_tiles_tbl` pour garantir la persistance lors des transitions et retours d'échoppes.### [2026-11-09] Anomalie 26 : Extraction et Assemblage des Sprites Ennemis Overworld (H-8 / G-8 Tektites, Peahats et Déformations Miroir)
+* **Symptômes** :
+  1. En salle G-8 (salle 118, ouest immédiat du spawn H-8 / salle 119) et dans les écrans voisins, les monstres (notamment les Tektites rouges) apparaissaient totalement déformés, avec des fragments de motifs incohérents et une symétrie miroir brisée.
+  2. Les Peahats en rotation utilisaient une pose erronée empruntée à un autre ennemi.
+  3. Lors des sauts de warp de débogage vers la salle 119 (`debug_do_warp_overworld`), des résidus d'états d'ennemis précédents (`en_type[2..7]`) persistaient à l'écran.
+* **Causes racines** :
+  1. **Indices de tuiles NES erronés dans `tools/extract_all_nes_sprites.py`** :
+     - Pour le Tektite, l'extracteur utilisait arbitrairement les tuiles 6..9 du bloc `ow` (qui contenaient des graphismes parasites) au lieu des tuiles canoniques de la ROM NES : tuiles 60..61 (pose au sol) et tuiles 62..63 (pose saut).
+     - Pour le Peahat, la frame 1 de rotation utilisait les tuiles 62..63 (qui appartenaient au Tektite !) au lieu des tuiles 58..59 authentiques.
+  2. **Nettoyage incomplet dans le warp debug** : `debug_do_warp_overworld` dans `src/debug.asm` ne remettait à zéro que `en_type` et `en_type+1`, omettant les slots 2 à 7 ainsi que les états `en_state`, risquant de laisser des fantômes actifs en entrant en salle 119.
+* **Correctif appliqué** :
+  1. `tools/extract_all_nes_sprites.py` :
+     - Alignement rigoureux des indices de tuiles PPU NES sur les données sources de la ROM (`PatternBlockOWSP`) :
+       * Tektite : tuiles 60, 61 (sol, miroir horizontal) et 62, 63 (saut, miroir horizontal).
+       * Peahat : tuiles 56, 57 (atterrissage) et 58, 59 (rotation en vol).
+     - Régénération de `assets/enemies.txt` et reconstruction des banques cartouche via `tools/build_sprite_banks.py`.
+  2. `src/debug.asm` (`debug_do_warp_overworld`) : Remplacement du nettoyage partiel par un appel inconditionnel à `jsr enemies_clear`.
+  3. `tools/run_cahier_recettes.py` : Vérification intégrale validée avec succès sur l'ensemble des scénarios de recette.
+* **Règles anti-régression** :
+  - Tout sprite extrait d'une banque CHR NES doit vérifier son index d'animation dans `ObjAnimations` et `ObjAnimFrameHeap` de la ROM officielle 1986.
+  - Ne jamais assembler de sprite composite avec des tuiles arbitraires non vérifiées dans le code de rendu NES correspondant (`DrawObjectMirrored` / `DrawObjectNotMirrored`).
+### [2026-11-09] Anomalie 26 : Extraction et Assemblage des Sprites Ennemis Overworld (H-8 / G-8 Tektites, Peahats et Déformations Miroir)
+* **Symptômes** :
+  1. En salle G-8 (salle 118, ouest immédiat du spawn H-8 / salle 119) et dans les écrans voisins, les monstres (notamment les Tektites rouges) apparaissaient totalement déformés, avec des fragments de motifs incohérents et une symétrie miroir brisée.
+  2. Les Peahats en rotation utilisaient une pose erronée empruntée à un autre ennemi.
+  3. Lors des sauts de warp de débogage vers la salle 119 (`debug_do_warp_overworld`), des résidus d'états d'ennemis précédents (`en_type[2..7]`) persistaient à l'écran.
+* **Causes racines** :
+  1. **Indices de tuiles NES erronés dans `tools/extract_all_nes_sprites.py`** :
+     - Pour le Tektite, l'extracteur utilisait arbitrairement les tuiles 6..9 du bloc `ow` (qui contenaient des graphismes parasites) au lieu des tuiles canoniques de la ROM NES : tuiles 60..61 (pose au sol) et tuiles 62..63 (pose saut).
+     - Pour le Peahat, la frame 1 de rotation utilisait les tuiles 62..63 (qui appartenaient au Tektite !) au lieu des tuiles 58..59 authentiques.
+  2. **Nettoyage incomplet dans le warp debug** : `debug_do_warp_overworld` dans `src/debug.asm` ne remettait à zéro que `en_type` et `en_type+1`, omettant les slots 2 à 7 ainsi que les états `en_state`, risquant de laisser des fantômes actifs en entrant en salle 119.
+* **Correctif appliqué** :
+  1. `tools/extract_all_nes_sprites.py` :
+     - Alignement rigoureux des indices de tuiles PPU NES sur les données sources de la ROM (`PatternBlockOWSP`) :
+       * Tektite : tuiles 60, 61 (sol, miroir horizontal) et 62, 63 (saut, miroir horizontal).
+       * Peahat : tuiles 56, 57 (atterrissage) et 58, 59 (rotation en vol).
+     - Régénération de `assets/enemies.txt` et reconstruction des banques cartouche via `tools/build_sprite_banks.py`.
+  2. `src/debug.asm` (`debug_do_warp_overworld`) : Remplacement du nettoyage partiel par un appel inconditionnel à `jsr enemies_clear`.
+  3. `tools/run_cahier_recettes.py` : Vérification intégrale validée avec succès sur l'ensemble des scénarios de recette.
+* **Règles anti-régression** :
+  - Tout sprite extrait d'une banque CHR NES doit vérifier son index d'animation dans `ObjAnimations` et `ObjAnimFrameHeap` de la ROM officielle 1986.
+  - Ne jamais assembler de sprite composite avec des tuiles arbitraires non vérifiées dans le code de rendu NES correspondant (`DrawObjectMirrored` / `DrawObjectNotMirrored`).
+### [2026-11-09] Anomalie 26 : Extraction et Assemblage des Sprites Ennemis Overworld (H-8 / G-8 Tektites, Peahats et Déformations Miroir)
+* **Symptômes** :
+  1. En salle G-8 (salle 118, ouest immédiat du spawn H-8 / salle 119) et dans les écrans voisins, les monstres (notamment les Tektites rouges) apparaissaient totalement déformés, avec des fragments de motifs incohérents et une symétrie miroir brisée.
+  2. Les Peahats en rotation utilisaient une pose erronée empruntée à un autre ennemi.
+  3. Lors des sauts de warp de débogage vers la salle 119 (`debug_do_warp_overworld`), des résidus d'états d'ennemis précédents (`en_type[2..7]`) persistaient à l'écran.
+* **Causes racines** :
+  1. **Indices de tuiles NES erronés dans `tools/extract_all_nes_sprites.py`** :
+     - Pour le Tektite, l'extracteur utilisait arbitrairement les tuiles 6..9 du bloc `ow` (qui contenaient des graphismes parasites) au lieu des tuiles canoniques de la ROM NES : tuiles 60..61 (pose au sol) et tuiles 62..63 (pose saut).
+     - Pour le Peahat, la frame 1 de rotation utilisait les tuiles 62..63 (qui appartenaient au Tektite !) au lieu des tuiles 58..59 authentiques.
+  2. **Nettoyage incomplet dans le warp debug** : `debug_do_warp_overworld` dans `src/debug.asm` ne remettait à zéro que `en_type` et `en_type+1`, omettant les slots 2 à 7 ainsi que les états `en_state`, risquant de laisser des fantômes actifs en entrant en salle 119.
+* **Correctif appliqué** :
+  1. `tools/extract_all_nes_sprites.py` :
+     - Alignement rigoureux des indices de tuiles PPU NES sur les données sources de la ROM (`PatternBlockOWSP`) :
+       * Tektite : tuiles 60, 61 (sol, miroir horizontal) et 62, 63 (saut, miroir horizontal).
+       * Peahat : tuiles 56, 57 (atterrissage) et 58, 59 (rotation en vol).
+     - Régénération de `assets/enemies.txt` et reconstruction des banques cartouche via `tools/build_sprite_banks.py`.
+  2. `src/debug.asm` (`debug_do_warp_overworld`) : Remplacement du nettoyage partiel par un appel inconditionnel à `jsr enemies_clear`.
+  3. `tools/run_cahier_recettes.py` : Vérification intégrale validée avec succès sur l'ensemble des scénarios de recette.
+* **Règles anti-régression** :
+  - Tout sprite extrait d'une banque CHR NES doit vérifier son index d'animation dans `ObjAnimations` et `ObjAnimFrameHeap` de la ROM officielle 1986.
+  - Ne jamais assembler de sprite composite avec des tuiles arbitraires non vérifiées dans le code de rendu NES correspondant (`DrawObjectMirrored` / `DrawObjectNotMirrored`).
 

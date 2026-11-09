@@ -59,7 +59,7 @@ map_enemies:
         ; Salle  27 : (11,  1) L-2
         !byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  28 : (12,  1) M-2
-        !byte TYPE_ARMOS      ,   8,  3,   TYPE_ARMOS      ,  10,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,  14,  3,   TYPE_ARMOS      ,   8,  5,   TYPE_ARMOS      ,  10,  5,   TYPE_ARMOS      ,  12,  5,   TYPE_ARMOS      ,  14,  5
+        !byte TYPE_ARMOS      ,   9,  4,   TYPE_ARMOS      ,  11,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,  15,  4,   TYPE_ARMOS      ,   9,  6,   TYPE_ARMOS      ,  11,  6,   TYPE_ARMOS      ,  13,  6,   TYPE_ARMOS      ,  15,  6
         ; Salle  29 : (13,  1) N-2
         !byte TYPE_PEAHAT     ,   9,  5,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  15,  2,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   9,  7,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Salle  30 : (14,  1) O-2
@@ -75,9 +75,9 @@ map_enemies:
         ; Salle  35 : ( 3,  2) D-3
         !byte TYPE_LYNEL_RED  ,   9,  4,   TYPE_LYNEL_RED  ,  16,  7,   TYPE_LYNEL_RED  ,   3,  7,   TYPE_LYNEL_RED  ,  14,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  36 : ( 4,  2) E-3 - Statues Armos (Guerriers de pierre endormis)
-        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   6,  3,   TYPE_ARMOS      ,   9,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,  15,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   9,  5,   TYPE_ARMOS      ,  15,  5
+        !byte TYPE_ARMOS      ,   4,  4,   TYPE_ARMOS      ,   7,  4,   TYPE_ARMOS      ,  10,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,  16,  4,   TYPE_ARMOS      ,   4,  6,   TYPE_ARMOS      ,  10,  6,   TYPE_ARMOS      ,  16,  6
         ; Salle  37 : ( 5,  2) F-3 - Statues Armos avec Grotte Secrète
-        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   6,  3,   TYPE_ARMOS      ,   9,  3,   TYPE_ARMOS      ,  12,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   6,  5,   TYPE_ARMOS      ,   9,  5,   TYPE_ARMOS      ,  12,  5
+        !byte TYPE_ARMOS      ,   4,  4,   TYPE_ARMOS      ,   7,  4,   TYPE_ARMOS      ,  10,  4,   TYPE_ARMOS      ,  13,  4,   TYPE_ARMOS      ,   4,  6,   TYPE_ARMOS      ,   7,  6,   TYPE_ARMOS      ,  10,  6,   TYPE_ARMOS      ,  13,  6
         ; Salle  38 : ( 6,  2) G-3
         !byte TYPE_PEAHAT     ,  10,  4,   TYPE_PEAHAT     ,   3,  7,   TYPE_PEAHAT     ,  15,  4,   TYPE_PEAHAT     ,   5,  2,   TYPE_PEAHAT     ,   7,  6,   TYPE_PEAHAT     ,  13,  4,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Salle  39 : ( 7,  2) H-3
@@ -107,7 +107,7 @@ map_enemies:
         ; Salle  51 : ( 3,  3) D-4
         !byte TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  52 : ( 4,  3) E-4
-        !byte TYPE_ARMOS      ,   3,  3,   TYPE_ARMOS      ,   5,  3,   TYPE_ARMOS      ,   7,  3,   TYPE_ARMOS      ,   3,  5,   TYPE_ARMOS      ,   5,  5,   TYPE_ARMOS      ,   7,  5,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
+        !byte TYPE_ARMOS      ,   4,  4,   TYPE_ARMOS      ,   6,  4,   TYPE_ARMOS      ,   8,  4,   TYPE_ARMOS      ,   4,  6,   TYPE_ARMOS      ,   6,  6,   TYPE_ARMOS      ,   8,  6,   TYPE_ZORA       ,  11,  6,   TYPE_ZORA       ,  17,  7
         ; Salle  53 : ( 5,  3) F-4
         !byte TYPE_ZORA       ,   9,  6,   TYPE_ZORA       ,   2,  7,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  54 : ( 6,  3) G-4
@@ -125,7 +125,7 @@ map_enemies:
         ; Salle  60 : (12,  3) M-4
         !byte TYPE_OCTO_RED   ,  11,  3,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  61 : (13,  3) N-4
-        !byte TYPE_ARMOS      ,   7,  3,   TYPE_ARMOS      ,  10,  3,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_ARMOS      ,   8,  4,   TYPE_ARMOS      ,  11,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   4,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  62 : (14,  3) O-4
         !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   4,  1,   TYPE_OCTO_RED   ,  16,  7,   TYPE_OCTO_BLUE  ,   5,  7,   TYPE_OCTO_RED   ,   7,  2,   TYPE_ZORA       ,  12,  3,   TYPE_ZORA       ,  17,  2,   TYPE_NONE       ,   0,  0
         ; Salle  63 : (15,  3) P-4
@@ -159,7 +159,7 @@ map_enemies:
         ; Salle  77 : (13,  4) N-5
         !byte TYPE_MOBLIN_BLUE,  10,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  78 : (14,  4) O-5
-        !byte TYPE_ARMOS      ,   6,  3,   TYPE_ARMOS      ,  11,  3,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
+        !byte TYPE_ARMOS      ,   7,  4,   TYPE_ARMOS      ,  12,  4,   TYPE_MOBLIN_BLUE,   3,  7,   TYPE_MOBLIN_BLUE,  16,  7,   TYPE_MOBLIN_BLUE,   5,  2,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0,   TYPE_NONE       ,   0,  0
         ; Salle  79 : (15,  4) P-5
         !byte TYPE_OCTO_RED   ,  10,  4,   TYPE_OCTO_BLUE  ,   4,  6,   TYPE_OCTO_RED   ,   6,  2,   TYPE_OCTO_BLUE  ,   7,  7,   TYPE_OCTO_BLUE  ,  10,  6,   TYPE_ZORA       ,  12,  4,   TYPE_ZORA       ,  17,  7,   TYPE_NONE       ,   0,  0
         ; Salle  80 : ( 0,  5) A-6

@@ -619,6 +619,8 @@ print_2digits:
 ; hud_update_sword : affiche "SWOR" si Link a l'épée, ou blanc sinon
 ; ---------------------------------------------------------------------------
 hud_update_sword:
+        txa
+        pha
         lda player_has_sword
         bne .show_sword
         lda #32                         ; espace
@@ -626,6 +628,8 @@ hud_update_sword:
 -       sta SCREEN_RAM+40+27,x
         dex
         bpl -
+        pla
+        tax
         rts
 .show_sword:
         ldx #3
@@ -635,6 +639,8 @@ hud_update_sword:
         sta COLOR_RAM+40+27,x
         dex
         bpl -
+        pla
+        tax
         rts
 .swor_txt: !text "SWOR"
 

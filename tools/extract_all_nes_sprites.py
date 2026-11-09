@@ -203,20 +203,20 @@ def extract_all():
         "........", "........", "........", "........"
     ]
 
-    # TEKTITE (Tiles 6..9)
-    # Pose 0 (sol) : tiles 6, 7 mirrored / Pose 1 (saut) : tiles 8, 9 mirrored
-    frames["tektite_0"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 6), hflip_tile(tile("ow", 6)), tile("ow", 7), hflip_tile(tile("ow", 7))), cm_tektite)
-    frames["tektite_1"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 8), hflip_tile(tile("ow", 8)), tile("ow", 9), hflip_tile(tile("ow", 9))), cm_tektite)
+    # TEKTITE (Tiles 60..63)
+    # Pose 0 (sol) : tiles 60, 61 mirrored / Pose 1 (saut) : tiles 62, 63 mirrored
+    frames["tektite_0"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 60), hflip_tile(tile("ow", 60)), tile("ow", 61), hflip_tile(tile("ow", 61))), cm_tektite)
+    frames["tektite_1"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 62), hflip_tile(tile("ow", 62)), tile("ow", 63), hflip_tile(tile("ow", 63))), cm_tektite)
 
     # LEEVER (Tiles 52..55)
     # Pose 0 : tiles 52, 53 mirrored / Pose 1 : tiles 54, 55 mirrored
     frames["leever_0"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 52), hflip_tile(tile("ow", 52)), tile("ow", 53), hflip_tile(tile("ow", 53))), cm_leever)
     frames["leever_1"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 54), hflip_tile(tile("ow", 54)), tile("ow", 55), hflip_tile(tile("ow", 55))), cm_leever)
 
-    # PEAHAT (Tiles 56..63)
-    # Pose 0 (atterrissage) : tiles 56, 57 mirrored / Pose 1 (rotation) : tiles 62, 63 mirrored
+    # PEAHAT (Tiles 56..59)
+    # Pose 0 (atterrissage) : tiles 56, 57 mirrored / Pose 1 (rotation) : tiles 58, 59 mirrored
     frames["peahat_0"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 56), hflip_tile(tile("ow", 56)), tile("ow", 57), hflip_tile(tile("ow", 57))), cm_peahat)
-    frames["peahat_1"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 62), hflip_tile(tile("ow", 62)), tile("ow", 63), hflip_tile(tile("ow", 63))), cm_peahat)
+    frames["peahat_1"] = convert_16x16_to_8x16(assemble_16x16(tile("ow", 58), hflip_tile(tile("ow", 58)), tile("ow", 59), hflip_tile(tile("ow", 59))), cm_peahat)
 
     # ARMOS (Tiles 18..25)
     # Pose 0 : tiles 18, 20 / 19, 21 / Pose 1 : tiles 22, 24 / 23, 25
