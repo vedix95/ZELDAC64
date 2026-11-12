@@ -29,6 +29,7 @@ INTRO_PHASE_FADE_WATER    = 7
 
 intro_phase:         !byte INTRO_PHASE_WATERFALL
 intro_timer:         !word 0
+intro_sub_timer:     !word 0
 intro_water_frame:   !byte 0
 intro_water_tick:    !byte 0
 intro_wave_y1:       !byte 114
@@ -36,6 +37,8 @@ intro_wave_y2:       !byte 142
 intro_blink_timer:   !byte 0
 intro_scroll_line:   !byte 0
 intro_scroll_tick:   !byte 0
+intro_fine_scroll_y:    !byte 7
+intro_fine_scroll_tick: !byte 0
 intro_fade_step_idx: !byte 0
 intro_fade_tick:     !byte 0
 intro_music_part:    !byte 0
@@ -46,13 +49,44 @@ intro_music_delay:   !byte 0
 intro_pal_step:      !byte 0
 intro_pal_timer:     !byte 0
 intro_wf_day_timer:  !word 0
-intro_text_color:    !byte COL_BLACK
+intro_text_color:    !byte COL_WHITE
+
+intro_frame_ready:   !byte 0
+
+; Tables des 12 slots de tresors actifs (couvrant toute la hauteur de l ecran)
+treas_active:        !fill 12, 0
+treas_y:             !fill 12, 0
+treas_spr_l:         !fill 12, 0
+treas_col_l:         !fill 12, 0
+treas_spr_r:         !fill 12, 0
+treas_col_r:         !fill 12, 0
+treas_cur_slot:      !byte 0
+treas_spr_mask:      !byte 0
 
 ; Variables specifiques au defile des monstres
 intro_mon_idx:       !byte 0
 intro_mon_frame:     !byte 0
 intro_mon_tick:      !byte 0
 intro_mon_anim_tick: !byte 0
+intro_tmp_slot:      !byte 0
+
+MAX_MON_SLOTS        = 6
+mon_slot_active:     !fill MAX_MON_SLOTS, 0
+mon_slot_y:          !fill MAX_MON_SLOTS, 0
+mon_slot_id:         !fill MAX_MON_SLOTS, 0
+mon_slot_frame:      !fill MAX_MON_SLOTS, 0
+
+mon_bit_mask:        !byte %00000001, %00000010, %00000100, %00001000, %00010000, %00100000
+mon_bit_inv:         !byte %11111110, %11111101, %11111011, %11110111, %11101111, %11011111
+
+mon_buf_lo:
+        !byte <(intro_mon_spr_buffers + 0*64), <(intro_mon_spr_buffers + 1*64)
+        !byte <(intro_mon_spr_buffers + 2*64), <(intro_mon_spr_buffers + 3*64)
+        !byte <(intro_mon_spr_buffers + 4*64), <(intro_mon_spr_buffers + 5*64)
+mon_buf_hi:
+        !byte >(intro_mon_spr_buffers + 0*64), >(intro_mon_spr_buffers + 1*64)
+        !byte >(intro_mon_spr_buffers + 2*64), >(intro_mon_spr_buffers + 3*64)
+        !byte >(intro_mon_spr_buffers + 4*64), >(intro_mon_spr_buffers + 5*64)
 
 ; Constantes de glyphes graphiques
 CHAR_WATER_0    = 128
@@ -95,20 +129,53 @@ CHAR_BOOMERANG  = 101
 CHAR_BOW        = 102
 CHAR_CANDLE     = 103
 
+; Glyphes de bordures officielles NES
+CHAR_FRAME_TL   = 249
+CHAR_FRAME_TR   = 250
+CHAR_FRAME_BL   = 251
+CHAR_FRAME_BR   = 252
+CHAR_FRAME_H    = 253
+CHAR_FRAME_V    = 254
+CHAR_FRAME_X    = 255
+
 !align 63, 0
 intro_wave_spr_data:
         !byte 0, 0, 0, 12, 60, 48, 30, 126, 120, 63, 126, 252, 30, 126, 120, 12, 60, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 SPR_BLOCK_WAVE = (intro_wave_spr_data / 64)
+!align 63, 0
+intro_glint_spr_data:
+        !byte 0, 0, 0, 0, 16, 0, 0, 16, 0, 0, 56, 0, 1, 254, 128, 0, 56, 0, 0, 16, 0, 0, 16, 0, 0, 0, 0
+        !fill 37, 0
+SPR_BLOCK_GLINT = (intro_glint_spr_data / 64)
 
 !align 63, 0
 intro_link_spr_data:
-        !byte 0, 170, 0, 2, 170, 128, 10, 170, 160, 42, 170, 168, 170, 170, 170, 0, 255, 0, 3, 255, 192, 1, 85, 64, 5, 85, 80, 15, 255, 240, 3, 255, 192, 5, 85, 80, 21, 85, 84, 21, 85, 84, 15, 255, 240, 21, 85, 84, 5, 0, 80, 15, 0, 240, 15, 0, 240, 63, 195, 252, 0, 0, 0, 0
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %10101010, %00000000
+        !byte %00000010, %10101010, %10000000
+        !byte %00001010, %10101010, %10100000
+        !byte %00001010, %10101010, %10100000
+        !byte %00001111, %01010101, %11110000
+        !byte %00001101, %11010111, %01110000
+        !byte %00000001, %01010101, %01000000
+        !byte %00000100, %01010101, %00010000
+        !byte %00000110, %10101010, %10010000
+        !byte %00000110, %10101010, %10010000
+        !byte %00000010, %10101010, %10000000
+        !byte %00000011, %11111111, %11000000
+        !byte %00000010, %10101010, %10000000
+        !byte %00000010, %10101010, %10000000
+        !byte %00000011, %11000011, %11000000
+        !byte %00000011, %11000011, %11000000
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte 0
 SPR_BLOCK_LINK = (intro_link_spr_data / 64)
+SPR_BLOCK_TRIFORCE = (spr_triforce_triangle / 64)
 
-!align 63, 0
-intro_spr_buffer:
-        !fill 64, 0
-SPR_BLOCK_MON = (intro_spr_buffer / 64)
+
 
 ; Tables d'adresses d'ecran et de couleur pour les 25 lignes
 intro_scr_lo:
@@ -137,6 +204,277 @@ intro_col_hi:
         !byte >(COLOR_RAM + 640), >(COLOR_RAM + 680), >(COLOR_RAM + 720), >(COLOR_RAM + 760)
         !byte >(COLOR_RAM + 800), >(COLOR_RAM + 840), >(COLOR_RAM + 880), >(COLOR_RAM + 920)
         !byte >(COLOR_RAM + 960)
+
+; ===========================================================================
+; GESTIONNAIRE D'INTERRUPTION RASTER VIC-II A 2 PHASES (MULTIPLEXEUR 16 SPRITES)
+; ===========================================================================
+
+intro_tmp_y: !byte 0
+intro_tmp_row: !byte 0
+intro_buf_idx: !byte 0
+intro_screen_memsetup: !byte $18
+intro_spr_bits:
+        !byte %00000001, %00000010, %00000100, %00001000
+        !byte %00010000, %00100000, %01000000, %10000000
+
+intro_init_raster_irq:
+        sei
+        lda #$7f
+        sta $dc0d                       ; Desactive interruptions timers CIA 1
+        lda $dc0d                       ; Ack CIA 1
+        lda #%00000001
+        sta VIC_IRQ_ENABLE              ; Active interruption raster VIC-II
+        lda #250
+        sta VIC_RASTER                  ; Premiere phase a raster 250 (VBlank)
+        lda VIC_CTRL1
+        and #%01111111                  ; Raster bit 8 = 0
+        sta VIC_CTRL1
+
+        lda #<irq_intro_bottom
+        sta $0314
+        lda #>irq_intro_bottom
+        sta $0315
+        asl VIC_IRQ_FLAG                ; Ack tout flag residuel
+        cli
+        rts
+
+irq_intro_top:
+        lda intro_phase
+        cmp #INTRO_PHASE_TREASURES
+        bne .top_skip
+        lda intro_scroll_line
+        cmp #50
+        bcs .top_skip
+        jsr intro_apply_treas_sprites_p1
+
+.top_skip:
+        lda #115
+        sta VIC_RASTER
+        lda #<irq_intro_mid1
+        sta $0314
+        lda #>irq_intro_mid1
+        sta $0315
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
+irq_intro_mid1:
+        lda intro_phase
+        cmp #INTRO_PHASE_TREASURES
+        bne .m1_skip
+        lda intro_scroll_line
+        cmp #50
+        bcs .m1_skip
+        jsr intro_apply_treas_sprites_p2
+
+.m1_skip:
+        lda #180
+        sta VIC_RASTER
+        lda #<irq_intro_mid2
+        sta $0314
+        lda #>irq_intro_mid2
+        sta $0315
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
+irq_intro_mid2:
+        lda intro_phase
+        cmp #INTRO_PHASE_TREASURES
+        bne .m2_skip
+        lda intro_scroll_line
+        cmp #50
+        bcs .m2_skip
+        jsr intro_apply_treas_sprites_p3
+
+.m2_skip:
+        lda #250
+        sta VIC_RASTER
+        lda #<irq_intro_bottom
+        sta $0314
+        lda #>irq_intro_bottom
+        sta $0315
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
+irq_intro_bottom:
+        inc intro_frame_ready
+
+        lda intro_screen_memsetup
+        sta VIC_MEMSETUP
+
+        lda intro_phase
+        cmp #INTRO_PHASE_STORY
+        beq .apply_scroll_y
+        cmp #INTRO_PHASE_TREASURES
+        beq .apply_scroll_y
+        cmp #INTRO_PHASE_MONSTERS
+        beq .apply_scroll_y
+        bne .bottom_raster
+
+.apply_scroll_y:
+        lda #%00010000                  ; 24 lignes, DEN=1
+        ora intro_fine_scroll_y
+        sta VIC_CTRL1
+
+.bottom_raster:
+        lda #50
+        sta VIC_RASTER
+        lda #<irq_intro_top
+        sta $0314
+        lda #>irq_intro_top
+        sta $0315
+        asl VIC_IRQ_FLAG
+        jmp $ea81
+
+; Routine commune d'assignation d'une paire de sprites gauche/droite
+intro_set_treas_pair:
+        lda treas_spr_l,y
+        sta SPRITE_PTR0,x
+        sta $0ff8,x
+        lda treas_col_l,y
+        sta VIC_SPRITE_COL0,x
+        lda treas_y,y
+        sta intro_tmp_y
+
+        txa
+        asl
+        tay
+        lda #64
+        sta VIC_SPRITE_X0,y
+        lda intro_tmp_y
+        sta VIC_SPRITE_Y0,y
+
+        lda intro_spr_bits,x
+        ora treas_spr_mask
+        sta treas_spr_mask
+
+        inx                             ; Sprite droit (1, 3, 5, 7)
+        ldy treas_cur_slot
+        lda treas_spr_r,y
+        sta SPRITE_PTR0,x
+        sta $0ff8,x
+        lda treas_col_r,y
+        sta VIC_SPRITE_COL0,x
+
+        txa
+        asl
+        tay
+        lda #192
+        sta VIC_SPRITE_X0,y
+        lda intro_tmp_y
+        sta VIC_SPRITE_Y0,y
+
+        lda intro_spr_bits,x
+        ora treas_spr_mask
+        sta treas_spr_mask
+
+        inx                             ; Paire suivante
+        rts
+
+; Phase 1 : Sprites en haut d'ecran (Y dans [50..114])
+intro_apply_treas_sprites_p1:
+        lda #0
+        sta treas_spr_mask
+        sta treas_cur_slot
+        ldx #0                          ; Index sprite gauche (0, 2, 4, 6)
+
+.p1_loop:
+        ldy treas_cur_slot
+        lda treas_active,y
+        beq .p1_next_slot
+        lda treas_y,y
+        cmp #115
+        bcs .p1_next_slot              ; Y >= 115 -> phase suivante
+        cmp #50
+        bcc .p1_next_slot              ; Y < 50 -> hors ecran
+
+        jsr intro_set_treas_pair
+        cpx #8
+        beq .p1_done
+
+.p1_next_slot:
+        inc treas_cur_slot
+        lda treas_cur_slot
+        cmp #12
+        bne .p1_loop
+
+.p1_done:
+        lda treas_spr_mask
+        sta VIC_SPRITE_EN
+        lda #%11111111
+        sta VIC_SPRITE_MC               ; Tous multicolores
+        lda #COL_WHITE
+        sta VIC_SPRITE_MC1              ; Blanc (eclats / lame / contour)
+        lda #COL_BROWN
+        sta VIC_SPRITE_MC2              ; Marron / or
+        lda #0
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        sta VIC_SPRITE_MSB
+        rts
+
+; Phase 2 : Sprites au milieu d'ecran (Y dans [115..179])
+intro_apply_treas_sprites_p2:
+        lda #0
+        sta treas_spr_mask
+        sta treas_cur_slot
+        ldx #0
+
+.p2_loop:
+        ldy treas_cur_slot
+        lda treas_active,y
+        beq .p2_next_slot
+        lda treas_y,y
+        cmp #115
+        bcc .p2_next_slot              ; Y < 115 -> deja affiche en phase 1
+        cmp #180
+        bcs .p2_next_slot              ; Y >= 180 -> pour phase 3
+
+        jsr intro_set_treas_pair
+        cpx #8
+        beq .p2_done
+
+.p2_next_slot:
+        inc treas_cur_slot
+        lda treas_cur_slot
+        cmp #12
+        bne .p2_loop
+
+.p2_done:
+        lda treas_spr_mask
+        sta VIC_SPRITE_EN
+        rts
+
+; Phase 3 : Sprites en bas d'ecran (Y dans [180..248])
+intro_apply_treas_sprites_p3:
+        lda #0
+        sta treas_spr_mask
+        sta treas_cur_slot
+        ldx #0
+
+.p3_loop:
+        ldy treas_cur_slot
+        lda treas_active,y
+        beq .p3_next_slot
+        lda treas_y,y
+        cmp #180
+        bcc .p3_next_slot              ; Y < 180 -> deja affiche en phase 2
+        cmp #248
+        bcs .p3_next_slot              ; Y >= 248 -> hors ecran en bas
+
+        jsr intro_set_treas_pair
+        cpx #8
+        beq .p3_done
+
+.p3_next_slot:
+        inc treas_cur_slot
+        lda treas_cur_slot
+        cmp #12
+        bne .p3_loop
+
+.p3_done:
+        lda treas_spr_mask
+        sta VIC_SPRITE_EN
+        rts
 
 ; ---------------------------------------------------------------------------
 ; intro_init : initialise l'introduction au demarrage
@@ -168,8 +506,22 @@ intro_init:
         sta intro_wave_y1
         lda #142
         sta intro_wave_y2
+        lda #0
+        sta intro_buf_idx
+        lda #$18
+        sta intro_screen_memsetup
+        sta VIC_MEMSETUP
         jsr intro_music_init
         jsr intro_draw_waterfall
+        ldx #11
+        lda #0
+-       sta treas_active,x
+        dex
+        bpl -
+        ldx #MAX_MON_SLOTS-1
+-       sta mon_slot_active,x
+        dex
+        bpl -
         rts
 
 ; ---------------------------------------------------------------------------
@@ -332,172 +684,284 @@ intro_update:
         lda #0
         sta intro_scroll_line
         sta intro_scroll_tick
-        jsr intro_draw_story_bg
+        sta intro_sub_timer
+        sta intro_sub_timer+1
+        lda #7
+        sta intro_fine_scroll_y
+        lda #0
+        sta intro_fine_scroll_tick
+        jsr intro_clear_scroll_area
+        lda #%00010000 | 7              ; Active mode 24 lignes (RSEL=0) pour scrolling invisible
+        sta VIC_CTRL1
 +       rts
 
-; --- 3. STORY SCROLL ---
+; --- 3. STORY SCROLL UNIFIE 1:1 NES (SMOOTH HARDWARE SCROLL 50 HZ) ---
 .update_story:
-        inc intro_blink_timer
-        lda intro_blink_timer
-        and #%00100000
-        beq +
-        jsr intro_show_press_text_parchment
-        jmp ++
-+       jsr intro_hide_press_text_parchment
-++
         lda intro_scroll_line
-        cmp #story_line_count
-        bcs .story_show_link
+        cmp #story_total_steps
+        bcs .story_all_done
 
-        inc intro_scroll_tick
-        lda intro_scroll_tick
-        cmp #28
+        ; Defilement fluide au pixel pres (1 pixel toutes les 2 frames = 25 px/s)
+        inc intro_fine_scroll_tick
+        lda intro_fine_scroll_tick
+        cmp #2
         bcc .story_ret
         lda #0
-        sta intro_scroll_tick
-        jsr intro_scroll_story_step
+        sta intro_fine_scroll_tick
+
+        dec intro_fine_scroll_y
+        lda intro_fine_scroll_y
+        and #%00000111
+        sta intro_fine_scroll_y
+        cmp #7
+        bne .story_ret
+
+        ; Boucle 0->7 : decalage d'une ligne de caracteres et injection
+        jsr intro_scroll_up_one_line
+        jsr intro_inject_story_line
         inc intro_scroll_line
+
 .story_ret:
         rts
 
-.story_show_link:
-        ; Link brandit la Triforce d'Or au centre !
-        jsr intro_setup_link_triforce
-        inc intro_scroll_tick
-        lda intro_scroll_tick
-        cmp #130                        ; Pause de 2.6s
-        bcc .st_link_ret
-        lda #0
-        sta VIC_SPRITE_EN
-        lda #INTRO_PHASE_FADE_TREAS
-        sta intro_phase
-        lda #0
-        sta intro_fade_step_idx
-        sta intro_fade_tick
-.st_link_ret:
-        rts
-
-.update_fade_treas:
-        inc intro_fade_tick
-        lda intro_fade_tick
-        cmp #4
-        bcc +
-        lda #0
-        sta intro_fade_tick
-        jsr intro_fade_step
-        inc intro_fade_step_idx
-        lda intro_fade_step_idx
-        cmp #4
-        bcc +
+.story_all_done:
+        jsr intro_clear_scroll_area
         lda #INTRO_PHASE_TREASURES
         sta intro_phase
         lda #0
         sta intro_scroll_line
         sta intro_scroll_tick
-        jsr intro_draw_treasures_bg
-+       rts
+        sta intro_sub_timer
+        sta intro_sub_timer+1
+        lda #7
+        sta intro_fine_scroll_y
+        rts
 
-; --- 5. TREASURES SHOWCASE ---
+.update_fade_treas:
+        lda #INTRO_PHASE_TREASURES
+        sta intro_phase
+        lda #0
+        sta intro_scroll_line
+        sta intro_scroll_tick
+        sta intro_sub_timer
+        sta intro_sub_timer+1
+        lda #7
+        sta intro_fine_scroll_y
+        rts
+
+; --- 4. ALL OF TREASURES SHOWCASE SCROLL (SMOOTH HARDWARE SCROLL) ---
 .update_treasures:
-        inc intro_blink_timer
-        lda intro_blink_timer
-        and #%00100000
-        beq +
-        jsr intro_show_press_text_parchment
-        jmp ++
-+       jsr intro_hide_press_text_parchment
-++
         lda intro_scroll_line
-        cmp #treasure_row_count
-        bcs .treasures_hold
+        cmp #58                         ; Pause Link tenant la pancarte au centre (lignes 10..13)
+        bne .tr_scroll_flow
 
-        inc intro_scroll_tick
-        lda intro_scroll_tick
-        cmp #25
+        lda intro_sub_timer
+        ora intro_sub_timer+1
+        bne +
+        ldx #11
+        lda #0
+-       sta treas_active,x
+        dex
+        bpl -
+        sta VIC_SPRITE_EN
+        jsr intro_setup_link_sign
++       inc intro_sub_timer
+        bne +
+        inc intro_sub_timer+1
++       lda intro_sub_timer+1
+        bne .tr_sign_done
+        lda intro_sub_timer
+        cmp #140                        ; Pause de 2.8s
+        bcc .tr_ret
+
+.tr_sign_done:
+        lda #0
+        sta VIC_SPRITE_EN
+        inc intro_scroll_line
+        lda #0
+        sta intro_sub_timer
+        sta intro_sub_timer+1
+        rts
+
+.tr_scroll_flow:
+        lda intro_scroll_line
+        cmp #treasure_total_steps
+        bcs .treasures_all_done
+
+        inc intro_fine_scroll_tick
+        lda intro_fine_scroll_tick
+        cmp #2
         bcc .tr_ret
         lda #0
-        sta intro_scroll_tick
-        jsr intro_scroll_treasure_step
+        sta intro_fine_scroll_tick
+
+        ; Synchronisation de tous les slots de tresors actifs au pixel pres
+        ldx #0
+-       lda treas_active,x
+        beq +
+        dec treas_y,x
+        lda treas_y,x
+        cmp #50
+        bcs +
+        lda #0
+        sta treas_active,x
++       inx
+        cpx #12
+        bne -
+
+        ; Si Link (Sprite 0) est actif, il monte avec la pancarte
+        lda VIC_SPRITE_EN
+        and #%00000001
+        beq +
+        dec VIC_SPRITE_Y0
+        lda VIC_SPRITE_Y0
+        cmp #50
+        bcs +
+        lda #0
+        sta VIC_SPRITE_EN
++
+
+        dec intro_fine_scroll_y
+        lda intro_fine_scroll_y
+        and #%00000111
+        sta intro_fine_scroll_y
+        cmp #7
+        bne .tr_ret
+
+        jsr intro_scroll_up_one_line
+        jsr intro_inject_treasure_step
         inc intro_scroll_line
+
 .tr_ret:
         rts
 
-.treasures_hold:
-        inc intro_scroll_tick
-        lda intro_scroll_tick
-        cmp #100
-        bcc +
-        lda #INTRO_PHASE_FADE_MONSTERS
-        sta intro_phase
-        lda #0
-        sta intro_fade_step_idx
-        sta intro_fade_tick
-+       rts
-
-.update_fade_monsters:
-        inc intro_fade_tick
-        lda intro_fade_tick
-        cmp #4
-        bcc +
-        lda #0
-        sta intro_fade_tick
-        jsr intro_fade_step
-        inc intro_fade_step_idx
-        lda intro_fade_step_idx
-        cmp #4
-        bcc +
-        lda #INTRO_PHASE_MONSTERS
-        sta intro_phase
-        jsr intro_draw_monsters_bg
-+       rts
-
-; --- 7. MONSTERS OF HYRULE SHOWCASE ---
-.update_monsters:
-        inc intro_blink_timer
-        lda intro_blink_timer
-        and #%00100000
-        beq +
-        jsr intro_show_press_text_parchment
-        jmp ++
-+       jsr intro_hide_press_text_parchment
-++
-        ; Animation de marche frame 0 <-> frame 1
-        inc intro_mon_anim_tick
-        lda intro_mon_anim_tick
-        cmp #14
-        bcc +
-        lda #0
-        sta intro_mon_anim_tick
-        lda intro_mon_frame
-        eor #1
-        sta intro_mon_frame
-        jsr intro_copy_monster_sprite_frame
-+
-        ; Avance vers le monstre suivant
-        inc intro_mon_tick
-        lda intro_mon_tick
-        cmp #140
-        bcc .mon_ret
-        lda #0
-        sta intro_mon_tick
-        inc intro_mon_idx
-        lda intro_mon_idx
-        cmp #15
-        bcc .show_next_mon
-
-        ; Tous les monstres ont defile !
+.treasures_all_done:
         lda #0
         sta VIC_SPRITE_EN
+        sta VIC_SPRITE_MC
+        lda #INTRO_PHASE_MONSTERS
+        sta intro_phase
+        lda #0
+        sta intro_scroll_line
+        sta intro_fine_scroll_tick
+        sta intro_sub_timer
+        sta intro_sub_timer+1
+        sta intro_mon_anim_tick
+        ldx #MAX_MON_SLOTS-1
+        lda #0
+-       sta mon_slot_active,x
+        dex
+        bpl -
+        lda #7
+        sta intro_fine_scroll_y
+        rts
+
+.update_fade_monsters:
+        lda #INTRO_PHASE_MONSTERS
+        sta intro_phase
+        lda #0
+        sta intro_scroll_line
+        sta intro_fine_scroll_tick
+        sta intro_sub_timer
+        sta intro_sub_timer+1
+        sta intro_mon_anim_tick
+        ldx #MAX_MON_SLOTS-1
+        lda #0
+-       sta mon_slot_active,x
+        dex
+        bpl -
+        lda #7
+        sta intro_fine_scroll_y
+        rts
+
+; --- 5. ALL OF MONSTERS SHOWCASE SCROLL (MULTI-MONSTRE ANIME ET SYNCHRONE) ---
+.update_monsters:
+        ; Animation de marche frame 0 <-> frame 1 tous les 8 frames pour tous les monstres actifs
+        inc intro_mon_anim_tick
+        lda intro_mon_anim_tick
+        cmp #8
+        bcc .anim_done
+        lda #0
+        sta intro_mon_anim_tick
+
+        ldx #0
+.mon_anim_loop:
+        lda mon_slot_active,x
+        beq .next_mon_anim
+        lda mon_slot_frame,x
+        eor #1
+        sta mon_slot_frame,x
+        jsr intro_copy_slot_sprite_frame
+.next_mon_anim:
+        inx
+        cpx #MAX_MON_SLOTS
+        bne .mon_anim_loop
+.anim_done:
+
+        lda intro_scroll_line
+        cmp #monster_total_steps
+        bcs .monsters_done
+
+        inc intro_fine_scroll_tick
+        lda intro_fine_scroll_tick
+        cmp #2
+        bcc .mon_ret
+        lda #0
+        sta intro_fine_scroll_tick
+
+        ; Synchronisation de tous les slots de monstres actifs au pixel pres
+        ldx #0
+.mon_y_loop:
+        lda mon_slot_active,x
+        beq .next_mon_y
+        dec mon_slot_y,x
+        txa
+        asl
+        tay
+        lda mon_slot_y,x
+        sta VIC_SPRITE_Y0,y
+        cmp #50
+        bcs .next_mon_y
+        ; Monstre sorti par le haut de l'ecran (Y < 50) : desactivation du slot
+        lda #0
+        sta mon_slot_active,x
+        lda VIC_SPRITE_EN
+        and mon_bit_inv,x
+        sta VIC_SPRITE_EN
+.next_mon_y:
+        inx
+        cpx #MAX_MON_SLOTS
+        bne .mon_y_loop
+
+        dec intro_fine_scroll_y
+        lda intro_fine_scroll_y
+        and #%00000111
+        sta intro_fine_scroll_y
+        cmp #7
+        bne .mon_ret
+
+        jsr intro_scroll_up_one_line
+        jsr intro_inject_monster_step
+        inc intro_scroll_line
+
+.mon_ret:
+        rts
+
+.monsters_done:
+        jsr intro_clear_scroll_area
+        lda #0
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_MC
+        lda #$18
+        sta intro_screen_memsetup
+        sta VIC_MEMSETUP
+        lda #%00011011                  ; Restaure le mode normal 25 lignes au retour waterfall
+        sta VIC_CTRL1
         lda #INTRO_PHASE_FADE_WATER
         sta intro_phase
         lda #0
         sta intro_fade_step_idx
         sta intro_fade_tick
-        rts
-
-.show_next_mon:
-        jsr intro_display_current_monster
-.mon_ret:
         rts
 
 .update_fade_water:
@@ -519,30 +983,64 @@ intro_update:
 ; DESSIN DE L'ECRAN TITRE & CASCADE AUTHENTIQUE NES
 ; ===========================================================================
 intro_draw_waterfall:
-        lda #COL_ORANGE
+        lda #COL_BLACK
         sta VIC_BACKGROUND
         sta VIC_BORDER
 
-        ; Efface l'ecran a 32 (espace) et couleur noir
+        ; 1. Remplissage initial :
+        ;    - Ciel rose/peche NES (CHAR_SOLID 154, COL_LRED) sur lignes 0..17 (720 octets)
+        ;    - Noir (32, COL_BLACK) sur lignes 18..24 (280 octets)
         ldx #0
-.clrwf:
-        lda #32
+.clrwf1:
+        lda #154                        ; CHAR_SOLID (bloc plein pour ciel rose)
         sta SCREEN_RAM,x
         sta SCREEN_RAM+$100,x
-        sta SCREEN_RAM+$200,x
-        sta SCREEN_RAM+$2e8,x
-        lda #COL_BLACK
+        lda #COL_LRED                   ; Ciel rose au lever du jour
         sta COLOR_RAM,x
         sta COLOR_RAM+$100,x
-        sta COLOR_RAM+$200,x
-        sta COLOR_RAM+$2e8,x
         inx
-        bne .clrwf
+        bne .clrwf1
 
-        ; --- 1. DESSIN DU GRAND BLASON NES (Lignes 2..13, Cols 9..30) ---
-        ; Falaises rangees 0..1 (haut d'ecran au-dessus du blason)
         ldx #0
-.sky_cliffs:
+.clrwf2:
+        lda #154
+        sta SCREEN_RAM+$200,x
+        lda #COL_LRED
+        sta COLOR_RAM+$200,x
+        inx
+        cpx #208                        ; 512 + 208 = 720 octets (lignes 0..17)
+        bne .clrwf2
+
+        ; Reste de l'ecran (lignes 18..24, 280 octets) : noir / espace
+-       lda #32
+        sta SCREEN_RAM+$200,x
+        lda #COL_BLACK
+        sta COLOR_RAM+$200,x
+        inx
+        bne -
+
+        ldx #0
+-       lda #32
+        sta SCREEN_RAM+$300,x
+        lda #COL_BLACK
+        sta COLOR_RAM+$300,x
+        inx
+        cpx #232                        ; 768 + 232 = 1000 octets
+        bne -
+
+        ; 2. Falaise discrete haute (Ligne 1, coin superieur droit)
+        lda #CHAR_CLIFF_EDG_R
+        sta SCREEN_RAM+40+38
+        lda #COL_GREY
+        sta COLOR_RAM+40+38
+        lda #CHAR_CLIFF_FACE
+        sta SCREEN_RAM+40+39
+        lda #COL_DGREY
+        sta COLOR_RAM+40+39
+
+        ; 3. Piliers rocheux lateraux du haut (Lignes 2..13, cols 0..1 et 38..39)
+        ldx #2
+.wf_upper_pillars:
         lda intro_scr_lo,x
         sta ZP_SCR
         lda intro_scr_hi,x
@@ -551,35 +1049,36 @@ intro_draw_waterfall:
         sta ZP_COL+1
         lda ZP_SCR
         sta ZP_COL
+
+        ; Pilier gauche (col 0..1)
         ldy #0
--       lda #CHAR_CLIFF_FACE
+        lda #CHAR_CLIFF_FACE
         sta (ZP_SCR),y
-        lda #COL_GREY
+        lda #COL_DGREY
         sta (ZP_COL),y
         iny
-        cpy #8
-        bne -
         lda #CHAR_CLIFF_EDG_L
         sta (ZP_SCR),y
-        lda #COL_DGREY
+        lda #COL_GREY
         sta (ZP_COL),y
-        ldy #31
+
+        ; Pilier droit (col 38..39)
+        ldy #38
         lda #CHAR_CLIFF_EDG_R
-        sta (ZP_SCR),y
-        lda #COL_DGREY
-        sta (ZP_COL),y
-        iny
--       lda #CHAR_CLIFF_FACE
         sta (ZP_SCR),y
         lda #COL_GREY
         sta (ZP_COL),y
         iny
-        cpy #40
-        bne -
-        inx
-        cpx #2
-        bne .sky_cliffs
+        lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
 
+        inx
+        cpx #14
+        bne .wf_upper_pillars
+
+        ; 4. Grand Blason ZELDA NES (Lignes 2..13, Cols 9..30)
         lda #<shield_chars_data
         sta ZP_SRC
         lda #>shield_chars_data
@@ -606,37 +1105,9 @@ intro_draw_waterfall:
         lda ZP_SCR
         sta ZP_COL
 
-        ; Falaises gauche et droite de la ligne du blason
-        ldy #0
--       lda #CHAR_CLIFF_FACE
-        sta (ZP_SCR),y
-        lda #COL_GREY
-        sta (ZP_COL),y
-        iny
-        cpy #8
-        bne -
-        lda #CHAR_CLIFF_EDG_L
-        sta (ZP_SCR),y
-        lda #COL_DGREY
-        sta (ZP_COL),y
-        ldy #31
-        lda #CHAR_CLIFF_EDG_R
-        sta (ZP_SCR),y
-        lda #COL_DGREY
-        sta (ZP_COL),y
-        iny
--       lda #CHAR_CLIFF_FACE
-        sta (ZP_SCR),y
-        lda #COL_GREY
-        sta (ZP_COL),y
-        iny
-        cpy #40
-        bne -
-
         ldy #0                          ; col 0..21 du blason
 .sh_col_loop:
         lda (ZP_SRC),y
-        beq +
         tax
         tya
         clc
@@ -660,7 +1131,8 @@ intro_draw_waterfall:
         sec
         sbc #9
         tay
-+       iny
+
+        iny
         cpy #22
         bne .sh_col_loop
 
@@ -678,7 +1150,6 @@ intro_draw_waterfall:
         bcc +
         inc ZP_DST+1
 +
-
         ldx ZP_ROW
         inx
         cpx #12
@@ -686,9 +1157,9 @@ intro_draw_waterfall:
         jmp .sh_row_loop
 +
 
-        ; --- 2. FALAISES ROCHEUSES ET FORETS (Lignes 14..20) ---
+        ; 5. Chute d'eau sous le blason & falaises moyennes (Lignes 14..17)
         ldx #14
-.cliff_loop:
+.wf_mid_loop:
         lda intro_scr_lo,x
         sta ZP_SCR
         lda intro_scr_hi,x
@@ -698,33 +1169,26 @@ intro_draw_waterfall:
         lda ZP_SCR
         sta ZP_COL
 
-        lda cliff_left_width-14,x
-        sta ZP_TMP
-
-        ; Remplissage rocheux gauche
+        ; Falaise gauche (cols 0..2)
         ldy #0
-.fill_cg:
         lda #CHAR_CLIFF_FACE
-        sta (ZP_SCR),y
-        lda #COL_GREY
-        sta (ZP_COL),y
-        iny
-        cpy ZP_TMP
-        bne .fill_cg
-
-        ; Biseau gauche
-        lda #CHAR_CLIFF_EDG_L
         sta (ZP_SCR),y
         lda #COL_DGREY
         sta (ZP_COL),y
-
-        ; Remplissage chute d'eau centrale
-.fill_chute:
         iny
-        tya
-        cmp cliff_right_start-14,x
-        beq .chute_done
-        lda #CHAR_WATER_0
+        lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        lda #CHAR_CLIFF_EDG_L
+        sta (ZP_SCR),y
+        lda #COL_GREY
+        sta (ZP_COL),y
+
+        ; Chute centrale (cols 16..23)
+        ldy #16
+-       lda #CHAR_WATER_0
         cpx #14
         bne +
         lda #CHAR_WATER_CREST
@@ -734,91 +1198,208 @@ intro_draw_waterfall:
         bne +
         lda #COL_WHITE
 +       sta (ZP_COL),y
-        jmp .fill_chute
-.chute_done:
-
-        ; Biseau droit
-        lda #CHAR_CLIFF_EDG_R
-        sta (ZP_SCR),y
-        lda #COL_DGREY
-        sta (ZP_COL),y
-
         iny
-.fill_cd:
-        lda #CHAR_CLIFF_FACE
+        cpy #24
+        bne -
+
+        ; Falaise droite (cols 37..39)
+        ldy #37
+        lda #CHAR_CLIFF_EDG_R
         sta (ZP_SCR),y
         lda #COL_GREY
         sta (ZP_COL),y
         iny
-        cpy #40
-        bne .fill_cd
+        lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
 
         inx
-        cpx #21
-        bne .cliff_loop
+        cpx #18
+        bne .wf_mid_loop
 
-        ; Pins verts sur les falaises
-        ldx #0
-.put_trees:
-        lda tree_row_tbl,x
-        beq .trees_done
-        tay
-        lda intro_scr_lo,y
+        ; 6. Plateau rocheux inferieur (Lignes 18..20)
+        ; Ligne 18 :
+        lda intro_scr_lo+18
         sta ZP_SCR
-        lda intro_scr_hi,y
+        lda intro_scr_hi+18
         sta ZP_SCR+1
-        lda intro_col_hi,y
+        lda intro_col_hi+18
         sta ZP_COL+1
         lda ZP_SCR
         sta ZP_COL
-        lda tree_col_tbl,x
-        tay
-        lda #CHAR_TREE_TOP
+
+        ldy #0
+-       lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        cpy #5
+        bne -
+        lda #CHAR_CLIFF_EDG_L
+        sta (ZP_SCR),y
+        lda #COL_GREY
+        sta (ZP_COL),y
+
+        ldy #16
+-       lda #CHAR_WATER_0
+        sta (ZP_SCR),y
+        lda #COL_CYAN
+        sta (ZP_COL),y
+        iny
+        cpy #24
+        bne -
+
+        ldy #34
+        lda #CHAR_CLIFF_EDG_R
+        sta (ZP_SCR),y
+        lda #COL_GREY
+        sta (ZP_COL),y
+        iny
+-       lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        cpy #40
+        bne -
+
+        ; Ligne 19 : avec pins verts
+        lda intro_scr_lo+19
+        sta ZP_SCR
+        lda intro_scr_hi+19
+        sta ZP_SCR+1
+        lda intro_col_hi+19
+        sta ZP_COL+1
+        lda ZP_SCR
+        sta ZP_COL
+
+        ldy #0
+-       lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        cpy #11
+        bne -
+-       lda #CHAR_TREE_TOP
         sta (ZP_SCR),y
         lda #COL_GREEN
         sta (ZP_COL),y
-        inx
-        bne .put_trees
-.trees_done:
+        iny
+        cpy #16
+        bne -
 
-        ; --- 3. BASSIN D'EAU ET VAGUES (Ligne 21) ---
-        ldx #0
-.lake_waves:
-        lda #CHAR_LAKE_WAVE
-        sta SCREEN_RAM+840+4,x
+        ; Cascade
+-       lda #CHAR_WATER_0
+        sta (ZP_SCR),y
+        lda #COL_CYAN
+        sta (ZP_COL),y
+        iny
+        cpy #24
+        bne -
+
+        ; Falaise droite
+-       lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        cpy #40
+        bne -
+
+        ; Ligne 20 :
+        lda intro_scr_lo+20
+        sta ZP_SCR
+        lda intro_scr_hi+20
+        sta ZP_SCR+1
+        lda intro_col_hi+20
+        sta ZP_COL+1
+        lda ZP_SCR
+        sta ZP_COL
+
+        ldy #0
+-       lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        cpy #16
+        bne -
+-       lda #CHAR_WATER_0
+        sta (ZP_SCR),y
+        lda #COL_CYAN
+        sta (ZP_COL),y
+        iny
+        cpy #24
+        bne -
+-       lda #CHAR_CLIFF_FACE
+        sta (ZP_SCR),y
+        lda #COL_DGREY
+        sta (ZP_COL),y
+        iny
+        cpy #40
+        bne -
+
+        ; 7. Bassin d'eau & ecume (Ligne 21)
+        ldy #0
+-       lda #CHAR_CLIFF_FACE
+        sta SCREEN_RAM+840,y
+        lda #COL_DGREY
+        sta COLOR_RAM+840,y
+        iny
+        cpy #4
+        bne -
+-       lda #CHAR_LAKE_WAVE
+        sta SCREEN_RAM+840,y
         lda #COL_BLUE
-        sta COLOR_RAM+840+4,x
-        inx
-        cpx #32
-        bne .lake_waves
-
-        ; Ecume blanche a la base de la chute (Cols 16..23)
-        ldy #16
-.foam_base:
-        lda #CHAR_WATER_FOAM
+        sta COLOR_RAM+840,y
+        iny
+        cpy #16
+        bne -
+-       lda #CHAR_WATER_FOAM
         sta SCREEN_RAM+840,y
         lda #COL_WHITE
         sta COLOR_RAM+840,y
         iny
         cpy #24
-        bne .foam_base
+        bne -
+-       lda #CHAR_LAKE_WAVE
+        sta SCREEN_RAM+840,y
+        lda #COL_BLUE
+        sta COLOR_RAM+840,y
+        iny
+        cpy #36
+        bne -
+-       lda #CHAR_CLIFF_FACE
+        sta SCREEN_RAM+840,y
+        lda #COL_DGREY
+        sta COLOR_RAM+840,y
+        iny
+        cpy #40
+        bne -
 
-        ; Mention "PUSH START BUTTON" clignotante
+        ; 8. Textes "PUSH START BUTTON" et copyright
         jsr intro_show_press_text
 
-        ; Mention "(C) 1986 NINTENDO" (Ligne 24)
         ldx #0
 .nint:
         lda txt_nintendo,x
         beq +
         sta SCREEN_RAM+960+12,x
-        lda #COL_BLACK
+        lda #COL_WHITE
         sta COLOR_RAM+960+12,x
         inx
         bne .nint
 +
 
-        ; Configuration des 4 sprites de vagues descendantes
+        ; 9. Sprites de vagues et etincelle
         lda #SPR_BLOCK_WAVE
         sta SPRITE_PTR1
         sta SPRITE_PTR2
@@ -848,31 +1429,59 @@ intro_draw_waterfall:
         jsr intro_animate_water
         rts
 
-; Animation du flux d'eau central dans les cols 17..22
+; Animation du flux d'eau central dans les cols 16..23
 intro_animate_water:
+        ; Animation etincelle scintillante sur le blason (Sprite 0)
+        inc intro_blink_timer
+        lda intro_blink_timer
+        and #%00011111                  ; Periode de 32 frames
+        cmp #12                         ; Activee pendant 12 frames
+        bcs .glint_off
+
+        ; Etoile visible
+        lda intro_blink_timer
+        lsr
+        lsr
+        lsr
+        lsr
+        lsr
+        and #%00000011                  ; Index 0..3
+        tax
+        lda glint_x_tbl,x
+        sta VIC_SPRITE_X0
+        lda glint_y_tbl,x
+        sta VIC_SPRITE_Y0
+        lda #SPR_BLOCK_GLINT
+        sta SPRITE_PTR0
+        lda #COL_WHITE
+        sta VIC_SPRITE_COL0
+        lda VIC_SPRITE_EN
+        ora #%00000001
+        sta VIC_SPRITE_EN
+        jmp .glint_done
+
+.glint_off:
+        lda VIC_SPRITE_EN
+        and #%11111110
+        sta VIC_SPRITE_EN
+.glint_done:
         ldx intro_water_frame
         lda water_char_cycle,x
         sta ZP_TMP
 
-        ldx #14
+        ldx #15
 .wf_anim_line:
         lda intro_scr_lo,x
         sta ZP_SCR
         lda intro_scr_hi,x
         sta ZP_SCR+1
-        lda intro_col_hi,x
-        sta ZP_COL+1
-        lda ZP_SCR
-        sta ZP_COL
 
-        ldy #17
+        ldy #16
 .wf_anim_col:
         lda ZP_TMP
         sta (ZP_SCR),y
-        lda #COL_CYAN
-        sta (ZP_COL),y
         iny
-        cpy #23
+        cpy #24
         bne .wf_anim_col
 
         inx
@@ -881,11 +1490,8 @@ intro_animate_water:
         rts
 
 water_char_cycle: !byte CHAR_WATER_0, CHAR_WATER_1, CHAR_WATER_2
-
-cliff_left_width:  !byte 11, 12, 13, 14, 15, 16, 16
-cliff_right_start: !byte 29, 28, 27, 26, 25, 24, 24
-tree_row_tbl:      !byte 3, 3, 7, 7, 10, 10, 14, 14, 17, 17, 19, 19, 0
-tree_col_tbl:      !byte 3, 36, 5, 34, 2, 37, 3, 36, 6, 33, 8, 31, 0
+glint_x_tbl: !byte 120, 160, 200, 160
+glint_y_tbl: !byte 72,  88,  72,  115
 
 intro_apply_pal_colors:
         ldx intro_pal_step
@@ -894,130 +1500,115 @@ intro_apply_pal_colors:
         rts
 +       lda pal_bg_colors,x
         sta VIC_BACKGROUND
-        cpx #8
-        bcc ++
-        lda #COL_YELLOW
-        sta intro_text_color
-        ldy #0
--       lda txt_nintendo,y
-        beq ++
-        lda #COL_WHITE
-        sta COLOR_RAM+960+12,y
-        iny
-        bne -
-++
-        lda pal_cliff_colors,x
-        sta ZP_TMP                      ; couleur falaise
-        lda pal_water_colors,x
-        sta ZP_ROW                      ; couleur cascade
-        lda pal_tree_colors,x
-        sta ZP_COL                      ; couleur pins
 
-        ; Maj couleur vagues sprites
+        ; Pointeur vers debut de SCREEN_RAM ($0400) et COLOR_RAM ($D800)
+        lda #<SCREEN_RAM
+        sta ZP_SCR
+        lda #>SCREEN_RAM
+        sta ZP_SCR+1
+        lda #<COLOR_RAM
+        sta ZP_COL
+        lda #>COLOR_RAM
+        sta ZP_COL+1
+
+        lda intro_pal_step
+        sta ZP_TMP                      ; etape de palette active
+
+        lda #4
+        sta ZP_ROW                      ; compteur de 4 pages
+
+.pal_page_loop:
+        ldy #0
+.pal_tile_loop:
+        lda (ZP_SCR),y
+        cmp #154                        ; Ciel rose/peche NES
+        bne +
+        ldx ZP_TMP
+        lda pal_bg_colors,x
+        sta (ZP_COL),y
+        jmp .pal_tile_next
+
++       cmp #CHAR_CLIFF_FACE
+        beq .pal_tile_cliff
+        cmp #CHAR_CLIFF_EDG_L
+        beq .pal_tile_cliff
+        cmp #CHAR_CLIFF_EDG_R
+        bne +
+.pal_tile_cliff:
+        ldx ZP_TMP
+        lda pal_cliff_colors,x
+        sta (ZP_COL),y
+        jmp .pal_tile_next
+
++       cmp #CHAR_TREE_TOP
+        bne +
+        ldx ZP_TMP
+        lda pal_tree_colors,x
+        sta (ZP_COL),y
+        jmp .pal_tile_next
+
++       cmp #CHAR_WATER_0
+        bcc .pal_tile_next
+        cmp #CHAR_LAKE_WAVE+1
+        bcs .pal_tile_next
+        ldx ZP_TMP
+        lda pal_water_colors,x
+        sta (ZP_COL),y
+
+.pal_tile_next:
+        iny
         lda ZP_ROW
+        cmp #1                          ; Derniere page ($0700) ?
+        bne +
+        cpy #232                        ; Limite exacte a 1000 octets d'ecran
+        beq .pal_pages_done
++       cpy #0
+        bne .pal_tile_loop
+
+        inc ZP_SCR+1
+        inc ZP_COL+1
+        dec ZP_ROW
+        bne .pal_page_loop
+
+.pal_pages_done:
+        ; Maj couleur vagues sprites
+        ldx ZP_TMP
+        lda pal_water_colors,x
         sta VIC_SPRITE_COL1
         sta VIC_SPRITE_COL2
         sta VIC_SPRITE_COL3
         sta VIC_SPRITE_COL4
 
-        ; Maj falaises rangees superieures (0..13)
-        ldx #0
-.pal_upper_loop:
-        lda intro_scr_lo,x
-        sta ZP_SCR
-        lda intro_col_hi,x
-        sta ZP_SCR+1
+        cpx #8
+        bcc .pal_done
+        lda #COL_WHITE
         ldy #0
--       lda ZP_TMP
-        sta (ZP_SCR),y
+-       lda txt_nintendo,y
+        beq .pal_done
+        sta COLOR_RAM+960+12,y
         iny
-        cpy #9
         bne -
-        ldy #31
--       lda ZP_TMP
-        sta (ZP_SCR),y
-        iny
-        cpy #40
-        bne -
-        inx
-        cpx #14
-        bne .pal_upper_loop
-
-        ; Maj couleurs des lignes 14..20
-        ldx #14
-.pal_line_loop:
-        lda intro_scr_lo,x
-        sta ZP_SCR
-        lda intro_col_hi,x
-        sta ZP_SCR+1
-
-        ; Falaises gauche
-        ldy #0
--       lda ZP_TMP
-        sta (ZP_SCR),y
-        iny
-        cpy #17
-        bne -
-        ; Cascade
--       lda ZP_ROW
-        sta (ZP_SCR),y
-        iny
-        cpy #23
-        bne -
-        ; Falaises droite
--       lda ZP_TMP
-        sta (ZP_SCR),y
-        iny
-        cpy #40
-        bne -
-        inx
-        cpx #21
-        bne .pal_line_loop
-
-        ; Maj vagues lac (ligne 21)
-        ldx #0
--       lda ZP_ROW
-        sta COLOR_RAM+840+4,x
-        inx
-        cpx #32
-        bne -
-
-        ; Pins verts
-        ldx #0
--       lda tree_row_tbl,x
-        beq +
-        tay
-        lda intro_scr_lo,y
-        sta ZP_SCR
-        lda intro_col_hi,y
-        sta ZP_SCR+1
-        lda tree_col_tbl,x
-        tay
-        lda ZP_COL
-        sta (ZP_SCR),y
-        inx
-        bne -
-
-+       rts
+.pal_done:
+        rts
 
 nes_pal_delays:
         !byte 8, 8, 6, 5, 4, 3, 2, 2, 2, 192, 6, 4, 192, 3, 4, 4
 pal_bg_colors:
-        !byte COL_ORANGE, COL_ORANGE, COL_ORANGE, COL_ORANGE, COL_ORANGE
-        !byte COL_ORANGE, COL_BROWN,  COL_BROWN,  COL_BLACK,  COL_BLACK
+        !byte COL_LRED,   COL_LRED,   COL_LRED,   COL_PURPLE, COL_CYAN
+        !byte COL_LBLUE,  COL_BLUE,   COL_BLUE,   COL_DGREY,  COL_BLACK
         !byte COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK, COL_BLACK
 pal_cliff_colors:
-        !byte COL_GREY,   COL_GREY,   COL_GREY,   COL_GREY,   COL_DGREY
-        !byte COL_DGREY,  COL_DGREY,  COL_DGREY,  COL_BLACK,  COL_BLACK
+        !byte COL_DGREY,  COL_DGREY,  COL_DGREY,  COL_DGREY,  COL_DGREY
+        !byte COL_DGREY,  COL_DGREY,  COL_DGREY,  COL_DGREY,  COL_BLACK
         !byte COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK, COL_BLACK
 pal_water_colors:
-        !byte COL_CYAN,   COL_CYAN,   COL_CYAN,  COL_LBLUE, COL_LBLUE
-        !byte COL_LBLUE,  COL_CYAN,   COL_CYAN,  COL_CYAN,  COL_LBLUE
-        !byte COL_BLUE,   COL_BLACK,  COL_BLACK, COL_BLACK, COL_BLACK, COL_BLACK
+        !byte COL_CYAN,   COL_CYAN,   COL_CYAN,   COL_CYAN,   COL_CYAN
+        !byte COL_LBLUE,  COL_BLUE,   COL_BLUE,   COL_BLUE,   COL_BLUE
+        !byte COL_BLUE,   COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK, COL_BLACK
 pal_tree_colors:
-        !byte COL_GREEN,  COL_GREEN,  COL_GREEN, COL_GREEN, COL_GREEN
-        !byte COL_DGREY,  COL_DGREY,  COL_BLACK, COL_BLACK, COL_BLACK
-        !byte COL_BLACK,  COL_BLACK,  COL_BLACK, COL_BLACK, COL_BLACK, COL_BLACK
+        !byte COL_GREEN,  COL_GREEN,  COL_GREEN,  COL_GREEN,  COL_GREEN
+        !byte COL_DGREY,  COL_DGREY,  COL_BLACK,  COL_BLACK,  COL_BLACK
+        !byte COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK,  COL_BLACK, COL_BLACK
 
 intro_show_press_text:
         ldx #0
@@ -1073,528 +1664,557 @@ intro_clear_scroll_area:
         lda #COL_BLACK
         sta VIC_BACKGROUND
         sta VIC_BORDER
+        lda #0
+        sta intro_buf_idx
+        lda #$18
+        sta intro_screen_memsetup
+        sta VIC_MEMSETUP
         ldx #0
 .clra:  lda #32
         sta SCREEN_RAM,x
         sta SCREEN_RAM+$100,x
         sta SCREEN_RAM+$200,x
         sta SCREEN_RAM+$2e8,x
-        lda #COL_BLACK
-        sta COLOR_RAM,x
+        sta $0c00,x
+        sta $0c00+$100,x
+        sta $0c00+$200,x
+        sta $0c00+$2e8,x
+        inx
+        bne .clra
+
+        ; Pre-coloration de COLOR_RAM
+        lda intro_phase
+        cmp #INTRO_PHASE_STORY
+        beq .clr_story_col
+
+        ; Tresors et monstres : tout le texte en blanc
+        ldx #0
+        lda #COL_WHITE
+-       sta COLOR_RAM,x
         sta COLOR_RAM+$100,x
         sta COLOR_RAM+$200,x
         sta COLOR_RAM+$2e8,x
         inx
-        bne .clra
-        rts
-
-intro_draw_parchment_frame:
-        ; Haut du rouleau
-        lda #160
-        sta SCREEN_RAM+40+3
-        lda #COL_YELLOW
-        sta COLOR_RAM+40+3
-        ldx #0
--       lda #161
-        sta SCREEN_RAM+40+4,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+40+4,x
-        inx
-        cpx #32
         bne -
-        lda #162
-        sta SCREEN_RAM+40+36
-        lda #COL_YELLOW
-        sta COLOR_RAM+40+36
+        jmp .clr_sprites
 
-        ; Bords déroulés
-        ldx #2
-.roll_sides:
-        lda intro_scr_lo,x
-        sta ZP_SCR
-        lda intro_scr_hi,x
-        sta ZP_SCR+1
+.clr_story_col:
+        ; Histoire : col 6 bleu clair, col 7..32 blanc, col 33 bleu clair, marges noir
+        ldx #0
+.row_col:
         lda intro_col_hi,x
-        sta ZP_COL+1
-        lda ZP_SCR
-        sta ZP_COL
-        ldy #3
-        lda #163
-        sta (ZP_SCR),y
-        lda #COL_YELLOW
-        sta (ZP_COL),y
-        ldy #36
-        lda #164
-        sta (ZP_SCR),y
-        lda #COL_YELLOW
-        sta (ZP_COL),y
-        inx
-        cpx #22
-        bne .roll_sides
-
-        ; Bas du rouleau
-        lda #165
-        sta SCREEN_RAM+880+3
-        lda #COL_YELLOW
-        sta COLOR_RAM+880+3
-        ldx #0
--       lda #166
-        sta SCREEN_RAM+880+4,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+880+4,x
-        inx
-        cpx #32
-        bne -
-        lda #167
-        sta SCREEN_RAM+880+36
-        lda #COL_YELLOW
-        sta COLOR_RAM+880+36
-        rts
-
-intro_show_press_text_parchment:
-        ldx #0
--       lda txt_press_button,x
-        beq +
-        sta SCREEN_RAM+960+11,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+960+11,x
-        inx
-        bne -
-+       rts
-
-intro_hide_press_text_parchment:
-        ldx #0
-        lda #32
--       sta SCREEN_RAM+960+11,x
-        inx
-        cpx #18
-        bne -
-        rts
-
-intro_draw_story_bg:
-        jsr intro_clear_scroll_area
-        jsr intro_draw_parchment_frame
-        ldx #0
--       lda txt_story_title,x
-        beq +
-        sta SCREEN_RAM+80+10,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+80+10,x
-        inx
-        bne -
-+       ldx #0
--       lda #115
-        sta SCREEN_RAM+120+10,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+120+10,x
-        inx
-        cpx #20
-        bne -
-        jsr intro_show_press_text_parchment
-        rts
-
-intro_scroll_story_step:
-        ldx #4
-.st_up: lda intro_scr_lo,x
-        sta ZP_DST
-        lda intro_scr_hi,x
         sta ZP_DST+1
-        lda intro_col_hi,x
-        sta ZP_COL+1
-        lda ZP_DST
-        sta ZP_COL
-
-        inx
         lda intro_scr_lo,x
-        sta ZP_SRC
-        lda intro_scr_hi,x
-        sta ZP_SRC+1
-        lda intro_col_hi,x
-        sta ZP_MAP+1
-        lda ZP_SRC
-        sta ZP_MAP
-
-        ldy #5
--       lda (ZP_SRC),y
+        sta ZP_DST
+        ldy #0
+-       lda #COL_BLACK
         sta (ZP_DST),y
-        lda (ZP_MAP),y
-        sta (ZP_COL),y
         iny
-        cpy #35
+        cpy #6
         bne -
-        cpx #20
-        bne .st_up
+        lda #COL_LBLUE
+        sta (ZP_DST),y
+        iny
+-       lda #COL_WHITE
+        sta (ZP_DST),y
+        iny
+        cpy #33
+        bne -
+        lda #COL_LBLUE
+        sta (ZP_DST),y
+        iny
+-       lda #COL_BLACK
+        sta (ZP_DST),y
+        iny
+        cpy #40
+        bne -
+        inx
+        cpx #25
+        bne .row_col
 
-        ; Efface ligne 20
-        ldy #5
+.clr_sprites:
+        ; Reinitialise tous les slots de tresors
+        ldx #11
+        lda #0
+-       sta treas_active,x
+        dex
+        bpl -
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        rts
+
+; ===========================================================================
+; MOTEUR DE DEFILEMENT VERTICAL DOUBLE-BUFFER 50 HZ (SCROLLING 1:1 NES)
+; ===========================================================================
+
+; Decale tout l'ecran de 1 ligne vers le haut dans le tampon inactif
+; (Buffer 0: $0400 <-> Buffer 1: $0C00) pour une fluidite absolue sans dechirement.
+intro_scroll_up_one_line:
+        lda intro_buf_idx
+        bne .scroll_1_to_0
+
+        ; Buffer 0 ($0400) est actuellement affiche.
+        ; On copie $0400 (lignes 1..24) vers $0C00 (lignes 0..23)
+        ldx #0
+-       lda SCREEN_RAM+40,x
+        sta $0c00,x
+        lda SCREEN_RAM+40+$100,x
+        sta $0c00+$100,x
+        lda SCREEN_RAM+40+$200,x
+        sta $0c00+$200,x
+        inx
+        bne -
+        ldx #0
+-       lda SCREEN_RAM+40+$300,x
+        sta $0c00+$300,x
+        inx
+        cpx #192
+        bne -
+        ; Efface ligne 24 de $0C00 ($0FC0..$0FE7)
         lda #32
--       sta SCREEN_RAM+800,y
-        lda #COL_BLACK
-        sta COLOR_RAM+800,y
-        iny
-        cpy #35
+        ldx #0
+-       sta $0fc0,x
+        inx
+        cpx #40
         bne -
+        lda #1
+        sta intro_buf_idx
+        lda #$38
+        sta intro_screen_memsetup
+        rts
 
-        ; Injecte la nouvelle ligne
+.scroll_1_to_0:
+        ; Buffer 1 ($0C00) est actuellement affiche.
+        ; On copie $0C00 (lignes 1..24) vers $0400 (lignes 0..23)
+        ldx #0
+-       lda $0c00+40,x
+        sta SCREEN_RAM,x
+        lda $0c00+40+$100,x
+        sta SCREEN_RAM+$100,x
+        lda $0c00+40+$200,x
+        sta SCREEN_RAM+$200,x
+        inx
+        bne -
+        ldx #0
+-       lda $0c00+40+$300,x
+        sta SCREEN_RAM+$300,x
+        inx
+        cpx #192
+        bne -
+        ; Efface ligne 24 de $0400 ($07C0..$07E7)
+        lda #32
+        ldx #0
+-       sta SCREEN_RAM+960,x
+        inx
+        cpx #40
+        bne -
+        lda #0
+        sta intro_buf_idx
+        lda #$18
+        sta intro_screen_memsetup
+        rts
+
+; Injecte une ligne de 40 colonnes pointee par ZP_SRC sur la ligne 24 du tampon actif
+intro_inject_text_line_24:
+        ldy #0
+.inj_l: lda (ZP_SRC),y
+        beq .inj_pad
+        ldx intro_buf_idx
+        bne +
+        sta SCREEN_RAM+960,y
+        jmp ++
++       sta $0fc0,y
+++      iny
+        cpy #40
+        bne .inj_l
+        rts
+
+.inj_pad:
+        lda #32
+        ldx intro_buf_idx
+        bne +
+-       sta SCREEN_RAM+960,y
+        iny
+        cpy #40
+        bne -
+        rts
++
+-       sta $0fc0,y
+        iny
+        cpy #40
+        bne -
+        rts
+
+; Injecte la ligne d'histoire correspondant a intro_scroll_line
+intro_inject_story_line:
         lda intro_scroll_line
-        cmp #story_line_count
-        bcs +
+        cmp #story_total_steps
+        bcs .st_inj_done
+        cmp #22
+        bcs .st_blank
         asl
         tax
         lda story_ptrs,x
         sta ZP_SRC
         lda story_ptrs+1,x
         sta ZP_SRC+1
-        ldy #0
--       lda (ZP_SRC),y
-        beq +
-        sta SCREEN_RAM+800+5,y
-        lda #COL_WHITE
-        sta COLOR_RAM+800+5,y
-        iny
-        cpy #30
-        bne -
+        jmp intro_inject_text_line_24
+.st_blank:
+        lda #<s_line_blank
+        sta ZP_SRC
+        lda #>s_line_blank
+        sta ZP_SRC+1
+        jmp intro_inject_text_line_24
+.st_inj_done:
+        rts
+
+; Injecte un pas du defile des 35 tresors
+intro_inject_treasure_step:
+        lda intro_scroll_line
+        cmp #2
+        bne +
+        jmp .inj_tr_head
++       cmp #41
+        bne +
+        jmp .inj_tr_foot
++       cmp #44
+        bne +
+        jmp .inj_tr_sign0
++       cmp #45
+        bne +
+        jmp .inj_tr_sign1
++       cmp #46
+        bne +
+        jmp .inj_tr_sign2
++       cmp #47
+        bne +
+        jmp .inj_tr_sign3
++
+        ; Rangees de tresors (4..39 -> 18 items, 2 pas par item, espacement 16 px)
+        cmp #4
+        bcc +
+        cmp #40
+        bcs +
+
+        ; Test pas pair
+        lsr
+        bcc .is_even_step
 +       rts
 
-intro_setup_link_triforce:
-        ; Nettoie le texte sous Link pour le laisser seul et majestueux au centre
-        ldx #4
-.clr_st_link:
-        lda intro_scr_lo,x
-        sta ZP_SCR
-        lda intro_scr_hi,x
-        sta ZP_SCR+1
-        ldy #5
-        lda #32
--       sta (ZP_SCR),y
-        iny
-        cpy #35
-        bne -
-        inx
-        cpx #20
-        bne .clr_st_link
+.is_even_step:
+        sec
+        sbc #2                          ; A = (intro_scroll_line / 2) - 2 = row index 0..17
+        sta intro_tmp_row
 
-        lda #SPR_BLOCK_LINK
-        sta SPRITE_PTR0
-        lda #160
-        sta VIC_SPRITE_X0
-        lda #135
-        sta VIC_SPRITE_Y0
-        lda VIC_SPRITE_MSB
-        and #%11111110
-        sta VIC_SPRITE_MSB
-        lda VIC_SPRITE_EXP_X
-        ora #%00000001
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        ora #%00000001
-        sta VIC_SPRITE_EXP_Y
-        lda VIC_SPRITE_MC
-        ora #%00000001
-        sta VIC_SPRITE_MC
-        lda #COL_GREEN
-        sta VIC_SPRITE_MC1
-        lda #COL_BROWN
-        sta VIC_SPRITE_MC2
-        lda #COL_YELLOW
-        sta VIC_SPRITE_COL0
-        lda VIC_SPRITE_EN
-        ora #%00000001
-        sta VIC_SPRITE_EN
-        rts
-
-intro_draw_treasures_bg:
-        jsr intro_clear_scroll_area
-        jsr intro_draw_parchment_frame
-        ldx #0
--       lda txt_treasures_title,x
-        beq +
-        sta SCREEN_RAM+80+12,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+80+12,x
-        inx
-        bne -
-+       ldx #0
--       lda #115
-        sta SCREEN_RAM+120+10,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+120+10,x
-        inx
-        cpx #20
-        bne -
-        jsr intro_show_press_text_parchment
-        rts
-
-intro_scroll_treasure_step:
-        ldx #4
-.tr_up: lda intro_scr_lo,x
-        sta ZP_DST
-        lda intro_scr_hi,x
-        sta ZP_DST+1
-        lda intro_col_hi,x
-        sta ZP_COL+1
-        lda ZP_DST
-        sta ZP_COL
-
-        inx
-        lda intro_scr_lo,x
-        sta ZP_SRC
-        lda intro_scr_hi,x
-        sta ZP_SRC+1
-        lda intro_col_hi,x
-        sta ZP_MAP+1
-        lda ZP_SRC
-        sta ZP_MAP
-
-        ldy #5
--       lda (ZP_SRC),y
-        sta (ZP_DST),y
-        lda (ZP_MAP),y
-        sta (ZP_COL),y
-        iny
-        cpy #35
-        bne -
-        cpx #20
-        bne .tr_up
-
-        ; Efface ligne 20
-        ldy #5
-        lda #32
--       sta SCREEN_RAM+800,y
-        lda #COL_BLACK
-        sta COLOR_RAM+800,y
-        iny
-        cpy #35
-        bne -
-
-        ; Injecte les 2 tresors
-        lda intro_scroll_line
-        cmp #treasure_row_count
-        bcs .tr_step_done
-
-        tax
-        ; Colonne Gauche (Icone col 6, Nom col 8)
-        lda tr_l_icons,x
-        sta SCREEN_RAM+800+6
-        lda tr_l_colors,x
-        sta COLOR_RAM+800+6
-
-        txa
+        ; Nom Colonne Gauche (colonnes 8..19)
         asl
         tay
         lda tr_l_ptrs,y
         sta ZP_SRC
         lda tr_l_ptrs+1,y
         sta ZP_SRC+1
-
         ldy #0
 -       lda (ZP_SRC),y
         beq +
-        sta SCREEN_RAM+800+8,y
-        lda #COL_WHITE
-        sta COLOR_RAM+800+8,y
+        ldx intro_buf_idx
+        bne .l_b1
+        sta SCREEN_RAM+960+8,y
+        jmp .l_cont
+.l_b1:  sta $0fc0+8,y
+.l_cont:
         iny
         cpy #13
         bne -
 +
-
-        ; Colonne Droite (Icone col 22, Nom col 24)
-        ldx intro_scroll_line
-        lda tr_r_icons,x
-        beq .tr_step_done
-        sta SCREEN_RAM+800+22
-        lda tr_r_colors,x
-        sta COLOR_RAM+800+22
-
-        txa
+        ; Nom Colonne Droite (colonnes 24..35)
+        lda intro_tmp_row
         asl
         tay
         lda tr_r_ptrs,y
         sta ZP_SRC
         lda tr_r_ptrs+1,y
         sta ZP_SRC+1
-
         ldy #0
 -       lda (ZP_SRC),y
         beq +
-        sta SCREEN_RAM+800+24,y
-        lda #COL_WHITE
-        sta COLOR_RAM+800+24,y
+        ldx intro_buf_idx
+        bne .r_b1
+        sta SCREEN_RAM+960+24,y
+        jmp .r_cont
+.r_b1:  sta $0fc0+24,y
+.r_cont:
+        iny
+        cpy #13
+        bne -
++
+        ; Active une rangee de sprites materiels (slot libre dans treas_active)
+        ldy #0
+-       lda treas_active,y
+        beq .found_free_slot
         iny
         cpy #12
         bne -
-+
-.tr_step_done:
         rts
 
-intro_draw_monsters_bg:
-        jsr intro_clear_scroll_area
-        jsr intro_draw_parchment_frame
-        ldx #0
--       lda txt_monsters_title,x
-        beq +
-        sta SCREEN_RAM+80+11,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+80+11,x
-        inx
-        bne -
-+       ldx #0
--       lda #115
-        sta SCREEN_RAM+120+10,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+120+10,x
-        inx
-        cpx #20
-        bne -
-        lda #0
-        sta intro_mon_idx
-        sta intro_mon_frame
-        sta intro_mon_tick
-        sta intro_mon_anim_tick
-        jsr intro_display_current_monster
-        jsr intro_show_press_text_parchment
+.found_free_slot:
+        lda #1
+        sta treas_active,y
+        lda #242                        ; Entre par le bas de l'ecran
+        sta treas_y,y
+        ldx intro_tmp_row
+        lda tr_l_spr_blocks,x
+        sta treas_spr_l,y
+        lda tr_l_spr_colors,x
+        sta treas_col_l,y
+        lda tr_r_spr_blocks,x
+        sta treas_spr_r,y
+        lda tr_r_spr_colors,x
+        sta treas_col_r,y
         rts
 
-intro_display_current_monster:
-        ; Nettoie lignes 5, 14, 16
-        ldy #4
-        lda #32
--       sta SCREEN_RAM+200,y
-        sta SCREEN_RAM+560,y
-        sta SCREEN_RAM+640,y
-        iny
-        cpy #36
-        bne -
+.inj_tr_rts:
+        rts
 
-        ; "MONSTER [XX / 15]" a la ligne 5
-        ldx intro_mon_idx
-        txa
-        asl
-        tax
-        lda intro_mon_num_ptrs,x
+.inj_tr_done:
+        rts
+
+.inj_tr_head:
+        lda #<txt_treasures_header
         sta ZP_SRC
-        lda intro_mon_num_ptrs+1,x
+        lda #>txt_treasures_header
         sta ZP_SRC+1
-        ldy #0
--       lda (ZP_SRC),y
-        beq +
-        sta SCREEN_RAM+200+12,y
-        lda #COL_GREY
-        sta COLOR_RAM+200+12,y
-        iny
-        bne -
-+
+        jmp intro_inject_text_line_24
 
-        ; Nom du monstre a la ligne 14
-        ldx intro_mon_idx
-        lda intro_mon_name_offsets,x
-        sta ZP_TMP
-        txa
-        asl
-        tax
-        lda intro_mon_name_ptrs,x
+.inj_tr_foot:
+        lda #<txt_treasures_footer
         sta ZP_SRC
-        lda intro_mon_name_ptrs+1,x
+        lda #>txt_treasures_footer
         sta ZP_SRC+1
-        ldy #0
--       lda (ZP_SRC),y
-        beq +
-        ldx ZP_TMP
-        sta SCREEN_RAM+560,x
-        lda #COL_YELLOW
-        sta COLOR_RAM+560,x
-        inc ZP_TMP
-        iny
-        bne -
-+
+        jmp intro_inject_text_line_24
 
-        ; Lore du monstre a la ligne 16
-        ldx intro_mon_idx
-        lda intro_mon_lore_offsets,x
-        sta ZP_TMP
-        txa
-        asl
-        tax
-        lda intro_mon_lore_ptrs,x
+.inj_tr_sign0:
+        lda #<txt_sign_0
         sta ZP_SRC
-        lda intro_mon_lore_ptrs+1,x
+        lda #>txt_sign_0
         sta ZP_SRC+1
-        ldy #0
--       lda (ZP_SRC),y
-        beq +
-        ldx ZP_TMP
-        sta SCREEN_RAM+640,x
-        lda #COL_WHITE
-        sta COLOR_RAM+640,x
-        inc ZP_TMP
-        iny
-        bne -
-+
+        jmp intro_inject_text_line_24
 
-        ; Regle couleur sprite
-        ldx intro_mon_idx
-        lda intro_mon_colors,x
-        sta VIC_SPRITE_COL0
+.inj_tr_sign1:
+        lda #<txt_sign_1
+        sta ZP_SRC
+        lda #>txt_sign_1
+        sta ZP_SRC+1
+        jmp intro_inject_text_line_24
 
-        ; Copie frame 0
-        lda #0
-        sta intro_mon_frame
-        jsr intro_copy_monster_sprite_frame
+.inj_tr_sign2:
+        lda #<txt_sign_2
+        sta ZP_SRC
+        lda #>txt_sign_2
+        sta ZP_SRC+1
+        jmp intro_inject_text_line_24
 
-        ; Active Sprite 0 (2x multicolor)
-        lda #160
+.inj_tr_sign3:
+        lda #<txt_sign_3
+        sta ZP_SRC
+        lda #>txt_sign_3
+        sta ZP_SRC+1
+        jmp intro_inject_text_line_24
+
+; Configure Link tenant la pancarte du manuel
+intro_setup_link_sign:
+        lda #SPR_BLOCK_LINK
+        sta SPRITE_PTR0
+        sta $0ff8
+        lda #172                        ; Centre horizontal sous la pancarte
         sta VIC_SPRITE_X0
-        lda #108
+        lda #162                        ; Directement sous la bordure de la pancarte
         sta VIC_SPRITE_Y0
         lda VIC_SPRITE_MSB
         and #%11111110
         sta VIC_SPRITE_MSB
-        lda VIC_SPRITE_EXP_X
-        ora #%00000001
+        lda #0
         sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        ora #%00000001
         sta VIC_SPRITE_EXP_Y
         lda VIC_SPRITE_MC
         ora #%00000001
         sta VIC_SPRITE_MC
         lda #COL_LRED
-        sta VIC_SPRITE_MC1
+        sta VIC_SPRITE_MC1              ; Peau
         lda #COL_BROWN
-        sta VIC_SPRITE_MC2
-        lda #SPR_BLOCK_MON
-        sta SPRITE_PTR0
-        lda VIC_SPRITE_EN
-        ora #%00000001
+        sta VIC_SPRITE_MC2              ; Bottes / ceinturon
+        lda #COL_GREEN
+        sta VIC_SPRITE_COL0             ; Tunique verte authentique
+        lda #%00000001
         sta VIC_SPRITE_EN
         rts
 
-intro_copy_monster_sprite_frame:
-        ldx intro_mon_idx
-        txa
-        asl
+; Injecte un pas du defile des 15 monstres
+intro_inject_monster_step:
+        lda intro_scroll_line
+        cmp #2
+        bne +
+        jmp .inj_mon_head
++       cmp #66
+        bne +
+        jmp .inj_mon_foot
++       cmp #6
+        bcc .inj_mon_ret
+        cmp #63
+        bcs .inj_mon_ret
+
+        sec
+        sbc #6
+        tay
+        and #%00000011
+        bne .inj_mon_ret                ; Pas un multiple de 4 : ligne vide
+
+        tya
+        lsr
+        lsr                             ; A = 0..14
+        sta intro_mon_idx
         tax
-        lda intro_mon_frame
-        bne .mon_f1
-        lda intro_mon_f0_ptrs,x
-        sta ZP_SRC
-        lda intro_mon_f0_ptrs+1,x
-        sta ZP_SRC+1
-        jmp .do_cpy
-.mon_f1:
-        lda intro_mon_f1_ptrs,x
-        sta ZP_SRC
-        lda intro_mon_f1_ptrs+1,x
-        sta ZP_SRC+1
-.do_cpy:
-        ldy #63
--       lda (ZP_SRC),y
-        sta intro_spr_buffer,y
-        dey
-        bpl -
+        jmp .do_inj_mon
+
+.inj_mon_ret:
         rts
 
-; ===========================================================================
+.do_inj_mon:
+
+        ; Affiche le nom du monstre a col 16
+        txa
+        asl
+        tay
+        lda intro_mon_name_ptrs,y
+        sta ZP_SRC
+        lda intro_mon_name_ptrs+1,y
+        sta ZP_SRC+1
+        ldy #0
+-       lda (ZP_SRC),y
+        beq +
+        ldx intro_buf_idx
+        bne .m_b1
+        sta SCREEN_RAM+960+16,y
+        jmp .m_cont
+.m_b1:  sta $0fc0+16,y
+.m_cont:
+        iny
+        cpy #16
+        bne -
++
+        ; Trouve un slot de sprite libre parmi les 6 slots
+        ldx #0
+-       lda mon_slot_active,x
+        beq .found_mon_slot
+        inx
+        cpx #MAX_MON_SLOTS
+        bne -
+        rts
+
+.found_mon_slot:
+        lda #1
+        sta mon_slot_active,x
+        lda #242
+        sta mon_slot_y,x
+        lda intro_mon_idx
+        sta mon_slot_id,x
+        lda #0
+        sta mon_slot_frame,x
+
+        jsr intro_copy_slot_sprite_frame
+
+        txa
+        asl
+        tay
+        lda #120                        ; Col 15 (X=120) immediatement a gauche du nom
+        sta VIC_SPRITE_X0,y
+        lda #242                        ; Y=242 entre par le bas avec le nom
+        sta VIC_SPRITE_Y0,y
+
+        txa
+        clc
+        adc #SPR_BLOCK_MON0
+        sta SPRITE_PTR0,x
+        sta $0ff8,x
+
+        ldy intro_mon_idx
+        lda intro_mon_colors,y
+        sta VIC_SPRITE_COL0,x
+
+        lda #COL_LRED
+        sta VIC_SPRITE_MC1
+        lda #COL_BROWN
+        sta VIC_SPRITE_MC2
+
+        lda VIC_SPRITE_MSB
+        and mon_bit_inv,x
+        sta VIC_SPRITE_MSB
+
+        lda VIC_SPRITE_EXP_X
+        and mon_bit_inv,x
+        sta VIC_SPRITE_EXP_X
+
+        lda VIC_SPRITE_EXP_Y
+        and mon_bit_inv,x
+        sta VIC_SPRITE_EXP_Y
+
+        lda VIC_SPRITE_MC
+        ora mon_bit_mask,x
+        sta VIC_SPRITE_MC
+
+        lda VIC_SPRITE_EN
+        ora mon_bit_mask,x
+        sta VIC_SPRITE_EN
+        rts
+
+.inj_mon_head:
+        lda #<txt_monsters_header
+        sta ZP_SRC
+        lda #>txt_monsters_header
+        sta ZP_SRC+1
+        jmp intro_inject_text_line_24
+
+.inj_mon_foot:
+        lda #<txt_treasures_footer
+        sta ZP_SRC
+        lda #>txt_treasures_footer
+        sta ZP_SRC+1
+        jmp intro_inject_text_line_24
+
+intro_copy_slot_sprite_frame:
+        stx intro_tmp_slot
+
+        lda mon_buf_lo,x
+        sta ZP_DST
+        lda mon_buf_hi,x
+        sta ZP_DST+1
+
+        ldy mon_slot_id,x
+        tya
+        asl
+        tay
+        lda mon_slot_frame,x
+        bne .copy_f1
+        lda intro_mon_f0_ptrs,y
+        sta ZP_SRC
+        lda intro_mon_f0_ptrs+1,y
+        sta ZP_SRC+1
+        jmp .do_copy_frame
+.copy_f1:
+        lda intro_mon_f1_ptrs,y
+        sta ZP_SRC
+        lda intro_mon_f1_ptrs+1,y
+        sta ZP_SRC+1
+
+.do_copy_frame:
+        ldy #63
+-       lda (ZP_SRC),y
+        sta (ZP_DST),y
+        dey
+        bpl -
+        ldx intro_tmp_slot
+        rts
+
 ; MOTEUR SONORE ET MUSIQUE AUTHENTIQUE DE ZELDA 1 (SID 3 VOIX + DUAL SID)
 ; ===========================================================================
 INTRO_SID2_BASE         = $d420
@@ -1949,56 +2569,72 @@ shield_chars_data:
         !byte 243, 241, 242, 241, 242, 241, 242, 241, 242, 241, 242, 241, 242, 241, 242, 241, 242, 241, 242, 241, 242, 243
 
 shield_colors_data:
-        !byte 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 2, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 5
-        !byte 5, 0, 2, 2, 2, 2, 7, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 5
-        !byte 5, 0, 2, 2, 2, 2, 7, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 5
-        !byte 5, 1, 2, 2, 2, 7, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 0, 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 0, 0, 0, 3, 3, 3, 0, 5
-        !byte 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5
-        !byte 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
-
+        !byte 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+        !byte 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7
+        !byte 7, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 7
+        !byte 7, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 7
+        !byte 7, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 7
+        !byte 7, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 7
+        !byte 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 7
+        !byte 7, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 7
+        !byte 7, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 7, 0, 7
+        !byte 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 3, 3, 3, 0, 7
+        !byte 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7
+        !byte 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
 ; ===========================================================================
 ; TEXTES OFFICIELS DE L'HISTOIRE (NES 1986)
 ; ===========================================================================
 txt_press_button:   !text "PUSH START BUTTON", 0
 txt_nintendo:       !byte CHAR_COPYRIGHT : !text " 1986 NINTENDO", 0
-txt_story_title:    !text "THE LEGEND OF ZELDA", 0
 
-s_line_00: !text "", 0
-s_line_01: !text "MANY YEARS AGO PRINCE", 0
-s_line_02: !text "DARKNESS GANNON STOLE", 0
-s_line_03: !text "ONE OF THE TRIFORCE WITH", 0
-s_line_04: !text "POWER. PRINCESS ZELDA", 0
-s_line_05: !text "HAD ONE OF THE TRIFORCE", 0
-s_line_06: !text "WITH WISDOM. SHE DIVIDED", 0
-s_line_07: !text "IT INTO 8 UNITS TO HIDE", 0
-s_line_08: !text "IT FROM GANNON BEFORE", 0
-s_line_09: !text "SHE WAS CAPTURED.", 0
-s_line_10: !text "", 0
-s_line_11: !text "  GO FIND THE 8 UNITS", 0
-s_line_12: !text "    LINK TO SAVE HER.", 0
-s_line_13: !text "", 0
-s_line_14: !text "", 0
-s_line_15: !text "", 0
-s_line_16: !text "", 0
-s_line_17: !text "", 0
+s_line_blank: !fill 40, 32 : !byte 0
 
-story_line_count = 18
+s_line_00: !text "      ", CHAR_FRAME_TL, CHAR_FRAME_H, CHAR_FRAME_H, CHAR_FRAME_X, " THE LEGEND OF ZELDA ", CHAR_FRAME_X, CHAR_FRAME_H, CHAR_FRAME_TR, "      ", 0
+s_line_01: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_02: !text "      ", CHAR_FRAME_V, "  MANY YEARS AGO PRINCE   ", CHAR_FRAME_V, "      ", 0
+s_line_03: !text "      ", CHAR_FRAME_V, "  DARKNESS GANNON STOLE   ", CHAR_FRAME_V, "      ", 0
+s_line_04: !text "      ", CHAR_FRAME_V, "  ONE OF THE TRIFORCE WITH", CHAR_FRAME_V, "      ", 0
+s_line_05: !text "      ", CHAR_FRAME_V, "  POWER. PRINCESS ZELDA   ", CHAR_FRAME_V, "      ", 0
+s_line_06: !text "      ", CHAR_FRAME_V, "  HAD ONE OF THE TRIFORCE ", CHAR_FRAME_V, "      ", 0
+s_line_07: !text "      ", CHAR_FRAME_V, "  WITH WISDOM. SHE DIVIDED", CHAR_FRAME_V, "      ", 0
+s_line_08: !text "      ", CHAR_FRAME_V, "  IT INTO 8 UNITS TO HIDE ", CHAR_FRAME_V, "      ", 0
+s_line_09: !text "      ", CHAR_FRAME_V, "  IT FROM GANNON BEFORE   ", CHAR_FRAME_V, "      ", 0
+s_line_10: !text "      ", CHAR_FRAME_V, "  SHE WAS CAPTURED.       ", CHAR_FRAME_V, "      ", 0
+s_line_11: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_12: !text "      ", CHAR_FRAME_V, "    GO FIND THE 8 UNITS   ", CHAR_FRAME_V, "      ", 0
+s_line_13: !text "      ", CHAR_FRAME_V, "    LINK TO SAVE HER.     ", CHAR_FRAME_V, "      ", 0
+s_line_14: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_15: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_16: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_17: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_18: !text "      ", CHAR_FRAME_V, "                          ", CHAR_FRAME_V, "      ", 0
+s_line_19: !text "      ", CHAR_FRAME_BL
+           !fill 26, CHAR_FRAME_H
+           !byte CHAR_FRAME_BR
+           !text "      ", 0
+
+story_line_count = 20
+story_total_steps = 48
 
 story_ptrs:
+        !word s_line_blank, s_line_blank
         !word s_line_00, s_line_01, s_line_02, s_line_03, s_line_04, s_line_05
         !word s_line_06, s_line_07, s_line_08, s_line_09, s_line_10, s_line_11
         !word s_line_12, s_line_13, s_line_14, s_line_15, s_line_16, s_line_17
+        !word s_line_18, s_line_19
 
 ; ===========================================================================
 ; DEFILE OFFICIEL DES TRESORS DE ZELDA 1 (2 COLONNES)
 ; ===========================================================================
-txt_treasures_title: !byte CHAR_STAR_DOT, CHAR_STAR_DOT : !text " ALL OF TREASURES " : !byte CHAR_STAR_DOT, CHAR_STAR_DOT, 0
+txt_treasures_header: !text "      ", CHAR_STAR_DOT, CHAR_STAR_DOT, " ALL OF TREASURES ", CHAR_STAR_DOT, CHAR_STAR_DOT, "      ", 0
+txt_treasures_footer: !text "                ", CHAR_STAR_DOT, CHAR_STAR_DOT, "                ", 0
+
+txt_sign_0: !text "      ", CHAR_FRAME_TL : !fill 26, CHAR_FRAME_H : !byte CHAR_FRAME_TR : !text "      ", 0
+txt_sign_1: !text "      ", CHAR_FRAME_V, "    PLEASE LOOK UP THE    ", CHAR_FRAME_V, "      ", 0
+txt_sign_2: !text "      ", CHAR_FRAME_V, "    MANUAL FOR DETAILS.   ", CHAR_FRAME_V, "      ", 0
+txt_sign_3: !text "      ", CHAR_FRAME_BL : !fill 26, CHAR_FRAME_H : !byte CHAR_FRAME_BR : !text "      ", 0
+
+treasure_total_steps = 70
 
 tr_l_name_00: !text "HEART CONT.", 0
 tr_r_name_00: !text "HEART", 0
@@ -2037,27 +2673,22 @@ tr_r_name_16: !text "COMPASS", 0
 tr_l_name_17: !text "TRIFORCE", 0
 tr_r_name_17: !text "OF WISDOM", 0
 
-treasure_row_count = 18
+; Sprites et couleurs 1:1 NES pour les 35 tresors
+!source "src/intro_items_tables.inc"
 
-tr_l_icons:
-        !byte CHAR_HEART_CONT, CHAR_FAIRY, CHAR_RUPEE, CHAR_POTION, CHAR_LETTER, CHAR_SWORD, CHAR_SWORD, CHAR_BOOMERANG, CHAR_BOMB, CHAR_ARROW, CHAR_CANDLE, CHAR_RING, CHAR_BRACELET, CHAR_RAFT, CHAR_ROD, CHAR_KEY, CHAR_MAP, CHAR_TRIFORCE
-tr_l_colors:
-        !byte COL_RED, COL_WHITE, COL_YELLOW, COL_CYAN, COL_WHITE, COL_BROWN, COL_CYAN, COL_YELLOW, COL_CYAN, COL_BROWN, COL_CYAN, COL_CYAN, COL_ORANGE, COL_BROWN, COL_CYAN, COL_GREY, COL_YELLOW, COL_YELLOW
 tr_l_ptrs:
         !word tr_l_name_00, tr_l_name_01, tr_l_name_02, tr_l_name_03, tr_l_name_04, tr_l_name_05
         !word tr_l_name_06, tr_l_name_07, tr_l_name_08, tr_l_name_09, tr_l_name_10, tr_l_name_11
         !word tr_l_name_12, tr_l_name_13, tr_l_name_14, tr_l_name_15, tr_l_name_16, tr_l_name_17
-tr_r_icons:
-        !byte CHAR_HEART, CHAR_CLOCK, CHAR_RUPEE, CHAR_POTION, CHAR_FOOD, CHAR_SWORD, CHAR_SHIELD, CHAR_BOOMERANG, CHAR_BOW, CHAR_ARROW, CHAR_CANDLE, CHAR_RING, CHAR_FLUTE, CHAR_LADDER, CHAR_BOOK, CHAR_KEY, CHAR_COMPASS, CHAR_TRIFORCE
-tr_r_colors:
-        !byte COL_RED, COL_YELLOW, COL_CYAN, COL_RED, COL_BROWN, COL_WHITE, COL_RED, COL_CYAN, COL_BROWN, COL_CYAN, COL_RED, COL_RED, COL_CYAN, COL_GREY, COL_ORANGE, COL_YELLOW, COL_CYAN, COL_YELLOW
+
 tr_r_ptrs:
         !word tr_r_name_00, tr_r_name_01, tr_r_name_02, tr_r_name_03, tr_r_name_04, tr_r_name_05
         !word tr_r_name_06, tr_r_name_07, tr_r_name_08, tr_r_name_09, tr_r_name_10, tr_r_name_11
         !word tr_r_name_12, tr_r_name_13, tr_r_name_14, tr_r_name_15, tr_r_name_16, tr_r_name_17
 
 ; ===========================================================================
-; TITRE DU DEFILE DES MONSTRES
+; DEFILE DES 15 MONSTRES D'HYRULE
 ; ===========================================================================
-txt_monsters_title: !byte CHAR_STAR_DOT, CHAR_STAR_DOT : !text " MONSTERS OF HYRULE " : !byte CHAR_STAR_DOT, CHAR_STAR_DOT, 0
+txt_monsters_header: !text "       ", CHAR_STAR_DOT, CHAR_STAR_DOT, " ALL OF MONSTERS ", CHAR_STAR_DOT, CHAR_STAR_DOT, "      ", 0
 
+monster_total_steps = 90

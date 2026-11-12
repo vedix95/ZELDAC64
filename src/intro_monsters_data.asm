@@ -725,50 +725,20 @@ intro_mon_14_f1:
 
 ; --- Textes des monstres ---
 intro_mon_name_00:  !text "O C T O R O K", 0
-intro_mon_num_00:   !text "MONSTER [01 / 15]", 0
-intro_mon_lore_00:  !text "OCTOPUS THAT SPITS ROCKS", 0
 intro_mon_name_01:  !text "T E K T I T E", 0
-intro_mon_num_01:   !text "MONSTER [02 / 15]", 0
-intro_mon_lore_01:  !text "FOUR-LEGGED JUMPING SPIDER", 0
 intro_mon_name_02:  !text "L E E V E R", 0
-intro_mon_num_02:   !text "MONSTER [03 / 15]", 0
-intro_mon_lore_02:  !text "BURROWING SPINNING MONSTER", 0
 intro_mon_name_03:  !text "P E A H A T", 0
-intro_mon_num_03:   !text "MONSTER [04 / 15]", 0
-intro_mon_lore_03:  !text "FLYING SPINNING GHOST WEED", 0
 intro_mon_name_04:  !text "M O B L I N", 0
-intro_mon_num_04:   !text "MONSTER [05 / 15]", 0
-intro_mon_lore_04:  !text "SPEAR-THROWING BULL GOBLIN", 0
 intro_mon_name_05:  !text "A R M O S", 0
-intro_mon_num_05:   !text "MONSTER [06 / 15]", 0
-intro_mon_lore_05:  !text "STONE STATUE COME TO LIFE", 0
 intro_mon_name_06:  !text "G H I N I", 0
-intro_mon_num_06:   !text "MONSTER [07 / 15]", 0
-intro_mon_lore_06:  !text "GRAVEYARD GHOST DEMON", 0
 intro_mon_name_07:  !text "L Y N E L", 0
-intro_mon_num_07:   !text "MONSTER [08 / 15]", 0
-intro_mon_lore_07:  !text "FEROCIOUS CENTAUR OF DEATH", 0
 intro_mon_name_08:  !text "Z O R A", 0
-intro_mon_num_08:   !text "MONSTER [09 / 15]", 0
-intro_mon_lore_08:  !text "WATER MONSTER SPITTING FIRE", 0
 intro_mon_name_09:  !text "D A R K N U T", 0
-intro_mon_num_09:   !text "MONSTER [10 / 15]", 0
-intro_mon_lore_09:  !text "ARMORED LABYRINTH KNIGHT", 0
 intro_mon_name_10:  !text "G O R I Y A", 0
-intro_mon_num_10:   !text "MONSTER [11 / 15]", 0
-intro_mon_lore_10:  !text "BOOMERANG-HURLING DEVIL", 0
 intro_mon_name_11:  !text "S T A L F O S", 0
-intro_mon_num_11:   !text "MONSTER [12 / 15]", 0
-intro_mon_lore_11:  !text "SKELETON WITH TWIN SWORDS", 0
 intro_mon_name_12:  !text "K E E S E", 0
-intro_mon_num_12:   !text "MONSTER [13 / 15]", 0
-intro_mon_lore_12:  !text "SWIFT UNDERWORLD BAT", 0
 intro_mon_name_13:  !text "L I K E       L I K E", 0
-intro_mon_num_13:   !text "MONSTER [14 / 15]", 0
-intro_mon_lore_13:  !text "SHIELD-EATING CREATURE", 0
 intro_mon_name_14:  !text "G A N O N", 0
-intro_mon_num_14:   !text "MONSTER [15 / 15]", 0
-intro_mon_lore_14:  !text "THE PRINCE OF DARKNESS", 0
 
 INTRO_MONSTER_COUNT = 15
 
@@ -839,57 +809,6 @@ intro_mon_name_offsets:
         !byte 15   ; KEESE
         !byte 9   ; LIKE LIKE
         !byte 15   ; GANON
-
-intro_mon_lore_ptrs:
-        !word intro_mon_lore_00
-        !word intro_mon_lore_01
-        !word intro_mon_lore_02
-        !word intro_mon_lore_03
-        !word intro_mon_lore_04
-        !word intro_mon_lore_05
-        !word intro_mon_lore_06
-        !word intro_mon_lore_07
-        !word intro_mon_lore_08
-        !word intro_mon_lore_09
-        !word intro_mon_lore_10
-        !word intro_mon_lore_11
-        !word intro_mon_lore_12
-        !word intro_mon_lore_13
-        !word intro_mon_lore_14
-
-intro_mon_lore_offsets:
-        !byte 8
-        !byte 7
-        !byte 7
-        !byte 7
-        !byte 7
-        !byte 7
-        !byte 9
-        !byte 7
-        !byte 6
-        !byte 8
-        !byte 8
-        !byte 7
-        !byte 10
-        !byte 9
-        !byte 9
-
-intro_mon_num_ptrs:
-        !word intro_mon_num_00
-        !word intro_mon_num_01
-        !word intro_mon_num_02
-        !word intro_mon_num_03
-        !word intro_mon_num_04
-        !word intro_mon_num_05
-        !word intro_mon_num_06
-        !word intro_mon_num_07
-        !word intro_mon_num_08
-        !word intro_mon_num_09
-        !word intro_mon_num_10
-        !word intro_mon_num_11
-        !word intro_mon_num_12
-        !word intro_mon_num_13
-        !word intro_mon_num_14
 
 intro_mon_colors:
         !byte COL_RED           ; 0: Octorok

@@ -19,6 +19,11 @@ Une recréation fidèle, intégrale et spectaculaire du classique **The Legend o
   * **128 salles d'Overworld** reproduites tuile par tuile avec tous les secrets officiels, grottes d'ermites, fées et boutiques.
   * **Les 9 Donjons complets** (Niveaux 1 à 9) avec leurs labyrinthes, portes à clés, énigmes de blocs poussables, et l'affrontement final contre **Ganon**.
   * **Tous les Boss originaux** : Aquamentus, Dodongo, Manhandla, Gleeok, Digdogger, Gohma et Ganon.
+* 📜 **Introduction & Prologue Cinématique 1:1 NES** :
+  * **Écran Titre & Cascade Animée** : Palette authentique de l'aube (ciel rose ouvert `COL_LRED`, falaises rocheuses grises de Palette 0, lettres ZELDA cramoisies `COL_RED` bordées d'or, étoile scintillante Sprite 0 et vagues descendantes Sprites 1..4).
+  * **Récit d'Hyrule en Scrolling Matériel 50 Hz** : Défilement vertical au pixel près via le registre VIC-II `$D011` dans son cadre de pierre centré avec masquage invisible en bordure (`RSEL=0`).
+  * **Défilé des 35 Trésors & Reliques** : Présentation simultanée sur deux colonnes avec sprites matériels VIC-II pleine résolution.
+  * **Défilé du Bestiaire d'Hyrule Multimonstres** : Moteur dynamique à 6 slots simultanés avec animations de marche 2 poses cadencées à 8 frames et couleurs individuelles.
 * ⚡ **Cartouche Magic Desk 512 Ko (Zéro Temps de Chargement)** :
   * Déballage du moteur en 0,2 seconde au démarrage.
   * Streaming instantané des salles, donjons, graphismes et overlays cartouche sans aucune latence disquette.
@@ -37,6 +42,16 @@ Une recréation fidèle, intégrale et spectaculaire du classique **The Legend o
 ---
 
 ## 📸 Le Jeu en Action
+
+### Introduction & Cinématiques 1:1 NES
+
+| Écran Titre & Cascade (Aube) | Récit d'Hyrule (Cadre Pierre) | Défilé des 35 Trésors (2 Colonnes) | Bestiaire Multimonstres (6 Slots) |
+| :---: | :---: | :---: | :---: |
+| ![Écran Titre](docs/images/shot_intro.png) | ![Récit](docs/images/shot_intro_story.png) | ![Trésors](docs/images/shot_intro_treasures.png) | ![Monstres](docs/images/shot_intro_monsters.png) |
+
+| Comparatif 1:1 : Original NES vs Port Commodore 64 |
+| :---: |
+| [![Comparatif NES vs C64](docs/images/compare_intro.png)](docs/images/compare_intro.png) |
 
 ### Aventure & Combats Épiques
 

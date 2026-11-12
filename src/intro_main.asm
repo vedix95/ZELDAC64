@@ -77,12 +77,23 @@ spr_triforce_triangle:
         !error "spr_triforce_triangle deborde sur la zone ROM chargen ($1000)"
 }
 
+!align 63, 0
+intro_mon_spr_buffers:
+        !fill 64 * 6, 0                 ; 6 blocs sprites de 64 octets = 384 octets ($0A40..$0BBF)
+SPR_BLOCK_MON0 = (intro_mon_spr_buffers / 64)
+
+!if intro_mon_spr_buffers + (64 * 6) > $0C00 {
+        !error "intro_mon_spr_buffers deborde sur Screen RAM 1 ($0C00)"
+}
+
 ; Jeu de caractères dédié à l'intro à $2000 (avec blason officiel NES et glyphes)
 * = CHARSET_ADDR
 !source "src/intro_charset.asm"
 
-; Code et données de l'introduction à $2800
-* = $2800
+; Sprites des 27 objets authentiques pour le defile des tresors ($2800..$2EBF)
+!source "src/intro_items_sprites.asm"
+
+; Code et données de l'introduction à la suite
 !source "src/intro.asm"
 
 MAP_BG_COLOR    = 13
@@ -90,11 +101,9 @@ MAP_MC1_COLOR   = 8
 MAP_MC2_COLOR   = 1
 
 wait_frame:
--       lda VIC_RASTER
-        cmp #250
-        bne -
--       lda VIC_RASTER
-        cmp #250
+        lda #0
+        sta intro_frame_ready
+-       lda intro_frame_ready
         beq -
         rts
 
@@ -117,6 +126,7 @@ sid_setup_menu_init:
         lda VIC_CTRL2
         and #%11101111                  ; Texte haute resolution
         sta VIC_CTRL2
+        jsr intro_init_raster_irq       ; Installe l'interruption raster synchronisee
 
         ; Efface l'ecran et les couleurs
         ldx #0
