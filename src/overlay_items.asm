@@ -215,18 +215,21 @@ ovl_item_candle_exec:
 OW_PUSH_FRAMES          = 60
 ow_push_cand_idx:       !byte 0
 ow_push_tile_type:      !byte 0
+ow_push_reveal_off:     !byte 0   ; décalage de l'escalier par rapport au rocher (0 = sous le rocher, 1 = au centre à droite)
 
-; Table : salle, index_tuile, type_tuile, sens_autorisés (%RLUD = bits 3..0), besoin_bracelet
+; Table : salle, index_tuile, type_tuile, sens_autorisés (%RLUD = bits 3..0), besoin_bracelet, décalage_escalier
+; Rochers : poussée vers la GAUCHE uniquement (%0100) ; Tombes : vers le HAUT (%0010)
+; D-3 et J-8 (4 rochers en losange) : l'escalier apparaît AU CENTRE du losange (+1 à droite du rocher poussé)
 ow_push_tbl:
-        !byte   9, 106, TILE_ROCK , %1111, 1   ; J-1 ($09) (6,5)  -> Hint 1
-        !byte  17, 110, TILE_ROCK , %1111, 1   ; B-2 ($11) (10,5) -> Hint 1
-        !byte  29, 105, TILE_ROCK , %1111, 1   ; N-2 ($1D) (5,5)  -> Warp
-        !byte  32, 108, TILE_GRAVE, %0010, 0   ; A-3 ($20) (8,5)  -> Warp (Tombe, Haut)
-        !byte  33, 111, TILE_GRAVE, %0010, 0   ; B-3 ($21) (11,5) -> Épée Magique (Tombe, Haut)
-        !byte  35, 105, TILE_ROCK , %1111, 1   ; D-3 ($23) (5,5)  -> Warp (rocher gauche)
-        !byte  51,  89, TILE_ROCK , %1111, 1   ; D-4 ($33) (9,4)  -> Potion Shop
-        !byte  73, 105, TILE_ROCK , %1111, 1   ; J-5 ($49) (5,5)  -> Warp
-        !byte 121, 110, TILE_ROCK , %1111, 1   ; J-8 ($79) (10,5) -> Warp (rocher gauche)
+        !byte   9, 106, TILE_ROCK , %0100, 1, 0   ; J-1 ($09) (6,5)  -> Hint 1
+        !byte  17, 110, TILE_ROCK , %0100, 1, 0   ; B-2 ($11) (10,5) -> Hint 1
+        !byte  29, 105, TILE_ROCK , %0100, 1, 0   ; N-2 ($1D) (5,5)  -> Warp
+        !byte  32, 108, TILE_GRAVE, %0010, 0, 0   ; A-3 ($20) (8,5)  -> Warp (Tombe, Haut)
+        !byte  33, 111, TILE_GRAVE, %0010, 0, 0   ; B-3 ($21) (11,5) -> Épée Magique (Tombe, Haut)
+        !byte  35, 105, TILE_ROCK , %0100, 1, 1   ; D-3 ($23) (5,5)  -> Warp (escalier au centre 6,5)
+        !byte  51,  89, TILE_ROCK , %0100, 1, 0   ; D-4 ($33) (9,4)  -> Potion Shop
+        !byte  73, 105, TILE_ROCK , %0100, 1, 0   ; J-5 ($49) (5,5)  -> Warp
+        !byte 121, 110, TILE_ROCK , %0100, 1, 1   ; J-8 ($79) (10,5) -> Warp (escalier au centre 11,5)
         !byte $ff
 
 ovl_item_bracelet_exec:
@@ -261,7 +264,7 @@ ovl_item_bracelet_exec:
 .ow_pt_next:
         txa
         clc
-        adc #5
+        adc #6
         tax
         bne .ow_pt_scan
 .ow_abort_tramp:
@@ -272,21 +275,24 @@ ovl_item_bracelet_exec:
         ldy ow_push_cand_idx
         lda ow_push_tbl+2,x
         sta ow_push_tile_type
+        lda ow_push_tbl+5,x
+        sta ow_push_reveal_off
+        lda ow_push_tile_type
         cmp room_buf,y
-        bne .ow_push_abort
+        bne .ow_abort_tramp
 
         ; 4. Vérifie le Bracelet de Force si requis
         lda ow_push_tbl+4,x
         beq .ow_pt_dir_chk
         lda player_has_bracelet
-        beq .ow_push_abort
+        beq .ow_abort_tramp
 
 .ow_pt_dir_chk:
         ; 5. Direction de poussée autorisée ?
         ldy player_dir
         lda push_dirbit,y
         and ow_push_tbl+3,x
-        beq .ow_push_abort
+        beq .ow_abort_tramp
 
         ; 6. Case d'arrivée libre (TILE_GRASS) ?
         lda ow_push_cand_idx
@@ -296,7 +302,7 @@ ovl_item_bracelet_exec:
         tay
         lda room_buf,y
         cmp #TILE_GRASS
-        bne .ow_push_abort
+        bne .ow_abort_tramp
 
         ; 7. Si changement de tuile poussée en cours de route, restaure l'ancienne
         lda dungeon_push_timer
@@ -322,8 +328,18 @@ ovl_item_bracelet_exec:
         lda #0
         sta dungeon_push_timer
 
-        ; Ancienne case -> Escalier secret (TILE_CAVE)
+        ; Ancienne case -> Escalier secret (sous le rocher) ou herbe + escalier au centre
         ldy push_block_idx
+        lda ow_push_reveal_off
+        beq .ow_rv_under
+        lda #TILE_GRASS
+        sta room_buf,y
+        jsr redraw_single_tile
+        lda push_block_idx
+        clc
+        adc ow_push_reveal_off
+        tay
+.ow_rv_under:
         lda #TILE_CAVE
         sta room_buf,y
         jsr redraw_single_tile

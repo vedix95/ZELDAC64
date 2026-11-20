@@ -174,24 +174,28 @@ restore_secrets_to_buf:
         cmp ZP_IDX
         bne +
         ldy sec_tiles_tbl,x
-        lda (ZP_DST),y
-        cmp #TILE_ROCK
-        beq .slide_restored_push
-        cmp #TILE_GRAVE
-        bne .put_restored_cave
-.slide_restored_push:
+        lda (ZP_DST),y                  ; type de tuile d'origine (rocher / tombe / autre)
         pha
+        cpx #2                          ; entrées 0..1 = D-3 / J-8 : escalier au centre du losange
+        ldx #1                          ; X = cases de recul du rocher (LDX ne touche pas C)
+        bcs .rest_cave
+        lda #TILE_GRASS
+        sta (ZP_DST),y                  ; case d'origine du rocher -> herbe
+        iny                             ; centre = case d'origine + 1
+        inx
+.rest_cave:
         lda #TILE_CAVE
-        sta (ZP_DST),y
-        tya
-        sec
-        sbc #20                         ; replace le rocher/tombe glissé 1 case au Nord
-        tay
+        sta (ZP_DST),y                  ; escalier / grotte révélé(e)
         pla
-        sta (ZP_DST),y
-        jmp .chk_dry_c5_sec
-.put_restored_cave:
-        lda #TILE_CAVE
+        cmp #TILE_ROCK
+        beq .rest_slide
+        cmp #TILE_GRAVE
+        bne .chk_dry_c5_sec
+        ldx #20                         ; tombe glissée 1 case au Nord (20 tuiles)
+.rest_slide:
+        dey                             ; rocher : 1 case à gauche ; tombe : 1 case au Nord
+        dex
+        bne .rest_slide
         sta (ZP_DST),y
 .chk_dry_c5_sec:
         lda ZP_IDX
@@ -228,12 +232,12 @@ restore_secrets_to_buf:
 
 SEC_ROOMS_COUNT = 26
 sec_rooms_tbl:
-        ; Tombes (32,33), Rochers (9,17,29,35,51,73,121), Étang D7 (66), Armos grottes (52,28,61,78)
+        ; D-3/J-8 losange (35,121) puis Tombes (32,33), Rochers (9,17,29,51,73), Étang D7 (66), Armos grottes (52,28,61,78)
         ; + 12 arbres brûlables (40,70,81,82,83,88,91,98,99,106,107,109)
-        !byte 32, 33, 9, 17, 29, 35, 51, 73, 121, 66, 52, 28, 61, 78
+        !byte 35, 121, 32, 33, 9, 17, 29, 51, 73, 66, 52, 28, 61, 78
         !byte 40, 70, 81, 82, 83, 88, 91, 98, 99, 106, 107, 109
 sec_tiles_tbl:
-        !byte 108, 111, 106, 110, 105, 105, 89, 105, 110, 90, 86, 93, 91, 92
+        !byte 105, 110, 108, 111, 106, 110, 105, 89, 105, 90, 86, 93, 91, 92
         !byte 73, 151, 89, 66, 112, 111, 112, 90, 88, 94, 72, 113
 
 ; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).

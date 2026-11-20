@@ -787,3 +787,15 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
 - **Correction** :
   - Réactivation systématique du mode texte multicolore (`lda VIC_CTRL2; ora #%00010000; sta VIC_CTRL2`) dans `close_debug` (`.restore_p`), `debug_do_warp_dungeon` et `debug_do_warp_overworld` (`src/debug.asm`, Banque 30).
 - **Validation** : Recompilation propre (`build/zelda.crt`, Banque 30 `2916/8192 o`, RAM résidente inchangée `$9FF6 < $A000`) et regénération + inspection visuelle des 23 captures de donjons et boss (palettes multicolores NES distinctes pour les 9 donjons : Cyan, Bleu, Vert, Gris clair, Rouge, Orange, Vert, Gris moyen, Rouge sombre).
+
+
+---
+
+### Anomalie 34 : Escalier des salles à 4 rochers (D-3, J-8) non situé au centre du losange
+- **Symptôme** : Dans les salles Overworld à 4 rochers en losange (D-3 `$23`, J-8 `$79`), l'escalier secret (Warp) apparaissait sous le rocher poussé au lieu de s'ouvrir au centre du losange ; la restauration au retour dans la salle faisait en outre glisser le rocher vers le Nord quelle que soit la direction de poussée.
+- **Correction** :
+  - `ow_push_tbl` ([src/overlay_items.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_items.asm)) : nouveau 6ᵉ octet `décalage_escalier` (1 pour D-3 et J-8 : le rocher glisse d'une case vers la gauche, la case d'origine redevient de l'herbe et `TILE_CAVE` apparaît au centre) ; poussée des rochers restreinte à la gauche, tombes vers le haut.
+  - `restore_secrets_to_buf` ([src/tilemap.asm](file:///home/vedix/Documents/C64/zelda/src/tilemap.asm)) restructurée (entrées 0..1 = D-3/J-8, recul du rocher par boucle `.rest_slide`) ; bug de collision des labels anonymes `-` évité ; résident `$9FFC < $A000`.
+- **Validation** : poussées + persistance (sortie/retour de salle) vérifiées sous VICE pour J-8, D-3, B-3 (tombe), J-5, D-4 ; capture [shot_rock_push.png](docs/images/shot_rock_push.png) renouvelée.
+- **Réserve** : la page de référence zeldadungeon.net est protégée par un défi Cloudflare (non contourné) ; seul le cas « 4 rochers → escalier au centre » demandé a été implémenté. Les autres secrets au Bracelet restent à ajuster sur des captures de référence.
+
