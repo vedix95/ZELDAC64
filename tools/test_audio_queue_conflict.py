@@ -119,8 +119,8 @@ def run_test():
         # DUMP 3 : rupee_pending doit être 1, chime_active doit être 1
         f.write(f's "/tmp/audio_dump_3.bin" 0 {audio_base:04x} {audio_base+11:04x}\n')
 
-        # Avancer de 35 frames (fin du chime)
-        for _ in range(35):
+        # Avancer de 38 frames (fin du chime = 56 frames au total depuis DUMP 2, rupee actif 8 frames)
+        for _ in range(38):
             f.write("g\n")
 
         # DUMP 4 : chime doit être fini, rupee doit avoir démarré à la suite !

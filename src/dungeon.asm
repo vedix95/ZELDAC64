@@ -320,12 +320,41 @@ dungeon_on_enter_room:
 
         ldx current_room_idx
 
-        ; 0. Salle Ermite Donjon 1 (0x41)
+        ; 0. Salle Ermite Donjon 1 (0x41) — filtrée strictement sur Niveau 1
+        lda current_dungeon_level
+        cmp #1
+        bne .chk_d7_goriya
         cpx #$41
-        bne +
+        bne .chk_d7_goriya
         jsr dungeon_setup_room_41
         rts
-+
+
+.chk_d7_goriya:
+        ; 0a. Goriya Affamé Donjon 7 (0x49) : tant que non nourri (DUNG_SECRET_REVEALED == 0)
+        lda current_dungeon_level
+        cmp #7
+        bne .chk_ganon_intro
+        cpx #$49
+        bne .chk_ganon_intro
+        lda dungeon_room_state,x
+        and #DUNG_SECRET_REVEALED
+        bne .chk_ganon_intro
+        jsr dungeon_setup_d7_goriya
+        rts
+
+.chk_ganon_intro:
+        ; 0b. Salle de Ganon (Donjon 9, salle $42) : fanfare d'apparition si Ganon vivant
+        lda current_dungeon_level
+        cmp #9
+        bne .chk_triforce_room
+        cpx #$42
+        bne .chk_triforce_room
+        lda dungeon_room_state,x
+        and #DUNG_ROOM_CLEARED
+        bne .chk_triforce_room
+        jsr sound_play_ganon_fanfare
+
+.chk_triforce_room:
         ; 1. Salle Triforce (officielle pour chaque niveau 1..9)
         ldx current_dungeon_level
         dex
@@ -764,6 +793,8 @@ dungeon_get_room_drop_type:
 
 .lvl1_drops:
         lda current_room_idx
+        cmp #$72
+        beq .ret_key                    ; 3x Keese -> 1ère Clé (NES authentique)
         cmp #$74
         beq .ret_key
         cmp #$63
@@ -859,7 +890,7 @@ dungeon_get_room_drop_type:
         cmp #$5B
         beq .ret_key
         cmp #$5D
-        beq .ret_raft                   ; Radeau (si obtenu en salle)
+        beq .ret_key                    ; Clé (le Radeau est dans le cellier $6A)
         lda #DROP_NONE
         rts
 
@@ -1287,7 +1318,10 @@ dungeon_update:
         beq +
         rts
 +
-        ; Animation torches salle Ermite (0x41)
+        ; Animation torches salle Ermite (Donjon 1, salle 0x41 uniquement)
+        lda current_dungeon_level
+        cmp #1
+        bne +
         ldx current_room_idx
         cpx #$41
         bne +
@@ -1450,7 +1484,11 @@ dungeon_update:
 .chk_cellar_room:
         lda current_room_idx
         cmp .cellar_rooms,x
+        bne .next_cellar_room
+        lda current_dungeon_level
+        cmp .cellar_levels,x
         beq .do_enter_cellar
+.next_cellar_room:
         dex
         bpl .chk_cellar_room
         rts
@@ -1461,6 +1499,8 @@ dungeon_update:
 
 .cellar_rooms:
         !byte $22, $6a, $32, $36, $08, $4a, $6f, $23, $45
+.cellar_levels:
+        !byte   1,   3,   4,   5,   6,   7,   8,   9,   9
 
 ; ===========================================================================
 ; BLOCS POUSSABLES (toutes les salles de donjon)
@@ -1479,11 +1519,11 @@ push_dest_idx:          !byte 0
 push_pdx:               !byte 0
 push_pdy:               !byte 0
 
-; Table : salle, index du bloc, sens autorisés (bit = 1<<DIR : bas, haut, gauche, droite), effet
+; Table : niveau, salle, index du bloc, sens autorisés (bit = 1<<DIR : bas, haut, gauche, droite), effet
 push_tbl:
-        !byte $22, 88, %0011, PUSH_FX_STAIRS    ; bloc gauche du losange (Donjon 1) : vers le haut ou le bas
-        !byte $32, 88, %0011, PUSH_FX_STAIRS    ; bloc gauche Like-Likes (Donjon 4 Échelle) : vers le haut ou le bas
-        !byte $42, 89, %0100, PUSH_FX_HERMIT    ; bloc du passage de l'ermite : vers la gauche
+        !byte 1, $22, 88, %0011, PUSH_FX_STAIRS ; bloc gauche du losange (Donjon 1) : vers le haut ou le bas
+        !byte 4, $32, 88, %0011, PUSH_FX_STAIRS ; bloc gauche Like-Likes (Donjon 4 Échelle) : vers le haut ou le bas
+        !byte 1, $42, 89, %0100, PUSH_FX_HERMIT ; bloc du passage de l'ermite (Donjon 1) : vers la gauche
         !byte $ff
 
 ; Déplacement de l'index de tuile selon le sens (bas +20, haut -20, gauche -1, droite +1)
@@ -1562,18 +1602,22 @@ check_link_pushing_block:
         bcc .clp_no
         sty push_block_idx
 
-        ; 3. Cherche (salle, bloc) dans la table stricte des blocs poussables
+        ; 3. Cherche (niveau, salle, bloc) dans la table stricte des blocs poussables (M7)
         ldx #0
 .clp_scan:
         lda push_tbl,x
         cmp #$ff
         beq .clp_no
-        cmp current_room_idx
+        cmp current_dungeon_level
         bne .clp_next
         lda push_tbl+1,x
+        cmp current_room_idx
+        bne .clp_next
+        lda push_tbl+2,x
         cmp push_block_idx
         beq .clp_found
 .clp_next:
+        inx
         inx
         inx
         inx
@@ -1584,7 +1628,7 @@ check_link_pushing_block:
         ; Sens de poussée autorisé ?
         ldy player_dir
         lda push_dirbit,y
-        and push_tbl+2,x
+        and push_tbl+3,x
         beq .clp_no
         ; La case d'arrivée doit être une dalle libre (jamais de blocage définitif)
         ldy player_dir
@@ -1627,7 +1671,7 @@ dungeon_do_push_block:
         jsr redraw_single_tile
 
         ldx dungeon_push_entry
-        lda push_tbl+3,x
+        lda push_tbl+4,x
         cmp #PUSH_FX_HERMIT
         beq .dpb_hermit
 
@@ -1914,7 +1958,15 @@ dungeon_collect_drop:
 
 +       cmp #DROP_TRIFORCE
         bne +
-        ; --- OBTENTION DE LA TRIFORCE ! ---
+        ; --- DONJON 9 SALLE $32 : SAUVETAGE PRINCESSE ZELDA & FIN DU JEU (M2) ---
+        lda current_dungeon_level
+        cmp #9
+        bne .tf_normal
+        lda #0
+        sta dungeon_drop_active
+        jmp open_ending
+.tf_normal:
+        ; --- OBTENTION DE LA TRIFORCE (Niveaux 1..8) ---
         lda current_dungeon_level
         sec
         sbc #1
@@ -2015,13 +2067,16 @@ dungeon_apply_room_state_internal:
         dex
         bpl .apply_door_loop
 
-        ; Persistance salle 0x42 si secret révélé
+        ; Persistance salle 0x42 (Donjon 1 uniquement) si secret révélé
+        lda current_dungeon_level
+        cmp #1
+        bne .chk_d4_stairs
         lda ZP_IDX
         cmp #$42
-        bne +
+        bne .chk_d1_stairs
         lda ZP_TMP
         and #DUNG_SECRET_REVEALED
-        beq +
+        beq .chk_d1_stairs
         ldy #89
         lda #TILE_DUNG_FLOOR
         sta (ZP_DST),y
@@ -2034,10 +2089,17 @@ dungeon_apply_room_state_internal:
         ldy #100
         sta (ZP_DST),y
 
-+       ; Escalier secret salle 0x22 ou 0x32 si déjà révélé
+.chk_d1_stairs:
+        ; Escalier secret salle 0x22 (Donjon 1)
         lda ZP_IDX
         cmp #$22
         beq .apply_secret_stairs
+        bne .done_apply
+.chk_d4_stairs:
+        ; Escalier secret salle 0x32 (Donjon 4 uniquement)
+        cmp #4
+        bne .done_apply
+        lda ZP_IDX
         cmp #$32
         bne .done_apply
 .apply_secret_stairs:
@@ -2339,207 +2401,10 @@ dungeon_on_bomb_explode:
         rts
 
 ; ===========================================================================
-; SALLE ERMITE DONJON 1 (Salle 0x41 : "LA PENINSULE TOUT A L'EST EST LE SECRET.")
+; PASSAGE SOUS-TERRAIN VU DE CÔTÉ (STATE_CELLAR)
+; Note : dungeon_setup_room_41, build_cellar_room, enter_cellar et exit_cellar
+; sont déportés dans l'overlay Banque 29 (src/overlay_items.asm) via trampolines.
 ; ===========================================================================
-dungeon_setup_room_41:
-        ldx #0
-        lda #0
--       sta en_state,x
-        inx
-        cpx #MAX_ENEMIES
-        bcc -
-
-        ; Ligne 6 : "LA PENINSULE TOUT A L'EST" (25 car)
-        ldx #0
--       lda txt_hint_d1_1,x
-        sta SCREEN_RAM+240+7,x
-        lda #COL_WHITE
-        sta COLOR_RAM+240+7,x
-        inx
-        cpx #25
-        bne -
-
-        ; Ligne 8 : "EST LE SECRET." (14 car)
-        ldx #0
--       lda txt_hint_d1_2,x
-        sta SCREEN_RAM+320+13,x
-        lda #COL_WHITE
-        sta COLOR_RAM+320+13,x
-        inx
-        cpx #14
-        bne -
-
-        ; Ermite au centre (Sprite 3 : X=160, Y=130)
-        lda #(sprite_link_old_man / 64)
-        sta SPRITE_PTR3
-        lda #COL_RED
-        sta VIC_SPRITE_COL3
-        lda #160
-        sta VIC_SPRITE_X3
-        lda #130
-        sta VIC_SPRITE_Y3
-
-        ; Torches gauche (Sprite 4 : X=120) et droite (Sprite 5 : X=200)
-        lda #(sprite_link_proj_flame_0 / 64)
-        sta SPRITE_PTR4
-        lda #(sprite_link_proj_flame_1 / 64)
-        sta SPRITE_PTR5
-        lda #COL_CYAN
-        sta VIC_SPRITE_COL4
-        sta VIC_SPRITE_COL5
-        lda #120
-        sta VIC_SPRITE_X4
-        lda #200
-        sta VIC_SPRITE_X5
-        lda #130
-        sta VIC_SPRITE_Y4
-        sta VIC_SPRITE_Y5
-
-        lda #%00111001
-        sta VIC_SPRITE_EN
-        sta VIC_SPRITE_MC
-        rts
-
-txt_hint_d1_1:  !text "EASTMOST PENINSULA IS THE"
-txt_hint_d1_2:  !text "   SECRET.    "
-
-; ===========================================================================
-; PASSAGE SOUS-TERRAIN VU DE CÔTÉ (STATE_CELLAR - Trésor de l'Arc du Donjon 1)
-; Fidèle à la salle souterraine de briques NES (Cellar1 : fond noir, murs de
-; briques grises/blanches, échelle à gauche et piédestal central de l'Arc).
-; ===========================================================================
-; Caractères 2D de l'échelle souterraine (tuile 7 : $20E0..$20FF en mode STATE_CELLAR)
-cellar_ladder_char_l:
-        !byte %00100100, %00101010, %00100101, %00100100
-        !byte %00100100, %00101010, %00100101, %00100100
-cellar_ladder_char_r:
-        !byte %00100100, %10101000, %01010100, %00100100
-        !byte %00100100, %10101000, %01010100, %00100100
-
-build_cellar_room:
-        ; 1. Remplit tout le tampon de 200 tuiles de briques (tuile 1 = TILE_DUNG_WALL_TOP)
-        ldx #0
-        lda #TILE_DUNG_WALL_TOP
--       sta room_buf,x
-        inx
-        cpx #200
-        bcc -
-
-        ; 2. Évide la chambre souterraine centrale (rangées 2..7, colonnes 3..16)
-        ;    en fond noir uni (tuile 12 = TILE_DUNG_DOOR_OPEN)
-        ldy #40                         ; début rangée 2 (2 * 20)
-.cellar_row_loop:
-        tya
-        clc
-        adc #3
-        tax                             ; X = offset col 3
-        lda #14                         ; 14 colonnes (cols 3..16)
-        sta ZP_TMP
-        lda #TILE_DUNG_DOOR_OPEN
-.cellar_col_loop:
-        sta room_buf,x
-        inx
-        dec ZP_TMP
-        bne .cellar_col_loop
-
-        tya
-        clc
-        adc #20
-        tay
-        cpy #160                        ; jusqu'à la fin de la rangée 7 (8 * 20)
-        bcc .cellar_row_loop
-
-        ; 3. Piliers de briques supérieurs (rangée 2, cols 6..8 et 11..13)
-        lda #TILE_DUNG_WALL_TOP
-        sta room_buf+46
-        sta room_buf+47
-        sta room_buf+48
-        sta room_buf+51
-        sta room_buf+52
-        sta room_buf+53
-
-        ; 4. Piédestal central en briques de l'Arc (rangée 7, cols 9..11 = offsets 149..151)
-        lda #TILE_DUNG_WALL_TOP
-        sta room_buf+149
-        sta room_buf+150
-        sta room_buf+151
-
-        ; 5. Échelle de descente en colonne 4 (rangées 0..7)
-        ldy #4
-        ldx #8
--       lda #TILE_DUNG_STAIRS
-        sta room_buf,y
-        tya
-        clc
-        adc #20
-        tay
-        dex
-        bne -
-        rts
-
-enter_cellar:
-        lda #STATE_CELLAR
-        sta game_state
-        lda #0
-        sta cellar_pickup_timer
-        sta player_attacking
-        sta item_active
-        sta en_proj_active
-        sta VIC_SPRITE_EXP_X
-        sta VIC_SPRITE_EXP_Y
-        sta VIC_SPRITE_MSB
-
-        ; Désactive les ennemis de la salle supérieure
-        ldx #7
-        lda #0
--       sta en_state,x
-        dex
-        bpl -
-
-        ; Charge le motif d'échelle 2D dans la tuile 7 ($20E0..$20FF)
-        ldx #7
--       lda cellar_ladder_char_l,x
-        sta $20e0,x
-        sta $20f0,x
-        lda cellar_ladder_char_r,x
-        sta $20e8,x
-        sta $20f8,x
-        dex
-        bpl -
-
-        ; Palette de briques souterraines NES (Noir / Gris / Blanc)
-        lda #COL_BLACK
-        sta active_bg_color
-        sta VIC_BACKGROUND
-        lda #COL_GREY
-        sta VIC_BG_MC1
-        lda #COL_WHITE
-        sta VIC_BG_MC2
-        lda #9                          ; Multicolore (8) + Blanc (1)
-        ldy #15
--       sta active_tile_color,y
-        dey
-        bpl -
-
-        ; Link apparaît en haut de l'échelle (col 4 : X=88, Y=84)
-        lda #88
-        sta player_x
-        lda #0
-        sta player_x+1
-        lda #84
-        sta player_y
-        lda #DIR_DOWN
-        sta player_dir
-
-        jsr build_cellar_room
-        lda #<room_buf
-        sta ZP_MAP
-        lda #>room_buf
-        sta ZP_MAP+1
-        jsr draw_map
-        jsr hud_render
-        jmp cellar_draw
-
 cellar_update:
         lda cellar_pickup_timer
         beq .cellar_controls
@@ -2652,73 +2517,60 @@ cellar_update:
         jmp .chk_l9_cellar_pickup
 +       rts
 
-.chk_wand_pickup:
-        ; --- Donjon 6 : Baguette Magique (salle 0x08) ---
-        ldx #$08
+; Helper factorisé : teste si l'objet du cellier X peut être ramassé (Carry=1 si oui, X préservé)
+.cellar_can_pickup:
         lda dungeon_room_state,x
         and #DUNG_ITEM_COLLECTED
-        bne +
+        bne .ccp_no
         lda player_x
         cmp #172
-        bcc +
+        bcc .ccp_no
         cmp #208
-        bcs +
-        lda #1
-        sta player_has_wand
-        ldx #$08
+        bcs .ccp_no
+        sec
+        rts
+.ccp_no:
+        clc
+        rts
+
+; Helper factorisé : finalise le ramassage dans la salle X
+.cellar_finish_pickup:
         lda dungeon_room_state,x
         ora #DUNG_ITEM_COLLECTED
         sta dungeon_room_state,x
         lda #80
         sta cellar_pickup_timer
         jsr sound_item_fanfare
-        jsr hud_render
+        jmp hud_render
+
+.chk_wand_pickup:
+        ; --- Donjon 6 : Baguette Magique (salle 0x08) ---
+        ldx #$08
+        jsr .cellar_can_pickup
+        bcc +
+        lda #1
+        sta player_has_wand
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_candle_pickup:
         ; --- Donjon 7 : Bougie Rouge (salle 0x4A) ---
         ldx #$4A
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #2                          ; Bougie Rouge (utilisations illimitées)
         sta player_has_candle
-        ldx #$4A
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_magic_key_pickup:
         ; --- Donjon 8 : Clé Magique (salle 0x6F) ---
         ldx #$6F
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #1
         sta player_has_magic_key
-        ldx #$6F
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_l9_cellar_pickup:
@@ -2727,139 +2579,61 @@ cellar_update:
         cmp #$23
         bne .chk_l9_silver
         ldx #$23
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #2                          ; Anneau Rouge (dégâts divisés par 4)
         sta player_has_blue_ring
-        ldx #$23
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_l9_silver:
         ldx #$45
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #2                          ; Flèches d'Argent (Silver Arrows)
         sta player_has_arrows
-        ldx #$45
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_bow_inner:
         ; --- Donjon 1 : Arc (salle 0x22) ---
         ldx #$22
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #1
         sta player_has_bow
         sta player_has_arrows
-        ldx #$22
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_raft_pickup:
         ; --- Donjon 3 : Radeau (salle 0x6A) ---
         ldx #$6A
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #1
         sta player_has_raft
-        ldx #$6A
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_ladder_pickup:
-        ; --- Donjon 4 : Échelle (salle 0x04) ---
+        ; --- Donjon 4 : Échelle (salle 0x32) ---
         ldx #$32
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #1
         sta player_has_stepladder
-        ldx #$32
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .chk_whistle_pickup:
         ; --- Donjon 5 : Flûte (salle 0x36) ---
         ldx #$36
-        lda dungeon_room_state,x
-        and #DUNG_ITEM_COLLECTED
-        bne +
-        lda player_x
-        cmp #172
+        jsr .cellar_can_pickup
         bcc +
-        cmp #208
-        bcs +
         lda #1
         sta player_has_whistle
-        ldx #$36
-        lda dungeon_room_state,x
-        ora #DUNG_ITEM_COLLECTED
-        sta dungeon_room_state,x
-        lda #80
-        sta cellar_pickup_timer
-        jsr sound_item_fanfare
-        jsr hud_render
+        jmp .cellar_finish_pickup
 +       rts
 
 .cellar_anim:
@@ -3153,40 +2927,5 @@ cellar_draw:
         lda #%00000001
         sta VIC_SPRITE_EN
         rts
-
-exit_cellar:
-        lda #STATE_PLAYING
-        sta game_state
-        lda #0
-        sta cellar_pickup_timer
-        lda current_dungeon_level
-        cmp #1
-        beq .exit_d1
-        lda #216
-        sta player_x
-        lda #0
-        sta player_x+1
-        lda #134
-        sta player_y
-        lda #DIR_LEFT
-        sta player_dir
-        jmp .finish_exit
-
-.exit_d1:
-        lda #152
-        sta player_x
-        lda #0
-        sta player_x+1
-        lda #143
-        sta player_y
-        lda #DIR_LEFT
-        sta player_dir
-
-.finish_exit:
-        jsr copy_map_charset
-        jsr load_room
-        jsr dungeon_apply_room_state_active
-        jsr enemies_room_init
-        jmp hud_render
 
 

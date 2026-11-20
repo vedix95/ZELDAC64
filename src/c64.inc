@@ -164,6 +164,8 @@ STATE_INTRO         = 4
 STATE_TRANSITION    = 5
 STATE_CELLAR        = 6
 STATE_RAFT          = 7
+STATE_GAMEOVER      = 8
+STATE_ENDING        = 9
 
 ; Pages de l'inventaire
 INV_PAGE_ITEMS      = 0

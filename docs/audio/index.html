@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zelda C64 — Bande-Sonore Dual SID Stéréo (MOS 8580)</title>
+  <style>
+    :root {
+      --bg: #12121e;
+      --card: #1d1d30;
+      --border: #3d3d66;
+      --gold: #f5d042;
+      --cyan: #5ce1e6;
+      --text: #eaeaf5;
+      --muted: #9b9bb8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2rem 1rem;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1f2242 0%, var(--bg) 65%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { color: var(--gold); margin: 0 0 .5rem; font-size: 1.9rem; }
+    .sub { color: var(--muted); font-size: .95rem; }
+    .badge {
+      display: inline-block;
+      margin-top: .75rem;
+      padding: .25rem .7rem;
+      border-radius: 999px;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-size: .8rem;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.25rem;
+    }
+    .track {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    }
+    .track img {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      image-rendering: pixelated;
+      border-bottom: 1px solid var(--border);
+    }
+    .body { padding: 1rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: .6rem; }
+    .title { font-weight: 700; font-size: 1.05rem; color: var(--gold); }
+    .desc { font-size: .88rem; color: var(--muted); line-height: 1.4; }
+    audio { width: 100%; margin-top: .35rem; }
+    footer { text-align: center; margin-top: 2rem; color: var(--muted); font-size: .85rem; }
+    footer a { color: var(--cyan); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>🎵 The Legend of Zelda — Commodore 64 OST</h1>
+      <div class="sub">Captures directes depuis <code>build/zelda.crt</code> sous VICE (ReSID 48 kHz)</div>
+      <span class="badge">Dual SID Stéréo · SID1 $D400 (G) + SID2 $D420 (D) · MOS 8580 · MP3 320 kbps</span>
+    </header>
+
+    <div class="grid">
+      <article class="track">
+        <img src="../images/shot_intro.png" alt="Écran Titre Zelda C64">
+        <div class="body">
+          <div class="title">📜 1. Thème d'Introduction &amp; Titre</div>
+          <div class="desc">Fanfare d'ouverture, cascade animée et Légende d'Hyrule en stéréo Dual SID.</div>
+          <audio controls preload="metadata" src="zelda_intro.mp3"></audio>
+        </div>
+      </article>
+
+      <article class="track">
+        <img src="../images/shot_overworld.png" alt="Overworld Zelda C64">
+        <div class="body">
+          <div class="title">🛡️ 2. Thème Overworld (Aventure)</div>
+          <div class="desc">Boucle complète Parties 1 &amp; 2 avec chœur stéréo SID2 et basse bondissante sur Voix 3.</div>
+          <audio controls preload="metadata" src="zelda_overworld.mp3"></audio>
+        </div>
+      </article>
+
+      <article class="track">
+        <img src="../images/shot_dungeon1.png" alt="Donjons 1 à 8 Zelda C64">
+        <div class="body">
+          <div class="title">🗝️ 3. Thème des Donjons (Underworld D1–D8)</div>
+          <div class="desc">Arpèges Pulse 50 % spatialisés entre SID1/SID2 et basse sourde souterraine.</div>
+          <audio controls preload="metadata" src="zelda_dungeon.mp3"></audio>
+        </div>
+      </article>
+
+      <article class="track">
+        <img src="../images/gal_boss_ganon.png" alt="Donjon 9 Death Mountain">
+        <div class="body">
+          <div class="title">🔥 4. Thème du Donjon 9 — Death Mountain</div>
+          <div class="desc">Thème étendu 124 pas streamé depuis la Banque Cartouche 31 pour la forteresse de Ganon.</div>
+          <audio controls preload="metadata" src="zelda_dungeon9.mp3"></audio>
+        </div>
+      </article>
+    </div>
+
+    <footer>
+      <a href="../../README.md">← Retour au README</a> ·
+      <a href="https://github.com/vedix95/ZELDAC64/releases/latest">Télécharger zelda.crt (Release)</a>
+    </footer>
+  </div>
+</body>
+</html>

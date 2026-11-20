@@ -509,9 +509,9 @@ ovl_debug_render_screen:
         sta ZP_SRC+1
         jsr debug_print_str
 
-        lda #< (SCREEN_RAM + 40 * 1 + 2)
+        lda #< (SCREEN_RAM + 40 * 1 + 4)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 1 + 2)
+        lda #> (SCREEN_RAM + 40 * 1 + 4)
         sta ZP_DST+1
         lda #< dbg_tabs_base
         sta ZP_SRC
@@ -523,11 +523,11 @@ ovl_debug_render_screen:
         lda dbg_tab_b1,x
         tay
         lda #'['
-        sta SCREEN_RAM + 40 * 1 + 2,y
+        sta SCREEN_RAM + 40 * 1 + 4,y
         lda dbg_tab_b2,x
         tay
         lda #']'
-        sta SCREEN_RAM + 40 * 1 + 2,y
+        sta SCREEN_RAM + 40 * 1 + 4,y
 
         ldx #0
 -       lda #'-'
@@ -626,10 +626,10 @@ debug_draw_p0:
         cpx #11
         bne .p0_str_loop
 
-        ; Affiche l'ID hex et les coordonnées de la salle OW choisie
-        lda #< (SCREEN_RAM + 40 * 15 + 19)
+        ; Affiche l'ID hex et les coordonnées de la salle OW choisie (" 11. OW ROOM : 77 [H-8]")
+        lda #< (SCREEN_RAM + 40 * 15 + 17)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 15 + 19)
+        lda #> (SCREEN_RAM + 40 * 15 + 17)
         sta ZP_DST+1
         lda dbg_warp_ow_room
         jsr debug_put_hex
@@ -638,9 +638,9 @@ debug_draw_p0:
         lda dbg_warp_ow_room
         and #$0f
         adc #'A'
-        sta SCREEN_RAM + 40 * 15 + 23
+        sta SCREEN_RAM + 40 * 15 + 21
         lda #'-'
-        sta SCREEN_RAM + 40 * 15 + 24
+        sta SCREEN_RAM + 40 * 15 + 22
         lda dbg_warp_ow_room
         lsr
         lsr
@@ -649,7 +649,7 @@ debug_draw_p0:
         and #$07
         clc
         adc #'1'
-        sta SCREEN_RAM + 40 * 15 + 25
+        sta SCREEN_RAM + 40 * 15 + 23
         rts
 
 ; ---------------------------------------------------------------------------
@@ -694,7 +694,7 @@ debug_draw_p1:
         cpx #6
         bne .p1_str_loop
 
-        ; Valeurs dynamiques
+        ; Valeurs dynamiques (ligne 14 : "STAT: HP 00/00 RUP:000 KEY:00")
         lda #< (SCREEN_RAM + 40 * 14 + 11)
         sta ZP_DST
         lda #> (SCREEN_RAM + 40 * 14 + 11)
@@ -708,12 +708,11 @@ debug_draw_p1:
         lda hud_max_hearts
         jsr debug_put_dec2_offset
 
-        lda #< (SCREEN_RAM + 40 * 14 + 22)
-        sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 14 + 22)
-        sta ZP_DST+1
         lda hud_rupees
-        jsr debug_put_hex
+        jsr print_3digits
+        sta SCREEN_RAM + 40 * 14 + 21
+        stx SCREEN_RAM + 40 * 14 + 22
+        sty SCREEN_RAM + 40 * 14 + 23
 
         lda #< (SCREEN_RAM + 40 * 14 + 29)
         sta ZP_DST
@@ -722,7 +721,7 @@ debug_draw_p1:
         lda hud_keys
         jsr debug_put_dec2
 
-        ; Ligne 16 : Épée et Bouclier
+        ; Ligne 16 : Épée, Bouclier et Anneau
         lda #< (SCREEN_RAM + 40 * 16 + 2)
         sta ZP_DST
         lda #> (SCREEN_RAM + 40 * 16 + 2)
@@ -747,9 +746,9 @@ debug_draw_p1:
         sta ZP_SRC+1
         jsr debug_print_str
 
-        lda #< (SCREEN_RAM + 40 * 16 + 22)
+        lda #< (SCREEN_RAM + 40 * 16 + 19)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 16 + 22)
+        lda #> (SCREEN_RAM + 40 * 16 + 19)
         sta ZP_DST+1
         ldx #0
         lda player_has_shield
@@ -761,13 +760,27 @@ debug_draw_p1:
         lda dbg_sh_names_hi,x
         sta ZP_SRC+1
         jsr debug_print_str
+
+        lda #< (SCREEN_RAM + 40 * 16 + 31)
+        sta ZP_DST
+        lda #> (SCREEN_RAM + 40 * 16 + 31)
+        sta ZP_DST+1
+        ldx player_has_blue_ring
+        cpx #3
+        bcc +
+        ldx #2
++       lda dbg_rg_names_lo,x
+        sta ZP_SRC
+        lda dbg_rg_names_hi,x
+        sta ZP_SRC+1
+        jsr debug_print_str
         rts
 
 ; ---------------------------------------------------------------------------
 ; PAGE 2 AFFICHAGE
 ; ---------------------------------------------------------------------------
 debug_draw_p2:
-        ; Diagnostic Link & Salle
+        ; Diagnostic Link & Salle (col 6: "LINK: X=    Y=  ")
         lda #< (SCREEN_RAM + 40 * 6 + 6)
         sta ZP_DST
         lda #> (SCREEN_RAM + 40 * 6 + 6)
@@ -778,16 +791,16 @@ debug_draw_p2:
         sta ZP_SRC+1
         jsr debug_print_str
 
-        lda #< (SCREEN_RAM + 40 * 6 + 20)
+        lda #< (SCREEN_RAM + 40 * 6 + 14)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 6 + 20)
+        lda #> (SCREEN_RAM + 40 * 6 + 14)
         sta ZP_DST+1
         lda player_x
         jsr debug_put_hex
 
-        lda #< (SCREEN_RAM + 40 * 6 + 27)
+        lda #< (SCREEN_RAM + 40 * 6 + 20)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 6 + 27)
+        lda #> (SCREEN_RAM + 40 * 6 + 20)
         sta ZP_DST+1
         lda player_y
         jsr debug_put_hex
@@ -802,9 +815,9 @@ debug_draw_p2:
         sta ZP_SRC+1
         jsr debug_print_str
 
-        lda #< (SCREEN_RAM + 40 * 9 + 25)
+        lda #< (SCREEN_RAM + 40 * 9 + 21)
         sta ZP_DST
-        lda #> (SCREEN_RAM + 40 * 9 + 25)
+        lda #> (SCREEN_RAM + 40 * 9 + 21)
         sta ZP_DST+1
         lda current_room_idx
         jsr debug_put_hex
@@ -820,9 +833,9 @@ debug_draw_p2:
         jsr debug_print_str
         rts
 
-dbg_p2_str1: !text "LINK: X=$__ Y=$__", 0
-dbg_p2_str2: !text "ROOM  OW/DUNG $__", 0
-dbg_p2_str3: !text "RAM: ZONE <$C000 OK", 0
+dbg_p2_str1: !text "LINK: X=    Y=  ", 0
+dbg_p2_str2: !text "ROOM: OW/DUNG  ", 0
+dbg_p2_str3: !text "RAM: ZONE < C000 OK", 0
 
 debug_cheat_heal:
         lda hud_max_hearts
@@ -837,16 +850,18 @@ debug_cheat_full_gear:
         lda #2
         sta player_has_shield
         sta player_has_boomerang
+        sta player_has_blue_ring        ; Anneau Rouge (1/4 dégâts)
+        sta player_has_arrows           ; Flèches d'Argent
+        sta player_has_candle           ; Bougie Rouge
+        sta player_has_potion           ; Potion Rouge (2 doses)
         lda #1
-        sta player_has_blue_ring
         sta player_has_raft
         sta player_has_stepladder
         sta player_has_bracelet
         sta player_has_magic_key
         sta player_has_bow
-        sta player_has_arrows
-        sta player_has_candle
         sta player_has_whistle
+        sta player_has_food             ; Nourriture / Appât
         sta player_has_wand
         sta player_has_book
         sta player_has_compass
@@ -857,7 +872,7 @@ debug_cheat_full_gear:
         lda #8
         sta hud_keys
         sta hud_bombs
-        lda #99
+        lda #250
         sta hud_rupees
         lda #$ff
         sta player_triforce_pieces
@@ -925,8 +940,7 @@ debug_do_warp_dungeon:
         jsr load_room
         jsr hud_init
         jsr enemies_room_init
-        jsr dungeon_on_enter_room
-        rts
+        jmp dungeon_on_enter_room       ; Tail-call : protège $A000 si Banque 29 chargée
 
 debug_do_warp_overworld:
         lda #STATE_PLAYING
@@ -1022,9 +1036,9 @@ dbg_title_str:
 dbg_tabs_base:
         !text " 1:WARP    2:CHEATS    3:INFO  ", 0
 dbg_tab_b1:
-        !byte 1, 14, 29
+        !byte 0, 10, 22
 dbg_tab_b2:
-        !byte 8, 23, 37
+        !byte 7, 19, 29
 
 dbg_foot1_str:
         !text "[SPACE]  PAGE [FIRE] OK", 0
@@ -1032,17 +1046,17 @@ dbg_foot2_str:
         !text "[D]/[B] : RESUME GAME", 0
 
 dbg_p0_strings:
-        !text " 1. L1:EAGLE  H-4", 0
-        !text " 2. L2:MOON   M-4", 0
-        !text " 3. L3:MANJI  E-8", 0
-        !text " 4. L4:SNAKE  F-5", 0
-        !text " 5. L5:LIZARD L-1", 0
-        !text " 6. L6:DRAGON C-3", 0
-        !text " 7. L7:DEMON  C-5", 0
-        !text " 8. L8:LION   N-7", 0
-        !text " 9. L9:DEATH  F-1", 0
-        !text "10. OW START  H-8", 0
-        !text "11. OW ROOM : $__ (___)", 0
+        !text "  1. L1:EAGLE  H-4", 0
+        !text "  2. L2:MOON   M-4", 0
+        !text "  3. L3:MANJI  E-8", 0
+        !text "  4. L4:SNAKE  F-5", 0
+        !text "  5. L5:LIZARD L-1", 0
+        !text "  6. L6:DRAGON C-3", 0
+        !text "  7. L7:DEMON  C-5", 0
+        !text "  8. L8:LION   N-7", 0
+        !text "  9. L9:DEATH  F-1", 0
+        !text " 10. OW START  H-8", 0
+        !text " 11. OW ROOM :    [   ]", 0
 
 dbg_p1_strings:
         !text "[F] GEAR  [H] FULL HEAL", 0
@@ -1050,25 +1064,32 @@ dbg_p1_strings:
         !text "[E] SWORD [B] SHIELD    [R] RING", 0
         !text "[K] +5 KEYS  [M] +4 BOMBS", 0
         !text "[U] +50 RUPEES [T] +1 TRIFORCE", 0
-        !text "STAT: HP __/__ RUP:$__ KEY:__", 0
+        !text "STAT: HP   /   RUP:    KEY:  ", 0
 
 dbg_p1_eq_str:
-        !text "SWRD:___ SHLD :___", 0
+        !text "SWRD:       SHLD:       RING:     ", 0
 
 dbg_sw_names_lo:
         !byte <dbg_sw0, <dbg_sw1, <dbg_sw2, <dbg_sw3
 dbg_sw_names_hi:
         !byte >dbg_sw0, >dbg_sw1, >dbg_sw2, >dbg_sw3
-dbg_sw0: !text "NONE   ", 0
-dbg_sw1: !text "WOOD   ", 0
-dbg_sw2: !text "WHITE  ", 0
-dbg_sw3: !text "MAGIC  ", 0
+dbg_sw0: !text "NONE ", 0
+dbg_sw1: !text "WOOD ", 0
+dbg_sw2: !text "WHITE", 0
+dbg_sw3: !text "MAGIC", 0
 
 dbg_sh_names_lo:
         !byte <dbg_sh1, <dbg_sw3
 dbg_sh_names_hi:
         !byte >dbg_sh1, >dbg_sw3
-dbg_sh1: !text "SMALL  ", 0
+dbg_sh1: !text "SMALL", 0
+
+dbg_rg_names_lo:
+        !byte <dbg_sw0, <dbg_rg1, <dbg_rg2
+dbg_rg_names_hi:
+        !byte >dbg_sw0, >dbg_rg1, >dbg_rg2
+dbg_rg1: !text "BLUE ", 0
+dbg_rg2: !text "RED  ", 0
 
 ; ---------------------------------------------------------------------------
 ; Auto-warp debug hook (activable par mémoire ou moniteur)
@@ -1133,11 +1154,13 @@ ovl_debug_exec_hook_cmd:
         jmp .hook_done
 
 .hook_warp_dung:
+        lda #0
+        sta debug_hook_cmd
         lda debug_hook_arg
         sta current_dungeon_level
         jsr debug_do_warp_dungeon
         lda debug_hook_arg2
-        beq +
+        beq .hook_warp_dung_ret
         and #$0f
         sta current_room_x
         lda debug_hook_arg2
@@ -1149,8 +1172,9 @@ ovl_debug_exec_hook_cmd:
         sta current_room_y
         jsr load_room
         jsr enemies_room_init
-        jsr dungeon_on_enter_room
-+       jmp .hook_done
+        jmp dungeon_on_enter_room       ; Tail-call : retour direct vers main_loop (protège $A000)
+.hook_warp_dung_ret:
+        rts
 
 .hook_open_inv:
         jsr open_inventory
@@ -1167,14 +1191,15 @@ ovl_debug_exec_hook_cmd:
         jmp .hook_done
 
 .hook_use_item:
+        lda #0
+        sta debug_hook_cmd
         lda game_state
         cmp #STATE_DEBUG
         bne +
         jsr close_debug
 +       lda debug_hook_arg
         sta hud_selected_b
-        jsr player_use_item_b
-        jmp .hook_done
+        jmp player_use_item_b           ; Tail-call : protège $A000 si Banque 29 (Flûte/Food/etc.)
 
 .hook_force_joy:
         lda debug_hook_arg

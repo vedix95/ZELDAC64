@@ -33,17 +33,17 @@ REPORT  := $(BLD_DIR)/$(NAME).rep
 
 all: $(CRT)
 
-# sprites.asm est généré depuis l'ASCII art (assets/link.txt)
+# sprites.asm est généré depuis l'ASCII art (assets/link.txt) avec ombres portées
 $(SRC_DIR)/sprites.asm: assets/link.txt tools/sprgen.py
-	$(PYTHON) tools/sprgen.py assets/link.txt -o $@
+	$(PYTHON) tools/sprgen.py assets/link.txt --shadows -o $@
 
 # sprites_enemies.asm est généré depuis assets/enemies.txt
 $(SRC_DIR)/sprites_enemies.asm: assets/enemies.txt tools/sprgen.py
-	$(PYTHON) tools/sprgen.py assets/enemies.txt -o $@
+	$(PYTHON) tools/sprgen.py assets/enemies.txt --shadows -o $@
 
 # sprites_extra.asm (Old Man, Item Get) est généré depuis assets/extra.txt
 $(SRC_DIR)/sprites_extra.asm: assets/extra.txt tools/sprgen.py
-	$(PYTHON) tools/sprgen.py assets/extra.txt --prefix link -o $@
+	$(PYTHON) tools/sprgen.py assets/extra.txt --shadows --prefix link -o $@
 
 # music_data.inc, music_data_low.inc et cart_audio.bin sont générés depuis assets/music_data.json
 $(SRC_DIR)/music_data.inc $(SRC_DIR)/music_data_low.inc $(BUILD_DIR)/cart_audio.bin &: assets/music_data.json tools/generate_game_audio.py
@@ -84,7 +84,7 @@ $(PRG_INT): $(SRC_DIR)/intro_main.asm $(SRC_DIR)/intro.asm $(SRC_DIR)/intro_musi
 SPR_BINS   := $(BLD_DIR)/sprites_ow.bin $(BLD_DIR)/sprites_dung.bin $(BLD_DIR)/sprites_boss.bin $(BLD_DIR)/sprites_npc.bin
 OVL_DATS   := $(BLD_DIR)/ovl_inv.dat $(BLD_DIR)/ovl_cave.dat $(BLD_DIR)/ovl_items.dat $(BLD_DIR)/ovl_debug.dat
 
-$(BLD_DIR)/sprite_ptrs.inc $(SPR_BINS) &: assets/enemies.txt assets/extra.txt tools/build_sprite_banks.py | $(BLD_DIR)
+$(BLD_DIR)/sprite_ptrs.inc $(SPR_BINS) &: assets/enemies.txt assets/extra.txt tools/build_sprite_banks.py tools/sprgen.py | $(BLD_DIR)
 	$(PYTHON) tools/build_sprite_banks.py
 
 $(BLD_DIR)/resident_symbols.inc: $(PRG) tools/vs2inc.py | $(BLD_DIR)

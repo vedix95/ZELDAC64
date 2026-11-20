@@ -618,48 +618,10 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
 * **Règles anti-régression** :
   - Tout ennemi de type `TYPE_ARMOS` doit obligatoirement être ancré sur la tuile `TILE_STATUE` correspondante dans `world.txt`.
   - Toujours préserver l'index de tuile `en_armos_tile` avant tout appel à `redraw_single_tile`.
-  - Toute nouvelle salle avec secret révélé par interaction d'ennemi doit obligatoirement figurer dans `sec_rooms_tbl` et `sec_tiles_tbl` pour garantir la persistance lors des transitions et retours d'échoppes.### [2026-11-09] Anomalie 26 : Extraction et Assemblage des Sprites Ennemis Overworld (H-8 / G-8 Tektites, Peahats et Déformations Miroir)
-* **Symptômes** :
-  1. En salle G-8 (salle 118, ouest immédiat du spawn H-8 / salle 119) et dans les écrans voisins, les monstres (notamment les Tektites rouges) apparaissaient totalement déformés, avec des fragments de motifs incohérents et une symétrie miroir brisée.
-  2. Les Peahats en rotation utilisaient une pose erronée empruntée à un autre ennemi.
-  3. Lors des sauts de warp de débogage vers la salle 119 (`debug_do_warp_overworld`), des résidus d'états d'ennemis précédents (`en_type[2..7]`) persistaient à l'écran.
-* **Causes racines** :
-  1. **Indices de tuiles NES erronés dans `tools/extract_all_nes_sprites.py`** :
-     - Pour le Tektite, l'extracteur utilisait arbitrairement les tuiles 6..9 du bloc `ow` (qui contenaient des graphismes parasites) au lieu des tuiles canoniques de la ROM NES : tuiles 60..61 (pose au sol) et tuiles 62..63 (pose saut).
-     - Pour le Peahat, la frame 1 de rotation utilisait les tuiles 62..63 (qui appartenaient au Tektite !) au lieu des tuiles 58..59 authentiques.
-  2. **Nettoyage incomplet dans le warp debug** : `debug_do_warp_overworld` dans `src/debug.asm` ne remettait à zéro que `en_type` et `en_type+1`, omettant les slots 2 à 7 ainsi que les états `en_state`, risquant de laisser des fantômes actifs en entrant en salle 119.
-* **Correctif appliqué** :
-  1. `tools/extract_all_nes_sprites.py` :
-     - Alignement rigoureux des indices de tuiles PPU NES sur les données sources de la ROM (`PatternBlockOWSP`) :
-       * Tektite : tuiles 60, 61 (sol, miroir horizontal) et 62, 63 (saut, miroir horizontal).
-       * Peahat : tuiles 56, 57 (atterrissage) et 58, 59 (rotation en vol).
-     - Régénération de `assets/enemies.txt` et reconstruction des banques cartouche via `tools/build_sprite_banks.py`.
-  2. `src/debug.asm` (`debug_do_warp_overworld`) : Remplacement du nettoyage partiel par un appel inconditionnel à `jsr enemies_clear`.
-  3. `tools/run_cahier_recettes.py` : Vérification intégrale validée avec succès sur l'ensemble des scénarios de recette.
-* **Règles anti-régression** :
-  - Tout sprite extrait d'une banque CHR NES doit vérifier son index d'animation dans `ObjAnimations` et `ObjAnimFrameHeap` de la ROM officielle 1986.
-  - Ne jamais assembler de sprite composite avec des tuiles arbitraires non vérifiées dans le code de rendu NES correspondant (`DrawObjectMirrored` / `DrawObjectNotMirrored`).
-### [2026-11-09] Anomalie 26 : Extraction et Assemblage des Sprites Ennemis Overworld (H-8 / G-8 Tektites, Peahats et Déformations Miroir)
-* **Symptômes** :
-  1. En salle G-8 (salle 118, ouest immédiat du spawn H-8 / salle 119) et dans les écrans voisins, les monstres (notamment les Tektites rouges) apparaissaient totalement déformés, avec des fragments de motifs incohérents et une symétrie miroir brisée.
-  2. Les Peahats en rotation utilisaient une pose erronée empruntée à un autre ennemi.
-  3. Lors des sauts de warp de débogage vers la salle 119 (`debug_do_warp_overworld`), des résidus d'états d'ennemis précédents (`en_type[2..7]`) persistaient à l'écran.
-* **Causes racines** :
-  1. **Indices de tuiles NES erronés dans `tools/extract_all_nes_sprites.py`** :
-     - Pour le Tektite, l'extracteur utilisait arbitrairement les tuiles 6..9 du bloc `ow` (qui contenaient des graphismes parasites) au lieu des tuiles canoniques de la ROM NES : tuiles 60..61 (pose au sol) et tuiles 62..63 (pose saut).
-     - Pour le Peahat, la frame 1 de rotation utilisait les tuiles 62..63 (qui appartenaient au Tektite !) au lieu des tuiles 58..59 authentiques.
-  2. **Nettoyage incomplet dans le warp debug** : `debug_do_warp_overworld` dans `src/debug.asm` ne remettait à zéro que `en_type` et `en_type+1`, omettant les slots 2 à 7 ainsi que les états `en_state`, risquant de laisser des fantômes actifs en entrant en salle 119.
-* **Correctif appliqué** :
-  1. `tools/extract_all_nes_sprites.py` :
-     - Alignement rigoureux des indices de tuiles PPU NES sur les données sources de la ROM (`PatternBlockOWSP`) :
-       * Tektite : tuiles 60, 61 (sol, miroir horizontal) et 62, 63 (saut, miroir horizontal).
-       * Peahat : tuiles 56, 57 (atterrissage) et 58, 59 (rotation en vol).
-     - Régénération de `assets/enemies.txt` et reconstruction des banques cartouche via `tools/build_sprite_banks.py`.
-  2. `src/debug.asm` (`debug_do_warp_overworld`) : Remplacement du nettoyage partiel par un appel inconditionnel à `jsr enemies_clear`.
-  3. `tools/run_cahier_recettes.py` : Vérification intégrale validée avec succès sur l'ensemble des scénarios de recette.
-* **Règles anti-régression** :
-  - Tout sprite extrait d'une banque CHR NES doit vérifier son index d'animation dans `ObjAnimations` et `ObjAnimFrameHeap` de la ROM officielle 1986.
-  - Ne jamais assembler de sprite composite avec des tuiles arbitraires non vérifiées dans le code de rendu NES correspondant (`DrawObjectMirrored` / `DrawObjectNotMirrored`).
+  - Toute nouvelle salle avec secret révélé par interaction d'ennemi doit obligatoirement figurer dans `sec_rooms_tbl` et `sec_tiles_tbl` pour garantir la persistance lors des transitions et retours d'échoppes.
+
+---
+
 ### [2026-11-09] Anomalie 26 : Extraction et Assemblage des Sprites Ennemis Overworld (H-8 / G-8 Tektites, Peahats et Déformations Miroir)
 * **Symptômes** :
   1. En salle G-8 (salle 118, ouest immédiat du spawn H-8 / salle 119) et dans les écrans voisins, les monstres (notamment les Tektites rouges) apparaissaient totalement déformés, avec des fragments de motifs incohérents et une symétrie miroir brisée.
@@ -682,3 +644,137 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Tout sprite extrait d'une banque CHR NES doit vérifier son index d'animation dans `ObjAnimations` et `ObjAnimFrameHeap` de la ROM officielle 1986.
   - Ne jamais assembler de sprite composite avec des tuiles arbitraires non vérifiées dans le code de rendu NES correspondant (`DrawObjectMirrored` / `DrawObjectNotMirrored`).
 
+---
+
+### [2026-11-20] Anomalie 27 : Boss Invisibles (Gleeok, Digdogger, Gohma, Patra), Ganon Zero Page, Carte Donjon Corrompue & Accessibilité des Donjons 3–9
+* **Fichiers concernés** : [src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm), [src/inventory_draw.asm](file:///home/vedix/Documents/C64/zelda/src/inventory_draw.asm), [src/tilemap.asm](file:///home/vedix/Documents/C64/zelda/src/tilemap.asm), [src/main.asm](file:///home/vedix/Documents/C64/zelda/src/main.asm), [src/dungeon.asm](file:///home/vedix/Documents/C64/zelda/src/dungeon.asm), [tools/build_dungeons.py](file:///home/vedix/Documents/C64/zelda/tools/build_dungeons.py), [src/dung1.asm](file:///home/vedix/Documents/C64/zelda/src/dung1.asm) à [src/dung9.asm](file:///home/vedix/Documents/C64/zelda/src/dung9.asm)
+* **Symptômes** :
+  1. Les boss Gleeok (D4), Digdogger (D5), Gohma (D6) et Patra (D9) étaient 100 % invisibles en combat, et Gleeok/Gohma téléportaient Link hors écran (`X+256`).
+  2. Ganon (D9) s'affichait en bouillie de pixels (Zero Page `$0000–$00FF`) 1 frame d'animation sur 2 (`SPRITE_PTR3..6 = $00..$03`).
+  3. Sur la carte de donjon de l'inventaire (Page 3), les salles secrètes affichaient `'W'` au lieu de `◆`, et la 2e colonne de chaque salle affichait des glyphes parasites (`||||`, damiers).
+  4. Les moitiés Boss/Triforce des Donjons 5, 6, 7, 8 et 9 (et 4 salles du D3) étaient inaccessibles à pied, 3 portes étaient à sens unique (`D6 $08→$09`, `D7 $4a→$49`, `D8 $6f→$7f`), et certains monstres terrestres apparaissaient dans des cages fermées de blocs (`D7 $6a`).
+  5. Murs du Donjon 8 plats (`mc1 == mc2 == 14`), Manhandla vert sur sol vert en D3, rangée de 6 escaliers parasites en `D6 $08` / `D9 $75,$77`, léger décalage brique sur les murs sud sans porte, et animation torches `$41` non filtrée par niveau 1.
+* **Causes racines** :
+  1. Dans `draw_boss_assembled` (`src/enemies.asm`), le cas des boss standards tombait en *fallthrough* dans `.apply_boss_msb` au lieu de `.drw_single_exit`, corrompant `VIC_SPRITE_MSB` avec le pointeur de sprite puis retournant sans configurer le Sprite 3.
+  2. Dans `.drw_ganon` (`src/enemies.asm`), `tya` écrasait `A` (`#SPR_DUNG_GANON_TL_0`) avant `beq +`, laissant `A = 0` sur les frames paires.
+  3. Dans `src/inventory_draw.asm`, `lda #87` écrivait ASCII `'W'` au lieu de `HUD_CHAR_RUPEE` (`98`), et `sta ZP_TMP+1` collisionnait avec `ZP_BASE` (`$06`), écrasé ensuite par la couleur.
+  4. `tools/build_dungeons.py` ignorait les codes portes NES `2/3/6`, ne symétrisait pas toutes les portes ni les liaisons de zones, mappait les murs sud sur la tuile `1` au lieu de `2`, et `sanitize_enemy_spawns` ne vérifiait pas l'accessibilité BFS depuis les portes.
+* **Correctif appliqué** :
+  1. `src/enemies.asm` : déplacement de `.apply_boss_msb` sous `.drw_single_exit` (0 octet ajouté) et réécriture propre de `.drw_ganon` via `lda en_anim,x : lsr : lda #SPR_DUNG_GANON_TL_0 : bcc +` (-2 octets).
+  2. `src/inventory_draw.asm` : utilisation de `HUD_CHAR_RUPEE` (`98`, `◆`), suppression de `ZP_TMP+1` et séparateur espace `' '` propre (1 case par salle).
+  3. `src/tilemap.asm`, `src/main.asm`, `src/dungeon.asm` : `mc1 = COL_GREY` (12) pour D8, `COL_RED` pour Manhandla, filtre `current_dungeon_level == 1` pour les torches `$41`.
+  4. `tools/build_dungeons.py` : symétrisation stricte 100 % des portes, ponts d'accessibilité garantissant 189/189 salles + tous les Boss/Triforces/Celliers accessibles, correction des murs sud (`2`) et rangées `0x70` (>2 tuiles), et `sanitize_enemy_spawns` contraint par BFS depuis les portes.
+* **Règles anti-régression** :
+  - Ne jamais insérer une sous-routine auxiliaire (`.apply_boss_msb`) entre un *fallthrough* et son étiquette cible (`.drw_single_exit`).
+  - Ne jamais utiliser `ZP_TMP+1` en parallèle de `ZP_BASE` (`$05 + 1 == $06`).
+  - Toujours vérifier après `build_dungeons.py` : 100 % d'accessibilité BFS depuis `ent`, 0 porte à sens unique, 0 monstre terrestre dans une poche fermée.
+
+---
+
+### [2026-11-20] Anomalie 28 : Cohérence des Secrets (Overworld & Donjons), Softlocks Radeau/Warp/Cellier D5, Armos E-3 16-bit & Fidélité NES
+* **Fichiers concernés** : [assets/world.txt](file:///home/vedix/Documents/C64/zelda/assets/world.txt), [src/cave.asm](file:///home/vedix/Documents/C64/zelda/src/cave.asm), [src/dungeon.asm](file:///home/vedix/Documents/C64/zelda/src/dungeon.asm), [src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm), [src/hud.asm](file:///home/vedix/Documents/C64/zelda/src/hud.asm), [src/items.asm](file:///home/vedix/Documents/C64/zelda/src/items.asm), [src/overlay_items.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_items.asm), [src/overlay_trampolines.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_trampolines.asm), [src/player.asm](file:///home/vedix/Documents/C64/zelda/src/player.asm), [src/tilemap.asm](file:///home/vedix/Documents/C64/zelda/src/tilemap.asm), [src/transition.asm](file:///home/vedix/Documents/C64/zelda/src/transition.asm)
+* **Symptômes** :
+  1. **Softlocks critiques** :
+     - Aucun ponton retour en `F-5` (`#69`, île du Donjon 4) ni `P-3` (`#47`, île du Réceptacle de Cœur) : Link restait prisonnier après traversée en Radeau.
+     - Les grottes de téléportation (`CAVE_TYPE_WARP`) déposaient Link à `(160, 132)` en plein mur de montagne (`N-2` `#29`) ou dans un arbre (`J-5` `#73`), bouclaient `D-3 -> D-3` et rendaient `J-8` (`#121`) inaccessible.
+     - La sortie du cellier de la Flûte (`D5 $36`, `exit_cellar`) déposait Link à `(216, 134)` sur une statue dragon solide `(12,4)`.
+  2. **Secrets Overworld cassés ou incohérents** :
+     - `armos_reveal_secret` (`src/enemies.asm`) calculait `tx = (en_x - 20) >> 4` sur 8 bits uniquement : la statue `E-3` (`#36`) à `tx = 16` (`en_x = $0114 = 276`) produisait `tx = 0`, rendant le **Bracelet de Force impossible à obtenir** ; de plus elle posait un escalier Moblin parasite.
+     - 22 salles bombables Overworld ne portaient pas `'B'` (`TILE_WALL_BOMB`), autorisant le bombardement de murs génériques sans persistance, tandis que 7 salles de `.bombable_rooms` n'avaient aucun mur.
+     - `.burnable_rooms` contenait 6 salles sans arbre et une salle morte (`#108 M-7`), 9 salles brûlables manquaient dans `sec_rooms_tbl` (zéro persistance), et `update_candle` ne testait la combustion qu'après avoir franchi 14 px (sautant les buissons adjacents).
+     - En `B-3` (`#33`), n'importe quelle tombe ouvrait la grotte de l'Épée Magique au lieu de la tombe canonique `(8,5)` (`idx 108`).
+     - La Flûte asséchait à tort `D-4` (`#51`) et téléportait toujours vers D1 (`#55`) au lieu de cycler entre les donjons complétés D1..D8.
+     - Les grottes de hasard (`CAVE_TYPE_GAMBLE`) donnaient systématiquement `+40` rubis au lieu du tirage NES (`+40 net`, `-10`, `-40`).
+  3. **Incohérences Donjons & Progression** :
+     - `.cellar_rooms` et `dungeon_apply_room_state_internal` (`$42`, `$22`, `$32`) ne filtraient pas `current_dungeon_level` (collision avec Ganon `$42` / Zelda `$32` en D9).
+     - Clé manquante en `D1 $72` (Keese), Radeau en doublon en `D3 $5D`.
+     - Ganon (`TYPE_GANON`) pouvait être achevé à l'épée ou aux flèches ordinaires sans Flèches d'Argent.
+     - 6 objets majeurs de progression (`boomerang, bow, arrows, candle, whistle, wand`) démarraient à `1` et `spawn_boomerang/bow/candle` ne vérifiaient pas leur possession.
+* **Correctif appliqué** :
+  1. **Factorisation RAM résidente (~200 octets libérés sous `$A000`)** : factorisation des 9 ramassages de celliers dans `src/dungeon.asm` (`.cellar_can_pickup` / `.cellar_finish_pickup`) et unification de `restore_room_secrets` + `restore_target_secrets` en `restore_secrets_to_buf` (`src/tilemap.asm`, suppression du doublon dans `src/transition.asm`). Fin résidente ramenée à `$9F39` (199 octets de marge sous `$A000`).
+  2. **Softlocks éliminés** : pontons retour ajoutés dans `assets/world.txt` (`F-5` `#69` en `(10,8..9)` et `P-3` `#47` en `(8,8..9)`) ; routage vers les 3 autres warps + coordonnées herbe vérifiées + garde-fou `.ensure_safe_cave_exit` dans `src/cave.asm` ; sortie `D5 $36` sur `(228, 142)` (tuile libre `(13,4)`) dans `src/dungeon.asm` ; garde-fou sortie `D8` (`N-7`) dans `src/tilemap.asm`.
+  3. **Secrets Overworld 100 % cohérents & persistants** : calcul 16-bit exact de `en_armos_tx` dans `armos_reveal_secret` + suppression de l'escalier parasite en `E-3` (`room_cave_types[36]=0`, `room_cave_types[69]=0`) ; marquage `'B'` des 23 murs bombables canoniques dans `assets/world.txt` + test strict `TILE_WALL_SECRET_B` dans `src/overlay_items.asm` ; 12 salles brûlables valides dans `.burnable_rooms` et `sec_rooms_tbl` (`SEC_ROOMS_COUNT = 23`) + détection flamme tous les 4 px dans `update_candle` ; restriction tombe `cpy #108` en `B-3` ; tornade Flûte cyclant sur `player_triforce_pieces` (D1..D8) sans assécher `D-4` ; hasard NES (`+40 / -10 / -40`) dans `CAVE_TYPE_GAMBLE`.
+  4. **Fidélité Donjons & Boss final** : filtres `current_dungeon_level` sur `.cellar_levels` et `dungeon_apply_room_state_internal`, clé `D1 $72`, clé `D3 $5D` ; Ganon étourdi à 1 PV à l'épée et vulnérable uniquement aux Flèches d'Argent (`player_has_arrows >= 2`, y compris pendant `EN_STATE_HURT`) ; initialisation authentique des 6 objets à `0`, `hud_selected_b = 1` (`BOMB`) et contrôles de possession dans `spawn_boomerang/bow/candle`.
+* **Règles anti-régression** :
+  - Tout calcul de coordonnée tuile depuis une position sprite `X` 16-bit (`en_x` / `player_x`) doit obligatoirement inclure l'octet haut (`en_x+1`) sous peine d'overflow dès `tx >= 16`.
+  - Toute salle bombable Overworld doit porter `'B'` (`TILE_WALL_BOMB`) dans `assets/world.txt` et toute salle brûlable/poussable doit figurer dans `sec_rooms_tbl` / `sec_tiles_tbl` pour garantir une persistance de 100 %.
+  - Tout check de salle spéciale de donjon (`$22`, `$32`, `$42`, celliers) doit impérativement filtrer `current_dungeon_level`.
+
+
+
+### Anomalie 29 : Audit QA complet (Lots 1, 2 et 3 — Softlock D9 `$23`, Game Over, Combat Boss, Rubis 3 chiffres, Donjons & Fin, UI/Debug/Raster)
+* **Symptômes détectés lors du playtest QA sous VICE** :
+  1. **Critiques (Lot 1)** :
+     - Softlock définitif à la sortie du cellier Anneau Rouge (`D9 $23`) : `exit_cellar` plaçait Link sur `(216, 134)` dans un bloc solide.
+     - Absence totale de Game Over (`hurt_link` `.dead_link:` vide) : Link restait immortel et jouable à `0` cœur.
+     - Bombes & Flèches one-shot tous les boss (y compris Ganon, Gohma, Dodongo, Digdogger) ainsi que les Blade Traps et Bubbles ; le Boomerang étourdissait Ganon/boss.
+     - Compteur de Rubis HUD & Inventaire plafonné visuellement à `99` (`print_2digits`) malgré des objets à `250` rubis, et overflow `255 → 0` dans `.give_rupee`.
+  2. **Majeurs (Lot 2)** :
+     - Boss Donjon 8 (`$3C`) contenait 2 Dodongos au lieu de Gleeok.
+     - Salle finale D9 (`$32`) dépourvue de Princesse Zelda et d'écran de victoire ; D9 accessible avec `0/8` fragments de Triforce.
+     - Anneau Rouge (`player_has_blue_ring == 2`) réduisait les dégâts par 2 (`and #1`) au lieu de 4 (`and #3`).
+     - Fontaines des Fées (`J-4` / `D-5`) ne soignaient pas par la berge Sud (`y >= 160`) et omettaient le test `player_x+1 == 0`.
+     - Nourriture (`use_food`) supprimait l'objet sans effet et le Goriya affamé (`D7 $49`) était absent.
+     - `push_tbl` et `dungeon_setup_room_41` ne filtraient pas `current_dungeon_level`.
+  3. **Visuels & UI (Lot 3)** :
+     - Ermite & torches en `D1 $41` effacés dès la frame suivante par `irq_top` (`apply_top_sprites`).
+     - HUD `SWOR` tronqué sans le `D` et collé aux cœurs ; Menu Debug corrompu sur ses 3 pages (onglets `[` `]` décalés, caractères `$`/`(` non supportés, hex au lieu de décimal).
+     - Glitch 1 pixel en bordure basse (`irq_bottom` sur raster `250` au lieu de `251`), Gohma `D6 $1C` coincée dans la porte Nord (`y=93`), Dodongo trop sombre sur sol bleu, Collines Perdues `L-2`/`L-3` larges d'une seule tuile, libellé `[B] ITEM` incohérent avec `[A]` du HUD.
+* **Correctifs appliqués** :
+  1. **Déport vers Overlay Banque 29 (`src/overlay_items.asm`, 16 pages = 4 Ko)** : `build_cellar_room`, `enter_cellar`, `exit_cellar`, `ovl_d1_hermit_41`, `ovl_d7_hungry_goriya_setup`, `ovl_use_food_exec`, `ovl_d9_gate_blocked`, `ovl_gameover_open/update` (`STATE_GAMEOVER = 8`), `ovl_ending_open/update` (`STATE_ENDING = 9`) + suppression du bug `sta en_ai_type,x` dans `ovl_item_whistle_exec`.
+  2. **Lot 1** : Sortie D9 `$23` sur tuile libre `(15,4)` (`264, 146`) ; séquence complète Game Over / Continue (respawn 3 cœurs H-8 ou entrée donjon) ; pipeline unifié `.apply_item_dmg` pour Flèches (`2`/`4`), Bombes (`4`, 2 bombes pour Dodongo) et Boomerang avec immunités strictes (Ganon, Gohma, Digdogger, Traps, Bubbles, Darknuts) et appel systématique à `dungeon_spawn_boss_heart` ; `print_3digits` (`000..255`) dans HUD + Inventaire + garde overflow `cmp #255` dans `.give_rupee`.
+  3. **Lot 2** : Boss D8 `$3C` = `TYPE_GLEEOK` (`tools/build_dungeons.py`) ; écran de fin Princesse Zelda en D9 `$32` ; portail 8/8 Triforce (`$FF`) devant D9 en `F-1` ; Anneau Rouge `and #3` ; boîte Fontaine des Fées élargie `[96..196] x [104..236]` avec test `player_x+1 == 0` ; Goriya affamé (`"GRUMBLE, GRUMBLE..."`) en `D7 $49` ouvrant les volets avec Food (+ effet appât hors `$49`) ; filtre `current_dungeon_level` dans `push_tbl` (entrées 5 octets) et `dungeon_setup_room_41`.
+  4. **Lot 3** : Protection `irq_top` pour `D1 $41` et `D7 $49` ; `irq_bottom` déplacé à raster `251` ; HUD `SWORD` 5 lettres coloré par niveau (Orange/Blanc/Cyan) et cœurs en cols `32..39` ; Menu Debug corrigé sur ses 3 pages + tail-calls `jmp` dans `.hook_warp_dung` et `.hook_use_item` pour prévenir toute collision Bank 30 / Bank 29 sur `$A000` ; Gohma D6 spawn `(10,3)` + clamp `y >= 112` ; Dodongo `COL_ORANGE` ; Collines Perdues `L-1`/`L-2`/`L-3` élargies à 2 tuiles (`,,` cols 8..9) ; libellé `[A] ITEM` en Inventaire Page 0.
+* **Vérification** : Compilation propre (`$1000`, `$1FBF < $2000`, `$9FFC < $A000`), **18/18 PASS** sur le banc de test live VICE couvrant tous les correctifs + inspection visuelle complète des captures + **4/4 suites audio/stabilité Dual SID PASS**.
+* **Règles anti-régression** :
+  - Tout appel depuis l'overlay Debug (Bank 30 en `$A000`) vers une routine résidente susceptible de charger l'overlay Items (Bank 29 en `$A000`, ex. `dungeon_on_enter_room` ou `player_use_item_b`) doit impérativement être effectué en **tail-call (`jmp`)** après remise à zéro de `debug_hook_cmd`, jamais par `jsr`.
+  - Programmer `irq_bottom` sur raster **`251`** (et non `250`) pour rester strictement dans la bordure basse VBlank sans artefact d'un pixel.
+
+
+---
+
+### Anomalie 30 : Forêt Perdue / Enchantée (Lost Woods) câblée sur la mauvaise salle (`$52` C-6 au lieu de `$61` B-7)
+- **Symptôme** :
+  - En vérifiant directement dans la ROM NES originale (`zelda.nes`, Bank 1 `$AD97..$ADDF` : `CPY #$61`, séquence `08 02 04 02` = Haut, Gauche, Bas, Gauche), la Forêt Perdue (*Lost Woods*) est la salle **`$61` (`B-7`, rx=1, ry=6)** — le carrefour forestier en croix `+` menant à l'Ouest vers `A-7` (`$60`) puis `A-6` (`$50`) et le Cimetière `A-5` (`$40`).
+  - Dans `src/transition.asm` (`check_lost_navigation`), le labyrinthe était câblé par erreur sur la salle **`$52` (`C-6`, rx=2, ry=5)** :
+    1. La vraie salle **`B-7` (`$61`)** n'avait aucune boucle magique (Link sortait directement à l'Ouest vers `A-7`, au Nord vers `B-6`, au Sud vers `B-8` sans résoudre l'énigme).
+    2. La salle **`C-6` (`$52`)** (un couloir en U avec mur d'arbres à l'Est) piégeait Link à tort dans la boucle de la Forêt Perdue.
+    3. L'accès au **Donjon 7 (`C-5` / `$42`)** depuis le Sud (`C-6` / `$52`) était bloqué car sortir au Nord depuis `C-6` rebouclait sur `C-6`.
+  - Par ailleurs, l'escalier reliant `A-6` (`$50`) au Cimetière `A-5` (`$40`) ne faisait qu'une tuile de large (`col 16`), rendant l'alignement étroit sur C64.
+- **Cause** : Confusion d'index de salle Overworld (`$52` au lieu de `$61`) dans `check_lost_navigation` (`src/transition.asm`) et dans `tools/take_50_screenshots.py`.
+- **Correction** :
+  - Déplacement de la logique Lost Woods (`check_lost_navigation` et `.lw_loop`) dans `src/transition.asm` vers la salle authentique **`$61` (`B-7`, `rx=1, ry=6`)** : sortie Est vers `C-7` (`$62`), toute mauvaise direction N/O/S reboucle sur `$61`, séquence **Haut → Gauche → Bas → Gauche** déclenche `sound_secret` et ouvre la sortie Ouest vers `A-7` (`$60`).
+  - Élargissement de l'escalier `A-6` (`$50`, lignes `0..4`) et `A-5` (`$40`, ligne `9`) de 1 tuile (`,`) à 2 tuiles (`,,`, colonnes `15..16`) dans `assets/world.txt` pour un accès fluide au Cimetière après la Forêt Perdue.
+  - Mise à jour de `tools/take_50_screenshots.py` (`0x52` → `0x61`).
+- **Validation** : Recompilation propre (`build/zelda.crt`, plafonds mémoire `$1000`, `< $2000`, `$9FCF < $A000`), audit topologique (`test_map_topology_reachability.py` PASS) et 11/11 tests live VICE (`verify_lost_woods.py`) + inspection visuelle des captures (`B-7`, `A-7`, `A-6`, `A-5`, `C-6`, `C-5`).
+
+
+---
+
+### Anomalie 31 : Rochers et tombes poussables Overworld non conformes (tous les rochers ouvraient un escalier, disparition instantanée sans glissement ni effort)
+- **Symptôme** :
+  - Dans les salles à plusieurs rochers comme **`J-8` (`$79`)** ou **`D-3` (`$23`)**, pousser n'importe lequel des 4 rochers avec le Bracelet de Force transformait **chacun des 4 rochers** en escalier (`TILE_CAVE`) instantanément en 1 image, sans vérifier l'index canonique du rocher ni si le secret était déjà ouvert.
+  - Le rocher (ou la tombe en `B-3`) disparaissait sur place au lieu de glisser d'une case après un effort continu avec tremblement comme les blocs poussables en donjon.
+  - Plusieurs secrets NES authentiques (`J-1 $09`, `B-2 $11`, tombe `A-3 $20`) manquaient, et `sec_tiles_tbl` contenait les mauvais index pour `D-3` (`86` au lieu de `105`), `J-8` (`91` au lieu de `110`) et `B-3` (`108` au lieu de `111`).
+- **Cause** : `ovl_item_bracelet_exec` (`src/overlay_items.asm`) ne testait que `current_room_idx` sans table `(salle, index_tuile)`, sans minuteur ni `push_shiver`, sans garde `overworld_secrets_opened` et sans déplacer la tuile.
+- **Correction** :
+  - Unification de toute la poussée Overworld (rochers + tombes) dans **`ovl_item_bracelet_exec`** (`src/overlay_items.asm`, Banque 29) appelée par `.chk_ow_push` (`src/player.asm`, qui libère 8 octets en basse RAM `< $2000`).
+  - Table stricte **`ow_push_tbl`** vérifiée directement sur `zelda.nes` (tuiles `$26` et `$29`) :
+    - 7 rochers poussables 4 directions avec Bracelet de Force : `J-1` (`106`), `B-2` (`110`), `N-2` (`105`), `D-3` (`105`), `D-4` (`89`), `J-5` (`105`), `J-8` (`110`).
+    - 2 tombes poussables vers le Haut sans Bracelet : `A-3` (`108`), `B-3` (`111`, Épée Magique).
+  - Mécanique **strictement identique aux donjons** : garde 1-coup (`overworld_secrets_opened`), maintien continu `OW_PUSH_FRAMES = 60` (~1,2 s) avec tremblement (`push_shiver`), vérification case d'arrivée `TILE_GRASS`, glissement réel de la tuile d'une case (`push_delta`) et révélation de `TILE_CAVE` dessous + `sound_secret`.
+  - Mise à jour de `restore_secrets_to_buf` / `sec_rooms_tbl` / `sec_tiles_tbl` (`SEC_ROOMS_COUNT = 26` dans `src/tilemap.asm`) pour restaurer l'escalier ET le rocher/tombe glissé d'une case lors d'un retour dans la salle, et réinitialisation de `dungeon_push_timer` dans `trans_finalize_room` (`src/transition.asm`).
+  - **Cache d'overlay (`loaded_overlay_bank`) dans `cart_load_overlay` (`src/main.asm`)** : évite de recopier 4 Ko (16 pages = ~65 536 cycles, soit > 3 trames PAL) depuis la cartouche à chaque frame lorsqu'on pousse un rocher ou une tombe ; la banque 29 n'est streamée qu'une seule fois puis exécutée directement en 6 cycles (`50,00 FPS` constants).
+- **Validation** : Recompilation propre (`build/zelda.crt`, plafonds `$1000`, basse RAM `$1FB7 < $2000`, résident `$9FFC < $A000`, Banque 29 `2518/4096 o`), **11/11 PASS** sous VICE (`verify_ow_push.py` : 15 frames de poussée mesurées au chronomètre VICE = **`294 838` cycles = `15,00` trames PAL exactes = 50,00 FPS** sans aucune saccade) + **10/10 PASS** régression overlays/objets (`verify_all8_items.py`).
+
+
+---
+
+### Anomalie 32 : Crash potentiel lors d'un changement d'overlay depuis l'Inventaire Page 0 (`irq_top` vers `$A009`)
+- **Symptôme** : Détecté lors de la campagne de tests aléatoires en jeu (`random_playtest_fluidity.py`) : si un chargement d'overlay (ex: Banque 30 Debug ou Banque 29 Objets) survient alors que `game_state == STATE_INVENTORY` et `inv_page == 0`, une interruption raster `irq_top` déclenchée pendant le `CLI` inter-pages de `cart_stream_copy` appelle `jsr $a009` (`inv_p0_irq_row1`) dans une banque qui n'est plus l'Inventaire (Banque 27), provoquant un crash CPU.
+- **Cause** : `irq_top` (`src/enemies.asm`) ne vérifiait que `game_state == STATE_INVENTORY` et `inv_page == INV_PAGE_ITEMS` sans vérifier que la Banque 27 était effectivement chargée et stable en `$A000..$BFFF`.
+- **Correction** :
+  - Dans `cart_load_overlay` (`src/main.asm`), invalidation immédiate `loaded_overlay_bank = $FF` avant `cart_stream_copy` puis affectation à la banque chargée après achèvement complet de la copie.
+  - Dans `irq_top` (`src/enemies.asm`), garde explicite `lda loaded_overlay_bank; cmp #CART_BANK_OVL_INV; bne .inv_skip_top` avant d'appeler `jsr $a009`.
+  - Factorisation des 3 helpers `cart_load_sprites_ow`/`_dung`/`_npc` dans `src/main.asm` libérant 22 octets en haute RAM résidente (`$9FF6 < $A000`, 10 octets libres).
+- **Validation** : 39/39 scénarios de tests aléatoires et de fluidité (`random_playtest_fluidity.py`) **0 anomalie, 0 fuite pile (`SP=$FF`), 49,45 FPS moyen (50,00 FPS constants en jeu et jusqu'à 8 ennemis actifs)**, + suites audio Dual SID (`test_dual_sid_dungeon.py`, `test_audio_queue_conflict.py`, `test_dungeon9_audio.py`) 100 % PASS.

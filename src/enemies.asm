@@ -1477,7 +1477,14 @@ spawn_enemy_magic_proj:
         lda en_anim,x
         eor #1
         sta en_anim,x
-+       jmp .exec_ai_roam
++       jsr .exec_ai_roam
+        ldx en_idx
+        lda en_y,x
+        cmp #112
+        bcs +
+        lda #112
+        sta en_y,x
++       rts
 
 .boss_patra:
         jmp .exec_ai_roam
@@ -1599,11 +1606,16 @@ armos_reveal_secret:
         txa
         asl
         tay
-        ; Calcule tx = (en_x - 20) / 16
+        ; Calcule tx = (en_x_16bit - 20) / 16 (gère tx >= 16 comme la statue E-3 à X=276)
         lda en_x,y
         sec
         sbc #20
+        sta ZP_TMP
+        lda en_x+1,y
+        sbc #0
         lsr
+        lda ZP_TMP
+        ror
         lsr
         lsr
         lsr
@@ -1648,7 +1660,7 @@ armos_reveal_secret:
         rts
 
 .chk_r36:
-        cmp #36                         ; Salle E-3 : Bracelet de Force
+        cmp #36                         ; Salle E-3 : Bracelet de Force (NES authentique, sans escalier)
         bne .chk_r28
         lda en_armos_tx
         cmp #16                         ; Statue en haut à droite (tx=16, ty=4)
@@ -1656,10 +1668,6 @@ armos_reveal_secret:
         lda en_armos_ty
         cmp #4
         bne .ars_done
-        ldy en_armos_tile
-        lda #TILE_CAVE
-        sta room_buf,y
-        jsr redraw_single_tile
         jsr record_room_secret_opened
         lda player_has_bracelet
         bne .ars_done
@@ -2910,6 +2918,16 @@ test_sword_single:
         lda #10
         sta en_hurt_timer,x
         jmp sound_enemy_hit
++       cpy #TYPE_GANON
+        bne +
+        ; Ganon ne peut être achevé à l'épée : reste étourdi à 1 PV pour la Flèche d'Argent
+        lda #1
+        sta en_hp,x
+        lda #EN_STATE_HURT
+        sta en_state,x
+        lda #60
+        sta en_hurt_timer,x
+        jmp sound_enemy_hit
 +       lda #0
         sta en_hp,x
         lda #EN_STATE_DYING
@@ -2946,6 +2964,16 @@ test_item_single:
         lda en_state,x
         cmp #EN_STATE_WALK
         beq +
+        ; Autorise la Flèche d'Argent à achever Ganon pendant son étourdissement (EN_STATE_HURT)
+        cmp #EN_STATE_HURT
+        bne .tis_ret
+        lda en_type,x
+        cmp #TYPE_GANON
+        bne .tis_ret
+        lda item_active
+        cmp #ITEM_BOW
+        beq +
+.tis_ret:
         rts
 +
         lda en_type,x
@@ -2977,17 +3005,27 @@ test_item_single:
         lda en_type,x
         cmp #TYPE_AQUAMENTUS
         beq .it_aqua
+        ; Rayon élargi 32 px pour la déflagration 48x42 de la Bombe (sinon 16 px)
+        lda #16
+        ldy item_active
+        cpy #ITEM_BOMB
+        bne +
+        ldy item_state
+        beq +
+        lda #32
++       sta ZP_TMP
         pla
         cmp #0
         bne +
         lda en_dx
-        cmp #16
+        cmp ZP_TMP
         bcs .it_miss_loc
-        jmp .it_chk_y
+        bcc .it_chk_y
 +       cmp #$ff
         bne .it_miss_loc
         lda en_dx
-        cmp #$f0
+        clc
+        adc ZP_TMP
         bcc .it_miss_loc
 
 .it_chk_y:
@@ -2998,7 +3036,7 @@ test_item_single:
         bcs +
         eor #$ff
         adc #1
-+       cmp #16
++       cmp ZP_TMP
         bcs .it_miss_loc
         jmp .it_hit_exec
 
@@ -3040,24 +3078,108 @@ test_item_single:
 +       cmp #ITEM_BOMB
         bne +
         jmp .bomb_blast_hit
-+       rts
++       cmp #ITEM_CANDLE
+        beq .candle_hit
+        cmp #ITEM_WAND
+        beq .wand_hit
+        rts
+
+.wand_hit:
+        ; Onde de Baguette Magique : 2 dégâts (détruit l'onde à l'impact)
+        lda #ITEM_NONE
+        sta item_active
+        lda #2
+        bne .magic_fire_dmg
+.candle_hit:
+        ; Flamme de Bougie : 1 dégât
+        lda #1
+.magic_fire_dmg:
+        ldx en_idx
+        ldy en_type,x
+        cpy #TYPE_BUBBLE
+        beq .mf_ret
+        cpy #TYPE_TRAP
+        beq .mf_ret
+        cpy #TYPE_GANON
+        beq .mf_ret
+        cpy #TYPE_GOHMA_RED
+        beq .mf_ret
+        cpy #TYPE_GOHMA_BLUE
+        beq .mf_ret
+        cpy #TYPE_DODONGO
+        beq .mf_ret
+        cpy #TYPE_DIGDOGGER
+        beq .mf_ret
+        jmp .apply_item_dmg
+.mf_ret:
+        rts
 
 .arrow_hit:
         lda #ITEM_NONE
         sta item_active
         ldx en_idx
-        lda en_type,x
-        cmp #TYPE_GOHMA_RED
-        beq .arrow_gohma
-        cmp #TYPE_GOHMA_BLUE
-        beq .arrow_gohma
-        cmp #TYPE_GANON
-        beq .arrow_ganon
+        ldy en_type,x
+        cpy #TYPE_GOHMA_RED
+        bne +
+        jmp .arrow_gohma
++       cpy #TYPE_GOHMA_BLUE
+        bne +
+        jmp .arrow_gohma
++       cpy #TYPE_GANON
+        bne +
+        jmp .arrow_ganon
++       ; Immunités aux flèches : pièges, Bubbles, Dodongo, Digdogger, Darknuts (bouclier)
+        cpy #TYPE_BUBBLE
+        beq .item_deflect
+        cpy #TYPE_TRAP
+        beq .item_deflect
+        cpy #TYPE_DODONGO
+        beq .item_deflect
+        cpy #TYPE_DIGDOGGER
+        beq .item_deflect
+        lda en_ai_type,y
+        cmp #AI_SHIELD
+        beq .item_deflect
+        ; Dégâts flèche : 2 (bois) ou 4 (argent)
+        lda #2
+        ldy player_has_arrows
+        cpy #2
+        bcc .apply_item_dmg
+        lda #4
+        bne .apply_item_dmg
+
+.item_deflect:
+        jsr sound_shield_block
+        rts
+
+.apply_item_dmg:
+        sta en_dx
+        ldx en_idx
+        ldy en_type,x
+        sec
+        lda en_hp,x
+        sbc en_dx
+        beq .item_kill_en
+        bcc .item_kill_en
+        sta en_hp,x
+        lda #EN_STATE_HURT
+        sta en_state,x
+        lda #14
+        sta en_hurt_timer,x
+        jsr sound_enemy_hit
+        rts
+.item_kill_en:
+        lda #0
+        sta en_hp,x
         lda #EN_STATE_DYING
         sta en_state,x
         lda #16
         sta en_timer,x
-        jsr sound_enemy_die
+        lda en_ai_type,y
+        cmp #AI_BOSS
+        bne +
+        jsr dungeon_spawn_boss_heart
++       jsr sound_enemy_die
         rts
 
 .arrow_gohma:
@@ -3077,6 +3199,7 @@ test_item_single:
         sta en_state,x
         lda #20
         sta en_timer,x
+        jsr dungeon_spawn_boss_heart
         jsr sound_enemy_die
         rts
 .arrow_gohma_deflect:
@@ -3084,13 +3207,14 @@ test_item_single:
         rts
 
 .arrow_ganon:
-        ; Ganon : terrasse par fleche d'argent ou affaibli
+        ; Ganon : requiert Flèches d'Argent (player_has_arrows >= 2) ET affaibli à 1 PV
         lda player_has_arrows
         cmp #2
-        bcs .ganon_killed
+        bcc .ganon_deflect
         lda en_hp,x
-        cmp #5
+        cmp #2
         bcc .ganon_killed
+.ganon_deflect:
         jsr sound_shield_block
         rts
 .ganon_killed:
@@ -3100,35 +3224,71 @@ test_item_single:
         sta en_state,x
         lda #30
         sta en_timer,x
+        jsr dungeon_spawn_boss_heart
         jsr sound_enemy_die
         rts
 
 .boom_hit:
-        ; Boomerang : étourdit le Moblin ou élimine l'Octorok
+        ; Boomerang : rebondit sans effet sur Boss, Pièges, Bubbles et Darknuts
         ldx en_idx
-        lda en_type,x
-        cmp #TYPE_OCTO
-        beq .arrow_hit                  ; Octorok meurt immédiatement
-        ; Moblin est étourdi pendant 1.5s
+        ldy en_type,x
+        lda #1
+        sta item_state                  ; le boomerang fait demi-tour
+        cpy #TYPE_BUBBLE
+        beq .boom_block
+        cpy #TYPE_TRAP
+        beq .boom_block
+        lda en_ai_type,y
+        cmp #AI_BOSS
+        beq .boom_block
+        cmp #AI_SHIELD
+        beq .boom_block
+        ; Élimine directement les petites cibles (Keese, Gel)
+        cpy #TYPE_KEESE_RED
+        beq .boom_kill
+        cpy #TYPE_KEESE_BLUE
+        beq .boom_kill
+        cpy #TYPE_GEL
+        beq .boom_kill
+        ; Étourdit les autres ennemis pendant 1.5s
         lda #EN_STATE_HURT
         sta en_state,x
         lda #75
         sta en_hurt_timer,x
-        lda #1
-        sta item_state                  ; le boomerang fait demi-tour
+.boom_block:
         jsr sound_shield_block
         rts
-
-.bomb_blast_hit:
-        ; Déflagration de bombe : mort instantanée
-        lda item_state
-        beq .it_miss                    ; pas encore explosée
-        ldx en_idx
+.boom_kill:
+        lda #0
+        sta en_hp,x
         lda #EN_STATE_DYING
         sta en_state,x
         lda #16
         sta en_timer,x
         jsr sound_enemy_die
+        rts
+
+.bomb_blast_hit:
+        ; Déflagration de bombe : 4 dégâts (2 bombes pour Dodongo 8 PV),
+        ; sans effet sur Ganon, Gohma, Digdogger, Bubbles et Blade Traps (C3)
+        lda item_state
+        beq .it_miss                    ; pas encore explosée
+        ldx en_idx
+        ldy en_type,x
+        cpy #TYPE_BUBBLE
+        beq .it_miss
+        cpy #TYPE_TRAP
+        beq .it_miss
+        cpy #TYPE_GANON
+        beq .it_miss
+        cpy #TYPE_GOHMA_RED
+        beq .it_miss
+        cpy #TYPE_GOHMA_BLUE
+        beq .it_miss
+        cpy #TYPE_DIGDOGGER
+        beq .it_miss
+        lda #4
+        jmp .apply_item_dmg
 .it_miss:
         rts
 
@@ -3289,12 +3449,19 @@ hurt_link:
 +       lda #32                         ; ~0.6s d'invulnérabilité
         sta player_hurt_timer
 
-        ; Protection Anneau Bleu : divise les dégâts par 2
+        ; Protection Anneaux : Bleu (1) = 1/2 dégâts (and #1), Rouge (2) = 1/4 dégâts (and #3) (M4)
         lda player_has_blue_ring
         beq .take_damage
         inc player_blue_ring_hits
+        cmp #2
+        bcs .red_ring_chk
         lda player_blue_ring_hits
         and #1
+        bne .skip_heart_loss
+        beq .take_damage
+.red_ring_chk:
+        lda player_blue_ring_hits
+        and #3
         bne .skip_heart_loss
 
 .take_damage:
@@ -3302,12 +3469,18 @@ hurt_link:
         beq .dead_link
         dec hud_cur_hearts
         jsr hud_render
+        lda hud_cur_hearts
+        beq .dead_link
 
 .skip_heart_loss:
-.dead_link:
         ; Son de blessure Link (géré proprement sur Voix 3)
         jsr sound_link_hurt
         rts
+
+.dead_link:
+        ; Mort de Link -> Écran Game Over / Continue (C2)
+        jsr sound_link_hurt
+        jmp open_gameover
 
 ; ---------------------------------------------------------------------------
 ; spawn_loot : récompense aléatoire à la mort d'un ennemi
@@ -3323,9 +3496,13 @@ spawn_loot:
         rts                             ; 25% : rien
 
 .give_rupee:
+        ; Protection overflow 255 -> 0 (C4)
+        lda hud_rupees
+        cmp #255
+        beq +
         inc hud_rupees
         jsr hud_render
-        jsr sound_rupee
++       jsr sound_rupee
         rts
 
 .give_heart:
@@ -3539,9 +3716,15 @@ irq_top:
         bne .check_playing
         lda inv_page
         cmp #INV_PAGE_ITEMS
-        bne .skip_top
+        bne .inv_skip_top
+        lda loaded_overlay_bank
+        cmp #CART_BANK_OVL_INV
+        beq .inv_do_p0_irq
+.inv_skip_top:
+        jmp .skip_top
+.inv_do_p0_irq:
         jsr $a009                      ; inv_p0_irq_row1 dans l'overlay inventaire
-        lda #139                        ; Raster entre Y=118 (fin=139) et Y=142
+        lda #140                        ; Raster centré entre rangée 1 (Y=112..133) et rangée 2 (Y=152)
         sta VIC_RASTER
         lda #$0c                        ; irq_p0_row2 vecteur ($A00C)
         sta $0314
@@ -3555,15 +3738,37 @@ irq_top:
         bne .skip_top
 
 .do_top:
+        ; Protection V1/M6 : préserve les sprites PNJ/torches en D1 $41 (Ermite) et D7 $4B (Goriya Affamé)
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .do_top_normal
+        lda current_dungeon_level
+        cmp #1
+        bne .chk_top_d7
+        lda current_room_idx
+        cmp #$41
+        beq .skip_top
+        bne .do_top_normal
+.chk_top_d7:
+        cmp #7
+        bne .do_top_normal
+        lda current_room_idx
+        cmp #$49
+        bne .do_top_normal
+        ldx #$49
+        lda dungeon_room_state,x
+        and #DUNG_SECRET_REVEALED
+        beq .skip_top
 
+.do_top_normal:
         jsr apply_top_sprites
         jsr apply_proj_sprite7
 
         lda multiplex_needed
         bne +
 
-        ; Passe unique : pas d'irq_mid à raster 230, programmation directe du VBlank
-        lda #250
+        ; Passe unique : pas d'irq_mid à raster 230, programmation directe du VBlank (raster 251, V4)
+        lda #251
         sta VIC_RASTER
         lda #< irq_bottom
         sta $0314
@@ -3583,7 +3788,7 @@ irq_top:
         jmp $ea81
 
 .skip_top:
-        lda #250
+        lda #251
         sta VIC_RASTER
         lda #< irq_bottom
         sta $0314
@@ -3599,7 +3804,7 @@ irq_top:
 irq_mid:
         jsr apply_bottom_sprites
 
-        lda #250
+        lda #251
         sta VIC_RASTER
         lda #< irq_bottom
         sta $0314
@@ -3717,14 +3922,6 @@ draw_boss_assembled:
         ; Boss standard (Gohma, Gleeok, Digdogger, Patra)
         jsr get_enemy_sprite_and_color
         sta SPRITE_PTR3
-.apply_boss_msb:
-        sta boss_tmp_msb4
-        lda VIC_SPRITE_MSB
-        and #%10000111                  ; efface bits 3, 4, 5, 6
-        ora boss_tmp_msb4
-        sta VIC_SPRITE_MSB
-        rts
-
 .drw_single_exit:
         lda boss_base_x
         sta VIC_SPRITE_X3
@@ -3745,6 +3942,14 @@ draw_boss_assembled:
         lda VIC_SPRITE_MC
         ora #%00001000
         sta VIC_SPRITE_MC
+        rts
+
+.apply_boss_msb:
+        sta boss_tmp_msb4
+        lda VIC_SPRITE_MSB
+        and #%10000111                  ; efface bits 3, 4, 5, 6
+        ora boss_tmp_msb4
+        sta VIC_SPRITE_MSB
         rts
 
 .boss_dying:
@@ -3917,11 +4122,10 @@ dod_bb_tbl: !byte SPR_DUNG_DODONGO_BLOATED_B, SPR_DUNG_DODONGO_BLOATED_R_F
         rts
 
 .drw_ganon:
+        lda en_anim,x
+        lsr
         lda #SPR_DUNG_GANON_TL_0
-        ldy en_anim,x
-        tya
-        and #1
-        beq +
+        bcc +
         lda #SPR_DUNG_GANON_TL_1
 +       sta SPRITE_PTR3
         clc

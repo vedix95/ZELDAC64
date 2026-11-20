@@ -135,41 +135,75 @@ load_room:
         rts
 
 ; ---------------------------------------------------------------------------
-; restore_room_secrets : Restauration des grottes secrètes dans room_buf
+; restore_room_secrets / restore_target_secrets :
+; Restauration factorisée des grottes secrètes dans room_buf ou target_room_buf
 ; ---------------------------------------------------------------------------
 restore_room_secrets:
+        lda #<room_buf
+        sta ZP_DST
+        lda #>room_buf
+        sta ZP_DST+1
+        lda current_room_idx
+        jmp restore_secrets_to_buf
+
+restore_target_secrets:
+        lda #<target_room_buf
+        sta ZP_DST
+        lda #>target_room_buf
+        sta ZP_DST+1
+        lda target_room_idx
+
+restore_secrets_to_buf:
+        sta ZP_IDX
         lda current_world_type
         bne .no_secret_restored
-        ldx current_room_idx
-        txa
+        lda ZP_IDX
         lsr
         lsr
         lsr
         tax
-        lda current_room_idx
+        lda ZP_IDX
         and #7
         tay
         lda bit_powers,y
         and overworld_secrets_opened,x
         beq .no_secret_restored
 
-        ldx #14
+        ldx #(SEC_ROOMS_COUNT - 1)
 -       lda sec_rooms_tbl,x
-        cmp current_room_idx
+        cmp ZP_IDX
         bne +
         ldy sec_tiles_tbl,x
+        lda (ZP_DST),y
+        cmp #TILE_ROCK
+        beq .slide_restored_push
+        cmp #TILE_GRAVE
+        bne .put_restored_cave
+.slide_restored_push:
+        pha
         lda #TILE_CAVE
-        sta room_buf,y
-        lda current_room_idx
+        sta (ZP_DST),y
+        tya
+        sec
+        sbc #20                         ; replace le rocher/tombe glissé 1 case au Nord
+        tay
+        pla
+        sta (ZP_DST),y
+        jmp .chk_dry_c5_sec
+.put_restored_cave:
+        lda #TILE_CAVE
+        sta (ZP_DST),y
+.chk_dry_c5_sec:
+        lda ZP_IDX
         cmp #66
         bne .check_std_sec
         ldy #0
 .dry_c5_loop:
-        lda room_buf,y
+        lda (ZP_DST),y
         cmp #TILE_WATER
         bne .sk_dry_c5
         lda #TILE_GRASS
-        sta room_buf,y
+        sta (ZP_DST),y
 .sk_dry_c5:
         iny
         cpy #200
@@ -180,11 +214,11 @@ restore_room_secrets:
 
 .check_std_sec:
         ldy #0
--       lda room_buf,y
+-       lda (ZP_DST),y
         cmp #TILE_WALL_BOMB
         bne .sk_bomb_conv
         lda #TILE_CAVE
-        sta room_buf,y
+        sta (ZP_DST),y
 .sk_bomb_conv:
         iny
         cpy #200
@@ -192,10 +226,15 @@ restore_room_secrets:
 .no_secret_restored:
         rts
 
+SEC_ROOMS_COUNT = 26
 sec_rooms_tbl:
-        !byte 33, 51, 35, 73, 121, 29, 109, 107, 82, 66, 52, 36, 28, 61, 78
+        ; Tombes (32,33), Rochers (9,17,29,35,51,73,121), Étang D7 (66), Armos grottes (52,28,61,78)
+        ; + 12 arbres brûlables (40,70,81,82,83,88,91,98,99,106,107,109)
+        !byte 32, 33, 9, 17, 29, 35, 51, 73, 121, 66, 52, 28, 61, 78
+        !byte 40, 70, 81, 82, 83, 88, 91, 98, 99, 106, 107, 109
 sec_tiles_tbl:
-        !byte 108, 89, 86, 105, 91, 105, 113, 72, 66, 90, 86, 96, 93, 91, 92
+        !byte 108, 111, 106, 110, 105, 105, 89, 105, 110, 90, 86, 93, 91, 92
+        !byte 73, 151, 89, 66, 112, 111, 112, 90, 88, 94, 72, 113
 
 ; Dessine la salle pointée par ZP_MAP (200 tuiles = 20x10).
 ; ZP_SCR / ZP_COL pointent sur la ligne 4 de texte (écran / couleur) :
@@ -283,7 +322,7 @@ draw_map:
 
 ; --- Palettes et Couleurs des 9 Donjons de Zelda 1 ---
 dungeon_mc1_table:
-        !byte 3, 6, 5, 15, 2, 8, 5, 14, 2       ; Cyan, Bleu, Vert, Gris, Rouge, Orange, Vert, Bleu clair, Rouge sombre
+        !byte 3, 6, 5, 15, 2, 8, 5, 12, 2       ; Cyan, Bleu, Vert, Gris clair, Rouge, Orange, Vert, Gris moyen (Lion), Rouge sombre
 dungeon_wall_color:
         !byte 11, 14, 13, 23, 10, 16, 13, 22, 10
 base_dungeon_tile_color:
@@ -421,62 +460,7 @@ enter_dungeon:
         sta game_state
         rts
 
-; ---------------------------------------------------------------------------
-; exit_dungeon : Quitte le donjon et restaure la carte Overworld
-; ---------------------------------------------------------------------------
-exit_dungeon:
-        ; 1. Désactive ennemis et objets
-        lda #0
-        sta en_type
-        sta en_type+1
-        sta en_proj_active
-        sta item_active
-        sta player_attacking
-
-        ; 2. Restaurer la salle et la position Overworld de Link avant chargement du chunk
-        lda saved_ow_room_x
-        sta current_room_x
-        lda saved_ow_room_y
-        sta current_room_y
-
-        ; 3. Vider l'écran et recharger le chunk Overworld actif
-        jsr clear_screen
-        lda #WORLD_OVERWORLD
-        sta current_world_type
-        jsr disk_load_map_overworld
-        jsr cart_load_sprites_ow
-
-        lda saved_ow_player_x
-        sta player_x
-        lda saved_ow_player_x+1
-        sta player_x+1
-        lda saved_ow_player_y
-        clc
-        adc #16                         ; Juste sous l'entrée
-        sta player_y
-        lda #DIR_DOWN
-        sta player_dir
-        lda #0
-        sta player_walk_anim
-        sta player_walk_tick
-
-        ; Si Link sortait du Donjon 9, restaure la partition Standard BGM depuis Banque 31 ($8000)
-        lda current_dungeon_level
-        cmp #9
-        bne +
-        jsr sound_restore_standard_bgm
-+
-        ; Relance la musique héroïque de l'Overworld
-        lda #MUSIC_OVERWORLD
-        jsr music_play
-
-        ; 4. Afficher la salle et les ennemis
-        jsr load_room
-        jsr hud_init
-        jsr enemies_room_init
-        lda #STATE_PLAYING
-        sta game_state
-        rts
+; Note : exit_dungeon est déporté dans l'overlay Banque 29 (src/overlay_items.asm) via trampoline.
 
 ; ---------------------------------------------------------------------------
 ; redraw_single_tile : redessine immédiatement la tuile Y (2x2 caractères) à l'écran

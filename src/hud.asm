@@ -34,7 +34,7 @@ hud_keys:         !byte 1               ; clefs initiales
 hud_bombs:        !byte 4               ; bombes initiales
 hud_max_hearts:   !byte 3               ; 3 cœurs max
 hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
-hud_selected_b:   !byte 0               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
+hud_selected_b:   !byte 1               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
 
 ; Salles visitées (allouées en basse RAM résidente sous $2000 dans main.asm)
 
@@ -108,9 +108,9 @@ hud_init:
         !text "RUPEES"
         !byte 21, 3
         !text "[A]"
-        !byte 27, 3
+        !byte 26, 3
         !text "[X]"
-        !byte 32, 6
+        !byte 33, 6
         !text "-LIFE-"
         !byte 49, 4
         !text "KEYS"
@@ -124,7 +124,7 @@ hud_init:
         ; Couleur jaune pour "-LIFE-"
         lda #COL_YELLOW
         ldx #5
--       sta COLOR_RAM+32,x
+-       sta COLOR_RAM+33,x
         dex
         bpl -
 
@@ -493,17 +493,19 @@ minimap_buf:
 .counters:
 
         ; 2. Compteurs avec icônes Zelda en colonne 16
-        ; Rubis : icône losange ◆ + compteur 2 chiffres
+        ; Rubis : icône losange ◆ + compteur 3 chiffres (000..255, C4)
         lda #HUD_CHAR_RUPEE
         sta SCREEN_RAM+16
         lda hud_rupees
-        jsr print_2digits
-        sta SCREEN_RAM+17
-        stx SCREEN_RAM+18
+        jsr print_3digits
+        sta SCREEN_RAM+17               ; centaines
+        stx SCREEN_RAM+18               ; dizaines
+        sty SCREEN_RAM+19               ; unités
         lda #COL_YELLOW
         sta COLOR_RAM+16
         sta COLOR_RAM+17
         sta COLOR_RAM+18
+        sta COLOR_RAM+19
 
         ; Clefs : icône clef + compteur
         lda #HUD_CHAR_KEY
@@ -546,14 +548,14 @@ minimap_buf:
         cpy #4
         bne .put_b_name
 
-        ; 4. Barre de vie (Cœurs) : 2 rangées de 8 (cols 31..38 sur Ligne 1 et Ligne 2)
+        ; 4. Barre de vie (Cœurs) : 2 rangées de 8 (cols 32..39 sur Ligne 1 et Ligne 2)
         ldx #0
 -       lda #32
-        sta SCREEN_RAM+40+31,x
-        sta SCREEN_RAM+80+31,x
+        sta SCREEN_RAM+40+32,x
+        sta SCREEN_RAM+80+32,x
         lda #COL_BLACK
-        sta COLOR_RAM+40+31,x
-        sta COLOR_RAM+80+31,x
+        sta COLOR_RAM+40+32,x
+        sta COLOR_RAM+80+32,x
         inx
         cpx #8
         bne -
@@ -569,28 +571,59 @@ minimap_buf:
 .draw_heart:
         cpx #8
         bcs .heart_row2
-        ; Rangée 1 : cœurs 0..7
-        sta SCREEN_RAM+40+31,x
+        ; Rangée 1 : cœurs 0..7 (cols 32..39)
+        sta SCREEN_RAM+40+32,x
         lda #COL_RED
-        sta COLOR_RAM+40+31,x
+        sta COLOR_RAM+40+32,x
         jmp .heart_next
 .heart_row2:
-        ; Rangée 2 : cœurs 8..15
+        ; Rangée 2 : cœurs 8..15 (cols 32..39)
         pha
         txa
         sec
         sbc #8
         tay
         pla
-        sta SCREEN_RAM+80+31,y
+        sta SCREEN_RAM+80+32,y
         lda #COL_RED
-        sta COLOR_RAM+80+31,y
+        sta COLOR_RAM+80+32,y
 .heart_next:
         inx
         cpx hud_max_hearts
         bne .heart_loop
         jsr hud_update_sword
         rts
+
+; Convertit A (0..255) en 3 caractères ASCII : A=centaines, X=dizaines, Y=unités
+print_3digits:
+        ldy #0
+.div100:
+        cmp #100
+        bcc .done100
+        sec
+        sbc #100
+        iny
+        jmp .div100
+.done100:
+        sty .hund_tmp
+        ldx #0
+.div10_3:
+        cmp #10
+        bcc .done10_3
+        sec
+        sbc #10
+        inx
+        jmp .div10_3
+.done10_3:
+        ora #'0'
+        tay                             ; Y = unités
+        txa
+        ora #'0'
+        tax                             ; X = dizaines
+        lda .hund_tmp
+        ora #'0'                        ; A = centaines
+        rts
+.hund_tmp: !byte 0
 
 ; Convertit A (0..99) en 2 caractères ASCII (dizaines dans A, unités dans X)
 ; Préserve le registre Y intact.
@@ -616,7 +649,7 @@ print_2digits:
 .units_tmp: !byte 0
 
 ; ---------------------------------------------------------------------------
-; hud_update_sword : affiche "SWOR" si Link a l'épée, ou blanc sinon
+; hud_update_sword : affiche "SWORD" (5 car, cols 26..30) coloré par niveau (V2)
 ; ---------------------------------------------------------------------------
 hud_update_sword:
         txa
@@ -624,23 +657,37 @@ hud_update_sword:
         lda player_has_sword
         bne .show_sword
         lda #32                         ; espace
-        ldx #3
--       sta SCREEN_RAM+40+27,x
+        ldx #4
+-       sta SCREEN_RAM+40+26,x
         dex
         bpl -
         pla
         tax
         rts
 .show_sword:
-        ldx #3
--       lda .swor_txt,x
-        sta SCREEN_RAM+40+27,x
-        lda #COL_CYAN
-        sta COLOR_RAM+40+27,x
+        cmp #1
+        beq .sw_c_wood
+        cmp #2
+        beq .sw_c_white
+        lda #COL_CYAN                   ; Épée Magique
+        bne .sw_col_ok
+.sw_c_wood:
+        lda #COL_ORANGE                 ; Épée de Bois
+        bne .sw_col_ok
+.sw_c_white:
+        lda #COL_WHITE                  ; Épée Blanche
+.sw_col_ok:
+        sta .sw_col_tmp
+        ldx #4
+-       lda .sword_txt,x
+        sta SCREEN_RAM+40+26,x
+        lda .sw_col_tmp
+        sta COLOR_RAM+40+26,x
         dex
         bpl -
         pla
         tax
         rts
-.swor_txt: !text "SWOR"
+.sw_col_tmp: !byte 0
+.sword_txt:  !text "SWORD"
 

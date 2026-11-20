@@ -80,9 +80,9 @@ DUNGEON_METADATA = {
     8: {
         'name': 'Lion',
         'ent': 0x7e, 'boss': 0x3c, 'tri': 0x2c,
-        'boss_type': 'TYPE_DODONGO', 'boss_hp': 8,
+        'boss_type': 'TYPE_GLEEOK', 'boss_hp': 12,
         'mc1': 14, 'wall': 22, 'is_79': True,
-        'boss_coords': (14, 4)
+        'boss_coords': (10, 3)
     },
     9: {
         'name': 'Death Mountain (Montagne de la Mort)',
@@ -641,7 +641,7 @@ def build_level6_enemies_table():
     empty = "TYPE_NONE         ,  0,  0"
     tbl = {r: [empty] * 8 for r in range(128)}
     # Boss Gohma Red (0x1C)
-    tbl[0x1C][0] = "TYPE_GOHMA_RED    , 10,  2"
+    tbl[0x1C][0] = "TYPE_GOHMA_RED    , 10,  3"
     # Wizzrobes Blue (0x49, 0x5A)
     tbl[0x49] = [
         "TYPE_WIZZROBE_BLUE,  8,  3",
@@ -966,11 +966,10 @@ def build_level8_enemies_table():
     """Table authentique d'ennemis pour le Niveau 8 (Lion)."""
     empty = "TYPE_NONE         ,  0,  0"
     tbl = {r: [empty] * 8 for r in range(128)}
-    # Boss Dodongos (0x3C)
+    # Boss Gleeok 4 têtes (0x3C) — authentique NES Donjon 8 (M1)
     tbl[0x3C] = [
-        "TYPE_DODONGO      , 14,  4",
-        "TYPE_DODONGO      , 10,  4",
-        empty, empty, empty, empty, empty, empty
+        "TYPE_GLEEOK       , 10,  3",
+        empty, empty, empty, empty, empty, empty, empty
     ]
     # Wizzrobes Blue (0x7F)
     tbl[0x7F] = [
@@ -1282,28 +1281,36 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
         0x74: 0, 0x68: 0, 0xb0: 5, 0x94: 6, 0xb4: 6, 0x70: 7, 0xf4: 5, 0x24: 0
     }
 
-    def door_code_to_tile(code, is_horizontal=True):
+    def door_code_to_tile(code, wall_tile):
         if code == 0:
             return 12  # Open
         elif code == 1:
-            return 1 if is_horizontal else 3  # Solid wall
+            return wall_tile  # Solid wall (1=Top, 2=Bot, 3=Left, 4=Right)
         elif code == 4:
             return 15  # Bombable / shutter
         elif code == 5:
             return 13  # Locked
         elif code == 7:
             return 14  # Shutter
-        return 1 if is_horizontal else 3
+        return wall_tile
 
-    decoded = {}
+    # Pre-pass : extraire et symétriser tous les codes de portes pour garantir
+    # 0 porte à sens unique et 100% d'accessibilité (Boss, Triforce, Celliers)
+    room_doors = {}
     for r in sorted(room_set):
-        rt = room_types[r] & 0x3F
         ns = ns_doors_16[r]
         ew = ew_doors_16[r]
         nd = (ns >> 5) & 7
         sd = (ns >> 2) & 7
         wd = (ew >> 5) & 7
         ed = (ew >> 2) & 7
+
+        # Codes NES 2/3 (murs traversables) -> ouvert (0), code 6 (verrouillé alt) -> verrouillé (5)
+        def norm_code(c):
+            if c in (2, 3): return 0
+            if c == 6: return 5
+            return c
+        nd, sd, wd, ed = norm_code(nd), norm_code(sd), norm_code(wd), norm_code(ed)
 
         rx, ry = r % 16, r // 16
         # Seal doors leading outside the dungeon rooms
@@ -1362,10 +1369,84 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
             if r == 0x63: nd = 4            # Bomb door North into 0x53
             if r == 0x76: wd = 0; ed = 4    # Entree Ouest ouverte (vers 0x75), Est bombe (vers 0x77)
 
-        n_tile = door_code_to_tile(nd, True)
-        s_tile = door_code_to_tile(sd, True)
-        w_tile = door_code_to_tile(wd, False)
-        e_tile = door_code_to_tile(ed, False)
+        room_doors[r] = {'N': nd, 'S': sd, 'W': wd, 'E': ed}
+
+    # Passages de liaison pour remplacer les téléporteurs souterrains NES
+    # (garantit l'accès à pied aux Boss, Triforces et Celliers dans D3, D5, D6, D7, D8, D9)
+    BRIDGE_DOORS = {
+        3: [(0x6b, 'W', 0x6a, 0), (0x4a, 'N', 0x3a, 5), (0x4c, 'N', 0x3c, 4), (0x6b, 'E', 0x6c, 4)],
+        5: [(0x46, 'W', 0x45, 5), (0x15, 'E', 0x16, 4)],
+        6: [(0x09, 'W', 0x08, 0), (0x1b, 'E', 0x1c, 5), (0x39, 'S', 0x49, 5), (0x3a, 'N', 0x2a, 4)],
+        7: [(0x49, 'E', 0x4a, 4), (0x28, 'E', 0x29, 5), (0x5b, 'E', 0x5c, 4), (0x6d, 'N', 0x5d, 4)],
+        8: [(0x7f, 'N', 0x6f, 0), (0x3d, 'W', 0x3c, 5), (0x3d, 'N', 0x2d, 4), (0x6e, 'W', 0x6d, 5)],
+        9: [(0x44, 'W', 0x43, 5), (0x45, 'N', 0x35, 4)],
+    }
+    OPP_DIR = {'N': 'S', 'S': 'N', 'W': 'E', 'E': 'W'}
+    DIR_DELTA = {'N': -16, 'S': 16, 'W': -1, 'E': 1}
+    for r1, d1, r2, code in BRIDGE_DOORS.get(lvl, []):
+        if r1 in room_doors and r2 in room_doors:
+            room_doors[r1][d1] = code
+            room_doors[r2][OPP_DIR[d1]] = 0 if code == 7 else code
+
+    # Symétrisation stricte de toutes les portes internes (0 porte à sens unique)
+    for r in sorted(room_set):
+        for d, delta in DIR_DELTA.items():
+            if r == ent and d == 'S':
+                continue
+            nr = r + delta
+            if nr not in room_doors:
+                room_doors[r][d] = 1
+                continue
+            c1 = room_doors[r][d]
+            c2 = room_doors[nr][OPP_DIR[d]]
+            if c1 != 1 and c2 == 1:
+                room_doors[nr][OPP_DIR[d]] = 0 if c1 == 7 else c1
+            elif c2 != 1 and c1 == 1:
+                room_doors[r][d] = 0 if c2 == 7 else c2
+
+    # Sécurité ultime BFS : relie automatiquement toute salle résiduelle isolée
+    from collections import deque
+    while True:
+        seen = {ent}
+        q = deque([ent])
+        while q:
+            cur = q.popleft()
+            for d, delta in DIR_DELTA.items():
+                if cur == ent and d == 'S': continue
+                if room_doors[cur][d] != 1:
+                    nr = cur + delta
+                    if nr in room_doors and nr not in seen:
+                        seen.add(nr)
+                        q.append(nr)
+        unreach = sorted(room_set - seen)
+        if not unreach:
+            break
+        bridged = False
+        for r in sorted(seen):
+            for d, delta in DIR_DELTA.items():
+                nr = r + delta
+                if nr in unreach:
+                    room_doors[r][d] = 4
+                    room_doors[nr][OPP_DIR[d]] = 4
+                    bridged = True
+                    break
+            if bridged:
+                break
+        if not bridged:
+            break
+
+    decoded = {}
+    for r in sorted(room_set):
+        rt = room_types[r] & 0x3F
+        nd = room_doors[r]['N']
+        sd = room_doors[r]['S']
+        wd = room_doors[r]['W']
+        ed = room_doors[r]['E']
+
+        n_tile = door_code_to_tile(nd, 1)
+        s_tile = door_code_to_tile(sd, 2)
+        w_tile = door_code_to_tile(wd, 3)
+        e_tile = door_code_to_tile(ed, 4)
 
         # Entrance south door is ALWAYS exit (tile 12)
         if r == ent:
@@ -1394,6 +1475,13 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
         grid.append([3, 3] + [0]*16 + [4, 4])
         grid.append([10] + [2]*8 + [s_tile, s_tile] + [2]*8 + [11])
 
+        # Remplace les rangées de douves (plus de 2 tuiles 0x70/7 sur une ligne) par du sol praticable
+        for gy in range(1, 9):
+            stair_cols = [gx for gx in range(2, 18) if grid[gy][gx] == 7]
+            if len(stair_cols) > 2:
+                for gx in stair_cols:
+                    grid[gy][gx] = 0
+
         # Level specific room adjustments
         if lvl == 1 and r == 0x22:
             grid[4][10] = 0 # Hidden under floor until block pushed
@@ -1418,9 +1506,36 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
 
     return decoded
 
-def find_nearest_free_tile(grid, start_x, start_y, occupied):
-    """Recherche en spirale la tuile de sol la plus proche exempte de bloc, statue ou mur."""
-    for dist in range(1, 15):
+def compute_door_reachable_tiles(grid):
+    """Calcule par BFS l'ensemble des dalles praticables accessibles depuis les portes de la salle."""
+    from collections import deque
+    starts = []
+    for di_y, di_x, ai_y, ai_x in [(0, 9, 1, 9), (9, 9, 8, 9), (4, 0, 4, 1), (4, 19, 4, 18)]:
+        if grid[di_y][di_x] in (12, 13, 14, 15) and grid[ai_y][ai_x] in (0, 7, 12):
+            starts.append((ai_x, ai_y))
+    if not starts:
+        # Fallback: bordure libre
+        for y in range(1, 9):
+            for x in range(2, 18):
+                if grid[y][x] == 0:
+                    starts.append((x, y))
+                    break
+            if starts:
+                break
+    seen = set(starts)
+    q = deque(starts)
+    while q:
+        cx, cy = q.popleft()
+        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+            nx, ny = cx + dx, cy + dy
+            if 1 <= nx <= 18 and 1 <= ny <= 8 and (nx, ny) not in seen and grid[ny][nx] in (0, 7, 12):
+                seen.add((nx, ny))
+                q.append((nx, ny))
+    return seen
+
+def find_nearest_free_tile(grid, start_x, start_y, occupied, allowed=None):
+    """Recherche en spirale la tuile de sol la plus proche exempte de bloc, statue, mur ou cage fermée."""
+    for dist in range(0, 18):
         candidates = []
         for dy in range(-dist, dist + 1):
             dx1 = dist - abs(dy)
@@ -1428,18 +1543,25 @@ def find_nearest_free_tile(grid, start_x, start_y, occupied):
                 nx, ny = start_x + dx, start_y + dy
                 if 2 <= nx <= 17 and 2 <= ny <= 7:
                     if grid[ny][nx] == 0 and (nx, ny) not in occupied:
-                        candidates.append((nx, ny))
+                        if allowed is None or (nx, ny) in allowed:
+                            candidates.append((nx, ny))
         if candidates:
             candidates.sort(key=lambda p: (abs(p[0]-start_x) + abs(p[1]-start_y), p[1], p[0]))
             return candidates[0]
     return start_x, start_y
 
 def sanitize_enemy_spawns(enemies_table, decoded_rooms, dungeon_rooms):
-    """Valide que tous les ennemis spawnent sur une dalle libre (tuile 0) sans conflit."""
+    """Valide que tous les ennemis spawnent sur une dalle libre (tuile 0) accessible à pied (hors cages fermées)."""
+    FLYING_OR_GHOST = {
+        "TYPE_KEESE_RED", "TYPE_KEESE_BLUE",
+        "TYPE_WIZZROBE_RED", "TYPE_WIZZROBE_BLUE",
+        "TYPE_WALLMASTER", "TYPE_BUBBLE", "TYPE_TRAP"
+    }
     for r in dungeon_rooms:
         if r not in decoded_rooms:
             continue
         grid = decoded_rooms[r]
+        reachable = compute_door_reachable_tiles(grid)
         occupied = set()
         new_slots = []
         for slot in enemies_table[r]:
@@ -1449,8 +1571,9 @@ def sanitize_enemy_spawns(enemies_table, decoded_rooms, dungeon_rooms):
                 new_slots.append(slot)
                 continue
             tx, ty = int(parts[1]), int(parts[2])
-            if grid[ty][tx] != 0 or (tx, ty) in occupied:
-                nx, ny = find_nearest_free_tile(grid, tx, ty, occupied)
+            allowed = None if etype in FLYING_OR_GHOST else reachable
+            if grid[ty][tx] != 0 or (tx, ty) in occupied or (allowed is not None and (tx, ty) not in allowed):
+                nx, ny = find_nearest_free_tile(grid, tx, ty, occupied, allowed=allowed)
                 occupied.add((nx, ny))
                 new_slots.append(f"{etype:<18}, {nx:2d}, {ny:2d}")
             else:

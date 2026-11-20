@@ -16,12 +16,23 @@
 
 * = OVERLAY_RAM_ADDR ; $A000
 
-; Table de vecteurs d'entrée de l'overlay ($A000..$A00F)
+; Table de vecteurs d'entrée de l'overlay ($A000..$A02C)
         jmp ovl_item_whistle_exec       ; $A000
         jmp ovl_item_candle_exec        ; $A003
         jmp ovl_item_bracelet_exec      ; $A006
         jmp ovl_item_bomb_secret_exec   ; $A009
         jmp ovl_item_raft_launch        ; $A00C
+        jmp ovl_enter_cellar            ; $A00F
+        jmp ovl_exit_cellar             ; $A012
+        jmp ovl_d1_hermit_41            ; $A015
+        jmp ovl_gameover_open           ; $A018
+        jmp ovl_gameover_update         ; $A01B
+        jmp ovl_ending_open             ; $A01E
+        jmp ovl_ending_update           ; $A021
+        jmp ovl_d9_gate_blocked         ; $A024
+        jmp ovl_use_food_exec           ; $A027
+        jmp ovl_d7_hungry_goriya_setup  ; $A02A
+        jmp ovl_exit_dungeon            ; $A02D
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -43,8 +54,6 @@ ovl_item_whistle_exec:
         sta en_type,x
         lda #2
         sta en_hp,x
-        lda #AI_ROAM
-        sta en_ai_type,x
         lda #0
         sta en_anim,x
 +       inx
@@ -53,13 +62,13 @@ ovl_item_whistle_exec:
 
         lda current_world_type
         cmp #WORLD_OVERWORLD
-        bne .whistle_end
+        beq +
+        rts
++
 
         ; --- Sur l'Overworld ---
         lda current_room_idx
         cmp #66                         ; Salle 66 (C-5) : Assèche l'étang du Donjon 7 !
-        beq .whistle_open_d7
-        cmp #51                         ; Salle 51 (D-4) : Dallage sacré aux piliers
         bne .whistle_warp
 
 .whistle_open_d7:
@@ -74,14 +83,10 @@ ovl_item_whistle_exec:
         cpy #200
         bcc -
 
-        ; Place l'entrée au centre (ligne 4, col 10 -> index 90, ou col 9 -> 89 en D-4)
+        ; Place l'entrée au centre de l'étang asséché (ligne 4, col 10 -> index 90)
         lda #TILE_CAVE
         ldy #90
-        ldx current_room_idx
-        cpx #51
-        bne +
-        ldy #89
-+       sta room_buf,y
+        sta room_buf,y
 
         lda #<room_buf
         sta ZP_MAP
@@ -93,18 +98,52 @@ ovl_item_whistle_exec:
         rts
 
 .whistle_warp:
-        ; Téléportation magique par la tornade vers l'entrée d'un donjon !
-        lda #55                         ; Entrée Niveau 1 (H-4)
+        ; Téléportation cyclique par la tornade vers les entrées des Donjons 1..8
+        ; déjà complétés (ou Donjon 1 par défaut si aucune Triforce obtenue)
+        ldx #0                          ; index de départ par défaut (D1)
+        ldy #7
+.ww_find_cur:
+        lda current_room_idx
+        cmp .whistle_rooms,y
+        beq .ww_start_next
+        dey
+        bpl .ww_find_cur
+        jmp .ww_scan
+.ww_start_next:
+        tya
+        tax
+        inx
+        cpx #8
+        bcc .ww_scan
+        ldx #0
+.ww_scan:
+        lda player_triforce_pieces
+        beq .ww_default                 ; Aucun fragment -> Donjon 1 (H-4)
+        ldy #8                          ; Max 8 essais cycliques
+.ww_loop:
+        lda bit_powers,x
+        and player_triforce_pieces
+        bne .ww_found
+        inx
+        cpx #8
+        bcc +
+        ldx #0
++       dey
+        bne .ww_loop
+.ww_default:
+        ldx #0
+.ww_found:
+        lda .whistle_rooms,x
         sta current_room_idx
-        lda #7
+        lda .whistle_rx,x
         sta current_room_x
-        lda #3
+        lda .whistle_ry,x
         sta current_room_y
-        lda #180
+        lda .whistle_px,x
         sta player_x
         lda #0
         sta player_x+1
-        lda #150
+        lda .whistle_py,x
         sta player_y
         jsr load_room
         jsr hud_init
@@ -114,6 +153,12 @@ ovl_item_whistle_exec:
         jsr sound_secret_chime
 .whistle_end:
         rts
+
+.whistle_rooms: !byte  55,  60, 116,  69,  11,  34,  66, 109
+.whistle_rx:    !byte   7,  12,   4,   5,  11,   2,   2,  13
+.whistle_ry:    !byte   3,   3,   7,   4,   0,   2,   4,   6
+.whistle_px:    !byte 164, 164, 180, 180, 164, 164, 180, 180
+.whistle_py:    !byte 158, 158, 158, 158, 158, 158, 190, 110
 
 ; ===========================================================================
 ; 2. BOUGIE BLEUE / ROUGE (Candle)
@@ -134,7 +179,7 @@ ovl_item_candle_exec:
         bne .candle_done
 
         lda current_room_idx
-        ldx #21
+        ldx #11
 .chk_burn_tbl:
         cmp .burnable_rooms,x
         beq .burn_tree_secret
@@ -145,8 +190,8 @@ ovl_item_candle_exec:
         rts
 
 .burnable_rooms:
-        !byte 15, 29, 40, 68, 70, 81, 82, 83, 88, 91, 94
-        !byte 98, 99, 100, 102, 103, 106, 107, 108, 109, 111, 113
+        ; 12 salles Overworld authentiques avec arbres brûlables (incluant D8 en N-7 #109)
+        !byte 40, 70, 81, 82, 83, 88, 91, 98, 99, 106, 107, 109
 
 .burn_tree_secret:
         lda #TILE_CAVE
@@ -160,57 +205,149 @@ ovl_item_candle_exec:
         rts
 
 ; ===========================================================================
-; 3. BRACELET DE FORCE (Power Bracelet)
+; 3. POUSSÉE OVERWORLD UNIFIÉE : ROCHERS (BRACELET) & TOMBES (IDENTIQUE DONJONS)
+;    Entrée : Y = index de la tuile (0..199) touchée devant Link
+;    - Table stricte ow_push_tbl : seul le rocher/tombe authentique NES bouge
+;    - 1 seule poussée par salle (vérification overworld_secrets_opened)
+;    - Poussée continue OW_PUSH_FRAMES (60 images = ~1,2 s) avec push_shiver
+;    - Glissement réel d'une case (push_delta) + révélation TILE_CAVE dessous
 ; ===========================================================================
+OW_PUSH_FRAMES          = 60
+ow_push_cand_idx:       !byte 0
+ow_push_tile_type:      !byte 0
+
+; Table : salle, index_tuile, type_tuile, sens_autorisés (%RLUD = bits 3..0), besoin_bracelet
+ow_push_tbl:
+        !byte   9, 106, TILE_ROCK , %1111, 1   ; J-1 ($09) (6,5)  -> Hint 1
+        !byte  17, 110, TILE_ROCK , %1111, 1   ; B-2 ($11) (10,5) -> Hint 1
+        !byte  29, 105, TILE_ROCK , %1111, 1   ; N-2 ($1D) (5,5)  -> Warp
+        !byte  32, 108, TILE_GRAVE, %0010, 0   ; A-3 ($20) (8,5)  -> Warp (Tombe, Haut)
+        !byte  33, 111, TILE_GRAVE, %0010, 0   ; B-3 ($21) (11,5) -> Épée Magique (Tombe, Haut)
+        !byte  35, 105, TILE_ROCK , %1111, 1   ; D-3 ($23) (5,5)  -> Warp (rocher gauche)
+        !byte  51,  89, TILE_ROCK , %1111, 1   ; D-4 ($33) (9,4)  -> Potion Shop
+        !byte  73, 105, TILE_ROCK , %1111, 1   ; J-5 ($49) (5,5)  -> Warp
+        !byte 121, 110, TILE_ROCK , %1111, 1   ; J-8 ($79) (10,5) -> Warp (rocher gauche)
+        !byte $ff
+
 ovl_item_bracelet_exec:
+        sty ow_push_cand_idx
         lda current_world_type
-        bne .ow_special_done
-        lda player_has_bracelet
-        beq .ow_special_done
-        lda player_dir
-        cmp #DIR_UP
-        bne .ow_special_done
+        bne .ow_abort_tramp
 
-        ; Teste si Link pousse vers le haut contre un rocher (TILE_ROCK)
-        lda player_x
-        clc
-        adc #12                         ; Centre horizontal de Link
-        sta col_x
-        lda player_x+1
-        adc #0
-        sta col_x+1
-        lda player_y
-        sec
-        sbc #4                          ; Point de contact juste au-dessus de Link
-        sta col_y
-        jsr get_tile_at_point           ; Y = index dans room_buf (0..199), A = tile_id
-        cmp #TILE_ROCK
-        bne .ow_special_done
-
-        ; Salles overworld avec secret de rocher poussable :
-        ; 51 (D-4), 35 (D-3), 73 (J-5), 121 (J-8), 29 (N-2)
+        ; 1. Bloque si le secret de la salle est déjà ouvert (1 seule poussée)
         lda current_room_idx
-        cmp #51
-        beq .push_rock_found
-        cmp #35
-        beq .push_rock_found
-        cmp #73
-        beq .push_rock_found
-        cmp #121
-        beq .push_rock_found
-        cmp #29
-        beq .push_rock_found
-        rts
+        lsr
+        lsr
+        lsr
+        tax
+        lda current_room_idx
+        and #7
+        tay
+        lda bit_powers,y
+        and overworld_secrets_opened,x
+        bne .ow_abort_tramp
 
-.push_rock_found:
+        ; 2. Recherche stricte (salle, index_tuile) dans ow_push_tbl
+        ldx #0
+.ow_pt_scan:
+        lda ow_push_tbl,x
+        cmp #$ff
+        beq .ow_abort_tramp
+        cmp current_room_idx
+        bne .ow_pt_next
+        lda ow_push_tbl+1,x
+        cmp ow_push_cand_idx
+        beq .ow_pt_found
+.ow_pt_next:
+        txa
+        clc
+        adc #5
+        tax
+        bne .ow_pt_scan
+.ow_abort_tramp:
+        jmp .ow_push_abort
+
+.ow_pt_found:
+        ; 3. Vérifie le type de tuile actuel dans room_buf
+        ldy ow_push_cand_idx
+        lda ow_push_tbl+2,x
+        sta ow_push_tile_type
+        cmp room_buf,y
+        bne .ow_push_abort
+
+        ; 4. Vérifie le Bracelet de Force si requis
+        lda ow_push_tbl+4,x
+        beq .ow_pt_dir_chk
+        lda player_has_bracelet
+        beq .ow_push_abort
+
+.ow_pt_dir_chk:
+        ; 5. Direction de poussée autorisée ?
+        ldy player_dir
+        lda push_dirbit,y
+        and ow_push_tbl+3,x
+        beq .ow_push_abort
+
+        ; 6. Case d'arrivée libre (TILE_GRASS) ?
+        lda ow_push_cand_idx
+        clc
+        adc push_delta,y
+        sta push_dest_idx
+        tay
         lda room_buf,y
-        cmp #TILE_CAVE
-        beq .ow_special_done
+        cmp #TILE_GRASS
+        bne .ow_push_abort
+
+        ; 7. Si changement de tuile poussée en cours de route, restaure l'ancienne
+        lda dungeon_push_timer
+        beq .ow_pt_set_idx
+        lda ow_push_cand_idx
+        cmp push_block_idx
+        beq .ow_pt_inc
+        ldy push_block_idx
+        jsr redraw_single_tile
+        lda #0
+        sta dungeon_push_timer
+.ow_pt_set_idx:
+        lda ow_push_cand_idx
+        sta push_block_idx
+
+.ow_pt_inc:
+        inc dungeon_push_timer
+        lda dungeon_push_timer
+        cmp #OW_PUSH_FRAMES
+        bcc .ow_pt_shiver
+
+        ; 8. Le rocher / la tombe cède et glisse d'une case !
+        lda #0
+        sta dungeon_push_timer
+
+        ; Ancienne case -> Escalier secret (TILE_CAVE)
+        ldy push_block_idx
         lda #TILE_CAVE
         sta room_buf,y
         jsr redraw_single_tile
+
+        ; Nouvelle case (+push_delta) -> Rocher ou Tombe déplacé
+        ldy push_dest_idx
+        lda ow_push_tile_type
+        sta room_buf,y
+        jsr redraw_single_tile
+
         jsr sound_secret
         jsr record_room_secret_opened
+        rts
+
+.ow_pt_shiver:
+        jmp push_shiver
+
+.ow_push_abort:
+        lda dungeon_push_timer
+        beq .ow_special_done
+        ldy push_block_idx
+        jsr redraw_single_tile
+        lda #0
+        sta dungeon_push_timer
 .ow_special_done:
         rts
 
@@ -294,38 +431,16 @@ ovl_item_bomb_secret_exec:
         rts
 
 .test_bomb_point:
+        ; Les 23 parois secrètes bombables authentiques sont marquées 'B' (TILE_WALL_SECRET_B)
+        ; dans assets/world.txt : ouverture exacte et persistance 100% garantie.
         jsr get_tile_at_point
         cmp #TILE_WALL_SECRET_B
-        bne .check_b_room
-        sec
-        rts
-
-.check_b_room:
-        cmp #TILE_WALL
         bne .not_b_sec
-        lda current_room_idx
-        ldx #41
-.chk_bomb_tbl:
-        cmp .bombable_rooms,x
-        beq .is_b_room
-        dex
-        bpl .chk_bomb_tbl
-        jmp .not_b_sec
-.is_b_room:
-        cpy #120
-        bcc .found_b_sec
-        jmp .not_b_sec
-.found_b_sec:
         sec
         rts
 .not_b_sec:
         clc
         rts
-
-.bombable_rooms:
-        !byte 1, 2, 3, 4, 5, 7, 14, 15, 16, 17, 18, 19, 20, 24, 25, 26, 28, 30, 31
-        !byte 33, 37, 43, 44, 45, 50, 61, 67, 72, 73, 74, 78, 86, 98, 100, 103, 104
-        !byte 110, 112, 114, 118, 120, 125
 
 ; ===========================================================================
 ; 5. RADEAU DE TRANSPORT (Raft launch check)
@@ -362,4 +477,765 @@ ovl_item_raft_launch:
         sta game_state
         jsr sound_secret
         sec
+        rts
+
+; ===========================================================================
+; 6. CELLIERS SOUTERRAINS (ovl_enter_cellar / ovl_exit_cellar — Fix C1 D9 $23)
+; ===========================================================================
+cellar_ladder_char_l:
+        !byte %00100100, %00101010, %00100101, %00100100
+        !byte %00100100, %00101010, %00100101, %00100100
+cellar_ladder_char_r:
+        !byte %00100100, %10101000, %01010100, %00100100
+        !byte %00100100, %10101000, %01010100, %00100100
+
+build_cellar_room:
+        ldx #0
+        lda #TILE_DUNG_WALL_TOP
+-       sta room_buf,x
+        inx
+        cpx #200
+        bcc -
+
+        ldy #40
+.cellar_row_loop:
+        tya
+        clc
+        adc #3
+        tax
+        lda #14
+        sta ZP_TMP
+        lda #TILE_DUNG_DOOR_OPEN
+.cellar_col_loop:
+        sta room_buf,x
+        inx
+        dec ZP_TMP
+        bne .cellar_col_loop
+
+        tya
+        clc
+        adc #20
+        tay
+        cpy #160
+        bcc .cellar_row_loop
+
+        lda #TILE_DUNG_WALL_TOP
+        sta room_buf+46
+        sta room_buf+47
+        sta room_buf+48
+        sta room_buf+51
+        sta room_buf+52
+        sta room_buf+53
+        sta room_buf+149
+        sta room_buf+150
+        sta room_buf+151
+
+        ldy #4
+        ldx #8
+-       lda #TILE_DUNG_STAIRS
+        sta room_buf,y
+        tya
+        clc
+        adc #20
+        tay
+        dex
+        bne -
+        rts
+
+ovl_enter_cellar:
+        lda #STATE_CELLAR
+        sta game_state
+        lda #0
+        sta cellar_pickup_timer
+        sta player_attacking
+        sta item_active
+        sta en_proj_active
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        sta VIC_SPRITE_MSB
+
+        ldx #7
+        lda #0
+-       sta en_state,x
+        dex
+        bpl -
+
+        ldx #7
+-       lda cellar_ladder_char_l,x
+        sta $20e0,x
+        sta $20f0,x
+        lda cellar_ladder_char_r,x
+        sta $20e8,x
+        sta $20f8,x
+        dex
+        bpl -
+
+        lda #COL_BLACK
+        sta active_bg_color
+        sta VIC_BACKGROUND
+        lda #COL_GREY
+        sta VIC_BG_MC1
+        lda #COL_WHITE
+        sta VIC_BG_MC2
+        lda #9
+        ldy #15
+-       sta active_tile_color,y
+        dey
+        bpl -
+
+        lda #88
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #84
+        sta player_y
+        lda #DIR_DOWN
+        sta player_dir
+
+        jsr build_cellar_room
+        lda #<room_buf
+        sta ZP_MAP
+        lda #>room_buf
+        sta ZP_MAP+1
+        jsr draw_map
+        jsr hud_render
+        jmp cellar_draw
+
+ovl_exit_cellar:
+        lda #STATE_PLAYING
+        sta game_state
+        lda #0
+        sta cellar_pickup_timer
+        sta player_x+1
+        lda #DIR_LEFT
+        sta player_dir
+
+        ; Recharge d'abord la salle du donjon pour valider les tuiles praticables
+        jsr copy_map_charset
+        jsr load_room
+        jsr dungeon_apply_room_state_active
+
+        lda current_dungeon_level
+        cmp #1
+        beq .exit_d1
+        cmp #5
+        beq .exit_d5
+        cmp #9
+        bne .exit_default
+        lda current_room_idx
+        cmp #$23
+        bne .exit_default
+        ; Fix C1 : En D9 $23 (Cellier Anneau Rouge), (12,3) est une statue solide !
+        ; Les escaliers sont en (14,4) -> placer Link en (15,4) libre (X=264=$0108, Y=146)
+        lda #<264
+        sta player_x
+        lda #>264
+        sta player_x+1
+        lda #146
+        sta player_y
+        lda #DIR_RIGHT
+        sta player_dir
+        jmp .finish_exit
+
+.exit_d5:
+        lda #228
+        sta player_x
+        lda #142
+        sta player_y
+        jmp .finish_exit
+
+.exit_d1:
+        lda #152
+        sta player_x
+        lda #143
+        sta player_y
+        jmp .finish_exit
+
+.exit_default:
+        lda #216
+        sta player_x
+        lda #134
+        sta player_y
+
+.finish_exit:
+        jsr enemies_room_init
+        jmp hud_render
+
+; ===========================================================================
+; 7. ERMITE DONJON 1 ($41) & GORIYA AFFAMÉ DONJON 7 ($4B) (V1 / M6)
+; ===========================================================================
+ovl_d1_hermit_41:
+        ldx #0
+        lda #0
+-       sta en_state,x
+        inx
+        cpx #MAX_ENEMIES
+        bcc -
+
+        ldx #0
+-       lda txt_hint_d1_1,x
+        sta SCREEN_RAM+240+7,x
+        lda #COL_WHITE
+        sta COLOR_RAM+240+7,x
+        inx
+        cpx #25
+        bne -
+
+        ldx #0
+-       lda txt_hint_d1_2,x
+        sta SCREEN_RAM+320+13,x
+        lda #COL_WHITE
+        sta COLOR_RAM+320+13,x
+        inx
+        cpx #14
+        bne -
+
+        lda #(sprite_link_old_man / 64)
+        sta SPRITE_PTR3
+        lda #COL_RED
+        sta VIC_SPRITE_COL3
+        lda #160
+        sta VIC_SPRITE_X3
+        lda #130
+        sta VIC_SPRITE_Y3
+        jmp .setup_npc_torches
+
+ovl_d7_hungry_goriya_setup:
+        ldx #0
+        lda #0
+-       sta en_state,x
+        inx
+        cpx #MAX_ENEMIES
+        bcc -
+
+        ; Affiche "GRUMBLE, GRUMBLE..." centré ligne 6
+        ldx #0
+-       lda txt_grumble,x
+        sta SCREEN_RAM+240+10,x
+        lda #COL_WHITE
+        sta COLOR_RAM+240+10,x
+        inx
+        cpx #19
+        bne -
+
+        ; Goriya affamé au centre (Sprite 3)
+        lda #SPR_DUNG_GORIYA_DOWN_0
+        sta SPRITE_PTR3
+        lda #COL_RED
+        sta VIC_SPRITE_COL3
+        lda #172
+        sta VIC_SPRITE_X3
+        lda #136
+        sta VIC_SPRITE_Y3
+
+.setup_npc_torches:
+        lda #(sprite_link_proj_flame_0 / 64)
+        sta SPRITE_PTR4
+        lda #(sprite_link_proj_flame_1 / 64)
+        sta SPRITE_PTR5
+        lda #COL_CYAN
+        sta VIC_SPRITE_COL4
+        sta VIC_SPRITE_COL5
+        lda #120
+        sta VIC_SPRITE_X4
+        lda #224
+        sta VIC_SPRITE_X5
+        lda #136
+        sta VIC_SPRITE_Y4
+        sta VIC_SPRITE_Y5
+        lda #0
+        sta VIC_SPRITE_MSB
+        lda #%00111001
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_MC
+        rts
+
+txt_hint_d1_1:  !text "EASTMOST PENINSULA IS THE"
+txt_hint_d1_2:  !text "   SECRET.    "
+txt_grumble:    !text "GRUMBLE, GRUMBLE..."
+
+; ===========================================================================
+; 8. UTILISATION DE LA NOURRITURE / APPÂT (ovl_use_food_exec — Fix M6)
+; ===========================================================================
+ovl_use_food_exec:
+        ; En Donjon 7 salle $49 : nourrit le Goriya affamé et ouvre les volets !
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .food_bait
+        lda current_dungeon_level
+        cmp #7
+        bne .food_bait
+        lda current_room_idx
+        cmp #$49
+        bne .food_bait
+        ldx #$49
+        lda dungeon_room_state,x
+        and #DUNG_SECRET_REVEALED
+        bne .food_bait
+
+        ; Consomme la nourriture et libère la salle $4B
+        lda #0
+        sta player_has_food
+        lda dungeon_room_state,x
+        ora #(DUNG_SECRET_REVEALED | DUNG_ROOM_CLEARED)
+        sta dungeon_room_state,x
+        ; Efface les sprites Goriya/torches et redessine la salle proprement
+        lda #%00000001
+        sta VIC_SPRITE_EN
+        jsr load_room
+        jsr dungeon_open_shutters
+        jsr hud_render
+        jsr sound_secret_chime
+        rts
+
+.food_bait:
+        ; Hors Goriya affamé : joue le son d'appât et étourdit/attire les ennemis actifs
+        lda #0
+        sta ZP_TMP
+        ldx #0
+.bait_loop:
+        lda en_state,x
+        cmp #EN_STATE_WALK
+        bne .bait_next
+        ldy en_type,x
+        lda en_ai_type,y
+        cmp #AI_BOSS
+        beq .bait_next
+        cpy #TYPE_BUBBLE
+        beq .bait_next
+        cpy #TYPE_TRAP
+        beq .bait_next
+        lda #EN_STATE_HURT
+        sta en_state,x
+        lda #120
+        sta en_hurt_timer,x
+        inc ZP_TMP
+.bait_next:
+        inx
+        cpx #MAX_ENEMIES
+        bcc .bait_loop
+        ; Ne consomme la viande que si au moins un monstre a été attiré !
+        lda ZP_TMP
+        beq +
+        lda #0
+        sta player_has_food
++       jsr sound_food
+        rts
+
+; ===========================================================================
+; 9. PORTAIL DONJON 9 : REQUIERT LES 8 FRAGMENTS DE TRIFORCE (Fix M3)
+; ===========================================================================
+ovl_d9_gate_blocked:
+        ; Repousse Link sous l'entrée de Spectacle Rock
+        lda player_y
+        clc
+        adc #20
+        sta player_y
+        lda #DIR_DOWN
+        sta player_dir
+        jsr sound_shield_block
+
+        ; Affiche la bannière d'avertissement sur la ligne 5 (centrée)
+        ldx #0
+-       lda txt_d9_gate,x
+        sta SCREEN_RAM+200+6,x
+        lda #COL_YELLOW
+        sta COLOR_RAM+200+6,x
+        inx
+        cpx #28
+        bne -
+
+        ; Maintient le message ~1,4s (70 frames) puis redessine la salle
+        lda #70
+        sta ZP_TMP
+.d9g_wait:
+        jsr wait_frame
+        dec ZP_TMP
+        bne .d9g_wait
+
+        jsr load_room
+        jsr hud_render
+        rts
+
+txt_d9_gate:    !text "NEED ALL 8 TRIFORCE PIECES! "
+
+; ===========================================================================
+; 10. ÉCRAN GAME OVER & CONTINUE (Fix C2 — STATE_GAMEOVER = 8)
+; ===========================================================================
+ovl_modal_timer: !byte 0
+
+ovl_clear_screen_black:
+        lda #0
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_MSB
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        sta active_bg_color
+        sta VIC_BACKGROUND
+        sta VIC_BORDER
+        ldx #0
+.oc_lp:
+        lda #32
+        sta SCREEN_RAM,x
+        sta SCREEN_RAM+250,x
+        sta SCREEN_RAM+500,x
+        sta SCREEN_RAM+750,x
+        lda #COL_WHITE
+        sta COLOR_RAM,x
+        sta COLOR_RAM+250,x
+        sta COLOR_RAM+500,x
+        sta COLOR_RAM+750,x
+        inx
+        cpx #250
+        bne .oc_lp
+        rts
+
+ovl_print_line:
+        ; ZP_SRC = texte nul-terminé, ZP_DST = SCREEN_RAM+ofs, ZP_TMP = couleur
+        ldy #0
+-       lda (ZP_SRC),y
+        beq +
+        sta (ZP_DST),y
+        iny
+        bne -
++       ; Applique la couleur sur Y caractères
+        lda ZP_DST
+        sta ZP_MAP
+        lda ZP_DST+1
+        clc
+        adc #($d8 - $04)                ; $0400 -> $D800
+        sta ZP_MAP+1
+        lda ZP_TMP
+        dey
+        bmi ++
+-       sta (ZP_MAP),y
+        dey
+        bpl -
+++      rts
+
+ovl_gameover_open:
+        lda #STATE_GAMEOVER
+        sta game_state
+        jsr music_stop
+        jsr ovl_clear_screen_black
+        lda #35
+        sta ovl_modal_timer
+
+        ; Titre "GAME OVER" en rouge (ligne 8, col 15)
+        lda #<txt_go_title
+        sta ZP_SRC
+        lda #>txt_go_title
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 8 + 15)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 8 + 15)
+        sta ZP_DST+1
+        lda #COL_RED
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        ; Sous-titre (ligne 11, col 7)
+        lda #<txt_go_sub
+        sta ZP_SRC
+        lda #>txt_go_sub
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 11 + 7)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 11 + 7)
+        sta ZP_DST+1
+        lda #COL_WHITE
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        ; Invite Continue (ligne 16, col 8)
+        lda #<txt_go_cont
+        sta ZP_SRC
+        lda #>txt_go_cont
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 16 + 8)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 16 + 8)
+        sta ZP_DST+1
+        lda #COL_YELLOW
+        sta ZP_TMP
+        jsr ovl_print_line
+        rts
+
+ovl_gameover_update:
+        lda #0
+        sta VIC_SPRITE_EN
+        lda ovl_modal_timer
+        beq .go_wait_btn
+        dec ovl_modal_timer
+        rts
+
+.go_wait_btn:
+        lda btn_a_pressed
+        ora btn_x_pressed
+        ora btn_b_pressed
+        bne .go_continue
+        lda joy
+        and #JOY_FIRE
+        bne .go_continue
+        rts
+
+.go_continue:
+        ; Restaure 3 cœurs (ou hud_max_hearts si inférieur)
+        lda #3
+        cmp hud_max_hearts
+        bcc +
+        lda hud_max_hearts
++       sta hud_cur_hearts
+        lda #0
+        sta player_hurt_timer
+        sta sword_cursed_timer
+        sta item_active
+        sta en_proj_active
+        sta player_attacking
+
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq .go_respawn_dung
+
+        ; Respawn Overworld au départ H-8 (7, 7)
+        lda #7
+        sta current_room_x
+        sta current_room_y
+        jsr clear_screen
+        jsr disk_load_map_overworld
+        jsr cart_load_sprites_ow
+        lda #180
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #150
+        sta player_y
+        lda #DIR_DOWN
+        sta player_dir
+        lda #MUSIC_OVERWORLD
+        jsr music_play
+        jsr load_room
+        jsr hud_init
+        jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+.go_respawn_dung:
+        ; Respawn à l'entrée du donjon actif
+        lda dungeon_entrance_room_x
+        sta current_room_x
+        lda dungeon_entrance_room_y
+        sta current_room_y
+        jsr clear_screen
+        lda #176
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #180
+        sta player_y
+        lda #DIR_UP
+        sta player_dir
+        jsr sound_play_dungeon_music
+        jsr load_room
+        jsr hud_init
+        jsr enemies_room_init
+        jsr dungeon_on_enter_room
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+txt_go_title:   !text "GAME OVER", 0
+txt_go_sub:     !text "LINK HAS FALLEN IN BATTLE.", 0
+txt_go_cont:    !text "PRESS [A] OR [FIRE] TO CONTINUE", 0
+
+; ===========================================================================
+; 11. SAUVETAGE PRINCESSE ZELDA & ÉCRAN DE FIN (Fix M2 — STATE_ENDING = 9)
+; ===========================================================================
+ovl_ending_open:
+        lda #STATE_ENDING
+        sta game_state
+        jsr ovl_clear_screen_black
+        jsr sound_triforce_fanfare
+        lda #60
+        sta ovl_modal_timer
+
+        ; Texte de victoire authentique NES
+        lda #<txt_end_1
+        sta ZP_SRC
+        lda #>txt_end_1
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 5 + 13)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 5 + 13)
+        sta ZP_DST+1
+        lda #COL_YELLOW
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        lda #<txt_end_2
+        sta ZP_SRC
+        lda #>txt_end_2
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 7 + 6)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 7 + 6)
+        sta ZP_DST+1
+        lda #COL_WHITE
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        lda #<txt_end_3
+        sta ZP_SRC
+        lda #>txt_end_3
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 16 + 7)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 16 + 7)
+        sta ZP_DST+1
+        lda #COL_CYAN
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        lda #<txt_end_4
+        sta ZP_SRC
+        lda #>txt_end_4
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 20 + 6)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 20 + 6)
+        sta ZP_DST+1
+        lda #COL_YELLOW
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        ; Sprites de fin : Link (0) brandissant la Triforce (2) à côté de Zelda (1)
+        lda #SPR_COMMON_ITEM_GET
+        sta SPRITE_PTR0
+        lda #COL_GREEN
+        sta VIC_SPRITE_COL0
+        lda #148
+        sta VIC_SPRITE_X0
+        lda #148
+        sta VIC_SPRITE_Y0
+
+        lda #(sprite_link_old_woman / 64)
+        sta SPRITE_PTR1
+        lda #COL_LIGHT_RED
+        sta VIC_SPRITE_COL1
+        lda #196
+        sta VIC_SPRITE_X1
+        lda #148
+        sta VIC_SPRITE_Y1
+
+        lda #SPR_COMMON_TRIFORCE
+        sta SPRITE_PTR2
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL2
+        lda #172
+        sta VIC_SPRITE_X2
+        lda #128
+        sta VIC_SPRITE_Y2
+
+        lda #%00000111
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_MC
+        rts
+
+ovl_ending_update:
+        ; Fait scintiller la Triforce
+        inc ZP_TMP
+        lda ZP_TMP
+        and #8
+        beq +
+        lda #COL_WHITE
+        bne ++
++       lda #COL_YELLOW
+++      sta VIC_SPRITE_COL2
+
+        lda ovl_modal_timer
+        beq .end_wait_btn
+        dec ovl_modal_timer
+        rts
+
+.end_wait_btn:
+        lda btn_a_pressed
+        ora btn_x_pressed
+        ora btn_b_pressed
+        bne .end_finish
+        lda joy
+        and #JOY_FIRE
+        bne .end_finish
+        rts
+
+.end_finish:
+        ; Soin complet et retour triomphal en Hyrule
+        lda hud_max_hearts
+        sta hud_cur_hearts
+        lda #$ff
+        sta player_triforce_pieces
+        jmp ovl_exit_dungeon
+
+txt_end_1:      !text "THANKS LINK!", 0
+txt_end_2:      !text "YOU ARE THE HERO OF HYRULE!", 0
+txt_end_3:      !text "PEACE RETURNS TO HYRULE.", 0
+txt_end_4:      !text "PRESS [A] TO RETURN TO HYRULE", 0
+
+; ===========================================================================
+; 12. SORTIE DE DONJON (ovl_exit_dungeon — déporté de tilemap.asm vers Banque 29)
+; ===========================================================================
+ovl_exit_dungeon:
+        lda #0
+        sta en_type
+        sta en_type+1
+        sta en_proj_active
+        sta item_active
+        sta player_attacking
+
+        lda saved_ow_room_x
+        sta current_room_x
+        lda saved_ow_room_y
+        sta current_room_y
+
+        jsr clear_screen
+        lda #WORLD_OVERWORLD
+        sta current_world_type
+        jsr disk_load_map_overworld
+        jsr cart_load_sprites_ow
+
+        lda saved_ow_player_x
+        sta player_x
+        lda saved_ow_player_x+1
+        sta player_x+1
+        lda saved_ow_player_y
+        clc
+        adc #16
+        sta player_y
+        lda #DIR_DOWN
+        sta player_dir
+        lda #0
+        sta player_walk_anim
+        sta player_walk_tick
+
+        lda current_dungeon_level
+        cmp #9
+        bne +
+        jsr sound_restore_standard_bgm
++       lda #MUSIC_OVERWORLD
+        jsr music_play
+
+        jsr load_room
+        lda current_dungeon_level
+        cmp #8
+        bne +
+        lda #244
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #162
+        sta player_y
++       jsr hud_init
+        jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
         rts

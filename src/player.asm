@@ -48,15 +48,15 @@ ladder_spr_x:          !word 0          ; position écran X du sprite d'échelle
 ladder_spr_y:          !byte 0          ; position écran Y du sprite d'échelle
 player_has_magic_key:  !byte 0          ; 1 = clef magique
 
-; Objets d'inventaire Slot B
-player_has_boomerang:  !byte 1          ; 1 = boomerang
-player_has_bow:        !byte 1          ; 1 = arc
-player_has_arrows:     !byte 1          ; 1 = flèches
-player_has_candle:     !byte 1          ; 1 = bougie bleue
+; Objets d'inventaire Slot B (gagnés en jeu, authentique NES)
+player_has_boomerang:  !byte 0          ; 1 = boomerang, 2 = boomerang magique
+player_has_bow:        !byte 0          ; 1 = arc
+player_has_arrows:     !byte 0          ; 1 = flèches, 2 = flèches d'argent
+player_has_candle:     !byte 0          ; 1 = bougie bleue, 2 = bougie rouge
 player_has_food:       !byte 0          ; 1 = viande / appât
 player_has_potion:     !byte 0          ; 0 = aucune, 1 = bleue, 2 = rouge
-player_has_whistle:    !byte 1          ; 1 = flûte magique
-player_has_wand:       !byte 1          ; 1 = baguette magique
+player_has_whistle:    !byte 0          ; 1 = flûte magique
+player_has_wand:       !byte 0          ; 1 = baguette magique
 
 
 player_has_compass:     !byte 0          ; 1 = boussole du donjon actif
@@ -613,15 +613,17 @@ player_update:
         bne .chk_dock_heart
 
 .in_fairy_pond:
+        lda player_x+1
+        bne .chk_dock_heart
         lda player_y
-        cmp #100
+        cmp #96
         bcc .chk_dock_heart
-        cmp #160
+        cmp #196
         bcs .chk_dock_heart
         lda player_x
-        cmp #120
+        cmp #104
         bcc .chk_dock_heart
-        cmp #184
+        cmp #236
         bcs .chk_dock_heart
         ; Link est dans le bassin de la Fée : soin complet de sa vie !
         lda hud_cur_hearts
@@ -637,25 +639,25 @@ player_update:
         ; --- Conteneur de Cœur sur le ponton marin en salle 95 (P-6) ---
         lda current_room_idx
         cmp #95
-        bne .chk_grave_push
+        bne .chk_ow_push
         lda player_has_stepladder
-        beq .chk_grave_push
+        beq .chk_ow_push
         lda player_x+1
         bne .dock_heart_x_ok
         lda player_x
         cmp #200
-        bcc .chk_grave_push
+        bcc .chk_ow_push
 .dock_heart_x_ok:
         lda player_y
         cmp #120
-        bcc .chk_grave_push
+        bcc .chk_ow_push
         cmp #180
-        bcs .chk_grave_push
+        bcs .chk_ow_push
         ; Vérifie si le cœur de la salle 95 a déjà été pris
         ldx #95
         lda cave_room_cleared,x
         and #1
-        bne .chk_grave_push
+        bne .chk_ow_push
         lda #1
         ora cave_room_cleared,x
         sta cave_room_cleared,x
@@ -666,63 +668,66 @@ player_update:
         jsr sound_item_fanfare
         rts
 
-.chk_grave_push:
-        ; --- Pousser la tombe en salle 33 (B-3) vers l'Épée Magique ---
-        lda current_room_idx
-        cmp #33
-        bne .chk_rock_push
-        lda player_dir
-        cmp #DIR_UP
-        bne .chk_rock_push
-        lda player_x
-        clc
-        adc #12
-        sta col_x
-        lda player_x+1
-        adc #0
-        sta col_x+1
-        lda player_y
-        sec
-        sbc #4
-        sta col_y
-        jsr get_tile_at_point
-        cmp #TILE_GRAVE
-        bne .chk_rock_push
-        lda room_buf,y
-        cmp #TILE_CAVE
-        beq .chk_rock_push
-        lda #TILE_CAVE
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret
-        jsr record_room_secret_opened
-        rts
+.chk_ow_push:
+        ; --- Poussée unifiée Rochers (Bracelet) & Tombes (identique aux donjons) ---
+        lda joy
+        and #%00001111
+        beq .ow_push_reset
 
-.chk_rock_push:
-        ; --- Pousser les rochers secrets avec le Bracelet de Force ---
-        lda player_has_bracelet
-        beq .ow_special_done
-        lda player_dir
-        cmp #DIR_UP
-        bne .ow_special_done
-        lda player_x
+        ldx player_dir
+        lda push_p1x,x
+        sta push_pdx
+        lda push_p1y,x
+        sta push_pdy
+        jsr .ow_probe_pushable
+        bcs .ow_push_hit
+        ldx player_dir
+        lda push_p2x,x
+        sta push_pdx
+        lda push_p2y,x
+        sta push_pdy
+        jsr .ow_probe_pushable
+        bcc .ow_push_reset
+
+.ow_push_hit:
+        ; Y = index de la tuile (0..199) touchée devant Link (TILE_ROCK ou TILE_GRAVE)
+        tya
+        pha
+        jsr load_ovl_items
+        pla
+        tay
+        jmp $a006                       ; ovl_item_bracelet_exec (rochers + tombes)
+
+.ow_probe_pushable:
         clc
-        adc #12
+        lda player_x
+        adc push_pdx
         sta col_x
         lda player_x+1
         adc #0
         sta col_x+1
+        clc
         lda player_y
-        sec
-        sbc #4
+        adc push_pdy
         sta col_y
         jsr get_tile_at_point
         cmp #TILE_ROCK
-        bne .ow_special_done
-        lda #CART_BANK_OVL_ITEMS
-        ldx #4
-        jsr cart_load_overlay
-        jsr $a006                      ; ovl_item_bracelet_exec
+        beq .ow_probe_yes
+        cmp #TILE_GRAVE
+        beq .ow_probe_yes
+        clc
+        rts
+.ow_probe_yes:
+        sec
+        rts
+
+.ow_push_reset:
+        lda dungeon_push_timer
+        beq .ow_special_done
+        ldy push_block_idx
+        jsr redraw_single_tile
+        lda #0
+        sta dungeon_push_timer
 .ow_special_done:
         rts
 
@@ -743,6 +748,13 @@ check_room_entrance:
         ldx current_room_idx
         lda dungeon_room_levels,x
         beq .chk_cave
+        cmp #9
+        bne .do_enter_dung
+        ldy player_triforce_pieces
+        cpy #$ff
+        beq .do_enter_dung
+        jmp d9_gate_blocked
+.do_enter_dung:
         sta current_dungeon_level
         jsr enter_dungeon
         rts

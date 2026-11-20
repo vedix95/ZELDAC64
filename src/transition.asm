@@ -42,7 +42,7 @@ apply_trans_override_end:
 
 ; ---------------------------------------------------------------------------
 ; check_lost_navigation : gère les séquences de sortie des Labyrinthes Overworld
-;   - Forêt Perdue (Salle $52 / C-6) : Haut, Gauche, Bas, Gauche vers le Cimetière ($51)
+;   - Forêt Perdue / Enchantée (Salle $61 / B-7) : Haut, Gauche, Bas, Gauche vers A-7 ($60) puis Cimetière
 ;   - Collines Perdues (Salle $1B / L-2) : 4x Haut vers le Donjon 5 ($11)
 ; Entrée : A = direction du mouvement (DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT)
 ; ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ check_lost_navigation:
         beq +
         rts
 +       lda current_room_idx
-        cmp #$52                        ; Lost Woods (Screen C-6 = Row 5, Col 2)
+        cmp #$61                        ; Lost Woods (Screen B-7 = Row 6, Col 1, authentique NES)
         beq .eval_lost_woods
         cmp #$1b                        ; Lost Hills (Screen L-2 = Row 1, Col 11)
         beq .go_lost_hills
@@ -74,7 +74,7 @@ check_lost_navigation:
         lda ZP_TMP
         cmp #DIR_RIGHT
         bne +
-        ; Sortie vers l'Est (D-6 / $53) : sortie normale de la forêt
+        ; Sortie vers l'Est (C-7 / $62) : sortie normale de la forêt
         lda #0
         sta lost_woods_progress
         rts
@@ -107,7 +107,7 @@ check_lost_navigation:
         jmp .lw_loop
 .lw_solved:
         ; Séquence Up -> Left -> Down -> Left accomplie !
-        ; Transition normale à gauche vers le cimetière (Salle $51 = Screen B-6)
+        ; Transition normale à gauche vers A-7 (Salle $60) menant au Cimetière
         lda #0
         sta lost_woods_progress
         jsr sound_secret
@@ -128,11 +128,11 @@ check_lost_navigation:
 .lw_loop:
         lda #1
         sta trans_override_target
-        lda #2
+        lda #1
         sta trans_target_rx
-        lda #5
+        lda #6
         sta trans_target_ry
-        lda #$52
+        lda #$61
         sta trans_target_room_idx
         rts
 
@@ -219,9 +219,7 @@ check_ow_raft:
         bpl .chk_raft_room
         rts
 .do_raft_ovl:
-        lda #CART_BANK_OVL_ITEMS
-        ldx #4
-        jsr cart_load_overlay
+        jsr load_ovl_items
         jmp $a00c                      ; ovl_item_raft_launch
 
 raft_src_room:    !byte 85, 69, 63, 47
@@ -359,63 +357,7 @@ check_ow_specials_ext:
 ; ---------------------------------------------------------------------------
 !zone transition_right
 
-; ---------------------------------------------------------------------------
-; restore_target_secrets : Restauration des grottes secrètes dans target_room_buf
-; ---------------------------------------------------------------------------
-restore_target_secrets:
-        lda current_world_type
-        bne .no_sec_tgt
-        ldx target_room_idx
-        txa
-        lsr
-        lsr
-        lsr
-        tax
-        lda target_room_idx
-        and #7
-        tay
-        lda bit_powers,y
-        and overworld_secrets_opened,x
-        beq .no_sec_tgt
-
-        ldx #14
--       lda sec_rooms_tbl,x
-        cmp target_room_idx
-        bne +
-        ldy sec_tiles_tbl,x
-        lda #TILE_CAVE
-        sta target_room_buf,y
-        lda target_room_idx
-        cmp #66
-        bne .chk_std_tgt
-        ldy #0
-.dry_c5_tgt:
-        lda target_room_buf,y
-        cmp #TILE_WATER
-        bne .sk_dry_tgt
-        lda #TILE_GRASS
-        sta target_room_buf,y
-.sk_dry_tgt:
-        iny
-        cpy #200
-        bcc .dry_c5_tgt
-        jmp .chk_std_tgt
-+       dex
-        bpl -
-
-.chk_std_tgt:
-        ldy #0
--       lda target_room_buf,y
-        cmp #TILE_WALL_BOMB
-        bne .sk_bomb_tgt
-        lda #TILE_CAVE
-        sta target_room_buf,y
-.sk_bomb_tgt:
-        iny
-        cpy #200
-        bcc -
-.no_sec_tgt:
-        rts
+; restore_target_secrets est factorisé dans tilemap.asm (restore_secrets_to_buf)
 
 trans_setup_target:
         stx target_room_idx
@@ -478,6 +420,7 @@ trans_finalize_room:
         sta ladder_tile_idx
         lda #0
         sta ladder_stepped_on
+        sta dungeon_push_timer
 
         ; Mémorise la salle courante
         lda target_room_idx

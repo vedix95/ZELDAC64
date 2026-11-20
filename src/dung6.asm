@@ -66,24 +66,23 @@ dungeon_start_ry:       !byte 7    ; $C11F
 room_enemy_idx:
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0
         !byte 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 10, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 11, 12, 11, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 16, 17, 14, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 18, 19, 20, 0, 0, 0, 0, 0
-        !byte 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 21, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 2, 10, 11, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 12, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 14, 15, 16, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 17, 18, 15, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 19, 20, 21, 0, 0, 0, 0, 0
+        !byte 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 22, 0, 0, 0, 0, 0
 
-; Salle ($08 : rx=8, ry=0) - RLE compact (65 octets)
+; Salle ($08 : rx=8, ry=0) - RLE compact (63 octets)
 u_room_08:
         !byte 8, 225, 33, 9, 19, 32, 5, 32, 53, 0, 21, 16, 20, 19, 96, 53
-        !byte 0, 21, 16, 20, 19, 96, 53, 0, 21, 16, 20, 19, 96, 55, 0, 23
-        !byte 32, 14, 19, 96, 53, 0, 21, 32, 14, 19, 96, 101, 16, 20, 19, 32
-        !byte 5, 32, 53, 0, 21, 16, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11
-        !byte 255
+        !byte 0, 21, 16, 20, 19, 96, 53, 0, 21, 16, 20, 19, 176, 7, 48, 12
+        !byte 19, 96, 53, 0, 21, 32, 12, 19, 96, 101, 16, 20, 19, 32, 5, 32
+        !byte 53, 0, 21, 16, 20, 19, 224, 0, 20, 10, 114, 29, 114, 11, 255
 ; Salle ($09 : rx=9, ry=0) - RLE compact (45 octets)
 u_room_09:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 80, 5, 16, 5, 96, 15, 19, 224, 16, 15, 19, 224, 0, 20, 19
+        !byte 12, 96, 5, 16, 5, 96, 15, 12, 224, 32, 15, 19, 224, 0, 20, 19
         !byte 224, 0, 20, 19, 224, 0, 20, 10, 114, 29, 114, 11, 255
 ; Salle ($0a : rx=10, ry=0) - RLE compact (44 octets)
 u_room_0a:
@@ -101,35 +100,34 @@ u_room_0c:
         !byte 16, 6, 16, 6, 16, 5, 32, 20, 19, 32, 5, 0, 6, 48, 6, 0
         !byte 5, 32, 20, 19, 32, 5, 112, 5, 32, 20, 19, 32, 53, 16, 53, 32
         !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($18 : rx=8, ry=1) - RLE compact (54 octets)
+; Salle ($18 : rx=8, ry=1) - RLE compact (55 octets)
 u_room_18:
-        !byte 8, 225, 33, 9, 19, 16, 69, 16, 69, 16, 20, 19, 16, 53, 48, 53
-        !byte 16, 20, 19, 16, 21, 112, 21, 16, 20, 19, 224, 16, 14, 19, 224, 16
-        !byte 14, 19, 48, 5, 80, 5, 48, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 10, 114, 30, 114, 11, 255
+        !byte 8, 113, 29, 113, 9, 19, 16, 69, 16, 69, 16, 20, 19, 16, 53, 48
+        !byte 53, 16, 20, 19, 16, 21, 112, 21, 16, 20, 19, 224, 16, 14, 19, 224
+        !byte 16, 14, 19, 48, 5, 80, 5, 48, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 10, 114, 30, 114, 11, 255
 ; Salle ($19 : rx=9, ry=1) - RLE compact (49 octets)
 u_room_19:
         !byte 8, 113, 29, 113, 9, 19, 144, 5, 64, 20, 19, 144, 5, 64, 20, 19
         !byte 144, 5, 64, 20, 12, 160, 5, 80, 28, 160, 5, 80, 12, 19, 144, 5
         !byte 64, 20, 19, 144, 5, 64, 20, 19, 224, 0, 20, 10, 114, 29, 114, 11
         !byte 255
-; Salle ($1a : rx=10, ry=1) - RLE compact (43 octets)
+; Salle ($1a : rx=10, ry=1) - RLE compact (42 octets)
 u_room_1a:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 16, 181
         !byte 16, 20, 12, 224, 32, 28, 224, 32, 12, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
-; Salle ($1b : rx=11, ry=1) - RLE compact (49 octets)
+        !byte 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
+; Salle ($1b : rx=11, ry=1) - RLE compact (48 octets)
 u_room_1b:
         !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 48, 5, 80, 5, 48, 20
-        !byte 19, 224, 0, 20, 12, 224, 16, 20, 12, 224, 16, 20, 19, 48, 5, 80
-        !byte 5, 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11
-        !byte 255
-; Salle ($1c : rx=12, ry=1) - RLE compact (52 octets)
+        !byte 19, 224, 0, 20, 12, 224, 32, 13, 12, 224, 32, 13, 19, 48, 5, 80
+        !byte 5, 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
+; Salle ($1c : rx=12, ry=1) - RLE compact (51 octets)
 u_room_1c:
         !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 32, 5, 112, 5, 32, 20, 19, 224, 0, 20, 19, 64, 5, 48
-        !byte 5, 64, 20, 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20, 10, 114
-        !byte 17, 114, 11, 255
+        !byte 20, 13, 48, 5, 112, 5, 32, 20, 13, 224, 16, 20, 19, 64, 5, 48
+        !byte 5, 64, 20, 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20, 10, 226
+        !byte 34, 11, 255
 ; Salle ($28 : rx=8, ry=2) - RLE compact (70 octets)
 u_room_28:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 5, 0, 5, 0, 21
@@ -147,7 +145,7 @@ u_room_29:
 u_room_2a:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 48, 21, 48
         !byte 21, 48, 20, 19, 48, 21, 48, 21, 48, 20, 19, 48, 21, 48, 21, 48
-        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17
+        !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 31
         !byte 114, 11, 255
 ; Salle ($38 : rx=8, ry=3) - RLE compact (46 octets)
 u_room_38:
@@ -158,24 +156,24 @@ u_room_38:
 u_room_39:
         !byte 8, 113, 30, 113, 9, 19, 144, 5, 64, 20, 19, 144, 5, 64, 20, 19
         !byte 144, 5, 64, 20, 19, 144, 5, 80, 14, 19, 144, 5, 80, 14, 19, 144
-        !byte 5, 64, 20, 19, 144, 5, 64, 20, 19, 224, 0, 20, 10, 114, 17, 114
+        !byte 5, 64, 20, 19, 144, 5, 64, 20, 19, 224, 0, 20, 10, 114, 29, 114
         !byte 11, 255
 ; Salle ($3a : rx=10, ry=3) - RLE compact (43 octets)
 u_room_3a:
-        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 12, 112, 5, 112, 20, 12, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
+        !byte 8, 113, 31, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 12, 112, 5, 112, 20, 12, 224, 16, 20, 19, 224, 0, 20, 19, 224
+        !byte 0, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 ; Salle ($48 : rx=8, ry=4) - RLE compact (52 octets)
 u_room_48:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 48, 5
         !byte 80, 5, 48, 20, 19, 32, 5, 112, 5, 32, 20, 19, 48, 5, 80, 5
         !byte 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114
         !byte 28, 114, 11, 255
-; Salle ($49 : rx=9, ry=4) - RLE compact (42 octets)
+; Salle ($49 : rx=9, ry=4) - RLE compact (43 octets)
 u_room_49:
-        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 16, 12, 19, 224, 16, 12, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
+        !byte 8, 113, 29, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 19, 224, 16, 12, 19, 224, 16, 12, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
 ; Salle ($4a : rx=10, ry=4) - RLE compact (44 octets)
 u_room_4a:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 16, 181, 16
@@ -193,57 +191,56 @@ u_room_59:
         !byte 48, 21, 48, 20, 19, 48, 21, 48, 21, 64, 13, 19, 48, 21, 48, 21
         !byte 64, 13, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114
         !byte 30, 114, 11, 255
-; Salle ($5a : rx=10, ry=5) - RLE compact (43 octets)
+; Salle ($5a : rx=10, ry=5) - RLE compact (42 octets)
 u_room_5a:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
         !byte 20, 13, 224, 16, 20, 13, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
+        !byte 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 ; Salle ($68 : rx=8, ry=6) - RLE compact (52 octets)
 u_room_68:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 48, 21
         !byte 48, 21, 48, 20, 19, 48, 21, 48, 21, 48, 20, 19, 48, 21, 48, 21
         !byte 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114
         !byte 28, 114, 11, 255
-; Salle ($69 : rx=9, ry=6) - RLE compact (50 octets)
+; Salle ($69 : rx=9, ry=6) - RLE compact (49 octets)
 u_room_69:
         !byte 8, 113, 28, 113, 9, 19, 144, 53, 16, 20, 19, 144, 53, 16, 20, 19
         !byte 160, 37, 16, 20, 19, 192, 7, 16, 20, 19, 160, 37, 16, 20, 19, 144
-        !byte 53, 16, 20, 19, 144, 53, 16, 20, 19, 224, 0, 20, 10, 114, 17, 114
-        !byte 11, 255
+        !byte 53, 16, 20, 19, 144, 53, 16, 20, 19, 224, 0, 20, 10, 226, 34, 11
+        !byte 255
 ; Salle ($6a : rx=10, ry=6) - RLE compact (42 octets)
 u_room_6a:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
         !byte 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
         !byte 19, 224, 0, 20, 10, 114, 29, 114, 11, 255
-; Salle ($78 : rx=8, ry=7) - RLE compact (50 octets)
+; Salle ($78 : rx=8, ry=7) - RLE compact (49 octets)
 u_room_78:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 21, 80, 21, 32, 20
         !byte 19, 224, 0, 20, 19, 96, 21, 112, 13, 19, 224, 16, 13, 19, 32, 21
-        !byte 80, 21, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114
-        !byte 11, 255
+        !byte 80, 21, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 226, 34, 11
+        !byte 255
 ; Salle ($79 : rx=9, ry=7) - RLE compact (63 octets)
 u_room_79:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 32, 6, 16, 6, 16, 6, 16
         !byte 6, 32, 20, 19, 224, 0, 20, 13, 48, 6, 16, 6, 16, 6, 16, 6
         !byte 48, 12, 13, 224, 32, 12, 19, 32, 6, 16, 6, 16, 6, 16, 6, 32
         !byte 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($7a : rx=10, ry=7) - RLE compact (49 octets)
+; Salle ($7a : rx=10, ry=7) - RLE compact (48 octets)
 u_room_7a:
         !byte 8, 113, 29, 113, 9, 19, 224, 0, 20, 19, 48, 5, 80, 5, 48, 20
         !byte 19, 224, 0, 20, 12, 224, 16, 20, 12, 224, 16, 20, 19, 48, 5, 80
-        !byte 5, 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11
-        !byte 255
+        !byte 5, 48, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 
 ; Salle scellée étanche pour toutes les coordonnées hors-donjon
 dummy_sealed_room:
         !byte 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 225, 65, 255
 
-; Table d'apparition des monstres dédupliquée (22 formations x 24 octets)
+; Table d'apparition des monstres dédupliquée (23 formations x 24 octets)
 map_enemies:
         ; Formation 0
         !byte TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 1
-        !byte TYPE_GIBDO        ,  6,  3,   TYPE_GIBDO        , 13,  3,   TYPE_GIBDO        ,  8,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GIBDO        ,  6,  3,   TYPE_GIBDO        , 13,  3,   TYPE_GIBDO        , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 2
         !byte TYPE_DARKNUT_RED  ,  8,  3,   TYPE_DARKNUT_RED  , 12,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 3
@@ -259,30 +256,32 @@ map_enemies:
         ; Formation 8
         !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 14,  3,   TYPE_DARKNUT_BLUE , 10,  4,   TYPE_DARKNUT_BLUE ,  6,  5,   TYPE_DARKNUT_BLUE , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 9
-        !byte TYPE_GOHMA_RED    , 10,  2,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GOHMA_RED    , 10,  3,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 10
-        !byte TYPE_STALFOS      ,  6,  2,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  4,  3,   TYPE_DARKNUT_RED  , 15,  3,   TYPE_DARKNUT_RED  , 10,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 11
-        !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 14,  3,   TYPE_DARKNUT_BLUE , 10,  4,   TYPE_DARKNUT_BLUE ,  6,  6,   TYPE_DARKNUT_BLUE , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  6,  2,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 12
-        !byte TYPE_LIKE_LIKE    ,  6,  3,   TYPE_LIKE_LIKE    , 14,  3,   TYPE_LIKE_LIKE    , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_BLUE ,  6,  3,   TYPE_DARKNUT_BLUE , 14,  3,   TYPE_DARKNUT_BLUE , 10,  4,   TYPE_DARKNUT_BLUE ,  6,  6,   TYPE_DARKNUT_BLUE , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 13
-        !byte TYPE_ROPE         , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_LIKE_LIKE    ,  6,  3,   TYPE_LIKE_LIKE    , 14,  3,   TYPE_LIKE_LIKE    , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 14
-        !byte TYPE_WIZZROBE_BLUE,  8,  3,   TYPE_WIZZROBE_BLUE, 12,  3,   TYPE_WIZZROBE_BLUE, 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_ROPE         , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 15
-        !byte TYPE_STALFOS      ,  6,  2,   TYPE_STALFOS      , 14,  2,   TYPE_STALFOS      , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_WIZZROBE_BLUE,  8,  3,   TYPE_WIZZROBE_BLUE, 12,  3,   TYPE_WIZZROBE_BLUE, 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 16
-        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  6,  2,   TYPE_STALFOS      , 14,  2,   TYPE_STALFOS      , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 17
-        !byte TYPE_DARKNUT_RED  ,  8,  3,   TYPE_DARKNUT_RED  , 12,  2,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 14,  3,   TYPE_STALFOS      , 10,  4,   TYPE_STALFOS      ,  6,  6,   TYPE_STALFOS      , 14,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 18
-        !byte TYPE_GORIYA_RED   ,  8,  3,   TYPE_GORIYA_RED   , 12,  2,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  8,  3,   TYPE_DARKNUT_RED  , 12,  2,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 19
-        !byte TYPE_DARKNUT_RED  ,  6,  3,   TYPE_DARKNUT_RED  , 14,  4,   TYPE_DARKNUT_RED  , 10,  4,   TYPE_DARKNUT_RED  ,  6,  6,   TYPE_DARKNUT_RED  , 16,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GORIYA_RED   ,  8,  3,   TYPE_GORIYA_RED   , 12,  2,   TYPE_GORIYA_RED   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 20
-        !byte TYPE_DARKNUT_BLUE , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_RED  ,  6,  3,   TYPE_DARKNUT_RED  , 14,  4,   TYPE_DARKNUT_RED  , 10,  4,   TYPE_DARKNUT_RED  ,  6,  6,   TYPE_DARKNUT_RED  , 16,  6,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 21
+        !byte TYPE_DARKNUT_BLUE , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        ; Formation 22
         !byte TYPE_WALLMASTER   ,  6,  3,   TYPE_WALLMASTER   , 14,  3,   TYPE_WALLMASTER   , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
 
 ; ===========================================================================

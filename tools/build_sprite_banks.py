@@ -18,7 +18,7 @@ BLD_DIR = os.path.join(BASE_DIR, "build")
 TOOLS_DIR = os.path.join(BASE_DIR, "tools")
 sys.path.insert(0, TOOLS_DIR)
 
-from sprgen import parse, to_grid, encode
+from sprgen import parse, to_grid, encode, apply_shadow, shadow_style_for
 
 BANK_SIZE = 8192
 BASE_PTR = 0xA0 # $2800 / 64
@@ -121,8 +121,9 @@ NPC_NAMES = [
     'tri_p1', 'tri_p2', 'tri_p3', 'tri_p4', 'tri_p5', 'tri_p6', 'tri_p7', 'tri_p8'
 ]
 
-def encode_sprite(frame):
+def encode_sprite(name, frame):
     grid = to_grid(frame)
+    apply_shadow(grid, shadow_style_for(name))
     data = bytearray()
     for b0, b1, b2 in encode(grid):
         data.extend([b0, b1, b2])
@@ -138,7 +139,7 @@ def build_bank(names, en_frames, ex_frames):
         frame = en_frames.get(name) or ex_frames.get(name)
         if not frame:
             raise ValueError(f"Sprite '{name}' introuvable !")
-        spr_bytes = encode_sprite(frame)
+        spr_bytes = encode_sprite(name, frame)
         offset = slot * 64
         bank[offset : offset + 64] = spr_bytes
         ptrs[name] = BASE_PTR + slot
@@ -148,7 +149,7 @@ def build_bank(names, en_frames, ex_frames):
         frames_dict = en_frames if src_kind == 'enemies' else ex_frames
         frame = frames_dict.get(name)
         if frame:
-            spr_bytes = encode_sprite(frame)
+            spr_bytes = encode_sprite(name, frame)
             offset = slot * 64
             bank[offset : offset + 64] = spr_bytes
 

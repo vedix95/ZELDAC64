@@ -109,13 +109,15 @@ Cette section vérifie les comportements fondamentaux communs à tous les jeux d
 - **Capture de contrôle** : `recette_std06_persistence_stairs.png`.
 
 ### 2.7 [STD-07] Performance & Stress Test 50 Hz sous Charge
-- **Objectif** : Éprouver la stabilité sous la charge maximale du moteur.
+- **Objectif** : Éprouver la stabilité et la fluidité exacte (19 656 cycles/trame PAL = 50,00 FPS) sous la charge maximale du moteur.
 - **Actions** :
-  1. Réunir 4 ennemis actifs simultanés + tirs de projectiles + Link attaquant à l'épée.
+  1. Réunir jusqu'à 6–8 ennemis actifs simultanés + tirs de projectiles + Link attaquant à l'épée ou déclenchant une explosion de bombe 2×2.
+  2. Maintenir une poussée continue sur un rocher Overworld (vérification cache d'overlay `loaded_overlay_bank`).
+  3. Enchaîner 25 séquences aléatoires multi-mondes (Overworld, Donjons 1..9, Boss, Inventaire 4 pages).
 - **Constatations sur comportement de jeu** :
-  - Le framerate reste stable à 50 Hz sans saccades excessives.
-  - La pile matérielle CPU (`$0100..$01FF`) reste parfaitement bornée (aucun crash ni empilement incontrôlé).
-  - Le multiplexeur de sprites ne présente aucun saut de trame vertical.
+  - Framerate strictement verrouillé à **50,00 FPS (`19 656` cycles/trame PAL)** y compris avec 6–8 ennemis, explosions 2×2, boss et poussée continue de rocher (grâce au cache `loaded_overlay_bank` évitant tout rechargement de 4 Ko par frame).
+  - La pile matérielle CPU (`$0100..$01FF`) reste figée à `SP=$FF` (0 fuite de pile).
+  - Le multiplexeur de sprites (`irq_bottom` sur raster 251) ne présente aucun saut ni artefact en bordure basse.
 
 ---
 
@@ -273,21 +275,19 @@ Cette section vérifie les comportements fondamentaux communs à tous les jeux d
 
 ## 7. Section E : Objets, Armes & Mécanique de l'Échelle
 
-### 7.1 [ITEM-01] Explosion de Bombe Authentique NES en Rosace à 7 Nuages
-- **Objectif** : Valider la conformité visuelle et l'absence de blocage des sprites lors de la détonation.
+### 7.1 [ITEM-01] Explosion de Bombe 2×2 & Arsenal Complet des 8 Objets
+- **Objectif** : Valider le dimensionnement fidèle NES des projectiles/bombes, les dégâts de combat de tous les objets secondaires et la continuité d'affichage des sprites.
 - **Procédure** :
-  1. Poser une bombe (`item_active = ITEM_BOMB`).
-  2. Observer l'animation complète de la mèche puis de la déflagration.
+  1. Poser une bombe (`item_active = ITEM_BOMB`) près d'un ennemi ou d'un mur fissurable.
+  2. Tester les 8 armes/objets secondaires (Boomerang, Bombe, Arc/Flèche, Bougie, Flûte, Viande/Appât, Potion, Baguette Magique).
 - **Constatations Visuelles (Capture)** :
-  - Rendu 1:1 net en rosace géométrique à 7 nuages distincts (1 noyau central + 6 satellites en hexagone).
-  - Animation dynamique en 3 phases fidèles à la NES :
-    - *Phase 1* : Flash blanc intense étincelant.
-    - *Phase 2* : Pleine déflagration bouillonnante avec micro-vibration tourbillonnante.
-    - *Phase 3* : Dissipation centrifuge via les particules de fumée `SPR_COMMON_DEATH_1`.
-  - Aucun usage de `VIC_SPRITE_EXP_X` ni `EXP_Y` (zéro pixel étiré flou).
+  - Sprites des projectiles et bombes aux proportions authentiques NES (bombe 12×15 px, flèches, flamme, vague magique).
+  - Explosion de bombe en expansion matérielle VIC-II 2×2 (`48×42 px`, centrée sur `(item_x-12, item_y-10)`) avec rayon de dégâts 32 px (4 PV + vulnérabilité Dodongo).
+  - Animation dynamique en 3 phases (flash blanc → nuage bouillonnant → dissipation) sans jamais figer ni masquer Link ou les monstres.
 - **Constatations Comportementales** :
-  - Les sprites des monstres et de Link restent affichés en continu pendant toute la durée de l'explosion (`irq_top` ne masque rien).
-- **Captures de contrôle** : `recette_item01_bomb_flash.png`, `recette_item01_bomb_cloud.png`.
+  - Dégâts vérifiés sur ennemis : Bombe (4), Arc (2–4 + œil de Gohma), Baguette (2), Bougie (1 + 12 arbres brûlables), Boomerang (étourdissement/élimination), Viande (appât + Goriya Affamé D7 `$49`), Potion (soin complet), Flûte (téléportation + lac D7 + Digdogger).
+  - Inventaire Page 0 (`[A] ITEM`) : les emplacements non possédés restent masqués et non sélectionnables.
+- **Captures de contrôle** : `docs/images/shot_bomb_blast.png`, `docs/images/gal_inv_items.png`.
 
 ### 7.2 [ITEM-02] Déploiement de l'Échelle (Stepladder) sans Altération de `room_buf`
 - **Objectif** : Valider le franchissement d'un ruisseau sans détruire les ponts existants.
@@ -415,10 +415,11 @@ Cette section vérifie les comportements fondamentaux communs à tous les jeux d
 | Plafond Matériel C64 | Limite Stricte | Adresse Réelle Actuelle | Statut de Conformité |
 |---|---|---|---|
 | **Sprites Link (Banque 0 VIC)** | $\le \$1000$ (chargen) | `$0800..$1000` (exactement `$1000`) | **CONFORME** (0 débordement) |
-| **Charset Résident Multicolore** | Adresse fixe `$2000` | Début `$2000` (code bas $\le \$1ED4$) | **CONFORME** (180+ octets libres) |
-| **Zone Haute RAM Résidente** | $\le \$9FFF$ (`$A000`) | S'achève à `$9F3C` | **CONFORME** (196 octets de marge) |
+| **Charset Résident Multicolore** | Adresse fixe `$2000` | Début `$2000` (code bas $\le \$1FB7$) | **CONFORME** (73 octets libres) |
+| **Zone Haute RAM Résidente** | $\le \$9FFF$ (`$A000`) | S'achève à `$9FF6` | **CONFORME** (10 octets libres) |
+| **Overlays Cartouche (`$A000`)** | $\le \$BFFF$ (8 Ko / banque) | B27 `5701o`, B28 `4090o`, B29 `2518o`, B30 `2892o` | **CONFORME** (cache `loaded_overlay_bank`) |
 | **Streaming Salles Cartouche** | Base `$C000` | Dédié `$C000..$CFFF` | **CONFORME** |
-| **Slots Sprites Donjon** | $\le 75$ slots | 58 slots utilisés | **CONFORME** (17 slots de réserve) |
+| **Slots Sprites Donjon** | $\le 75$ slots | 75 slots utilisés | **CONFORME** (plein exact) |
 
 ---
 
@@ -473,7 +474,7 @@ Cette section vérifie les comportements fondamentaux communs à tous les jeux d
 
 ---
 
-## 13. Matrice de Traçabilité des 25 Bugs & Anomalies Résolus
+## 13. Matrice de Traçabilité des 32 Bugs & Anomalies Résolus
 
 | ID Bug | Problème Identifié dans les Docs | Preuve de Non-Régression & Test Dédié | Statut |
 |---|---|---|:---:|
@@ -506,6 +507,11 @@ Cette section vérifie les comportements fondamentaux communs à tous les jeux d
 | **Anomalie 16**| Donjon 4 décalé & Wizzrobe inactif | `test_dungeon4_reconstructed.py` : 20 salles exactes, en-tête `$C012` | **RÉSOLU** |
 | **Bug 24** | Boucle infinie ramassage épée en grotte | `test_cave_sword_pickup.py` : préservation registre X, slot désactivé à 0 | **RÉSOLU** |
 | **Bug 25** | Statues Armos décalées & secrets erronés | `test_armos_e4_secret.py`, `test_armos_feature.py` : spawn 1:1, 5 secrets First Quest | **RÉSOLU** |
+| **Anomalie 26-28** | QA Lots 1–3 : Softlock D9 `$23`, Game Over, Fin Zelda, D8 Gleeok, D7 Goriya Affamé, Rubis 3 chiffres, HUD `SWORD`, Debug 3 pages, Raster 251 | `verify_lots_1_2_3.py` (18/18 PASS) : toutes mécaniques critiques, majeures et UI validées | **RÉSOLU** |
+| **Anomalie 29** | Sprites projectiles/bombes minuscules, objets non possédés sélectionnables, dégâts Bougie/Baguette | `verify_all8_items.py` (10/10 PASS) : sprites NES, explosion 2×2 48×42 px, masquage inventaire, dégâts complets | **RÉSOLU** |
+| **Anomalie 30** | Forêt Enchantée / Perdue câblée sur `$52` (C-6) bloquant Donjon 7 (`C-5`) au lieu de `$61` (B-7) | `verify_lost_woods.py` (11/11 PASS) : `B-7` boucle N→O→S→O vers `A-7`, `C-6` mène à `C-5`, escalier `A-6` élargi | **RÉSOLU** |
+| **Anomalie 31** | Rochers/tombes Overworld multi-escaliers sans glissement + saccades 12 FPS à la poussée | `verify_ow_push.py` (11/11 PASS) : `ow_push_tbl` 9 secrets NES, 60 frames + tremblement + glissement 1 case, cache `loaded_overlay_bank` = 50,00 FPS exacts | **RÉSOLU** |
+| **Anomalie 32** | Crash potentiel `irq_top` vers `$A009` lors d'un basculement d'overlay depuis Inventaire P0 | `random_playtest_fluidity.py` (39/39 PASS, 0 anomalie, `SP=$FF`, 50,00 FPS) : invalidation `$FF` pendant streaming + garde `CART_BANK_OVL_INV` | **RÉSOLU** |
 
 ---
 

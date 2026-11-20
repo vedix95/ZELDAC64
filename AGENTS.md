@@ -6,7 +6,7 @@ Avant toute modification ou ajout de code, consulter le registre des anomalies d
 ## 1. Multiplexeur de Sprites et Interruptions Raster (VIC-II)
 - Ne jamais inhiber globalement les sprites (`apply_top_sprites`, `apply_bottom_sprites`) dans les routines d'interruption raster (`irq_top`, `irq_bottom`) lors de l'activation ou de l'animation d'un objet (ex: bombe).
 - L'affichage des sprites du joueur, des monstres et des armes doit rester continu sous peine de figer visuellement la scène.
-- **Passe Unique Dynamique ($\le 4$ ennemis)** : Si le nombre d'ennemis actifs est $\le 4$ (`sort_eff_y[sort_idx[4]] == $FF`), ne jamais programmer `irq_mid` à raster 230 ; sauter directement à raster 250 (`irq_bottom`) pour éviter d'éteindre prématurément les sprites 3..6 en bas de l'écran.
+- **Passe Unique Dynamique ($\le 4$ ennemis)** : Si le nombre d'ennemis actifs est $\le 4$ (`sort_eff_y[sort_idx[4]] == $FF`), ne jamais programmer `irq_mid` à raster 230 ; sauter directement à raster `251` (`irq_bottom`) pour éviter d'éteindre prématurément les sprites 3..6 en bas de l'écran et éliminer tout artefact de 1 pixel sur la bordure basse.
 
 ## 2. Transitions d'Écran et Streaming Cartouche
 - Lors d'une transition ou d'un chargement de salle/chunk, maintenir le masquage écran (VIC blanking) jusqu'à ce que la Screen RAM ($0400) et la Color RAM ($D800) soient intégralement écrites.
@@ -89,3 +89,10 @@ Avant toute modification ou ajout de code, consulter le registre des anomalies d
 
 
 
+
+
+## 16. Cache d'Overlays (`loaded_overlay_bank`), Garde `irq_top` & Poussée Overworld Unifiée
+- `cart_load_overlay` ([src/main.asm](file:///home/vedix/Documents/C64/zelda/src/main.asm)) doit systématiquement mettre en cache la banque chargée dans `loaded_overlay_bank` : si la banque demandée est déjà résidente en `$A000..$BFFF`, retourner immédiatement (6 cycles au lieu de ~65 536 cycles de streaming = maintien strict des 50,00 FPS).
+- Avant tout transfert `cart_stream_copy` vers `$A000`, invalider `loaded_overlay_bank = $FF` et ne restaurer le numéro de banque qu'après la fin complète de la copie. `irq_top` ([src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm)) doit impérativement vérifier `loaded_overlay_bank == CART_BANK_OVL_INV` avant d'appeler `jsr $a009`.
+- Toute poussée Overworld (rochers au Bracelet de Force et tombes) passe par la table stricte `ow_push_tbl` dans `ovl_item_bracelet_exec` ([src/overlay_items.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_items.asm)) avec garde 1-coup (`overworld_secrets_opened`), maintien continu `OW_PUSH_FRAMES = 60` + tremblement `push_shiver`, et glissement réel de la tuile d'une case (`push_delta`) révélant `TILE_CAVE`.
+- La Forêt Perdue / Enchantée (*Lost Woods*) est strictement câblée sur la salle authentique **`$61` (`B-7`)** dans `src/transition.asm` (jamais `$52` `C-6`, qui bloque le Donjon 7 `C-5`).

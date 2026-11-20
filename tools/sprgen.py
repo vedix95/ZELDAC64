@@ -104,6 +104,66 @@ def to_grid(entry):
     return grid
 
 
+# Classification des sprites recevant une ombre portée (code 3 = b = VIC_SPRITE_MC2 = COL_BROWN)
+# dans les lignes libres basses (18..20) du cadre matériel 12x21, sans sprite VIC-II supplémentaire.
+SHADOW_GROUND_EXACT = {
+    "down_0", "down_1", "up_0", "up_1", "left_0", "left_1", "right_0", "right_1",
+    "attack_down", "attack_up", "attack_left", "attack_right",
+    "item_get", "old_man", "merchant", "old_woman",
+    "tektite_0", "polsvoice_0", "gel",
+    "lanmola_head", "lanmola_body",
+    "manhandla_core", "patra_center",
+}
+SHADOW_GROUND_PREFIXES = (
+    "octo_down", "octo_up", "octo_left", "octo_right",
+    "moblin_down", "moblin_up", "moblin_left", "moblin_right",
+    "lynel_", "leever_", "armos_",
+    "zol_", "rope_", "stalfos_", "goriya_", "darknut_",
+    "wizzrobe_", "wallmaster_", "likelike_", "gibdo_",
+)
+SHADOW_AIR_EXACT = {
+    "tektite_1", "polsvoice_1", "patra_orb",
+}
+SHADOW_AIR_PREFIXES = (
+    "keese_", "peahat_", "ghini_", "vire_",
+)
+SHADOW_WIDE_EXACT = {
+    "digdogger", "gohma_closed", "gohma_open",
+}
+SHADOW_WIDE_PREFIXES = (
+    "dodongo_", "ganon_bl_", "ganon_br_",
+)
+
+
+def shadow_style_for(name):
+    if name in SHADOW_AIR_EXACT or name.startswith(SHADOW_AIR_PREFIXES):
+        return "air"
+    if name in SHADOW_WIDE_EXACT or name.startswith(SHADOW_WIDE_PREFIXES):
+        return "wide"
+    if name in SHADOW_GROUND_EXACT or name.startswith(SHADOW_GROUND_PREFIXES):
+        return "ground"
+    return None
+
+
+def apply_shadow(grid, style):
+    """Ajoute une ombre elliptique subtile (MC2 = COL_BROWN) uniquement sur pixels transparents."""
+    if not style:
+        return grid
+    if style == "ground":
+        spans = ((18, range(3, 9)), (19, range(4, 8)))
+    elif style == "air":
+        spans = ((19, range(4, 8)), (20, range(5, 7)))
+    elif style == "wide":
+        spans = ((18, range(2, 10)), (19, range(3, 9)))
+    else:
+        return grid
+    for y, xs in spans:
+        for x in xs:
+            if grid[y][x] == 0:
+                grid[y][x] = 3
+    return grid
+
+
 def encode(grid):
     out = []
     for row in grid:
@@ -168,10 +228,16 @@ def main():
     ap.add_argument("-o", "--output", required=True)
     ap.add_argument("--preview")
     ap.add_argument("--prefix", default=None, help="Prefix for sprite labels")
+    ap.add_argument("--shadows", action="store_true", help="Ajoute les ombres portées sous les personnages")
     a = ap.parse_args()
 
     order, frames = parse(a.source)
-    grids = {n: to_grid(frames[n]) for n in order}
+    grids = {}
+    for n in order:
+        g = to_grid(frames[n])
+        if a.shadows:
+            apply_shadow(g, shadow_style_for(n))
+        grids[n] = g
     prefix = a.prefix if a.prefix is not None else os.path.splitext(os.path.basename(a.source))[0]
 
     with open(a.output, "w", encoding="utf-8") as f:

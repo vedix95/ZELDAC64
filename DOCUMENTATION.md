@@ -45,19 +45,19 @@ The cartridge banks are organized as follows:
 - **Banks 10..13**: Dedicated Sprite Banks (Overworld, Dungeons, Bosses, NPCs & Objects), streamed directly into `$2800`–`$3FFF`.
 - **Banks 14..17**: 4 regional Overworld chunks (`OW0` to `OW3`), streamed on-demand directly into `$C000`.
 - **Banks 18..26**: 9 complete Underworld Dungeons (`DUNG1` to `DUNG9`), streamed on-demand directly into `$C000`.
-- **Banks 27..30**: High-level game overlays loaded to `$A000`:
-  - **Bank 27**: Inventory Subscreen & Full 16x8 Hyrule World Map (`ovl_inv.dat`).
-  - **Bank 28**: Secret Caves, Shops & Merchant Dialogues (`ovl_cave.dat`).
-  - **Bank 29**: Special Item Logics (`ovl_items.dat`).
-  - **Bank 30**: Diagnostic & Debug Menu (`ovl_debug.dat`).
+- **Banks 27..30**: High-level game overlays loaded on-demand to `$A000` with **`loaded_overlay_bank` cache** (zero-cycle bypass if already resident; invalidated to `$FF` during page streaming to guard `irq_top`):
+  - **Bank 27**: Inventory Subscreen (4 pages, unowned-item masking) & Full 16×8 Hyrule World Map (`ovl_inv.dat`, 5,701 bytes).
+  - **Bank 28**: Secret Caves, Shops, Warp Zones & Merchant Dialogues (`ovl_cave.dat`, 4,090 bytes).
+  - **Bank 29**: Special Item & Gameplay Logics (`ovl_items.dat`, 2,518 bytes): Whistle, Candle secrets, Bomb secrets, unified Overworld Rock/Grave push (`ow_push_tbl`), Raft launch, Cellar entry/exit (`D9 $23`), D1 `$41` Hermit, D7 `$49` Hungry Goriya & Food bait, D9 8/8 Triforce gate, Game Over/Continue (`STATE_GAMEOVER`), Princess Zelda Victory Ending (`STATE_ENDING`), and `exit_dungeon`.
+  - **Bank 30**: Diagnostic & 3-Page Debug Menu (`ovl_debug.dat`, 2,892 bytes).
 - **Bank 31**: Extended Audio Streaming Bank (`CART_BANK_AUDIO`, `cart_audio.bin`), streaming Death Mountain / Dungeon 9 extended 124-step authentic theme directly into `bgm_track_buffer`.
 - **Banks 32..63**: Free expansion headroom (256 KB available).
 
-### 2.2 Instant Memory Streaming (`src/main.asm` -> `cart_stream_copy`)
+### 2.2 Instant Memory Streaming & Overlay Cache (`src/main.asm` -> `cart_stream_copy`, `cart_load_overlay`)
 
 When moving between Overworld chunks, entering/exiting dungeons, or loading overlays:
-1. **Zero Disk Latency**: The latch at `$DE00` commutates the corresponding 8 KB ROM bank into `$8000`–`$9FFF`.
-2. **Interrupt-Safe Block Copy**: Interrupts are masked (`SEI`) page-by-page while `cart_stream_copy` transfers 256-byte blocks, releasing interrupts (`CLI; NOP; NOP`) between pages to preserve raster VBlank and SID audio synthesis.
+1. **Zero Disk Latency & Overlay Caching**: The latch at `$DE00` commutates the corresponding 8 KB ROM bank into `$8000`–`$9FFF`. `cart_load_overlay` caches the currently resident bank in `loaded_overlay_bank`: repeated calls to the same overlay (e.g. frame-by-frame Overworld rock pushing or repeated item usage) return in **6 CPU cycles** instead of streaming 4 KB (~65,536 cycles), keeping gameplay locked at **50.00 FPS PAL (`19,656` cycles/frame)**.
+2. **Interrupt-Safe Block Copy & `irq_top` Guard**: Interrupts are masked (`SEI`) page-by-page while `cart_stream_copy` transfers 256-byte blocks, releasing interrupts (`CLI; NOP; NOP`) between pages to preserve raster VBlank and SID audio synthesis. Before streaming into `$A000`, `loaded_overlay_bank` is invalidated to `$FF` and restored only upon completion; `irq_top` checks `loaded_overlay_bank == CART_BANK_OVL_INV` before calling `$A009`, eliminating any inter-bank IRQ crash.
 3. **Charset & Palette Sync**: In dungeons, room-specific font overlays are streamed to `$2540` while reserving characters 120..125 for persistent passive relics.
 
 ---
@@ -120,8 +120,10 @@ The engine automatically detects and supports a secondary SID chip:
 - **Cartridge Bank 31 Streaming**: Stored in Cartridge Bank 31 (`CART_BANK_AUDIO`), streamed on demand (2 pages = 512 bytes) to `bgm_track_buffer` upon entering Death Mountain, and automatically swapped back to Overworld music upon exit.
 
 ### 5.4 Memory Layout & Overlay Collision Protection
-- **Low Memory Zone (`$1BF8..$1ED4`)**: Pitch frequency tables (`freq_tbl_lo/hi`) and short fanfares reside under `$2000`, safe from dynamic overlays.
-- **Resident RAM Ceiling (`$9F80`)**: All persistent game variables, enemy engines, and BGM tables end at `$9F80`, guaranteeing a 128-byte safety margin below `$A000` (`OVERLAY_RAM_ADDR`). Overlays streaming into `$A000..$BFFF` (inventory, caves, debug) cannot corrupt the audio engine.
+- **Sprite Bank 0 Ceiling (`$1000`)**: Link & projectile sprites (`src/sprites.asm`) end at exactly `$1000`, strictly below VIC-II Chargen ROM.
+- **Low Memory Zone (`$0801..$1FB7 < $2000`)**: Main loop, input, Link movement, pitch frequency tables (`freq_tbl_lo/hi`) and short fanfares reside under `$2000` (73 bytes free), completely safe from the `$2000` multicolor charset and `$A000` overlays.
+- **Resident RAM Ceiling (`$9FF6 < $A000`)**: All persistent game engines, enemies, HUD, and BGM buffers end at `$9FF6` (10 bytes free below `OVERLAY_RAM_ADDR = $A000`), enforced at assembly time by `!if * > OVERLAY_RAM_ADDR { !error ... }`. Overlays streaming into `$A000..$BFFF` cannot corrupt resident code or audio tables.
+- **Raster Split Precision**: `irq_bottom` is anchored at raster line **251** (strictly inside bottom VBlank border, zero 1px screen artifact), and dynamic single-pass multiplexing skips `irq_mid` when $\le 4$ enemies are active.
 
 ---
 
@@ -170,13 +172,24 @@ The inventory overlay (`Bank 27`, loaded to `$A000`) features 4 subscreen pages:
 - **Corridor Alignment Detection**: `goriya_check_align_and_shoot` checks if Link crosses Goriya's horizontal or vertical line of sight (±10 px), causing Goriya to immediately face Link and throw the boomerang.
 - **Homing Return Trajectory**: Boomerang travels 28 frames forward, then enters return phase (`en_proj_returning = 1`), homing in on Goriya (`en_proj_owner`) in 2-axis tracking until caught within 10 pixels. Shield blocking or player hit deflects the boomerang into return phase rather than instantly destroying it.
 
-### 7.4 Visual Asset Atlas & Contact Sheet Engine (`tools/export_assets_sheet.py`)
+### 7.4 Overworld Labyrinths, Unified Rock/Grave Pushing & Combat Systems
+- **Authentic Lost Woods (`B-7` / `$61`) & Lost Hills (`L-2` / `$1B`)** (`src/transition.asm`):
+  - Exact 1986 NES Quest 1 navigation decoded from `zelda.nes` (`CPY #$61`, `N → W → S → W` exits West to `A-7` `$60` with `sound_secret`, East exits to `C-7` `$62`, wrong N/W/S turns loop cleanly to `$61`; `C-6` `$52` leads normally North to Dungeon 7 `C-5` `$42`).
+  - Widened 2-tile staircases (`,,`) on `L-1..L-3` and `A-5..A-6` ensure smooth vertical traversal.
+- **Unified Overworld Push Engine (`ow_push_tbl`, Bank 29 `src/overlay_items.asm`)**:
+  - Identical in feel and mechanics to dungeon push blocks: strict table of the 7 authentic NES Power Bracelet rocks (`J-1`, `B-2`, `N-2`, `D-3`, `D-4`, `J-5`, `J-8`, 4 directions) and 2 gravestones (`A-3`, `B-3` Magical Sword, UP only, no bracelet), 1-shot guard via `overworld_secrets_opened`, 60-frame continuous push with `push_shiver` white flash, physical 1-tile slide (`push_delta`) onto `TILE_GRASS` revealing `TILE_CAVE` underneath, and full persistence on room re-entry (`src/tilemap.asm`).
+- **Full 8-Item Combat, 2×2 Bomb Blast & Endgame (`src/items.asm`, `src/enemies.asm`, `src/overlay_items.asm`)**:
+  - All 8 secondary items have full NES-proportioned sprites (`assets/link.txt`) and live gameplay effects: Boomerang (stun/kill), Bomb (2×2 hardware-expanded 48×42 px blast centered at `(item_x-12, item_y-10)`, 32 px hit radius, 4 damage + Dodongo vulnerability), Bow/Arrow (2–4 damage + Gohma eye), Candle flame (1 damage + 12 burnable trees), Whistle (warp + D7 lake + Digdogger), Food/Bait (lures enemies + D7 `$49` Hungry Goriya `"GRUMBLE, GRUMBLE..."`), Potion (full heal), Magic Wand (2-damage wave + Spellbook flame).
+  - Complete **Game Over / Continue** flow (`STATE_GAMEOVER = 8`), **Dungeon 9 8/8 Triforce gate** (`F-1`), **Gleeok in D8 `$3C`**, and **Princess Zelda Victory Ending** (`STATE_ENDING = 9` in D9 `$32`).
+  - **50.00 FPS PAL Verified**: Cycle-accurate profiling across 39 gameplay/random scenarios confirms exact `19,656` cycles/frame (`50.0 FPS`) even with 6–8 simultaneous enemies, active explosions, bosses, and continuous rock pushing.
+
+### 7.5 Visual Asset Atlas & Contact Sheet Engine (`tools/export_assets_sheet.py`)
 - **Automated Multi-Sheet Extraction**: Standalone pure-Python renderer (using standard library `zlib` and `struct`) converting ASCII raw assets into high-resolution PNG contact sheets with pixel-perfect C64 aspect ratio (2:1 multicolor scaling).
-- **Master Atlas (`build/atlas_all_assets.png`)**: Single consolidated 1920×3399 poster encompassing:
+- **Master Atlas (`build/atlas_all_assets.png`)**: Single consolidated 1920×3580 poster encompassing:
   - Section 1: Overworld tiles (16 tiles across 4 regional palettes: Plains, Mountain, Coast, Graveyard).
   - Section 2: Underworld dungeon tiles (16 authentic NES tiles: doors, diamond blocks, dragon statues, secret stairs).
-  - Section 3: Link hero sprites (walk cycles 4 dir, sword thrusts, item get, secondary projectiles).
-  - Section 4: Monster bestiary (89 enemy & boss frames: Octoroks, Moblins, Tektites, Leevers, Goriyas, Aquamentus, Dodongo, Ganon...).
+  - Section 3: Link hero sprites (walk cycles 4 dir, sword thrusts, item get, enlarged NES-proportion secondary projectiles & bombs).
+  - Section 4: Monster bestiary (125 enemy & boss frames: Octoroks, Moblins, Lynels 4-dir, Tektites, Leevers, Goriyas, Darknuts, Aquamentus, Dodongo, Gleeok, Gohma, Digdogger, Manhandla, Ganon...).
   - Section 5: Inventory items, relics, NPCs, and assembled 8-piece Triforce pyramid showcase.
   - Section 6: Animated cycle strips with timing indicators (`2 Frames @ 8 FPS`, `3 Phases @ 24 Ticks`).
 - **Dedicated Modular Sheets**: `build/sheet_tiles.png`, `build/sheet_sprites_link.png`, `build/sheet_sprites_enemies.png`, `build/sheet_sprites_items.png`, and `build/sheet_animations.png`.

@@ -117,10 +117,10 @@ game_init:
         jsr init_raster_irq
 !if START_IN_DUNGEON == 0 {
         lda #MUSIC_OVERWORLD
-} else {
-        lda #MUSIC_DUNGEON
-}
         jsr music_play
+} else {
+        jsr sound_play_dungeon_music
+}
 
         lda #STATE_PLAYING
         sta game_state
@@ -141,6 +141,14 @@ main_loop:
         beq +
         cmp #3
         beq .hook_inv_resident
+        cmp #6
+        bne .run_dbg_hook
+        ; Sécurité V8 : hook_force_joy (6) uniquement en jeu/cellier (protège $A000)
+        lda game_state
+        beq .run_dbg_hook
+        cmp #STATE_CELLAR
+        bne +
+.run_dbg_hook:
         jsr debug_exec_hook_cmd
         jmp +
 .hook_inv_resident:
@@ -171,6 +179,12 @@ main_loop:
 +       cmp #STATE_RAFT
         bne +
         jmp .in_raft
++       cmp #STATE_GAMEOVER
+        bne +
+        jmp .in_gameover
++       cmp #STATE_ENDING
+        bne +
+        jmp .in_ending
 +
 
         ; Touche D : ouvre l'écran de debug depuis le jeu normal
@@ -266,6 +280,14 @@ main_loop:
         jsr debug_update
         jmp main_loop
 
+.in_gameover:
+        jsr gameover_update
+        jmp main_loop
+
+.in_ending:
+        jsr ending_update
+        jmp main_loop
+
 ; Synchronisation sur l'interruption raster VBlank (50 Hz).
 wait_frame:
         lda #0
@@ -301,16 +323,13 @@ en_base_damage:
         !byte 0, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 2, 1, 4, 4, 1, 1, 2, 1, 1, 1, 1, 2, 2, 4, 2, 4, 1, 2, 2, 2, 2, 0, 2, 2, 4, 1, 2, 2, 2, 2, 2, 2, 2, 4
 
 en_base_color:
-        !byte COL_BLACK, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_BROWN, COL_CYAN, COL_GREEN, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_GREEN, COL_GREEN, COL_ORANGE, COL_WHITE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_ORANGE, COL_LIGHT_RED, COL_LGREY, COL_BLUE, COL_PURPLE, COL_CYAN, COL_RED, COL_BLUE, COL_GREEN, COL_BROWN, COL_GREEN, COL_GREEN, COL_ORANGE, COL_RED, COL_BLUE, COL_ORANGE, COL_PURPLE
+        !byte COL_BLACK, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_BROWN, COL_CYAN, COL_GREEN, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_GREEN, COL_GREEN, COL_ORANGE, COL_WHITE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_ORANGE, COL_LIGHT_RED, COL_LGREY, COL_BLUE, COL_PURPLE, COL_CYAN, COL_RED, COL_BLUE, COL_GREEN, COL_ORANGE, COL_RED, COL_GREEN, COL_ORANGE, COL_RED, COL_BLUE, COL_ORANGE, COL_PURPLE
 
 en_ai_type:
         !byte AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_HOP, AI_HOP, AI_BURROW, AI_BURROW, AI_FLY, AI_STATUE, AI_FLY, AI_WATER, AI_ROAM, AI_ROAM, AI_FLY, AI_FLY, AI_SLIME, AI_SLIME, AI_RUSH, AI_ROAM, AI_ROAM, AI_ROAM, AI_SHIELD, AI_SHIELD, AI_TELEPORT, AI_TELEPORT, AI_ROAM, AI_ROAM, AI_HOP, AI_ROAM, AI_FLY, AI_FLY, AI_RUSH, AI_ROAM, AI_ROAM, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_FLY, AI_BOSS
 
 en_proj_type_tbl:
         !byte PROJ_NONE, PROJ_ROCK, PROJ_ROCK, PROJ_SPEAR, PROJ_SPEAR, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_BOOMERANG, PROJ_BOOMERANG, PROJ_NONE, PROJ_NONE, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL
-
-en_sprite_tbl_lo:
-        !byte <none_ptrs, <octo_ptrs, <octo_ptrs, <moblin_ptrs, <moblin_ptrs, <tektite_ptrs, <tektite_ptrs, <leever_ptrs, <leever_ptrs, <peahat_ptrs, <armos_ptrs, <ghini_ptrs, <zora_ptrs, <lynel_ptrs, <lynel_ptrs, <keese_ptrs, <keese_ptrs, <zol_ptrs, <gel_ptrs, <rope_ptrs, <stalfos_ptrs, <goriya_ptrs, <goriya_ptrs, <darknut_ptrs, <darknut_ptrs, <wizzrobe_ptrs, <wizzrobe_ptrs, <wallmaster_ptrs, <likelike_ptrs, <polsvoice_ptrs, <gibdo_ptrs, <vire_ptrs, <bubble_ptrs, <trap_ptrs, <lanmola_ptrs, <lanmola_ptrs, <aquamentus_ptrs, <dodongo_ptrs, <manhandla_ptrs, <gleeok_ptrs, <digdogger_ptrs, <gohma_ptrs, <gohma_ptrs, <patra_ptrs, <ganon_ptrs
 
 en_sprite_tbl_hi:
         !byte >none_ptrs, >octo_ptrs, >octo_ptrs, >moblin_ptrs, >moblin_ptrs, >tektite_ptrs, >tektite_ptrs, >leever_ptrs, >leever_ptrs, >peahat_ptrs, >armos_ptrs, >ghini_ptrs, >zora_ptrs, >lynel_ptrs, >lynel_ptrs, >keese_ptrs, >keese_ptrs, >zol_ptrs, >gel_ptrs, >rope_ptrs, >stalfos_ptrs, >goriya_ptrs, >goriya_ptrs, >darknut_ptrs, >darknut_ptrs, >wizzrobe_ptrs, >wizzrobe_ptrs, >wallmaster_ptrs, >likelike_ptrs, >polsvoice_ptrs, >gibdo_ptrs, >vire_ptrs, >bubble_ptrs, >trap_ptrs, >lanmola_ptrs, >lanmola_ptrs, >aquamentus_ptrs, >dodongo_ptrs, >manhandla_ptrs, >gleeok_ptrs, >digdogger_ptrs, >gohma_ptrs, >gohma_ptrs, >patra_ptrs, >ganon_ptrs
@@ -329,6 +348,9 @@ en_sprite_tbl_hi:
 ; Code CPU au-delà de la banque VIC 0 ($4000..$CFFF)
 ; $4000..$7FFF est toujours 100% RAM en modes CPU_PORT $36 et $37.
 * = $4000
+
+en_sprite_tbl_lo:
+        !byte <none_ptrs, <octo_ptrs, <octo_ptrs, <moblin_ptrs, <moblin_ptrs, <tektite_ptrs, <tektite_ptrs, <leever_ptrs, <leever_ptrs, <peahat_ptrs, <armos_ptrs, <ghini_ptrs, <zora_ptrs, <lynel_ptrs, <lynel_ptrs, <keese_ptrs, <keese_ptrs, <zol_ptrs, <gel_ptrs, <rope_ptrs, <stalfos_ptrs, <goriya_ptrs, <goriya_ptrs, <darknut_ptrs, <darknut_ptrs, <wizzrobe_ptrs, <wizzrobe_ptrs, <wallmaster_ptrs, <likelike_ptrs, <polsvoice_ptrs, <gibdo_ptrs, <vire_ptrs, <bubble_ptrs, <trap_ptrs, <lanmola_ptrs, <lanmola_ptrs, <aquamentus_ptrs, <dodongo_ptrs, <manhandla_ptrs, <gleeok_ptrs, <digdogger_ptrs, <gohma_ptrs, <gohma_ptrs, <patra_ptrs, <ganon_ptrs
 
 current_cart_bank: !byte 0
 
@@ -423,32 +445,20 @@ cart_copy_to_c000:
         plp
         rts
 
-; Helpers de streaming contextuel de sprites
+; Helpers de streaming contextuel de sprites (factorisés)
 cart_load_sprites_ow:
-        lda #<SPRITE_BUF_ADDR
-        sta ZP_DST
-        lda #>SPRITE_BUF_ADDR
-        sta ZP_DST+1
-        ldx #24                 ; 24 pages = 6144 octets ($2800..$3FFF)
         lda #CART_BANK_SPR_OW
-        jmp cart_stream_copy
-
+        !byte $2c               ; BIT abs : saute les 2 octets suivants
 cart_load_sprites_dung:
-        lda #<SPRITE_BUF_ADDR
-        sta ZP_DST
-        lda #>SPRITE_BUF_ADDR
-        sta ZP_DST+1
-        ldx #24
         lda #CART_BANK_SPR_DUNG
-        jmp cart_stream_copy
-
+        !byte $2c
 cart_load_sprites_npc:
-        lda #<SPRITE_BUF_ADDR
-        sta ZP_DST
-        lda #>SPRITE_BUF_ADDR
-        sta ZP_DST+1
-        ldx #24
         lda #CART_BANK_SPR_NPC
+        ldy #<SPRITE_BUF_ADDR
+        sty ZP_DST
+        ldy #>SPRITE_BUF_ADDR
+        sty ZP_DST+1
+        ldx #24                 ; 24 pages = 6144 octets ($2800..$3FFF)
         jmp cart_stream_copy
 
 cart_load_sprites_boss:
@@ -461,14 +471,28 @@ cart_load_sprites_boss:
         jmp cart_stream_copy
 
 ; cart_load_overlay : Charge un overlay dans $A000 (A = Banque, X = nb pages)
+; Cache la banque déjà présente en $A000..$BFFF (0 cycle de copie si déjà en RAM)
+; et invalide ($FF) pendant le transfert pour protéger irq_top contre tout appel
+; inter-banque lors d'un basculement depuis l'inventaire.
+loaded_overlay_bank:    !byte $ff
+
 cart_load_overlay:
-        pha
+        cmp loaded_overlay_bank
+        bne +
+        rts
++       pha
+        lda #$ff
+        sta loaded_overlay_bank
         lda #<OVERLAY_RAM_ADDR
         sta ZP_DST
         lda #>OVERLAY_RAM_ADDR
         sta ZP_DST+1
         pla
-        jmp cart_stream_copy
+        pha
+        jsr cart_stream_copy
+        pla
+        sta loaded_overlay_bank
+        rts
 
 !source "src/tilemap.asm"
 !source "src/transition.asm"

@@ -234,10 +234,18 @@ def build_audio_data():
     else:
         d9_c3 = d9_c3_pat
 
+    # Fanfare d'apparition de Ganon (Script à $92CC) - Authentique NES Table 2 ($10)
+    gn_sc = data["ganon_fanfare"]
+    gn_bytes = gn_sc["bytes"]
+    gn_c1, gn_t1 = decode_nes_track(gn_bytes, 0, gn_sc["sq0_off"], ow_durs, is_trg=False)
+    gn_c2, gn_t2 = decode_nes_track(gn_bytes, gn_sc["sq0_off"], gn_sc["trg_off"], ow_durs, is_trg=False)
+    gn_c3, gn_t3 = decode_nes_track(gn_bytes, gn_sc["trg_off"], gn_sc["end_off"], ow_durs, is_trg=True)
+    gn_total_ticks = max(gn_t1, gn_t2, gn_t3)
+
     # -----------------------------------------------------------------------
     # 3. Compilation chronologique en pas discrets PAL (50 Hz)
     # -----------------------------------------------------------------------
-    def compile_timeline(c1_events, c2_events, c3_events, total_ticks):
+    def compile_timeline(c1_events, c2_events, c3_events, total_ticks, exact_delay=False):
         times = set()
         for t, dur, sid in c1_events: times.add(t)
         for t, dur, sid in c2_events: times.add(t)
@@ -261,7 +269,10 @@ def build_audio_data():
             if dt <= 0:
                 dt = 12
             frames = int(round(dt * 50.0 / 60.0))
-            if frames < 1:
+            if exact_delay:
+                # music_update attend (music_delay + 1) frames : soustraire 1 pour un tempo PAL exact
+                frames = max(0, frames - 1)
+            elif frames < 1:
                 frames = 1
 
             if t in onsets1: v1 = onsets1[t]
@@ -288,13 +299,14 @@ def build_audio_data():
     uw_steps = compile_timeline(uw_c1, uw_c2, uw_c3, uw_total_ticks)
     item_steps = compile_timeline(it_c1, it_c2, it_c3, it_total_ticks)
     triforce_steps = compile_timeline(tr_c1, tr_c2, tr_c3, tr_total_ticks)
-    d9_steps = compile_timeline(d9_c1, d9_c2, d9_c3, d9_total_ticks)
+    d9_steps = compile_timeline(d9_c1, d9_c2, d9_c3, d9_total_ticks, exact_delay=True)
+    ganon_steps = compile_timeline(gn_c1, gn_c2, gn_c3, gn_total_ticks, exact_delay=True)
 
     # -----------------------------------------------------------------------
     # 4. Indexation de toutes les fréquences SID uniques
     # -----------------------------------------------------------------------
     freqs = set()
-    for _, f1, f2, f3 in ow_p1 + ow_p2 + uw_steps + item_steps + triforce_steps + d9_steps:
+    for _, f1, f2, f3 in ow_p1 + ow_p2 + uw_steps + item_steps + triforce_steps + d9_steps + ganon_steps:
         if f1 not in (0, 0xFE): freqs.add(f1)
         if f2 not in (0, 0xFE): freqs.add(f2)
         if f3 not in (0, 0xFE): freqs.add(f3)
@@ -312,6 +324,7 @@ def build_audio_data():
     print(f"Overworld Partie 2    : {len(ow_p2)} pas")
     print(f"Underworld (D1..D8)   : {len(uw_steps)} pas")
     print(f"Donjon 9 (Final)      : {len(d9_steps)} pas")
+    print(f"Fanfare Ganon         : {len(ganon_steps)} pas")
     print(f"Fanfare Objet         : {len(item_steps)} pas")
     print(f"Fanfare Triforce      : {len(triforce_steps)} pas")
 
@@ -383,6 +396,7 @@ def build_audio_data():
     lines.append(f"MUSIC_OW_P2_LEN     = {len(ow_p2)}")
     lines.append(f"MUSIC_UW_LEN        = {len(uw_steps)}")
     lines.append(f"MUSIC_D9_LEN        = {len(d9_steps)}")
+    lines.append(f"MUSIC_GANON_LEN     = {len(ganon_steps)}")
     lines.append("")
     lines.append("; bgm_track_buffer : Tampon dynamique partage sous $A000")
     lines.append("bgm_track_buffer:")
@@ -391,11 +405,15 @@ def build_audio_data():
     append_track(lines, "music_uw", uw_steps, include_dur=False) # music_uw_dur remplace par constante 8
     lines.append("bgm_track_buffer_end:")
     lines.append("")
-    lines.append("; Equates pour le Donjon 9 (recoit les 2 pages streamees depuis Banque 31)")
+    lines.append("; Equates pour le Donjon 9 et Fanfare Ganon (3 pages streamees depuis Banque 31 $8800)")
     lines.append("music_d9_dur        = bgm_track_buffer")
     lines.append("music_d9_v1         = music_d9_dur + MUSIC_D9_LEN")
     lines.append("music_d9_v2         = music_d9_v1 + MUSIC_D9_LEN")
     lines.append("music_d9_v3         = music_d9_v2 + MUSIC_D9_LEN")
+    lines.append("music_ganon_dur     = bgm_track_buffer + 512")
+    lines.append("music_ganon_v1      = music_ganon_dur + MUSIC_GANON_LEN")
+    lines.append("music_ganon_v2      = music_ganon_v1 + MUSIC_GANON_LEN")
+    lines.append("music_ganon_v3      = music_ganon_v2 + MUSIC_GANON_LEN")
     lines.append("")
 
     with open(OUT_INC_PATH, "w", encoding="utf-8") as f:
@@ -430,16 +448,27 @@ def build_audio_data():
         sys.exit(f"Erreur : Standard BGM trop volumineux ({len(std_bytes)} > 2048 o)")
     cart_bank[0 : len(std_bytes)] = bytes(std_bytes)
 
-    # Dungeon 9 bytes (124 pas * 4 = 496 octets)
+    # Dungeon 9 bytes (124 pas * 4 = 496 octets) -> offset $0800 (pages 8..9)
     d9_raw = []
     d9_raw.extend([s[0] for s in d9_steps])
     d9_raw.extend([freq_to_idx[s[1]] for s in d9_steps])
     d9_raw.extend([freq_to_idx[s[2]] for s in d9_steps])
     d9_raw.extend([freq_to_idx[s[3]] for s in d9_steps])
 
-    if len(d9_raw) > 0x0800:
-        sys.exit(f"Erreur : Donjon 9 BGM trop volumineux ({len(d9_raw)} > 2048 o)")
+    if len(d9_raw) > 0x0200:
+        sys.exit(f"Erreur : Donjon 9 BGM trop volumineux ({len(d9_raw)} > 512 o)")
     cart_bank[0x0800 : 0x0800 + len(d9_raw)] = bytes(d9_raw)
+
+    # Fanfare Ganon -> offset $0A00 (page 10, streamée avec les 3 pages du Donjon 9)
+    ganon_raw = []
+    ganon_raw.extend([s[0] for s in ganon_steps])
+    ganon_raw.extend([freq_to_idx[s[1]] for s in ganon_steps])
+    ganon_raw.extend([freq_to_idx[s[2]] for s in ganon_steps])
+    ganon_raw.extend([freq_to_idx[s[3]] for s in ganon_steps])
+
+    if len(ganon_raw) > 0x0100:
+        sys.exit(f"Erreur : Fanfare Ganon trop volumineuse ({len(ganon_raw)} > 256 o)")
+    cart_bank[0x0A00 : 0x0A00 + len(ganon_raw)] = bytes(ganon_raw)
 
     os.makedirs(os.path.dirname(OUT_CART_AUDIO_PATH), exist_ok=True)
     with open(OUT_CART_AUDIO_PATH, "wb") as f:

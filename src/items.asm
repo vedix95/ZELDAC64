@@ -99,10 +99,7 @@ use_food:
         lda player_has_food
         bne +
         rts
-+       lda #0
-        sta player_has_food
-        jsr sound_food
-        rts
++       jmp ovl_use_food
 
 use_potion:
         lda player_has_potion
@@ -119,9 +116,7 @@ use_whistle:
         lda player_has_whistle
         bne +
         rts
-+       lda #CART_BANK_OVL_ITEMS
-        ldx #4
-        jsr cart_load_overlay
++       jsr load_ovl_items
         jmp $a000                      ; ovl_item_whistle_exec
 
 use_wand:
@@ -148,7 +143,10 @@ use_wand:
 ; 1. BOOMERANG : part devant Link, suit Link en vol et revient vers lui
 ; ---------------------------------------------------------------------------
 spawn_boomerang:
-        lda #ITEM_BOOMERANG
+        lda player_has_boomerang
+        bne +
+        rts
++       lda #ITEM_BOOMERANG
         sta item_active
         lda player_dir
         sta item_dir
@@ -194,8 +192,13 @@ spawn_bomb:
 ; 3. ARC & FLÈCHE : tir rapide dans la direction de Link
 ; ---------------------------------------------------------------------------
 spawn_bow:
+        lda player_has_bow
+        beq .bow_no
+        lda player_has_arrows
+        beq .bow_no
         lda hud_rupees
         bne +
+.bow_no:
         rts
 +       dec hud_rupees
         jsr hud_render
@@ -219,7 +222,10 @@ spawn_bow:
 ; 4. BOUGIE : projette une flamme courte qui brûle sur place
 ; ---------------------------------------------------------------------------
 spawn_candle:
-        lda #ITEM_CANDLE
+        lda player_has_candle
+        bne +
+        rts
++       lda #ITEM_CANDLE
         sta item_active
         lda player_dir
         sta item_dir
@@ -677,6 +683,15 @@ update_candle:
         inc item_y
 
 .cnd_chk:
+        ; Teste aussi pendant le trajet (tous les 4 px) afin d'enflammer un buisson adjacent
+        lda current_world_type
+        bne .cnd_dec
+        lda item_timer
+        and #$03
+        bne .cnd_dec
+        jsr .cnd_call_ovl
+        bcs .cnd_done
+.cnd_dec:
         dec item_timer
         bne .cnd_done
         ; S'arrête et brûle sur place
@@ -687,6 +702,10 @@ update_candle:
 .cnd_done:
         rts
 
+.cnd_call_ovl:
+        jsr load_ovl_items
+        jmp $a003                       ; ovl_item_candle_exec
+
 .candle_burn:
         ; --- PHASE 1 : BRÛLE SUR PLACE ---
         lda current_world_type
@@ -694,10 +713,7 @@ update_candle:
         lda item_timer
         cmp #60
         bne +
-        lda #CART_BANK_OVL_ITEMS
-        ldx #4
-        jsr cart_load_overlay
-        jsr $a003                      ; ovl_item_candle_exec
+        jsr .cnd_call_ovl
         bcs .burn_done
 +       dec item_timer
         bne .burn_done
@@ -797,6 +813,14 @@ items_draw:
         jmp .enable_spr2
 
 .not_triforce_hold:
+        ; Réinitialise l'expansion matérielle 2x2 de Sprite 2 (utilisée uniquement pour l'explosion)
+        lda VIC_SPRITE_EXP_X
+        and #%11111011
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        and #%11111011
+        sta VIC_SPRITE_EXP_Y
+
         lda item_active
         beq +
         jmp .draw_item
@@ -957,14 +981,6 @@ items_draw:
         ora ZP_TMP
         sta VIC_SPRITE_MSB
 
-        ; S'assure que Sprite 2 n'est jamais étiré matériellement
-        lda VIC_SPRITE_EXP_X
-        and #%11111011
-        sta VIC_SPRITE_EXP_X
-        lda VIC_SPRITE_EXP_Y
-        and #%11111011
-        sta VIC_SPRITE_EXP_Y
-
         lda item_active
         cmp #ITEM_BOOMERANG
         bne .drw_bomb_single
@@ -1004,10 +1020,33 @@ items_draw:
         jmp .enable_spr2
 
 .drw_bomb_blast:
-        ; Animation authentique NES en 3 phases selon item_timer (24..1) :
-        ; Phase 3 (6..1)   : Anneau de dispersion de fumée (SPR_COMMON_DEATH_1)
-        ; Phase 2 (16..7)  : Pleine déflagration turbulente (sprite_link_proj_explosion + jitter)
-        ; Phase 1 (24..17) : Déflagration vive au centre (sprite_link_proj_explosion)
+        ; Déflagration authentique NES grande taille (48x42 px via expansion VIC-II 2x2)
+        ; Centrage exact sur (item_x - 12, item_y - 10) avec gestion 16-bit du MSB
+        lda VIC_SPRITE_EXP_X
+        ora #%00000100
+        sta VIC_SPRITE_EXP_X
+        lda VIC_SPRITE_EXP_Y
+        ora #%00000100
+        sta VIC_SPRITE_EXP_Y
+
+        sec
+        lda item_x
+        sbc #12
+        sta VIC_SPRITE_X2
+        lda item_x+1
+        sbc #0
+        tax
+        lda VIC_SPRITE_MSB
+        and #%11111011
+        cpx #0
+        beq +
+        ora #%00000100
++       sta VIC_SPRITE_MSB
+
+        sec
+        lda item_y
+        sbc #10
+        sta VIC_SPRITE_Y2
 
         lda item_timer
         cmp #7
@@ -1036,29 +1075,29 @@ items_draw:
         bne ++
 +       lda #COL_YELLOW
 ++      sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        bne .enable_spr2
 
 .bmb_stage_turbulent:
-        ; --- PHASE 2 : Pleine explosion tourbillonnante aux 7 nuages ---
+        ; --- PHASE 2 : Pleine explosion tourbillonnante ---
         lda item_anim
         and #3
         tax
         lda exp_colors,x
         sta VIC_SPRITE_COL2
 
-        ; Vibration subtile simulant le tourbillonnement des 6 satellites
+        ; Vibration subtile autour de la position centrée
         lda item_timer
         and #3
         tax
         clc
-        lda item_x
+        lda VIC_SPRITE_X2
         adc bomb_jitter_x,x
         sta VIC_SPRITE_X2
         clc
-        lda item_y
+        lda VIC_SPRITE_Y2
         adc bomb_jitter_y,x
         sta VIC_SPRITE_Y2
-        jmp .enable_spr2
+        bne .enable_spr2
 
 .drw_bow:
         cmp #ITEM_BOW
@@ -1071,16 +1110,16 @@ items_draw:
         cmp #DIR_RIGHT
         beq .drw_arrow_rt
         lda #< (sprite_link_proj_arrow_v / 64)
-        jmp +
+        bne +
 .drw_arrow_lf:
         lda #< (sprite_link_proj_arrow_left / 64)
-        jmp +
+        bne +
 .drw_arrow_rt:
         lda #< (sprite_link_proj_arrow_right / 64)
 +       sta SPRITE_PTR2
         lda #COL_WHITE
         sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        bne .enable_spr2
 
 .drw_candle:
         cmp #ITEM_CANDLE
@@ -1090,7 +1129,7 @@ items_draw:
         and #4
         beq +
         lda #< (sprite_link_proj_flame_1 / 64)
-        jmp ++
+        bne ++
 +       lda #< (sprite_link_proj_flame_0 / 64)
 ++      sta SPRITE_PTR2
         lda #COL_LIGHT_RED
@@ -1120,9 +1159,7 @@ bomb_check_secret_wall:
         lda current_world_type
         beq +
         rts
-+       lda #CART_BANK_OVL_ITEMS
-        ldx #4
-        jsr cart_load_overlay
++       jsr load_ovl_items
         jmp $a009                      ; ovl_item_bomb_secret_exec
 
 record_room_secret_opened:

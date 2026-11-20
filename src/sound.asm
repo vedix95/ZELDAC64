@@ -11,6 +11,7 @@ MUSIC_DUNGEON           = 2
 MUSIC_ITEM_FANFARE      = 3
 MUSIC_TRIFORCE          = 4
 MUSIC_DUNGEON_FINAL     = 5
+MUSIC_GANON_FANFARE     = 6
 
 SID1_BASE               = $d400
 SID2_BASE               = $d420                 ; Adresse standard Stereo SID
@@ -247,7 +248,10 @@ sound_play_dungeon_music:
         cmp #9
         bne .play_std_dungeon
 
-        ; Niveau 9 (Montagne de la Mort) : Streame la partition Donjon 9 depuis Banque 31 ($8800)
+        ; Niveau 9 (Montagne de la Mort) : Streame D9 + Fanfare Ganon depuis Banque 31 ($8800)
+        lda bgm_d9_loaded
+        bne .d9_already_streamed
+        jsr music_stop                  ; Stoppe la lecture IRQ avant modification du tampon
         lda #<bgm_track_buffer
         sta ZP_DST
         lda #>bgm_track_buffer
@@ -257,19 +261,27 @@ sound_play_dungeon_music:
         lda #>$8800
         sta ZP_SRC+1
         lda #CART_BANK_AUDIO
-        ldx #2                  ; 2 pages (512 octets, partition 496 octets)
+        ldx #3                          ; 3 pages (768 octets : D9 496o + Fanfare Ganon 84o)
         jsr cart_stream_copy_from
+        lda #1
+        sta bgm_d9_loaded
+.d9_already_streamed:
         lda #MUSIC_DUNGEON_FINAL
         jmp music_play
 
 .play_std_dungeon:
-        lda #MUSIC_DUNGEON
+        lda bgm_d9_loaded
+        beq +
+        jsr sound_restore_standard_bgm
++       lda #MUSIC_DUNGEON
         jmp music_play
 
 ; ---------------------------------------------------------------------------
-; sound_restore_standard_bgm : Restaure la partition Standard BGM depuis Banque 31 ($8000)
+; sound_restore_standard_bgm : Restaure les 3 pages recouvertes par D9 depuis Banque 31 ($8000)
+; Ne touche jamais au-delà de bgm_track_buffer + $02FF (protège totalement $A000)
 ; ---------------------------------------------------------------------------
 sound_restore_standard_bgm:
+        jsr music_stop                  ; Stoppe la lecture IRQ avant restauration du tampon
         lda #<bgm_track_buffer
         sta ZP_DST
         lda #>bgm_track_buffer
@@ -278,9 +290,34 @@ sound_restore_standard_bgm:
         sta ZP_SRC
         lda #>$8000
         sta ZP_SRC+1
+        lda #0
+        sta bgm_d9_loaded
         lda #CART_BANK_AUDIO
-        ldx #6                  ; 6 pages (1364 octets)
+        ldx #3                          ; 3 pages exactes (768 octets recouverts par D9)
         jmp cart_stream_copy_from
+
+; ---------------------------------------------------------------------------
+; sound_play_ganon_fanfare : Fanfare d'apparition de Ganon (Donjon 9 salle $42)
+; ---------------------------------------------------------------------------
+sound_play_ganon_fanfare:
+        lda bgm_d9_loaded
+        beq .gn_skip
+        lda #MUSIC_DUNGEON_FINAL
+        sta saved_bg_music
+        lda #MUSIC_GANON_FANFARE
+        jmp music_play
+.gn_skip:
+        rts
+
+; Helper : retourne $04 (Pulse 25% NES Death Mountain / Ganon) ou $08 (Pulse 50% standard)
+.get_dung_pw_hi:
+        lda current_music
+        cmp #MUSIC_DUNGEON_FINAL
+        bcc +
+        lda #$04
+        rts
++       lda #$08
+        rts
 
 ; ---------------------------------------------------------------------------
 ; music_play : Lance la lecture d'un morceau (A = MUSIC_OVERWORLD / MUSIC_DUNGEON)
@@ -380,10 +417,10 @@ music_play:
 
 .init_dungeon_inst:
         ; --- Instruments Underworld (Dungeon) Authentiques ---
-        ; Voix 1 : Pulse 50% ($0800), arpeggio lead
+        ; Voix 1 : Pulse (50% D1..8, 25% Death Mountain / Ganon), arpeggio lead
         lda #$00
         sta SID1_V1_PW_LO
-        lda #$08                        ; Impulsion 50%
+        jsr .get_dung_pw_hi
         sta SID1_V1_PW_HI
         lda #$09                        ; Attack 2ms, Decay 750ms
         sta SID1_V1_AD
@@ -392,10 +429,10 @@ music_play:
         lda #%01000000                  ; Pulse Gate OFF (attendre apply_music_step)
         sta SID1_V1_CTRL
 
-        ; Voix 2 : Pulse 50% ($0800), arpeggio contre-chant (NES Square 0)
+        ; Voix 2 : Pulse (50% D1..8, 25% Death Mountain / Ganon), contre-chant (NES Square 0)
         lda #$00
         sta SID1_V2_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID1_V2_PW_HI
         lda #$09
         sta SID1_V2_AD
@@ -416,7 +453,7 @@ music_play:
         beq +
         lda #$00
         sta SID2_V1_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID2_V1_PW_HI
         lda #$09
         sta SID2_V1_AD
@@ -427,7 +464,7 @@ music_play:
 
         lda #$00
         sta SID2_V2_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID2_V2_PW_HI
         lda #$09
         sta SID2_V2_AD
@@ -569,7 +606,7 @@ restore_music_voice_2:
 .res_v2_uw:
         lda #$00
         sta SID1_V2_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID1_V2_PW_HI
         lda #$09
         sta SID1_V2_AD
@@ -580,7 +617,7 @@ restore_music_voice_2:
         beq +
         lda #$00
         sta SID2_V2_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID2_V2_PW_HI
         lda #$09
         sta SID2_V2_AD
@@ -771,6 +808,9 @@ music_update:
 +       cmp #MUSIC_DUNGEON_FINAL
         bne +
         jmp .step_dungeon_final
++       cmp #MUSIC_GANON_FANFARE
+        bne +
+        jmp .step_ganon_fanfare
 +       cmp #MUSIC_ITEM_FANFARE
         beq .step_item_fanfare
         cmp #MUSIC_TRIFORCE
@@ -931,6 +971,29 @@ music_update:
         jmp .apply_music_step
 
 ; ---------------------------------------------------------------------------
+; Déroulement Fanfare Apparition de Ganon ($92CC - 21 Pas, reprise auto D9)
+; ---------------------------------------------------------------------------
+.step_ganon_fanfare:
+        ldx music_step
+        cpx #MUSIC_GANON_LEN
+        bcc .ganon_read
+        lda #MUSIC_NONE
+        sta current_music
+        lda #MUSIC_DUNGEON_FINAL
+        jmp music_play
+.ganon_read:
+        lda music_ganon_dur,x
+        sta music_delay
+        lda music_ganon_v1,x
+        sta temp_v1
+        lda music_ganon_v2,x
+        sta temp_v2
+        lda music_ganon_v3,x
+        sta temp_v3
+        inc music_step
+        jmp .apply_music_step
+
+; ---------------------------------------------------------------------------
 ; Application des notes aux registres SID
 ; ---------------------------------------------------------------------------
 .apply_music_step:
@@ -961,7 +1024,7 @@ music_update:
 
         lda #$00
         sta SID1_V1_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID1_V1_PW_HI
         lda current_music
         cmp #MUSIC_DUNGEON
@@ -1108,10 +1171,10 @@ music_update:
         jmp .v2_dual_sid
 
 .v2_pulse:
-        ; Underworld / Fanfares : Pulse 50%
+        ; Underworld / Fanfares : Pulse (50% D1..8, 25% Death Mountain / Ganon)
         lda #$00
         sta SID1_V2_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID1_V2_PW_HI
         lda #$09
         sta SID1_V2_AD
@@ -1159,7 +1222,7 @@ music_update:
 .v2_dual_pulse:
         lda #$00
         sta SID2_V2_PW_LO
-        lda #$08
+        jsr .get_dung_pw_hi
         sta SID2_V2_PW_HI
         lda #$09
         sta SID2_V2_AD
@@ -1293,6 +1356,7 @@ music_update:
 temp_v1:        !byte 0
 temp_v2:        !byte 0
 temp_v3:        !byte 0
+bgm_d9_loaded:  !byte 0                 ; 1 = tampon bgm_track_buffer contient Donjon 9 + Ganon
 
 ; ===========================================================================
 ; EFFETS SONORES (SFX)

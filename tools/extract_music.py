@@ -110,6 +110,16 @@ def extract_music_data(rom_path=DEFAULT_ROM):
         'bytes': list(b0[d9_off : d9_off + 0xCD])
     }
 
+    # 8. Fanfare d'apparition de Ganon (SongHeader $8E15 -> Script à $92CC)
+    ganon_off = 0x92CC - 0x8000
+    ganon_fanfare = {
+        'addr': 0x92CC,
+        'sq0_off': 0x10,
+        'trg_off': 0x22,
+        'end_off': 0x2B,
+        'bytes': list(b0[ganon_off : ganon_off + 0x2B])
+    }
+
     data = {
         "_description": "Partitions musicales authentiques de The Legend of Zelda (NES, Banque 0)",
         "_generator": "tools/extract_music.py",
@@ -120,7 +130,8 @@ def extract_music_data(rom_path=DEFAULT_ROM):
         "uw_scripts": uw_scripts,
         "item_fanfare": item_fanfare,
         "triforce_fanfare": triforce_fanfare,
-        "dungeon_final": dungeon_final
+        "dungeon_final": dungeon_final,
+        "ganon_fanfare": ganon_fanfare
     }
 
     return data

@@ -44,7 +44,7 @@ SCENARIOS = [
     ("shot_04_ow_clearing.png", 1, 0x67, 0, "OW Green Clearing (Zone 0, Room 7,6)"),
     ("shot_05_ow_lake.png", 1, 0x56, 0, "OW Large Lake (Zone 0, Room 6,5)"),
     ("shot_06_ow_graveyard.png", 1, 0x41, 0, "OW Graveyard with Ghinis (Zone 2, Room 1,4)"),
-    ("shot_07_ow_lost_woods.png", 1, 0x52, 0, "OW Lost Woods (Zone 3, Room 2,5)"),
+    ("shot_07_ow_lost_woods.png", 1, 0x61, 0, "OW Lost Woods (Zone 3, Room 1,6)"),
     ("shot_08_ow_desert.png", 1, 0x24, 0, "OW Desert Sands (Zone 1, Room 4,2)"),
     ("shot_09_ow_waterfall.png", 1, 0x1E, 0, "OW Waterfall Basin (Zone 3, Room 14,1)"),
     ("shot_10_ow_death_mountain.png", 1, 0x05, 0, "OW Death Mountain Foothills (Zone 1, Room 5,0)"),

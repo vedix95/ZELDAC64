@@ -71,6 +71,17 @@ cave_slot3_col:         !byte 0
 cave_held_item_ptr:     !byte 0
 cave_held_item_col:     !byte 0
 
+; Défilement machine à écrire & centrage dynamique des textes de grotte
+CAVE_TXT_SPEED          = 4             ; 4 frames/caractère (~80 ms à 50 Hz, fidèle NES)
+cave_txt_line:          !byte 0         ; 0 = ligne 1, 1 = ligne 2, 2 = terminé
+cave_txt_idx:           !byte 0         ; position courante dans la ligne
+cave_txt_tick:          !byte 0         ; décompte inter-caractères
+cave_txt1_col:          !byte 0         ; colonne de départ centrée ligne 1
+cave_txt2_col:          !byte 0         ; colonne de départ centrée ligne 2
+cave_txt1_ptr:          !word 0         ; pointeur résolu ligne 1
+cave_txt2_ptr:          !word 0         ; pointeur résolu ligne 2
+cave_blip_timer:        !byte 0         ; durée restante du bip texte SID
+
 ; Fanfare triomphale SID pour l'obtention d'un objet (8 notes arpégées)
 cave_fanfare_lo:
         !byte $26, $9E, $B8, $4C, $3C, $70, $98, $78
@@ -644,42 +655,43 @@ ovl_cave_draw_screen:
         sta ZP_MAP+1
         jsr draw_map
 
-        ; 2. Affiche les lignes de texte selon le type de grotte
-        jsr cave_render_texts
+        ; 2. Prépare les lignes de texte centrées pour le défilement lettre par lettre
+        jsr cave_init_text_scroll
 
-        ; 3. Affiche les étiquettes de prix pour les marchands (Ligne 11)
+        ; 3. Affiche les étiquettes de prix pour les marchands (Ligne 16)
         jsr cave_render_prices
         rts
 
-cave_render_texts:
+; ---------------------------------------------------------------------------
+; cave_init_text_scroll : efface les lignes 6 & 8, résout les pointeurs de
+; texte et calcule leur colonne de centrage exacte : (40 - len) / 2.
+; ---------------------------------------------------------------------------
+cave_init_text_scroll:
+        ; Efface proprement l'intérieur des lignes 7 et 9 (colonnes 2..37)
+        ldx #2
+.clr_txt_rows:
+        lda #' '
+        sta SCREEN_RAM+280,x
+        sta SCREEN_RAM+360,x
+        lda #COL_BLACK
+        sta COLOR_RAM+280,x
+        sta COLOR_RAM+360,x
+        inx
+        cpx #38
+        bne .clr_txt_rows
+
+        ; Pointeur ligne 1
         ldx current_cave_type
         lda cave_txt1_lo,x
+        sta cave_txt1_ptr
         sta ZP_SRC
         lda cave_txt1_hi,x
+        sta cave_txt1_ptr+1
         sta ZP_SRC+1
+        jsr .calc_center_col
+        sta cave_txt1_col
 
-        ; Ligne 6 : 28 caractères (colonnes 6..33)
-        ldy #0
--       lda (ZP_SRC),y
-        beq .pad_txt1
-        sta SCREEN_RAM+240+6,y
-        lda #COL_WHITE
-        sta COLOR_RAM+240+6,y
-        iny
-        cpy #28
-        bne -
-        jmp +
-
-.pad_txt1:
-        cpy #28
-        bcs +
-        lda #' '
-        sta SCREEN_RAM+240+6,y
-        lda #COL_BLACK
-        sta COLOR_RAM+240+6,y
-        iny
-        bne .pad_txt1
-+
+        ; Pointeur ligne 2 (avec cas Moblin +100 rubis)
         ldx current_cave_type
         cpx #CAVE_TYPE_MOBLIN
         bne .set_def_txt2
@@ -694,40 +706,217 @@ cave_render_texts:
         bne .set_def_txt2
 .show_mob100:
         lda #<txt_moblin_100_2
+        sta cave_txt2_ptr
         sta ZP_SRC
         lda #>txt_moblin_100_2
+        sta cave_txt2_ptr+1
         sta ZP_SRC+1
-        jmp .draw_txt2_chars
+        jmp .calc_txt2_col
 
 .set_def_txt2:
         lda cave_txt2_lo,x
+        sta cave_txt2_ptr
         sta ZP_SRC
         lda cave_txt2_hi,x
+        sta cave_txt2_ptr+1
         sta ZP_SRC+1
 
-.draw_txt2_chars:
-        ; Ligne 8 : 28 caractères (colonnes 6..33)
-        ldy #0
--       lda (ZP_SRC),y
-        beq .pad_txt2
-        sta SCREEN_RAM+320+6,y
-        lda #COL_WHITE
-        sta COLOR_RAM+320+6,y
-        iny
-        cpy #28
-        bne -
+.calc_txt2_col:
+        jsr .calc_center_col
+        sta cave_txt2_col
+
+        lda #0
+        sta cave_txt_line
+        sta cave_txt_idx
+        sta cave_blip_timer
+        lda #1
+        sta cave_txt_tick
         rts
 
-.pad_txt2:
-        cpy #28
-        bcs ++
-        lda #' '
-        sta SCREEN_RAM+320+6,y
-        lda #COL_BLACK
-        sta COLOR_RAM+320+6,y
+; Calcule A = (40 - strlen(ZP_SRC)) >> 1 (borné à [2..20])
+.calc_center_col:
+        ldy #0
+-       lda (ZP_SRC),y
+        beq +
         iny
-        bne .pad_txt2
-++      rts
+        cpy #36
+        bcc -
++       sty ZP_TMP
+        lda #40
+        sec
+        sbc ZP_TMP
+        lsr
+        cmp #2
+        bcs +
+        lda #2
++       rts
+
+; ---------------------------------------------------------------------------
+; cave_update_text_scroll : révèle les dialogues lettre par lettre avec bip SID
+; ---------------------------------------------------------------------------
+cave_update_text_scroll:
+        ; Gestion de l'extinction du bip texte
+        lda cave_blip_timer
+        beq .chk_scroll_active
+        dec cave_blip_timer
+        bne .chk_scroll_active
+        jsr cave_stop_text_blip
+
+.chk_scroll_active:
+        lda cave_txt_line
+        cmp #2
+        bcc +
+        rts
++       ; Ne jamais parasiter la fanfare d'obtention d'objet
+        lda cave_pickup_timer
+        beq +
+        jsr cave_stop_text_blip
+        rts
++       dec cave_txt_tick
+        beq +
+        rts
++       lda #CAVE_TXT_SPEED
+        sta cave_txt_tick
+
+        lda cave_txt_line
+        bne .scroll_line2
+
+        ; --- Ligne 1 (Row 7, sous marge noire de 8 px) ---
+        lda cave_txt1_ptr
+        sta ZP_SRC
+        lda cave_txt1_ptr+1
+        sta ZP_SRC+1
+        ldy cave_txt_idx
+        lda (ZP_SRC),y
+        bne .put_char_l1
+        lda #1
+        sta cave_txt_line
+        lda #0
+        sta cave_txt_idx
+        rts
+.put_char_l1:
+        pha
+        tya
+        clc
+        adc cave_txt1_col
+        tax
+        pla
+        sta SCREEN_RAM+280,x
+        tay
+        lda #COL_WHITE
+        sta COLOR_RAM+280,x
+        inc cave_txt_idx
+        cpy #' '
+        beq .scroll_rts
+        jmp cave_text_blip
+
+.scroll_line2:
+        ; --- Ligne 2 (Row 9, au-dessus du PNJ Y=130) ---
+        lda cave_txt2_ptr
+        sta ZP_SRC
+        lda cave_txt2_ptr+1
+        sta ZP_SRC+1
+        ldy cave_txt_idx
+        lda (ZP_SRC),y
+        bne .put_char_l2
+        lda #2
+        sta cave_txt_line
+        rts
+.put_char_l2:
+        pha
+        tya
+        clc
+        adc cave_txt2_col
+        tax
+        pla
+        sta SCREEN_RAM+360,x
+        tay
+        lda #COL_WHITE
+        sta COLOR_RAM+360,x
+        inc cave_txt_idx
+        cpy #' '
+        beq .scroll_rts
+        jmp cave_text_blip
+
+.scroll_rts:
+        rts
+
+; Bip court NES sur Voix 3 SID1 (+ SID2 si Dual SID) — sans écraser les SFX actifs
+cave_text_blip:
+        lda sfx_timer
+        bne .scroll_rts
+        lda #15
+        sta SID1_VOLUME
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_VOLUME
++       lda #$00
+        sta SID1_V3_FREQ_LO
+        lda #$22                        ; Timbre aigu typique texte Zelda NES
+        sta SID1_V3_FREQ_HI
+        lda #$00
+        sta SID1_V3_PW_LO
+        lda #$08
+        sta SID1_V3_PW_HI
+        lda #$00                        ; Attack 2ms, Decay 6ms
+        sta SID1_V3_AD
+        lda #$a0                        ; Sustain 10, Release 6ms
+        sta SID1_V3_SR
+        lda #%01000000                  ; Pulse Gate OFF (>=16 cycles avant Gate ON)
+        sta SID1_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%01000001                  ; Pulse Gate ON
+        sta SID1_V3_CTRL
+
+        ldy dual_sid_enabled
+        beq .blip_done
+        lda #$00
+        sta SID2_V3_FREQ_LO
+        lda #$22
+        sta SID2_V3_FREQ_HI
+        lda #$00
+        sta SID2_V3_PW_LO
+        lda #$08
+        sta SID2_V3_PW_HI
+        lda #$00
+        sta SID2_V3_AD
+        lda #$a0
+        sta SID2_V3_SR
+        lda #%01000000
+        sta SID2_V3_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%01000001
+        sta SID2_V3_CTRL
+.blip_done:
+        lda #2                          ; 2 frames (~40 ms)
+        sta cave_blip_timer
+        rts
+
+cave_stop_text_blip:
+        lda #0
+        sta cave_blip_timer
+        lda sfx_timer
+        bne +
+        lda #%01000000                  ; Gate OFF en préservant le bit Pulse
+        sta SID1_V3_CTRL
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_V3_CTRL
++       rts
 
 cave_render_prices:
         ; Efface la ligne 16 (colonnes 12..30)
@@ -827,6 +1016,7 @@ cave_print_price:
 ; ---------------------------------------------------------------------------
 ovl_cave_update:
         inc cave_torch_tick
+        jsr cave_update_text_scroll
 
         ; Si Link est en train de célébrer l'obtention d'un objet
         lda cave_pickup_timer
@@ -1034,18 +1224,29 @@ cave_buy_slot_x:
         lda current_cave_type
         cmp #CAVE_TYPE_WARP
         bne .chk_gamble_slot
-        ; Choisit la destination selon le slot (0 -> D3 #35, 5 -> J5 #73, 10 -> N2 #29 ou J8 #121)
-        ldy #0
+        ; Choisit la destination parmi les 3 AUTRES grottes de téléportation
+        ; (D3 #35, J5 #73, N2 #29, J8 #121) en sautant la salle courante
+        lda #0
         cpx #0
-        beq .do_warp_dest
-        iny
+        beq +
+        lda #1
         cpx #5
+        beq +
+        lda #2
++       sta ZP_TMP
+        ldy #0
+.warp_find_loop:
+        lda warp_dest_idx,y
+        cmp current_room_idx
+        beq .warp_skip
+        lda ZP_TMP
         beq .do_warp_dest
+        dec ZP_TMP
+.warp_skip:
         iny
-        lda current_room_idx
-        cmp #29
-        bne .do_warp_dest
-        iny
+        cpy #4
+        bcc .warp_find_loop
+        ldy #0
 .do_warp_dest:
         lda warp_dest_rx,y
         sta current_room_x
@@ -1053,11 +1254,11 @@ cave_buy_slot_x:
         sta current_room_y
         lda warp_dest_idx,y
         sta current_room_idx
-        lda #160
+        lda warp_dest_x,y
         sta saved_overworld_x
         lda #0
         sta saved_overworld_x+1
-        lda #132
+        lda warp_dest_y,y               ; cave_exit ajoute +16 -> atterrissage herbe libre
         sta saved_overworld_y
         jsr sound_secret_chime
         jmp cave_exit
@@ -1065,6 +1266,8 @@ cave_buy_slot_x:
 warp_dest_rx:   !byte 3, 9, 13, 9
 warp_dest_ry:   !byte 2, 4,  1, 7
 warp_dest_idx:  !byte 35, 73, 29, 121
+warp_dest_x:    !byte 116, 132, 100, 196
+warp_dest_y:    !byte 174, 142, 158, 174
 
 .chk_gamble_slot:
         cmp #CAVE_TYPE_GAMBLE
@@ -1074,18 +1277,53 @@ warp_dest_idx:  !byte 35, 73, 29, 121
         bcs +
         jmp .cant_afford
 +
-        ; Gain de +40 rubis nets (+50 - 10 de mise)
+        ; Jeu de hasard authentique NES : 3 issues aléatoires (+40 net, -10, -40)
+        lda VIC_RASTER
+        eor hud_blink_tick
+        eor cave_active_slot_idx
+.gamble_mod3:
+        cmp #3
+        bcc .gamble_pick
+        sec
+        sbc #3
+        jmp .gamble_mod3
+.gamble_pick:
+        cmp #0
+        beq .gamble_win
+        cmp #1
+        beq .gamble_lose10
+        ; Perte -40 rubis (bornée à 0)
+        lda hud_rupees
+        sec
+        sbc #40
+        bcs +
+        lda #0
++       sta hud_rupees
+        jsr sound_shield_block
+        jmp .gamble_finish
+.gamble_lose10:
+        ; Perte -10 rubis (mise perdue)
+        lda hud_rupees
+        sec
+        sbc #10
+        sta hud_rupees
+        jsr sound_shield_block
+        jmp .gamble_finish
+.gamble_win:
+        ; Gain +50 rubis (-10 de mise = +40 net, borné à 255)
+        lda hud_rupees
         clc
         adc #40
         bcc +
         lda #255
 +       sta hud_rupees
+        jsr sound_rupee
+.gamble_finish:
         jsr hud_render
         lda #0
         sta cave_slot1_active
         sta cave_slot2_active
         sta cave_slot3_active
-        jsr sound_rupee
         jsr cave_render_prices
         rts
 
@@ -1507,6 +1745,7 @@ setup_pnj_sprite:
 ; cave_exit : replace Link à l'extérieur devant la grotte
 ; ---------------------------------------------------------------------------
 cave_exit:
+        jsr cave_stop_text_blip
         lda #STATE_PLAYING
         sta game_state
 
@@ -1556,17 +1795,69 @@ cave_exit:
         sta VIC_SPRITE_MC2
 
         jsr load_room
+        jsr .ensure_safe_cave_exit
         jsr hud_init
         jsr hud_render
         jsr enemies_room_init
 
         lda current_world_type
-        bne +
+        bne .ce_play_dung
         lda #MUSIC_OVERWORLD
-        bne ++
-+       lda #MUSIC_DUNGEON
-++      jsr music_play
+        jmp music_play
+.ce_play_dung:
+        jmp sound_play_dungeon_music
+
+; Garde-fou sortie de grotte Overworld : si player_y = saved_y+16 tombe dans un
+; obstacle (ex: arbre brûlé sur la rangée basse en G-5), relocalise Link sur la
+; tuile libre adjacente (haut, droite ou gauche).
+.ensure_safe_cave_exit:
+        lda current_world_type
+        bne .sce_done
+        jsr .sce_is_solid
+        bcc .sce_done
+        ; Essai 1 : au-dessus (saved_overworld_y - 16)
+        lda saved_overworld_y
+        sec
+        sbc #16
+        sta player_y
+        jsr .sce_is_solid
+        bcc .sce_done
+        ; Essai 2 : à droite (saved_overworld_x + 16, saved_overworld_y)
+        lda saved_overworld_y
+        sta player_y
+        lda saved_overworld_x
+        clc
+        adc #16
+        sta player_x
+        lda saved_overworld_x+1
+        adc #0
+        sta player_x+1
+        jsr .sce_is_solid
+        bcc .sce_done
+        ; Essai 3 : à gauche (saved_overworld_x - 16, saved_overworld_y)
+        lda saved_overworld_x
+        sec
+        sbc #16
+        sta player_x
+        lda saved_overworld_x+1
+        sbc #0
+        sta player_x+1
+.sce_done:
         rts
+
+.sce_is_solid:
+        lda player_x
+        clc
+        adc #12
+        sta col_x
+        lda player_x+1
+        adc #0
+        sta col_x+1
+        lda player_y
+        clc
+        adc #12
+        sta col_y
+        jmp check_point_solid
 
 ; ===========================================================================
 ; TEXTES OFFICIELS DES 23 GROTTES

@@ -91,47 +91,46 @@ u_room_24:
 u_room_32:
         !byte 8, 225, 33, 9, 19, 16, 181, 16, 20, 19, 16, 5, 32, 5, 16, 5
         !byte 32, 5, 16, 20, 19, 16, 5, 0, 21, 48, 21, 0, 5, 16, 20, 19
-        !byte 16, 5, 0, 21, 48, 21, 0, 5, 16, 20, 19, 16, 5, 32, 6, 16
-        !byte 6, 32, 5, 16, 20, 19, 16, 5, 144, 5, 16, 20, 19, 16, 5, 0
+        !byte 16, 5, 0, 21, 48, 21, 0, 5, 32, 15, 19, 16, 5, 32, 6, 16
+        !byte 6, 32, 5, 32, 15, 19, 16, 5, 144, 5, 16, 20, 19, 16, 5, 0
         !byte 6, 80, 6, 0, 5, 16, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11
         !byte 255
-; Salle ($33 : rx=3, ry=3) - RLE compact (45 octets)
+; Salle ($33 : rx=3, ry=3) - RLE compact (43 octets)
 u_room_33:
         !byte 8, 113, 29, 113, 9, 19, 224, 0, 20, 19, 16, 181, 16, 20, 19, 224
-        !byte 0, 20, 19, 224, 16, 15, 19, 224, 16, 15, 19, 16, 181, 16, 20, 19
-        !byte 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
-; Salle ($34 : rx=4, ry=3) - RLE compact (54 octets)
+        !byte 0, 20, 15, 224, 32, 31, 224, 32, 15, 19, 16, 181, 16, 20, 19, 224
+        !byte 0, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
+; Salle ($34 : rx=4, ry=3) - RLE compact (53 octets)
 u_room_34:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 149, 32, 20, 19, 32
         !byte 5, 112, 5, 32, 20, 15, 48, 5, 112, 5, 32, 20, 15, 48, 5, 112
         !byte 5, 32, 20, 19, 32, 149, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 10, 114, 17, 114, 11, 255
+        !byte 10, 226, 34, 11, 255
 ; Salle ($35 : rx=5, ry=3) - RLE compact (42 octets)
 u_room_35:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
         !byte 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
-; Salle ($42 : rx=2, ry=4) - RLE compact (49 octets)
+        !byte 19, 224, 0, 20, 10, 114, 31, 114, 11, 255
+; Salle ($42 : rx=2, ry=4) - RLE compact (48 octets)
 u_room_42:
         !byte 8, 113, 30, 113, 9, 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20
         !byte 19, 224, 0, 20, 19, 224, 16, 15, 19, 224, 16, 15, 19, 224, 0, 20
-        !byte 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11
-        !byte 255
+        !byte 19, 16, 6, 144, 6, 16, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 ; Salle ($43 : rx=3, ry=4) - RLE compact (42 octets)
 u_room_43:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 15, 224, 16, 20, 15, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 15, 224, 32, 13, 15, 224, 32, 13, 19, 224, 0, 20, 19, 224, 0, 20
         !byte 19, 224, 0, 20, 10, 114, 31, 114, 11, 255
 ; Salle ($44 : rx=4, ry=4) - RLE compact (42 octets)
 u_room_44:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 16, 12, 19, 224, 16, 12, 19, 224, 0, 20, 19, 224, 0, 20
+        !byte 13, 224, 32, 12, 13, 224, 32, 12, 19, 224, 0, 20, 19, 224, 0, 20
         !byte 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($45 : rx=5, ry=4) - RLE compact (42 octets)
+; Salle ($45 : rx=5, ry=4) - RLE compact (43 octets)
 u_room_45:
-        !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 12, 192, 7, 48, 28, 224, 32, 12, 19, 224, 0, 20, 19, 224, 0, 20
-        !byte 19, 224, 0, 20, 10, 114, 31, 114, 11, 255
+        !byte 8, 113, 31, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 12, 192, 7, 48, 28, 224, 32, 12, 19, 224, 0, 20, 19, 224, 0
+        !byte 20, 19, 224, 0, 20, 10, 114, 31, 114, 11, 255
 ; Salle ($46 : rx=6, ry=4) - RLE compact (42 octets)
 u_room_46:
         !byte 8, 225, 33, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0, 20
@@ -160,48 +159,46 @@ u_room_56:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 16, 181, 16, 20, 19, 224
         !byte 0, 20, 15, 224, 16, 20, 15, 224, 16, 20, 19, 16, 181, 16, 20, 19
         !byte 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($63 : rx=3, ry=6) - RLE compact (50 octets)
+; Salle ($63 : rx=3, ry=6) - RLE compact (49 octets)
 u_room_63:
         !byte 8, 113, 31, 113, 9, 19, 144, 53, 16, 20, 19, 144, 53, 16, 20, 19
         !byte 160, 37, 16, 20, 19, 192, 7, 16, 20, 19, 160, 37, 16, 20, 19, 144
-        !byte 53, 16, 20, 19, 144, 53, 16, 20, 19, 224, 0, 20, 10, 114, 17, 114
-        !byte 11, 255
-; Salle ($64 : rx=4, ry=6) - RLE compact (50 octets)
+        !byte 53, 16, 20, 19, 144, 53, 16, 20, 19, 224, 0, 20, 10, 226, 34, 11
+        !byte 255
+; Salle ($64 : rx=4, ry=6) - RLE compact (49 octets)
 u_room_64:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 21, 80, 21, 32, 20
         !byte 19, 224, 0, 20, 19, 96, 21, 112, 12, 19, 224, 16, 12, 19, 32, 21
-        !byte 80, 21, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 17, 114
-        !byte 11, 255
-; Salle ($65 : rx=5, ry=6) - RLE compact (43 octets)
+        !byte 80, 21, 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 226, 34, 11
+        !byte 255
+; Salle ($65 : rx=5, ry=6) - RLE compact (42 octets)
 u_room_65:
         !byte 8, 113, 31, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 16, 181
         !byte 16, 20, 12, 224, 32, 28, 224, 32, 12, 19, 224, 0, 20, 19, 224, 0
-        !byte 20, 19, 224, 0, 20, 10, 114, 17, 114, 11, 255
+        !byte 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 ; Salle ($66 : rx=6, ry=6) - RLE compact (43 octets)
 u_room_66:
         !byte 8, 113, 30, 113, 9, 19, 224, 0, 20, 19, 224, 0, 20, 19, 224, 0
         !byte 20, 14, 224, 16, 20, 14, 224, 16, 20, 19, 224, 0, 20, 19, 224, 0
         !byte 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($75 : rx=5, ry=7) - RLE compact (65 octets)
+; Salle ($75 : rx=5, ry=7) - RLE compact (61 octets)
 u_room_75:
         !byte 8, 225, 33, 9, 19, 32, 5, 32, 53, 0, 21, 16, 20, 19, 96, 53
-        !byte 0, 21, 16, 20, 19, 96, 53, 0, 21, 16, 20, 19, 96, 55, 0, 23
-        !byte 32, 12, 19, 96, 53, 0, 21, 32, 12, 19, 96, 101, 16, 20, 19, 32
-        !byte 5, 32, 53, 0, 21, 16, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11
-        !byte 255
+        !byte 0, 21, 16, 20, 19, 96, 53, 0, 21, 16, 20, 19, 224, 16, 12, 19
+        !byte 96, 53, 0, 21, 32, 12, 19, 96, 101, 16, 20, 19, 32, 5, 32, 53
+        !byte 0, 21, 16, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 ; Salle ($76 : rx=6, ry=7) - RLE compact (64 octets)
 u_room_76:
         !byte 8, 113, 28, 113, 9, 19, 224, 0, 20, 19, 32, 6, 16, 6, 16, 6
         !byte 16, 6, 32, 20, 19, 224, 0, 20, 12, 48, 6, 16, 6, 16, 6, 16
         !byte 6, 48, 15, 12, 224, 32, 15, 19, 32, 6, 16, 6, 16, 6, 16, 6
         !byte 32, 20, 19, 224, 0, 20, 19, 224, 0, 20, 10, 114, 28, 114, 11, 255
-; Salle ($77 : rx=7, ry=7) - RLE compact (65 octets)
+; Salle ($77 : rx=7, ry=7) - RLE compact (61 octets)
 u_room_77:
         !byte 8, 225, 33, 9, 19, 32, 5, 32, 53, 0, 21, 16, 20, 19, 96, 53
-        !byte 0, 21, 16, 20, 19, 96, 53, 0, 21, 16, 20, 12, 112, 55, 0, 23
-        !byte 16, 20, 12, 112, 53, 0, 21, 16, 20, 19, 96, 101, 16, 20, 19, 32
-        !byte 5, 32, 53, 0, 21, 16, 20, 19, 224, 0, 20, 10, 114, 17, 114, 11
-        !byte 255
+        !byte 0, 21, 16, 20, 19, 96, 53, 0, 21, 16, 20, 12, 224, 16, 20, 12
+        !byte 112, 53, 0, 21, 16, 20, 19, 96, 101, 16, 20, 19, 32, 5, 32, 53
+        !byte 0, 21, 16, 20, 19, 224, 0, 20, 10, 226, 34, 11, 255
 
 ; Salle scellée étanche pour toutes les coordonnées hors-donjon
 dummy_sealed_room:
@@ -218,7 +215,7 @@ map_enemies:
         ; Formation 3
         !byte TYPE_GEL          ,  6,  3,   TYPE_GEL          , 14,  3,   TYPE_GEL          ,  8,  5,   TYPE_GEL          , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 4
-        !byte TYPE_STALFOS      ,  6,  3,   TYPE_STALFOS      , 13,  3,   TYPE_STALFOS      ,  8,  5,   TYPE_STALFOS      , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_STALFOS      ,  4,  3,   TYPE_STALFOS      , 15,  3,   TYPE_STALFOS      ,  8,  7,   TYPE_STALFOS      , 12,  7,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 5
         !byte TYPE_DARKNUT_RED  ,  8,  3,   TYPE_DARKNUT_RED  , 12,  3,   TYPE_DARKNUT_RED  , 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 6
@@ -232,7 +229,7 @@ map_enemies:
         ; Formation 10
         !byte TYPE_WIZZROBE_BLUE,  8,  3,   TYPE_WIZZROBE_BLUE, 12,  3,   TYPE_WIZZROBE_BLUE, 10,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 11
-        !byte TYPE_DARKNUT_BLUE , 10,  3,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_DARKNUT_BLUE ,  9,  2,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 12
         !byte TYPE_GORIYA_RED   ,  6,  3,   TYPE_GORIYA_RED   , 14,  3,   TYPE_GORIYA_RED   ,  8,  5,   TYPE_GORIYA_RED   , 12,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 13
@@ -242,7 +239,7 @@ map_enemies:
         ; Formation 15
         !byte TYPE_DARKNUT_RED  , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
         ; Formation 16
-        !byte TYPE_GIBDO        ,  6,  3,   TYPE_GIBDO        , 13,  3,   TYPE_GIBDO        ,  8,  5,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
+        !byte TYPE_GIBDO        ,  6,  3,   TYPE_GIBDO        , 13,  3,   TYPE_GIBDO        , 10,  4,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0,   TYPE_NONE         ,  0,  0
 
 ; ===========================================================================
 ; Jeu de caracteres authentique du donjon (576 octets)

@@ -70,6 +70,21 @@ ovl_inventory_open:
 ; close_inventory : referme le menu et reprend le jeu
 ; ---------------------------------------------------------------------------
 ovl_inventory_close:
+        ; Si le curseur est resté sur un objet non possédé, re-sélectionne le 1er objet possédé
+        ldx hud_selected_b
+        jsr p0_is_item_owned
+        bne .inv_sel_ok
+        ldx #0
+.inv_find_owned:
+        jsr p0_is_item_owned
+        bne .inv_found_owned
+        inx
+        cpx #8
+        bcc .inv_find_owned
+        ldx #1                          ; Fallback : Bombe
+.inv_found_owned:
+        stx hud_selected_b
+.inv_sel_ok:
         lda #STATE_PLAYING
         sta game_state
 
@@ -313,12 +328,13 @@ update_items_page:
 update_triforce_page:
         inc inv_frame_timer
         lda inv_frame_timer
-        and #%00001000
-        beq .tri_gold
-        lda #COL_WHITE
-        bne .tri_apply
-.tri_gold:
+        and #%00011000
+        cmp #%00011000
+        beq .tri_shimmer
         lda #COL_YELLOW
+        bne .tri_apply
+.tri_shimmer:
+        lda #COL_ORANGE
 .tri_apply:
         ldx #7
 -       sta VIC_SPRITE_COL0,x
@@ -387,7 +403,7 @@ sound_select_item:
         rts
 
 ; ---------------------------------------------------------------------------
-; map_update_link_color : clignotement Link sur la carte
+; map_update_link_color : clignotement Link sur la carte (Overworld ou Donjon)
 ; ---------------------------------------------------------------------------
 map_update_link_color:
         ldx current_room_y
@@ -396,10 +412,29 @@ map_update_link_color:
         lda map_row_col_hi,x
         sta ZP_COL+1
 
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq .blink_dung
         lda current_room_x
         asl
         clc
         adc #4
+        tay
+        lda map_link_color
+        sta (ZP_COL),y
+        rts
+.blink_dung:
+        ldx current_dungeon_level
+        dex
+        cpx #9
+        bcc +
+        ldx #0
++       lda current_room_x
+        sec
+        sbc dung_bank_x,x
+        asl
+        clc
+        adc #12
         tay
         lda map_link_color
         sta (ZP_COL),y
