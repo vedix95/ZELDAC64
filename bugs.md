@@ -778,3 +778,12 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
   - Dans `irq_top` (`src/enemies.asm`), garde explicite `lda loaded_overlay_bank; cmp #CART_BANK_OVL_INV; bne .inv_skip_top` avant d'appeler `jsr $a009`.
   - Factorisation des 3 helpers `cart_load_sprites_ow`/`_dung`/`_npc` dans `src/main.asm` libérant 22 octets en haute RAM résidente (`$9FF6 < $A000`, 10 octets libres).
 - **Validation** : 39/39 scénarios de tests aléatoires et de fluidité (`random_playtest_fluidity.py`) **0 anomalie, 0 fuite pile (`SP=$FF`), 49,45 FPS moyen (50,00 FPS constants en jeu et jusqu'à 8 ennemis actifs)**, + suites audio Dual SID (`test_dual_sid_dungeon.py`, `test_audio_queue_conflict.py`, `test_dungeon9_audio.py`) 100 % PASS.
+
+---
+
+### Anomalie 33 : Mode texte Hi-Res bloqué (tuiles rayées et couleurs de donjon ignorées) après un Warp Debug depuis l'Inventaire (`VIC_CTRL2` bit 4)
+- **Symptôme** : Lorsqu'on ouvrait l'Inventaire (qui désactive le bit 4 de `VIC_CTRL2` `$D016` pour afficher le texte en haute résolution) puis qu'on effectuait une téléportation via le Menu Debug (`debug_do_warp_dungeon` ou `debug_do_warp_overworld`) ou une fermeture directe (`close_debug`), l'écran de jeu restait bloqué en mode caractères Hi-Res monochrome : les tuiles multicolores des donjons s'affichaient sous forme de rayures verticales bleu clair uniformes et les palettes `VIC_BG_MC1`/`VIC_BG_MC2` des 9 donjons étaient totalement ignorées par le VIC-II.
+- **Cause** : `open_inventory` (`src/inventory.asm`) efface le bit 4 (`#%00010000`) de `VIC_CTRL2`, et seul `ovl_inventory_close` le réactivait. Les sorties de `src/debug.asm` (`close_debug`, `debug_do_warp_dungeon`, `debug_do_warp_overworld`) ne réarmaient pas ce bit avant de repasser en `STATE_PLAYING`.
+- **Correction** :
+  - Réactivation systématique du mode texte multicolore (`lda VIC_CTRL2; ora #%00010000; sta VIC_CTRL2`) dans `close_debug` (`.restore_p`), `debug_do_warp_dungeon` et `debug_do_warp_overworld` (`src/debug.asm`, Banque 30).
+- **Validation** : Recompilation propre (`build/zelda.crt`, Banque 30 `2916/8192 o`, RAM résidente inchangée `$9FF6 < $A000`) et regénération + inspection visuelle des 23 captures de donjons et boss (palettes multicolores NES distinctes pour les 9 donjons : Cyan, Bleu, Vert, Gris clair, Rouge, Orange, Vert, Gris moyen, Rouge sombre).

@@ -466,6 +466,9 @@ close_debug:
 .restore_p:
         lda #STATE_PLAYING
         sta game_state
+        lda VIC_CTRL2
+        ora #%00010000                  ; Réactive le texte multicolore (si venu depuis Inventaire)
+        sta VIC_CTRL2
         lda #COL_BLACK
         sta active_bg_color
         sta VIC_BACKGROUND
@@ -883,6 +886,9 @@ debug_cheat_full_gear:
 debug_do_warp_dungeon:
         lda #STATE_PLAYING
         sta game_state
+        lda VIC_CTRL2
+        ora #%00010000                  ; Garantit le mode texte multicolore pour les tuiles de donjon
+        sta VIC_CTRL2
         lda #0
         sta en_type
         sta en_type+1
@@ -945,6 +951,9 @@ debug_do_warp_dungeon:
 debug_do_warp_overworld:
         lda #STATE_PLAYING
         sta game_state
+        lda VIC_CTRL2
+        ora #%00010000                  ; Garantit le mode texte multicolore pour l'Overworld
+        sta VIC_CTRL2
         jsr enemies_clear
         lda #0
         sta item_active
