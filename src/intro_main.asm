@@ -526,10 +526,31 @@ intro_main_loop:
 ; open_file_select : Charge Banque 32 (ovl_save.dat) à $A000 et lance File Select
 ; ---------------------------------------------------------------------------
 open_file_select:
-        jsr intro_music_stop
+        ; Coupe l'IRQ raster de l'intro (pour qu'elle n'écrase pas $D018/$D016/$D011)
+        sei
         lda #0
-        sta SID_VOLUME
+        sta VIC_IRQ_ENABLE
+        asl VIC_IRQ_FLAG
         sta VIC_SPRITE_EN
+        cli
+
+        ; Force le mode texte haute résolution propre ($0400 / ROM Chargen $1000)
+        lda #$14                        ; $14 : écran $0400, chargen ROM C64 $1000 (toujours intact)
+        sta VIC_MEMSETUP
+        lda #%00011011
+        sta VIC_CTRL1
+        lda VIC_CTRL2
+        and #%11101111                  ; bit 4 = 0 : texte hires net (pas multicolore)
+        sta VIC_CTRL2
+
+        ; Relais $02F0 -> jmp intro_music_update (vraie musique Zelda sans coupure !)
+        lda #$4c                        ; JMP abs
+        sta $02f0
+        lda #<intro_music_update
+        sta $02f1
+        lda #>intro_music_update
+        sta $02f2
+
         lda selected_dual_sid
         sta $df02
         ldx #0

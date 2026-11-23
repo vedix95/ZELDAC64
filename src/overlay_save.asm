@@ -622,118 +622,17 @@ ovl_save_inc_death:
 +       jmp save_flash_commit
 
 ; ===========================================================================
-; 3. MUSIQUE FILE SELECT (Fairy Fountain — Arpèges NES sur SID1 & SID2)
+; 3. RELAIS MUSIQUE FILE SELECT (vraie partition Zelda de intro.prg via $02F0)
 ; ===========================================================================
-fs_mus_step:      !byte 0
-fs_mus_tick:      !byte 0
-
-; 16 pas d'arpèges en boucle (G4-B4-D5-F#5, E4-G4-B4-D5, C4-E4-G4-B4, A3-C4-E4-G4)
-; Fréquences SID PAL (phi2 = 985248 Hz)
-fs_arp_lo:
-        !byte <$1a90, <$2170, <$27cb, <$3202
-        !byte <$163c, <$1a90, <$2170, <$27cb
-        !byte <$11b0, <$163c, <$1a90, <$2170
-        !byte <$0ebd, <$11b0, <$163c, <$1a90
-fs_arp_hi:
-        !byte >$1a90, >$2170, >$27cb, >$3202
-        !byte >$163c, >$1a90, >$2170, >$27cb
-        !byte >$11b0, >$163c, >$1a90, >$2170
-        !byte >$0ebd, >$11b0, >$163c, >$1a90
-fs_bass_lo:
-        !byte <$06a4, <$058f, <$046c, <$03af
-fs_bass_hi:
-        !byte >$06a4, >$058f, >$046c, >$03af
-
 fs_music_init:
-        lda #0
-        sta fs_mus_step
-        sta fs_mus_tick
-        lda #$0f
-        sta SID_VOLUME
-        lda #$08
-        sta SID_V1_AD
-        lda #$84
-        sta SID_V1_SR
-        lda #$00
-        sta SID_V3_AD
-        lda #$a5
-        sta SID_V3_SR
-        lda EF_RAM_DUAL_SID
-        beq +
-        lda #$0f
-        sta SID2_VOLUME
-        lda #$08
-        sta SID2_V1_AD
-        lda #$84
-        sta SID2_V1_SR
-        lda #$00
-        sta SID2_V3_AD
-        lda #$a5
-        sta SID2_V3_SR
-+       rts
+        rts
 
 fs_music_update:
-        lda fs_mus_tick
-        beq .play_note
-        dec fs_mus_tick
-        rts
-.play_note:
-        lda #7
-        sta fs_mus_tick
-
-        ldx fs_mus_step
-        lda #$10                        ; Triangle gate OFF (waveform préservée)
-        sta SID_V1_CTRL
-        ldy EF_RAM_DUAL_SID
-        beq +
-        sta SID2_V1_CTRL
-+
-        ; Basse toutes les 4 notes
-        txa
-        and #3
-        bne .arp_only
-        txa
-        lsr
-        lsr
-        tay
-        lda #$20
-        sta SID_V3_CTRL
-        lda fs_bass_lo,y
-        sta SID_V3_FREQ_LO
-        lda fs_bass_hi,y
-        sta SID_V3_FREQ_HI
-        lda #$21
-        sta SID_V3_CTRL
-        ldy EF_RAM_DUAL_SID
-        beq .arp_only
-        lda fs_bass_lo,y
-        sta SID2_V3_FREQ_LO
-        lda fs_bass_hi,y
-        sta SID2_V3_FREQ_HI
-        lda #$21
-        sta SID2_V3_CTRL
-
-.arp_only:
-        lda fs_arp_lo,x
-        sta SID_V1_FREQ_LO
-        lda fs_arp_hi,x
-        sta SID_V1_FREQ_HI
-        lda #$11
-        sta SID_V1_CTRL
-        ldy EF_RAM_DUAL_SID
-        beq +
-        lda fs_arp_lo,x
-        sta SID2_V1_FREQ_LO
-        lda fs_arp_hi,x
-        sta SID2_V1_FREQ_HI
-        lda #$11
-        sta SID2_V1_CTRL
-+
-        inx
-        txa
-        and #$0f
-        sta fs_mus_step
-        rts
+        lda $02f0
+        cmp #$4c
+        bne +
+        jmp $02f0                       ; jmp intro_music_update (50 Hz)
++       rts
 
 ; ===========================================================================
 ; 4. MENU ORIGINAL ZELDA NES (FILE SELECT / REGISTER / ELIMINATION)
