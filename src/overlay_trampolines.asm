@@ -248,3 +248,7 @@ gameover_save_and_continue:
 gameover_save_and_quit:
         jsr save_current_slot
         jmp $a00c                       ; ovl_quit_to_intro (Banque 32 déjà chargée !)
+
+collect_loot_drop:
+        jsr load_ovl_items
+        jmp $a03c                       ; ovl_update_loot

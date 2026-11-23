@@ -289,7 +289,7 @@ en_base_hp:
         !byte 0, 1, 2, 2, 3, 1, 1, 2, 4, 2, 3, 9, 2, 4, 6, 1, 1, 2, 1, 1, 2, 3, 5, 4, 8, 5, 10, 2, 9, 10, 6, 4, 255, 255, 2, 4, 6, 8, 8, 8, 8, 2, 4, 10, 16
 
 en_base_damage:
-        !byte 0, 1, 1, 1, 2, 1, 1, 1, 2, 1, 2, 2, 1, 4, 4, 1, 1, 2, 1, 1, 1, 1, 2, 2, 4, 2, 4, 1, 2, 2, 2, 2, 0, 2, 2, 4, 1, 2, 2, 2, 2, 2, 2, 2, 4
+        !byte 0, 2, 2, 2, 4, 2, 2, 2, 4, 2, 4, 4, 2, 4, 8, 2, 2, 4, 2, 2, 2, 2, 4, 4, 8, 4, 8, 2, 4, 4, 4, 4, 0, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 8
 
 en_base_color:
         !byte COL_BLACK, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_BROWN, COL_CYAN, COL_GREEN, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_GREEN, COL_GREEN, COL_ORANGE, COL_WHITE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_ORANGE, COL_LIGHT_RED, COL_LGREY, COL_BLUE, COL_PURPLE, COL_CYAN, COL_RED, COL_BLUE, COL_GREEN, COL_ORANGE, COL_RED, COL_GREEN, COL_ORANGE, COL_RED, COL_BLUE, COL_ORANGE, COL_PURPLE

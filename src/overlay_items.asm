@@ -37,6 +37,8 @@
         jmp ovl_curtain_close           ; $A033
         jmp ovl_enter_dungeon           ; $A036
         jmp ovl_gameover_continue       ; $A039
+        jmp ovl_update_loot             ; $A03C
+        jmp ovl_dungeon_collect_drop    ; $A03F
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -1392,19 +1394,117 @@ ovl_exit_dungeon:
         rts
 
 ; ===========================================================================
-; 13. BUTIN ENNEMI (ovl_spawn_loot — déporté vers Banque 29, avec Horloge & Fée)
+; 13. BUTIN ENNEMI (ovl_spawn_loot & ovl_collect_loot — Banque 29)
 ; ===========================================================================
 ovl_spawn_loot:
         jsr get_rand
         and #$0f
-        beq ovl_loot_fairy              ; 1/16 (~6.25%) : Fée (restaure toute la vie)
+        beq .drop_fairy                 ; 1/16 (~6.25%) : Fée (soin complet)
         cmp #1
-        beq ovl_loot_clock              ; 1/16 (~6.25%) : Horloge (gèle les ennemis)
-        cmp #6
-        bcc .loot_heart                 ; 4/16 (25%)    : Cœur
+        beq .drop_clock                 ; 1/16 (~6.25%) : Horloge (gèle ennemis)
+        cmp #2
+        beq .drop_rupee5                ; 1/16 (~6.25%) : Rubis bleu (+5)
+        cmp #4
+        bcc .drop_bomb                  ; 2/16 (12.5%)  : Bombes (+4)
+        cmp #8
+        bcc .drop_heart                 ; 4/16 (25%)    : Cœur (+1 cœur)
+        cmp #13
+        bcc .drop_rupee1                ; 5/16 (31.25%) : Rubis jaune (+1)
+        rts                             ; 3/16 (18.75%) : rien
+
+.drop_fairy:
+        lda #LOOT_FAIRY
+        !byte $2c
+.drop_clock:
+        lda #LOOT_CLOCK
+        !byte $2c
+.drop_rupee5:
+        lda #LOOT_RUPEE_5
+        !byte $2c
+.drop_bomb:
+        lda #LOOT_BOMB
+        !byte $2c
+.drop_heart:
+        lda #LOOT_HEART
+        !byte $2c
+.drop_rupee1:
+        lda #LOOT_RUPEE_1
+        sta loot_drop_type
+        ldx en_idx
+        lda en_y,x
+        sta loot_drop_y
+        txa
+        asl
+        tax
+        lda en_x,x
+        sta loot_drop_x
+        lda en_x+1,x
+        sta loot_drop_x+1
+        lda #<400
+        sta loot_drop_timer
+        lda #>400
+        sta loot_drop_timer+1
+        lda #1
+        sta loot_drop_active
+        rts
+
+ovl_update_loot:
+        lda loot_drop_timer
+        bne +
+        lda loot_drop_timer+1
+        beq .loot_expire
+        dec loot_drop_timer+1
++       dec loot_drop_timer
+        lda player_x
+        sec
+        sbc loot_drop_x
+        tay
+        lda player_x+1
+        sbc loot_drop_x+1
+        beq .chk_lx_pos
+        cmp #$ff
+        bne .loot_ret
+        tya
+        eor #$ff
+        clc
+        adc #1
+        jmp .chk_lx_dist
+.chk_lx_pos:
+        tya
+.chk_lx_dist:
         cmp #12
-        bcc .loot_rupee                 ; 6/16 (37.5%)  : Rubis
-        rts                             ; 4/16 (25%)    : rien
+        bcs .loot_ret
+        lda player_y
+        sec
+        sbc loot_drop_y
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #12
+        bcs .loot_ret
+
+ovl_collect_loot:
+        lda #0
+        sta loot_drop_active
+        lda loot_drop_type
+        cmp #LOOT_FAIRY
+        beq ovl_loot_fairy
+        cmp #LOOT_CLOCK
+        beq ovl_loot_clock
+        cmp #LOOT_RUPEE_5
+        beq .loot_rupee5
+        cmp #LOOT_BOMB
+        beq .loot_bomb
+        cmp #LOOT_HEART
+        beq .loot_heart
+        cmp #LOOT_RUPEE_1
+        beq .loot_rupee1
+        rts
+.loot_expire:
+        lda #0
+        sta loot_drop_active
+.loot_ret:
+        rts
 
 ovl_loot_fairy:
         jsr hud_heal_full
@@ -1415,17 +1515,155 @@ ovl_loot_clock:
         sta clock_freeze_active
         jmp sound_secret_chime
 
-.loot_rupee:
-        lda hud_rupees
-        cmp #255
-        beq +
-        inc hud_rupees
+.loot_rupee5:
+        lda #5
+        !byte $2c
+.loot_rupee1:
+        lda #1
+        clc
+        adc hud_rupees
+        bcc +
+        lda #255
++       sta hud_rupees
         jsr hud_render
-+       jmp sound_rupee
+        jmp sound_rupee
+
+.loot_bomb:
+        lda hud_bombs
+        clc
+        adc #4
+        cmp #17
+        bcc +
+        lda #16
++       sta hud_bombs
+        jsr hud_render
+        jmp sound_rupee
 
 .loot_heart:
         jsr hud_heal_one_heart
         jmp sound_rupee
+
+; ===========================================================================
+; 13b. RAMASSAGE D'OBJET DE DONJON (ovl_dungeon_collect_drop — Banque 29)
+; ===========================================================================
+ovl_dungeon_collect_drop:
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_ITEM_COLLECTED
+        sta dungeon_room_state,x
+
+        lda dungeon_drop_type
+        cmp #DROP_KEY
+        bne +
+        inc hud_keys
+.done_minor_drop:
+        jsr hud_render
+        jsr sound_rupee
+        lda #0
+        sta dungeon_drop_active
+        rts
+
++       cmp #DROP_HEART_CONTAINER
+        bne +
+        inc hud_max_hearts
+        jsr hud_heal_full
+        jmp .start_dungeon_pickup
+
++       cmp #DROP_COMPASS
+        bne +
+        lda #1
+        sta player_has_compass
+        jmp .done_minor_drop
+
++       cmp #DROP_MAP
+        bne +
+        lda #1
+        sta player_has_dungeon_map
+        jmp .done_minor_drop
+
++       cmp #DROP_BOOMERANG
+        bne +
+        lda current_dungeon_level
+        cmp #2
+        bne .set_wood_boom
+        lda #2
+        bne .store_boom
+.set_wood_boom:
+        lda #1
+.store_boom:
+        sta player_has_boomerang
+        jmp .start_dungeon_pickup_hud
+
++       cmp #DROP_RAFT
+        bne +
+        lda #1
+        sta player_has_raft
+        jmp .start_dungeon_pickup_hud
+
++       cmp #DROP_LADDER
+        bne +
+        lda #1
+        sta player_has_stepladder
+        jmp .start_dungeon_pickup_hud
+
++       cmp #DROP_WHISTLE
+        bne +
+        lda #1
+        sta player_has_whistle
+        jmp .start_dungeon_pickup_hud
+
++       cmp #DROP_BOOK
+        bne +
+        lda #1
+        sta player_has_book
+.start_dungeon_pickup_hud:
+        jsr hud_render
+.start_dungeon_pickup:
+        jsr sound_item_fanfare
+        lda player_x
+        sta dungeon_drop_x
+        lda player_y
+        sec
+        sbc #16
+        sta dungeon_drop_y
+        lda #60
+        sta dungeon_pickup_timer
+        rts
+
++       cmp #DROP_TRIFORCE
+        bne +
+        lda current_dungeon_level
+        cmp #9
+        bne .tf_normal
+        lda #0
+        sta dungeon_drop_active
+        jmp ovl_ending_open
+.tf_normal:
+        lda current_dungeon_level
+        sec
+        sbc #1
+        tay
+        lda #1
+-       cpy #0
+        beq ++
+        asl
+        dey
+        jmp -
+++      ora player_triforce_pieces
+        sta player_triforce_pieces
+
+        jsr hud_heal_full
+
+        lda #1
+        sta triforce_fanfare_timer
+        jsr sound_triforce_fanfare
+        lda #0
+        sta dungeon_drop_active
+        rts
++
+        lda #0
+        sta dungeon_drop_active
+        rts
 
 ; ===========================================================================
 ; 14. RIDEAU D'ENTRÉE / SORTIE DE DONJON (ovl_curtain_close)

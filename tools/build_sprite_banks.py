@@ -130,7 +130,13 @@ def encode_sprite(name, frame):
     data.append(0) # 64e octet
     return data
 
-def build_bank(names, en_frames, ex_frames):
+DROP_SLOTS = {
+    76: ('item_rupee', 'SPR_DROP_RUPEE'),
+    77: ('item_fairy', 'SPR_DROP_FAIRY'),
+    78: ('item_clock', 'SPR_DROP_CLOCK'),
+}
+
+def build_bank(names, en_frames, ex_frames, include_drops=True):
     bank = bytearray(BANK_SIZE)
     ptrs = {}
 
@@ -152,6 +158,13 @@ def build_bank(names, en_frames, ex_frames):
             spr_bytes = encode_sprite(name, frame)
             offset = slot * 64
             bank[offset : offset + 64] = spr_bytes
+
+    # 3. Dans OW/Donjon/Boss (hors grottes), slots 76..78 ($EC..$EE) = Drops ennemis (Rubis, Fée, Horloge)
+    if include_drops:
+        for slot, (name, _) in DROP_SLOTS.items():
+            frame = ex_frames.get(name)
+            if frame:
+                bank[slot * 64 : slot * 64 + 64] = encode_sprite(name, frame)
 
     return bank, ptrs
 
@@ -181,8 +194,8 @@ def main():
         f.write(boss_bank)
     print(f"  [+] Banque Sprites Boss générée      : {p_boss} ({len(BOSS_NAMES)} slots)")
 
-    # 4. PNJ & Grottes
-    npc_bank, npc_ptrs = build_bank(NPC_NAMES, en_frames, ex_frames)
+    # 4. PNJ & Grottes (conserve OLD_MAN/MERCHANT/OLD_WOMAN en $EC..$EE)
+    npc_bank, npc_ptrs = build_bank(NPC_NAMES, en_frames, ex_frames, include_drops=False)
     p_npc = os.path.join(BLD_DIR, "sprites_npc.bin")
     with open(p_npc, "wb") as f:
         f.write(npc_bank)
@@ -198,6 +211,9 @@ def main():
         "; --- Sprites communs ($F7..$FF) valides dans toutes les banques ---\n"
     ]
     for slot, (name, _, sym) in sorted(COMMON_SLOTS.items()):
+        ptr = BASE_PTR + slot
+        inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
+    for slot, (_, sym) in sorted(DROP_SLOTS.items()):
         ptr = BASE_PTR + slot
         inc_lines.append(f"{sym:32s} = ${ptr:02x}\n")
 

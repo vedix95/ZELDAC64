@@ -107,6 +107,27 @@ link_lunge_x_lo:      !byte 0, 0, <(-2), 2
 link_lunge_x_hi:      !byte 0, 0, >(-2), 0
 link_lunge_y:         !byte 2, <(-2), 0, 0
 
+; Loot au sol (drops d'ennemis, rendus sur Sprite 2)
+LOOT_NONE             = 0
+LOOT_HEART            = 1
+LOOT_RUPEE_1          = 2
+LOOT_RUPEE_5          = 3
+LOOT_BOMB             = 4
+LOOT_FAIRY            = 5
+LOOT_CLOCK            = 6
+
+loot_drop_active:     !byte 0
+loot_drop_type:       !byte 0
+loot_drop_x:          !word 0
+loot_drop_y:          !byte 0
+loot_drop_timer:      !word 0
+
+loot_spr_tbl:
+        !byte SPR_COMMON_HEART, SPR_DROP_RUPEE, SPR_DROP_RUPEE
+        !byte <(sprite_link_item_bomb / 64), SPR_DROP_FAIRY, SPR_DROP_CLOCK
+loot_col_tbl:
+        !byte COL_RED, COL_YELLOW, COL_BLUE, COL_BLUE, COL_LIGHT_RED, COL_YELLOW
+
 player_init:
         lda #PLAYER_COLOR
         sta VIC_SPRITE_COL0
@@ -1017,11 +1038,14 @@ player_use_item_b:
 
 ; Recopie la position et les pointeurs dans les registres VIC-II.
 player_draw:
-        ; Couleur de Link (Verte ou Blanche si Anneau Bleu)
+        ; Couleur de Link (Verte, Blanche si Anneau Bleu, Rouge si Anneau Rouge)
         lda #COL_GREEN
         ldx player_has_blue_ring
         beq +
         lda #COL_WHITE
+        cpx #2
+        bcc +
+        lda #COL_RED
 +       sta VIC_SPRITE_COL0
         lda #PLAYER_SKIN
         sta VIC_SPRITE_MC1

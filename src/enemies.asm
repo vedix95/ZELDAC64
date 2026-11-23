@@ -425,6 +425,7 @@ enemies_init:
 enemies_room_init:
         lda #0
         sta clock_freeze_active
+        sta loot_drop_active
         sta en_proj_active              ; réinitialise les projectiles en vol
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
@@ -2597,14 +2598,15 @@ check_projectile_hit_link:
         bne .pj_dx_neg
         lda en_dx
         cmp #12
-        bcs .pj_no_hit
-        jmp .pj_chk_y
+        bcc .pj_chk_y
+.pj_far_no_hit:
+        jmp .pj_no_hit
 .pj_dx_neg:
         cmp #$ff
-        bne .pj_no_hit
+        bne .pj_far_no_hit
         lda en_dx
         cmp #$f4
-        bcc .pj_no_hit
+        bcc .pj_far_no_hit
 
 .pj_chk_y:
         ; Distance Y
@@ -2662,11 +2664,22 @@ check_projectile_hit_link:
         bne +
         lda #1
         sta en_proj_returning
-        jsr hurt_link
+        lda #2
+        jsr hurt_link_dmg
         rts
 +       lda #0
         sta en_proj_active
-        jsr hurt_link
+        lda en_proj_type
+        cmp #PROJ_FIREBALL
+        beq .proj_heavy
+        cmp #PROJ_MAGIC
+        beq .proj_heavy
+        lda #2
+        bne .proj_apply
+.proj_heavy:
+        lda #4
+.proj_apply:
+        jsr hurt_link_dmg
 .pj_no_hit:
         rts
 
@@ -3462,14 +3475,20 @@ hurt_link_dmg:
 +       lda #32                         ; ~0.6s d'invulnérabilité
         sta player_hurt_timer
 
-        ; Protection Anneaux : Bleu (1) = /2, Rouge (2) = /4 (min 1 quart)
+        ; Protection Anneaux : Bleu (1) = /2, Rouge (2) = /4 (0.5 quart alterne 0/1)
         lda player_has_blue_ring
         beq .take_damage
         lsr ZP_TMP
         cmp #2
-        bcc +
+        bcc .ring_min1
         lsr ZP_TMP
-+       lda ZP_TMP
+        bne .take_damage
+        inc player_blue_ring_hits
+        lda player_blue_ring_hits
+        and #1
+        bne .skip_heart_loss
+.ring_min1:
+        lda ZP_TMP
         bne .take_damage
         lda #1
         sta ZP_TMP

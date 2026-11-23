@@ -292,7 +292,10 @@ set_spawn_coords:
 ; items_update : mis à jour à chaque frame en jeu
 ; ---------------------------------------------------------------------------
 items_update:
-        lda item_active
+        lda loot_drop_active
+        beq +
+        jsr collect_loot_drop
++       lda item_active
         bne +
         rts
 +       inc item_anim
@@ -960,6 +963,33 @@ items_draw:
         jmp .enable_spr2
 
 .no_ladder_to_draw:
+        lda loot_drop_active
+        beq .hide_spr2
+        lda loot_drop_timer+1
+        bne .draw_loot_spr
+        lda loot_drop_timer
+        cmp #80
+        bcs .draw_loot_spr
+        and #4
+        bne .hide_spr2
+.draw_loot_spr:
+        lda loot_drop_x
+        sta VIC_SPRITE_X2
+        lda loot_drop_y
+        sta VIC_SPRITE_Y2
+        lda VIC_SPRITE_MSB
+        and #%11111011
+        ldx loot_drop_x+1
+        beq +
+        ora #%00000100
++       sta VIC_SPRITE_MSB
+        ldx loot_drop_type
+        lda loot_spr_tbl-1,x
+        sta SPRITE_PTR2
+        lda loot_col_tbl-1,x
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+.hide_spr2:
         ; Aucun objet : désactive Sprite 2
         lda VIC_SPRITE_EN
         and #%11111011                  ; désactive Sprite 2 seul (préserve Link, épée, ennemis)
