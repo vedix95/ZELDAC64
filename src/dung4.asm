@@ -229,7 +229,7 @@ map_enemies:
 
 ; ===========================================================================
 ; Jeu de caracteres authentique du donjon (576 octets)
-; Copié dynamiquement par disk.asm a $2000 (0..31), $2540 (168..199) et $2640 (200..207)
+; Copié dynamiquement par cart_stream.asm a $2000 (0..31), $2540 (168..199) et $2640 (200..207)
 ; ===========================================================================
 dungeon_charset:
 ; Chars 0..31 (Tuiles 0..7 : 256 octets)

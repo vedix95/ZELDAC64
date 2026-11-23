@@ -339,7 +339,7 @@ raft_update:
         lsr
         lsr
         lsr
-        jsr disk_ensure_ow_chunk_a
+        jsr cart_ensure_ow_chunk_a
         jsr load_room
         jsr hud_render
         jsr enemies_room_init
@@ -369,7 +369,7 @@ trans_setup_target:
         lsr
         lsr
         lsr
-        jsr disk_ensure_ow_chunk_a
+        jsr cart_ensure_ow_chunk_a
         ldx target_room_idx
 .tst_chunk_ok:
         lda room_tbl_lo,x

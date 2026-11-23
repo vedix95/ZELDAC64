@@ -51,7 +51,7 @@ with open(mon_file, "w") as f:
 print(f"Generated {mon_file}")
 cmdline = [
     "x64sc",
-    "-autostart", "build/zelda.d64:zelda",
+    "-cartcrt", "build/zelda.crt",
     "-moncommands", mon_file,
     "+sound",
     "-warp"

@@ -1376,9 +1376,9 @@ def decode_nes_dungeon_rooms(lvl, room_set, ent):
     BRIDGE_DOORS = {
         3: [(0x6b, 'W', 0x6a, 0), (0x4a, 'N', 0x3a, 5), (0x4c, 'N', 0x3c, 4), (0x6b, 'E', 0x6c, 4)],
         5: [(0x46, 'W', 0x45, 5), (0x15, 'E', 0x16, 4)],
-        6: [(0x09, 'W', 0x08, 0), (0x1b, 'E', 0x1c, 5), (0x39, 'S', 0x49, 5), (0x3a, 'N', 0x2a, 4)],
-        7: [(0x49, 'E', 0x4a, 4), (0x28, 'E', 0x29, 5), (0x5b, 'E', 0x5c, 4), (0x6d, 'N', 0x5d, 4)],
-        8: [(0x7f, 'N', 0x6f, 0), (0x3d, 'W', 0x3c, 5), (0x3d, 'N', 0x2d, 4), (0x6e, 'W', 0x6d, 5)],
+        6: [(0x09, 'W', 0x08, 0), (0x1b, 'E', 0x1c, 0), (0x39, 'S', 0x49, 0), (0x3a, 'N', 0x2a, 4)],
+        7: [(0x49, 'E', 0x4a, 4), (0x28, 'E', 0x29, 0), (0x5b, 'E', 0x5c, 4), (0x6d, 'N', 0x5d, 4)],
+        8: [(0x7f, 'N', 0x6f, 0), (0x3d, 'W', 0x3c, 0), (0x3d, 'N', 0x2d, 4), (0x6e, 'W', 0x6d, 0)],
         9: [(0x44, 'W', 0x43, 5), (0x45, 'N', 0x35, 4)],
     }
     OPP_DIR = {'N': 'S', 'S': 'N', 'W': 'E', 'E': 'W'}
@@ -1738,7 +1738,7 @@ def build_dungeon_asm(lvl):
     chars_0_31, chars_168_199, chars_200_207 = generate_dungeon_charset_bytes()
     lines.append("\n; ===========================================================================")
     lines.append("; Jeu de caracteres authentique du donjon (576 octets)")
-    lines.append("; Copié dynamiquement par disk.asm a $2000 (0..31), $2540 (168..199) et $2640 (200..207)")
+    lines.append("; Copié dynamiquement par cart_stream.asm a $2000 (0..31), $2540 (168..199) et $2640 (200..207)")
     lines.append("; ===========================================================================")
     lines.append("dungeon_charset:")
     lines.append("; Chars 0..31 (Tuiles 0..7 : 256 octets)")

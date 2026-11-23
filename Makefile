@@ -1,9 +1,8 @@
 # ---------------------------------------------------------------------------
 # Projet C64 : Zelda
-#   make          -> assemble build/zelda.prg
+#   make          -> génère la cartouche Magic Desk build/zelda.crt
 #   make run      -> assemble puis lance dans VICE (x64sc)
 #   make debug    -> idem, avec les labels chargés dans le moniteur VICE
-#   make d64      -> crée une image disque build/zelda.d64
 #   make clean    -> supprime build/
 #   make check    -> vérifie que les outils sont installés
 # ---------------------------------------------------------------------------
@@ -147,6 +146,13 @@ assets-sheet: atlas
 # Exécution du Cahier de Recettes et validation des scénarios sous VICE
 recette: $(CRT)
 	$(PYTHON) tools/run_cahier_recettes.py
+
+# Vérification unifiée (Conformité NES, Sprites/Tuiles CHR, Mémoire, Logique, Visuels)
+verify-fast: $(CRT)
+	$(PYTHON) tools/verify_all.py --fast
+
+verify: $(CRT)
+	$(PYTHON) tools/verify_all.py --full
 
 clean:
 	rm -rf $(BLD_DIR)

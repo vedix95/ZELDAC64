@@ -42,7 +42,7 @@ q
 with open('/tmp/test_warp.mon', 'w') as f:
     f.write(mon)
 
-cmd = ['x64sc', '-autostart', 'build/zelda.d64:zelda', '-moncommands', '/tmp/test_warp.mon', '+sound', '-warp']
+cmd = ['x64sc', '-cartcrt', 'build/zelda.crt', '-moncommands', '/tmp/test_warp.mon', '+sound', '-warp']
 res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 print("Finished!")
 for fn in ['/tmp/test_room119.png', '/tmp/test_room127.png']:

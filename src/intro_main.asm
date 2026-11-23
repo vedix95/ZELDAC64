@@ -1,7 +1,7 @@
 ; ============================================================================
 ; intro_main.asm : Programme autonome d'introduction pour Commodore 64
 ; Création d'un passionné à l'aide de son IA préférée issue de chez Google
-; Génère build/intro.prg (écrit sur disquette build/zelda.d64 en tant que "INTRO")
+; Génère build/intro.prg (embarqué dans la cartouche Magic Desk build/zelda.crt)
 ; ============================================================================
 !cpu 6510
 !source "src/c64.inc"
@@ -31,7 +31,7 @@ start:
 }
 
 cart_present:
-        !byte 0                         ; 0 = Disquette, 1 = Cartouche Magic Desk (Type 19)
+        !byte 0                         ; 1 = Cartouche Magic Desk (Type 19)
 
 ; Lecture joystick et manette ($0811..$0836, btn_a_pressed = $0816)
 !source "src/input.asm"

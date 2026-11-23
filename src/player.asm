@@ -13,6 +13,7 @@
 ;   X : player_x + 6 .. player_x + 17 (12 px de large)
 ;   Y : player_y + 11 .. player_y + 16 (6 px de haut)
 ; ---------------------------------------------------------------------------
+!zone player
 PLAYER_SPEED    = 2
 PLAYER_X_MIN    = 20
 PLAYER_X_MAX    = 324
@@ -131,6 +132,7 @@ player_init:
 
 player_update:
         lda triforce_fanfare_timer
+        ora dungeon_pickup_timer
         beq +
         rts
 +
@@ -1177,8 +1179,9 @@ player_draw:
         lda ZP_TMP
         sta VIC_SPRITE_EN
 
-        ; Pointeur Sprite 0 : pose celebration Triforce ou marche normale
+        ; Pointeur Sprite 0 : pose celebration Triforce/objet ou marche normale
         lda triforce_fanfare_timer
+        ora dungeon_pickup_timer
         beq +
         lda #SPR_COMMON_ITEM_GET
         sta SPRITE_PTR0

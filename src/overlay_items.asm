@@ -33,6 +33,9 @@
         jmp ovl_use_food_exec           ; $A027
         jmp ovl_d7_hungry_goriya_setup  ; $A02A
         jmp ovl_exit_dungeon            ; $A02D
+        jmp ovl_spawn_loot              ; $A030
+        jmp ovl_curtain_close           ; $A033
+        jmp ovl_enter_dungeon           ; $A036
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -49,13 +52,27 @@ ovl_item_whistle_exec:
         beq +
         lda en_type,x
         cmp #TYPE_DIGDOGGER
-        bne +
+        bne .chk_pols
         lda #TYPE_GEL
         sta en_type,x
         lda #2
         sta en_hp,x
         lda #0
         sta en_anim,x
+        jmp +
+.chk_pols:
+        cmp #TYPE_POLS_VOICE
+        bne +
+        lda en_state,x
+        cmp #EN_STATE_DYING
+        beq +
+        lda #0
+        sta en_hp,x
+        lda #EN_STATE_DYING
+        sta en_state,x
+        lda #16
+        sta en_timer,x
+        jsr sound_enemy_die
 +       inx
         cpx #MAX_ENEMIES
         bcc .chk_dig
@@ -1023,7 +1040,7 @@ ovl_gameover_update:
         sta current_room_x
         sta current_room_y
         jsr clear_screen
-        jsr disk_load_map_overworld
+        jsr cart_load_map_overworld
         jsr cart_load_sprites_ow
         lda #180
         sta player_x
@@ -1206,6 +1223,7 @@ txt_end_4:      !text "PRESS [A] TO RETURN TO HYRULE", 0
 ; 12. SORTIE DE DONJON (ovl_exit_dungeon — déporté de tilemap.asm vers Banque 29)
 ; ===========================================================================
 ovl_exit_dungeon:
+        jsr ovl_curtain_close
         lda #0
         sta en_type
         sta en_type+1
@@ -1221,7 +1239,7 @@ ovl_exit_dungeon:
         jsr clear_screen
         lda #WORLD_OVERWORLD
         sta current_world_type
-        jsr disk_load_map_overworld
+        jsr cart_load_map_overworld
         jsr cart_load_sprites_ow
 
         lda saved_ow_player_x
@@ -1257,6 +1275,170 @@ ovl_exit_dungeon:
         sta player_y
 +       jsr hud_init
         jsr enemies_room_init
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+; ===========================================================================
+; 13. BUTIN ENNEMI (ovl_spawn_loot — déporté vers Banque 29, avec Horloge & Fée)
+; ===========================================================================
+ovl_spawn_loot:
+        jsr get_rand
+        and #$0f
+        beq ovl_loot_fairy              ; 1/16 (~6.25%) : Fée (restaure toute la vie)
+        cmp #1
+        beq ovl_loot_clock              ; 1/16 (~6.25%) : Horloge (gèle les ennemis)
+        cmp #6
+        bcc .loot_heart                 ; 4/16 (25%)    : Cœur
+        cmp #12
+        bcc .loot_rupee                 ; 6/16 (37.5%)  : Rubis
+        rts                             ; 4/16 (25%)    : rien
+
+ovl_loot_fairy:
+        lda hud_max_hearts
+        sta hud_cur_hearts
+        jsr hud_render
+        jmp sound_item_fanfare
+
+ovl_loot_clock:
+        lda #1
+        sta clock_freeze_active
+        jmp sound_secret_chime
+
+.loot_rupee:
+        lda hud_rupees
+        cmp #255
+        beq +
+        inc hud_rupees
+        jsr hud_render
++       jmp sound_rupee
+
+.loot_heart:
+        lda hud_cur_hearts
+        cmp hud_max_hearts
+        bcs +
+        inc hud_cur_hearts
+        jsr hud_render
+        jmp sound_rupee
++       rts
+
+; ===========================================================================
+; 14. RIDEAU D'ENTRÉE / SORTIE DE DONJON (ovl_curtain_close)
+; ===========================================================================
+ovl_curtain_close:
+        lda #0
+        sta VIC_SPRITE_EN
+        sta curt_left                   ; colonne gauche (0 -> 19)
+        lda #39
+        sta curt_right                  ; colonne droite (39 -> 20)
+.curt_step:
+        jsr wait_frame
+        sei
+        ldx #17
+.curt_row:
+        lda curtain_row_lo,x
+        sta ZP_SCR
+        lda curtain_row_hi,x
+        sta ZP_SCR+1
+        lda #$20                        ; espace noir (fond VIC_BG_COL0)
+        ldy curt_left
+        sta (ZP_SCR),y
+        ldy curt_right
+        sta (ZP_SCR),y
+        dex
+        bpl .curt_row
+        cli
+
+        inc curt_left
+        dec curt_right
+        lda curt_left
+        cmp #20
+        bcc .curt_step
+        rts
+
+curt_left:      !byte 0
+curt_right:     !byte 0
+
+; Adresses Screen RAM des lignes 7..24 ($0400 + row * 40)
+curtain_row_lo:
+        !for r, 7, 24 {
+            !byte <(SCREEN_RAM + r * 40)
+        }
+curtain_row_hi:
+        !for r, 7, 24 {
+            !byte >(SCREEN_RAM + r * 40)
+        }
+
+; ===========================================================================
+; 15. ENTRÉE EN DONJON (ovl_enter_dungeon — déporté de tilemap.asm vers Banque 29)
+; ===========================================================================
+ovl_enter_dungeon:
+        lda current_room_x
+        sta saved_ow_room_x
+        lda current_room_y
+        sta saved_ow_room_y
+        lda player_x
+        sta saved_ow_player_x
+        lda player_x+1
+        sta saved_ow_player_x+1
+        lda player_y
+        sta saved_ow_player_y
+
+        lda #0
+        sta en_type
+        sta en_type+1
+        sta en_proj_active
+        sta item_active
+        sta player_attacking
+
+        lda current_dungeon_level
+        bne +
+        lda #1
+        sta current_dungeon_level
++       lda #WORLD_DUNGEON
+        sta current_world_type
+
+        jsr ovl_curtain_close
+        jsr clear_screen
+        jsr cart_load_dungeon
+        jsr cart_load_sprites_dung
+        lda current_dungeon_level
+        cmp dungeon_active_level
+        beq +
+        jsr dungeon_init
++
+        lda current_dungeon_level
+        sec
+        sbc #1
+        cmp #9
+        bcc +
+        lda #0
++       tax
+
+        lda dungeon_start_rx,x
+        sta current_room_x
+        sta dungeon_entrance_room_x
+        lda dungeon_start_ry,x
+        sta current_room_y
+        sta dungeon_entrance_room_y
+
+        lda #176
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #180
+        sta player_y
+        lda #DIR_UP
+        sta player_dir
+        lda #0
+        sta player_walk_anim
+        sta player_walk_tick
+
+        jsr sound_play_dungeon_music
+        jsr load_room
+        jsr hud_init
+        jsr enemies_room_init
+        jsr dungeon_on_enter_room
         lda #STATE_PLAYING
         sta game_state
         rts

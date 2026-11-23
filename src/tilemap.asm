@@ -78,7 +78,7 @@ load_room:
         sta ladder_stepped_on
         lda current_world_type
         bne +
-        jsr disk_ensure_ow_chunk
+        jsr cart_ensure_ow_chunk
 +       ldx current_room_y
         lda world_row_offset,x
         clc
@@ -382,87 +382,11 @@ dungeon_start_ry:
         !byte 7,  7,  7, 7, 7, 7, 7,  7, 7
 
 ; ---------------------------------------------------------------------------
-; enter_dungeon : Bascule vers le monde souterrain / Donjon (Niveaux 1 à 9)
+; enter_dungeon : Bascule vers le monde souterrain / Donjon (déporté en Banque 29)
 ; ---------------------------------------------------------------------------
 enter_dungeon:
-        ; 1. Sauvegarde la position Overworld
-        lda current_room_x
-        sta saved_ow_room_x
-        lda current_room_y
-        sta saved_ow_room_y
-        lda player_x
-        sta saved_ow_player_x
-        lda player_x+1
-        sta saved_ow_player_x+1
-        lda player_y
-        sta saved_ow_player_y
-
-        ; 2. Désactive ennemis, projectiles et objets
-        lda #0
-        sta en_type
-        sta en_type+1
-        sta en_proj_active
-        sta item_active
-        sta player_attacking
-
-        ; 3. Détermine le Niveau de Donjon (1..9)
-        lda current_dungeon_level
-        bne +
-        lda #1
-        sta current_dungeon_level
-+
-        lda #WORLD_DUNGEON
-        sta current_world_type
-
-        ; 4. Vider l'écran et charger le Donjon depuis la cartouche
-        jsr clear_screen
-        jsr disk_load_dungeon
-        jsr cart_load_sprites_dung
-        lda current_dungeon_level
-        cmp dungeon_active_level
-        beq +
-        jsr dungeon_init
-+
-
-        ; 5. Positionne Link dans la salle d'entrée du Donjon
-        lda current_dungeon_level
-        sec
-        sbc #1
-        cmp #9
-        bcc +
-        lda #0
-+       tax
-
-        lda dungeon_start_rx,x
-        sta current_room_x
-        sta dungeon_entrance_room_x
-        lda dungeon_start_ry,x
-        sta current_room_y
-        sta dungeon_entrance_room_y
-
-        lda #176
-        sta player_x
-        lda #0
-        sta player_x+1
-        lda #180
-        sta player_y
-        lda #DIR_UP
-        sta player_dir
-        lda #0
-        sta player_walk_anim
-        sta player_walk_tick
-
-        ; Lance la musique authentique du Donjon (Underworld)
-        jsr sound_play_dungeon_music
-
-        ; 5. Afficher la salle et les ennemis
-        jsr load_room
-        jsr hud_init
-        jsr enemies_room_init
-        jsr dungeon_on_enter_room
-        lda #STATE_PLAYING
-        sta game_state
-        rts
+        jsr load_ovl_items
+        jmp $a036                       ; ovl_enter_dungeon
 
 ; Note : exit_dungeon est déporté dans l'overlay Banque 29 (src/overlay_items.asm) via trampoline.
 

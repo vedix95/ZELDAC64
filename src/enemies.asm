@@ -122,6 +122,7 @@ rand_seed:              !byte $a5
 ; ---------------------------------------------------------------------------
 
 sword_cursed_timer:     !byte 0
+clock_freeze_active:    !byte 0
 
 ; --- Tables des pointeurs de sprites (8 octets par ennemi : 4 dir x 2 anim) ---
 octo_ptrs:
@@ -423,6 +424,7 @@ enemies_init:
 ; ---------------------------------------------------------------------------
 enemies_room_init:
         lda #0
+        sta clock_freeze_active
         sta en_proj_active              ; réinitialise les projectiles en vol
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
@@ -733,7 +735,10 @@ update_single_enemy:
         jmp .update_hurt
 +
         ; --- ÉTAT NORMAL (EN_STATE_WALK) ---
-        ldx en_idx
+        lda clock_freeze_active
+        beq +
+        rts                             ; Horloge active : ennemis figés dans la salle
++       ldx en_idx
         ldy en_type,x
         lda en_ai_type,y
         cmp #AI_HOP
@@ -3483,36 +3488,11 @@ hurt_link:
         jmp open_gameover
 
 ; ---------------------------------------------------------------------------
-; spawn_loot : récompense aléatoire à la mort d'un ennemi
+; spawn_loot : récompense aléatoire à la mort d'un ennemi (Bank 29 : Horloge/Fée)
 ; ---------------------------------------------------------------------------
 spawn_loot:
-        jsr get_rand
-        and #3
-        beq .give_heart                 ; 25% : Cœur de vie
-        cmp #1
-        beq .give_rupee                 ; 25% : Rubis
-        cmp #2
-        beq .give_rupee                 ; 25% : Rubis
-        rts                             ; 25% : rien
-
-.give_rupee:
-        ; Protection overflow 255 -> 0 (C4)
-        lda hud_rupees
-        cmp #255
-        beq +
-        inc hud_rupees
-        jsr hud_render
-+       jsr sound_rupee
-        rts
-
-.give_heart:
-        lda hud_cur_hearts
-        cmp hud_max_hearts
-        bcs +
-        inc hud_cur_hearts
-        jsr hud_render
-        jsr sound_rupee
-+       rts
+        jsr load_ovl_items
+        jmp $a030                       ; ovl_spawn_loot
 
 ; ---------------------------------------------------------------------------
 ; enemies_draw : alias pour préparer le multiplexeur (main.asm & debug.asm)

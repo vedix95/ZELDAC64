@@ -26,7 +26,7 @@ start:
         jmp game_init
 
 cart_present:
-        !byte 0                         ; 0 = Disquette, 1 = Cartouche Magic Desk (Type 19)
+        !byte 0                         ; 1 = Cartouche Magic Desk (Type 19)
 cfg_dual_sid:
         !byte 0                         ; $0811: 0 = Mono (Single SID), 1 = Dual SID (Stereo)
 cfg_sid2_addr_idx:
@@ -61,14 +61,14 @@ game_init:
         sta VIC_MEMSETUP
 
 !if START_IN_DUNGEON == 0 {
-        jsr disk_load_map_overworld
+        jsr cart_load_map_overworld
         jsr cart_load_sprites_ow
         lda #WORLD_OVERWORLD
         sta current_world_type
 } else {
         lda #1
         sta current_dungeon_level
-        jsr disk_load_dungeon
+        jsr cart_load_dungeon
         jsr cart_load_sprites_dung
         lda #WORLD_DUNGEON
         sta current_world_type
@@ -505,7 +505,7 @@ cart_load_overlay:
 !source "src/overlay_trampolines.asm"
 
 ; Moteur de Streaming Cartouche pour les cartes ($C000..$CCFF)
-!source "src/disk.asm"
+!source "src/cart_stream.asm"
 
 ; Moteur Audio et partitions (Single SID + Dual SID)
 !source "src/sound.asm"

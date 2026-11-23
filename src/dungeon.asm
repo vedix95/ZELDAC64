@@ -27,6 +27,7 @@ dungeon_drop_y:         !byte 148
 dungeon_drop_cooldown:  !byte 0
 triforce_fanfare_timer: !byte 0
 cellar_pickup_timer:    !byte 0
+dungeon_pickup_timer:   !byte 0
 dungeon_torch_tick:     !byte 0
 target_room_idx:        !byte 0
 dungeon_active_level:   !byte $ff
@@ -741,6 +742,8 @@ dungeon_get_room_drop_type:
         beq .ret_key_69
         cmp #$78
         beq .ret_key_69
+        cmp #$69
+        beq .ret_key_69                    ; Clé supplémentaire (équilibrage serrures)
         lda #DROP_NONE
         rts
 
@@ -831,12 +834,6 @@ dungeon_get_room_drop_type:
 .ret_heart:
         lda #DROP_HEART_CONTAINER
         rts
-.ret_raft:
-        lda #DROP_RAFT
-        rts
-.ret_none:
-        lda #DROP_NONE
-        rts
 
 .lvl2_drops:
         lda current_room_idx
@@ -910,6 +907,8 @@ dungeon_get_room_drop_type:
         beq .ret_key_45
         cmp #$21
         beq .ret_key_45
+        cmp #$61
+        beq .ret_key_45                    ; Clé supplémentaire (équilibrage serrures)
         lda #DROP_NONE
         rts
 
@@ -1363,6 +1362,18 @@ dungeon_update:
         rts
 
 .check_room_objectives:
+        lda dungeon_pickup_timer
+        beq +
+        dec dungeon_pickup_timer
+        bne .hold_drop_pose
+        lda #0
+        sta dungeon_drop_active
+        rts
+.hold_drop_pose:
+        lda #SPR_COMMON_ITEM_GET
+        sta SPRITE_PTR0
+        rts
++
         ; 2. Vérification des objectifs de salle et volets fermés
         ldx current_room_idx
         lda dungeon_room_state,x
@@ -1875,9 +1886,7 @@ dungeon_collect_drop:
         sta hud_cur_hearts
         jsr hud_render
         jsr sound_item_fanfare
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .start_dungeon_pickup
 
 +       cmp #DROP_COMPASS
         bne +
@@ -1912,9 +1921,7 @@ dungeon_collect_drop:
         sta player_has_boomerang
         jsr hud_render
         jsr sound_item_fanfare
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .start_dungeon_pickup
 
 +       cmp #DROP_RAFT
         bne +
@@ -1922,9 +1929,7 @@ dungeon_collect_drop:
         sta player_has_raft
         jsr hud_render
         jsr sound_item_fanfare
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .start_dungeon_pickup
 
 +       cmp #DROP_LADDER
         bne +
@@ -1932,9 +1937,7 @@ dungeon_collect_drop:
         sta player_has_stepladder
         jsr hud_render
         jsr sound_item_fanfare
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .start_dungeon_pickup
 
 +       cmp #DROP_WHISTLE
         bne +
@@ -1942,9 +1945,7 @@ dungeon_collect_drop:
         sta player_has_whistle
         jsr hud_render
         jsr sound_item_fanfare
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .start_dungeon_pickup
 
 +       cmp #DROP_BOOK
         bne +
@@ -1952,8 +1953,17 @@ dungeon_collect_drop:
         sta player_has_book
         jsr hud_render
         jsr sound_item_fanfare
-        lda #0
-        sta dungeon_drop_active
+        jmp .start_dungeon_pickup
+
+.start_dungeon_pickup:
+        lda player_x
+        sta dungeon_drop_x
+        lda player_y
+        sec
+        sbc #16
+        sta dungeon_drop_y
+        lda #60
+        sta dungeon_pickup_timer
         rts
 
 +       cmp #DROP_TRIFORCE

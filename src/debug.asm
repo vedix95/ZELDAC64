@@ -914,7 +914,7 @@ debug_do_warp_dungeon:
         sta saved_ow_player_y
 
         jsr clear_screen
-        jsr disk_load_dungeon
+        jsr cart_load_dungeon
         jsr cart_load_sprites_dung
         jsr dungeon_init
 
@@ -971,7 +971,7 @@ debug_do_warp_overworld:
         sta current_room_y
 
         jsr clear_screen
-        jsr disk_load_map_overworld
+        jsr cart_load_map_overworld
         jsr cart_load_sprites_ow
 
         lda #184

@@ -1,7 +1,6 @@
 ; ---------------------------------------------------------------------------
 ; cart_stream.asm : Moteur de Streaming ROM Cartouche Magic Desk (Type 19)
-; Remplace intégralement l'ancien pilote disquette IEC (1541) par du streaming
-; instantané depuis les 32 banques de 8 Ko de la cartouche (0 délai, 0 disque).
+; Streaming instantané depuis les banques de 8 Ko de la cartouche Magic Desk.
 ; ---------------------------------------------------------------------------
 
 !zone cart_stream
@@ -12,18 +11,18 @@ cached_ow_chunk:        !byte $ff
 ; Les constantes CART_REG, CART_DISABLE, CART_BANK_* sont définies dans src/cart_defs.inc
 
 ; ---------------------------------------------------------------------------
-; disk_ensure_ow_chunk : Vérifie que le chunk Overworld pour current_room_y est en RAM
+; cart_ensure_ow_chunk : Vérifie que le chunk Overworld pour current_room_y est en RAM
 ; ---------------------------------------------------------------------------
-disk_ensure_ow_chunk:
+cart_ensure_ow_chunk:
         lda current_room_y
         lsr
         and #3
-        ; Fallthrough vers disk_ensure_ow_chunk_a
+        ; Fallthrough vers cart_ensure_ow_chunk_a
 
 ; ---------------------------------------------------------------------------
-; disk_ensure_ow_chunk_a : Charge le chunk Overworld A (0..3) s'il n'est pas déjà en RAM
+; cart_ensure_ow_chunk_a : Charge le chunk Overworld A (0..3) s'il n'est pas déjà en RAM
 ; ---------------------------------------------------------------------------
-disk_ensure_ow_chunk_a:
+cart_ensure_ow_chunk_a:
         and #3
         cmp cached_ow_chunk
         bne .load_ow_chunk
@@ -61,16 +60,16 @@ disk_ensure_ow_chunk_a:
         rts
 
 ; ---------------------------------------------------------------------------
-; disk_load_map_overworld : Purge la mémoire et charge le chunk Overworld actif
+; cart_load_map_overworld : Purge la mémoire et charge le chunk Overworld actif
 ; ---------------------------------------------------------------------------
-disk_load_map_overworld:
+cart_load_map_overworld:
         ; Force le rechargement du chunk Overworld correspondant à current_room_y
         lda #0
         sta cached_dungeon_level
         lda #$ff
         sta cached_ow_chunk
 
-        jsr disk_ensure_ow_chunk
+        jsr cart_ensure_ow_chunk
         bcs .ow_err
 
         ; Restaure le jeu de caractères Overworld ($2000 et $2540)
@@ -142,12 +141,12 @@ set_overworld_tables:
         rts
 
 ; ---------------------------------------------------------------------------
-; disk_load_dungeon : Charge le donjon correspondant à current_dungeon_level
+; cart_load_dungeon : Charge le donjon correspondant à current_dungeon_level
 ;   - Streaming instantané depuis les Banques 14..22 de la cartouche Magic Desk
 ;   - Cache RAM : si déjà en mémoire, aucun rechargement requis
 ;   - Mise à jour dynamique de map_enemies_ptr et des couleurs
 ; ---------------------------------------------------------------------------
-disk_load_dungeon:
+cart_load_dungeon:
         ; Invalide le cache de chunk Overworld
         lda #$ff
         sta cached_ow_chunk
@@ -200,5 +199,3 @@ disk_load_dungeon:
         rts
 
 ; Alias de compatibilité
-disk_load_map_underworld:
-        jmp disk_load_dungeon

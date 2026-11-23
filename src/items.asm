@@ -841,7 +841,12 @@ items_draw:
         sta VIC_SPRITE_Y2
         lda VIC_SPRITE_MSB
         and #%11111011
-        sta VIC_SPRITE_MSB
+        ldx dungeon_pickup_timer
+        beq +
+        ldx player_x+1
+        beq +
+        ora #%00000100
++       sta VIC_SPRITE_MSB
 
         lda dungeon_drop_type
         cmp #DROP_KEY

@@ -8,6 +8,7 @@
 ;   - Ligne de séparation
 ; ---------------------------------------------------------------------------
 
+!zone hud
 HUD_ROW_MAP     = 0
 HUD_ROW_B_A     = 0
 HUD_ROW_LIFE    = 0

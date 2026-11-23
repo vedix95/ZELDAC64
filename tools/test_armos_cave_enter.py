@@ -56,7 +56,7 @@ with open(mon_file, "w") as f:
 
 cmdline = [
     "x64sc",
-    "-autostart", "build/zelda.d64:zelda",
+    "-cartcrt", "build/zelda.crt",
     "-moncommands", mon_file,
     "+sound",
     "-warp"
