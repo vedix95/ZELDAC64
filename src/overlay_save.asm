@@ -1034,10 +1034,7 @@ fs_draw_select_screen:
         ora fs_bit_mask,y
         sta VIC_SPRITE_EN
 
-        ; Affiche l'épée / anneau sur la ligne sous le nom (row + 1)
-        lda save_buf + SL_SWORD,x
-        beq .next_slot_draw
-        pha
+        ; Affiche l'équipement, morts et Triforce sur la ligne sous le nom (row + 1)
         lda fs_tmp
         asl
         asl
@@ -1046,7 +1043,10 @@ fs_draw_select_screen:
         tax
         ldy #11
         jsr fs_set_pos
-        pla
+
+        ldx ZP_TMP
+        lda save_buf + SL_SWORD,x
+        beq .chk_shd_tag
         cmp #1
         beq .sw_wood_c
         cmp #2
@@ -1062,12 +1062,82 @@ fs_draw_select_screen:
         sta fs_cnt
         ldy #0
 -       lda txt_swd_tag,y
-        beq .next_slot_draw
+        beq .chk_shd_tag
         sta (ZP_DST),y
         lda fs_cnt
         sta (ZP_COL),y
         iny
         bne -
+
+.chk_shd_tag:
+        ldx ZP_TMP
+        lda save_buf + SL_SHIELD,x
+        cmp #2
+        bcc .draw_deaths_tag
+        ldy #4
+        lda #$13                        ; 'S'
+        sta (ZP_DST),y
+        lda #COL_CYAN
+        sta (ZP_COL),y
+        iny
+        lda #$08                        ; 'H'
+        sta (ZP_DST),y
+        lda #COL_CYAN
+        sta (ZP_COL),y
+
+.draw_deaths_tag:
+        ldx ZP_TMP
+        lda save_buf + SL_DEATHS_LO,x
+        jsr fs_bin_to_2dec
+        ldy #12
+        lda #$04                        ; 'D'
+        sta (ZP_DST),y
+        lda #COL_WHITE
+        sta (ZP_COL),y
+        iny
+        lda #':'
+        sta (ZP_DST),y
+        lda #COL_WHITE
+        sta (ZP_COL),y
+        iny
+        txa
+        sta (ZP_DST),y
+        lda #COL_WHITE
+        sta (ZP_COL),y
+        iny
+        lda fs_cnt
+        sta (ZP_DST),y
+        lda #COL_WHITE
+        sta (ZP_COL),y
+
+        ; Compteur Triforce (popcount de SL_TRIFORCE)
+        ldx ZP_TMP
+        lda save_buf + SL_TRIFORCE,x
+        ldy #0
+        ldx #8
+-       lsr
+        bcc +
+        iny
++       dex
+        bne -
+        tya
+        ora #'0'
+        pha
+        ldy #18
+        lda #$14                        ; 'T'
+        sta (ZP_DST),y
+        lda #COL_YELLOW
+        sta (ZP_COL),y
+        iny
+        lda #':'
+        sta (ZP_DST),y
+        lda #COL_YELLOW
+        sta (ZP_COL),y
+        iny
+        pla
+        sta (ZP_DST),y
+        lda #COL_YELLOW
+        sta (ZP_COL),y
         jmp .next_slot_draw
 
 .slot_empty:
@@ -1617,6 +1687,25 @@ fs_alphabet:
 txt_swd_tag:    !scr "swd" : !byte 0
 fs_bit_mask:    !byte 1, 2, 4
 fs_anim_tick:   !byte 0
+
+; Convertit A (0..99) en 2 chiffres écran : X = dizaines, fs_cnt = unités
+fs_bin_to_2dec:
+        cmp #100
+        bcc +
+        lda #99
++       ldx #0
+-       cmp #10
+        bcc +
+        sec
+        sbc #10
+        inx
+        bcs -
++       ora #'0'
+        sta fs_cnt
+        txa
+        ora #'0'
+        tax
+        rts
 
 fs_link_sprites:
         ; Frame 0 : sprite_link_down_0

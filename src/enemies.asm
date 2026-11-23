@@ -426,6 +426,8 @@ enemies_room_init:
         lda #0
         sta clock_freeze_active
         sta loot_drop_active
+        sta candle_used_room
+        sta dung_room_dark
         sta en_proj_active              ; réinitialise les projectiles en vol
         sta VIC_SPRITE_EXP_X
         sta VIC_SPRITE_EXP_Y
@@ -3114,10 +3116,14 @@ beam_dmg_tbl:
         !byte 1, 2, 4
 
 .wand_hit:
-        ; Onde de Baguette Magique : 2 dégâts (détruit l'onde à l'impact)
-        lda #ITEM_NONE
+        ; Onde de Baguette Magique : 2 dégâts (avec Livre : laisse une flamme !)
+        lda player_has_book
+        beq +
+        jsr wand_spawn_book_flame
+        jmp ++
++       lda #ITEM_NONE
         sta item_active
-        lda #2
+++      lda #2
         bne .magic_fire_dmg
 .candle_hit:
         ; Flamme de Bougie : 1 dégât

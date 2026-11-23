@@ -243,7 +243,14 @@ spawn_candle:
         lda player_has_candle
         bne +
         rts
-+       lda #ITEM_CANDLE
++       cmp #1
+        bne .candle_ok
+        lda candle_used_room
+        beq +
+        rts                             ; Bougie Bleue : 1 fois par salle
++       inc candle_used_room
+.candle_ok:
+        lda #ITEM_CANDLE
         sta item_active
         lda player_dir
         sta item_dir
@@ -253,7 +260,10 @@ spawn_candle:
         sta item_timer
 
         jsr set_spawn_coords
-
+        lda dung_room_dark
+        beq +
+        jsr dungeon_light_room
++
         ; Crépitement de la flamme
         jsr sound_candle
         rts
@@ -749,6 +759,23 @@ update_candle:
 update_wand:
         dec item_timer
         bne +
+        lda item_active
+        cmp #ITEM_WAND
+        bne .wand_end
+        lda player_has_book
+        beq .wand_end
+wand_spawn_book_flame:
+        lda #ITEM_CANDLE
+        sta item_active
+        lda #1
+        sta item_state
+        lda #50
+        sta item_timer
+        lda dung_room_dark
+        beq +
+        jsr dungeon_light_room
++       rts
+.wand_end:
         lda #ITEM_NONE
         sta item_active
         rts

@@ -130,6 +130,8 @@ ovl_cave_enter:
         sta cave_torch_tick
         sta cave_jingle_tick
         sta cave_jingle_idx
+        sta cave_npc_angry
+        sta cave_fb_active
 
         ; 4. Détermine le type de grotte selon current_room_idx
         ldx current_room_idx
@@ -1139,6 +1141,22 @@ ovl_cave_update:
         sta player_walk_tick
         sta player_walk_anim
 .anim_cave_done:
+        ; Riposte du vieillard si Link attaque en grotte
+        lda btn_x_pressed
+        beq +
+        lda player_has_sword
+        beq +
+        lda current_cave_type
+        cmp #CAVE_TYPE_FAIRY
+        beq +
+        cmp #CAVE_TYPE_MOBLIN
+        beq +
+        lda #1
+        sta cave_npc_angry
++       lda cave_npc_angry
+        beq +
+        jsr cave_update_fireball
++
 
         ; Seuil de sortie inconditionnel (X ~ 166..196, Y >= 214)
         lda player_x+1
@@ -1561,12 +1579,16 @@ ovl_cave_draw:
 
         lda player_has_blue_ring
         beq +
+        cmp #1
+        beq .cave_blue_ring
+        lda #COL_RED
+        bne .cave_set_ring
+.cave_blue_ring:
         lda #COL_WHITE
-        sta VIC_SPRITE_COL0
-        jmp ++
+        bne .cave_set_ring
 +       lda #COL_GREEN
+.cave_set_ring:
         sta VIC_SPRITE_COL0
-++
 
         lda cave_pickup_timer
         beq .normal_link_spr
@@ -1604,7 +1626,43 @@ ovl_cave_draw:
         sta VIC_SPRITE_Y1
         jsr setup_pnj_sprite
 
-        ; 3. Sprites 2 & 3 : Torches gauche et droite (X=136, X=216, Y=130)
+        ; 3. Sprites 2 & 3 : Fées en orbite (Fontaine) ou Torches gauche/droite
+        lda current_cave_type
+        cmp #CAVE_TYPE_FAIRY
+        bne .draw_torches
+        lda cave_torch_tick
+        lsr
+        lsr
+        and #7
+        tax
+        lda #176
+        clc
+        adc fairy_orb_dx,x
+        sta VIC_SPRITE_X2
+        lda #136
+        clc
+        adc fairy_orb_dy,x
+        sta VIC_SPRITE_Y2
+        txa
+        eor #4
+        tax
+        lda #176
+        clc
+        adc fairy_orb_dx,x
+        sta VIC_SPRITE_X3
+        lda #136
+        clc
+        adc fairy_orb_dy,x
+        sta VIC_SPRITE_Y3
+        lda #SPR_COMMON_HEART
+        sta SPRITE_PTR2
+        sta SPRITE_PTR3
+        lda #COL_LIGHT_RED
+        sta VIC_SPRITE_COL2
+        lda #COL_YELLOW
+        sta VIC_SPRITE_COL3
+        jmp .done_spr23
+.draw_torches:
         lda #136
         sta VIC_SPRITE_X2
         lda #130
@@ -1626,12 +1684,12 @@ ovl_cave_draw:
         sta SPRITE_PTR2
         lda #(sprite_link_proj_flame_1 >> 6)
         sta SPRITE_PTR3
-        jmp ++
+        jmp .done_spr23
 +       lda #(sprite_link_proj_flame_1 >> 6)
         sta SPRITE_PTR2
         lda #(sprite_link_proj_flame_0 >> 6)
         sta SPRITE_PTR3
-++
+.done_spr23:
 
         ; 4. Sprites 4..6 : Objets au sol (X=136, 176, 216, Y=146)
         lda cave_slot1_ptr
@@ -1685,14 +1743,98 @@ ovl_cave_draw:
         sta ZP_TMP
 +
         lda cave_pickup_timer
+        bne .enable_spr7
+        lda cave_fb_active
         beq +
+        lda #SPR_COMMON_FIREBALL
+        sta SPRITE_PTR7
+        lda cave_fb_x
+        sta VIC_SPRITE_X7
+        lda cave_fb_y
+        sta VIC_SPRITE_Y7
+        lda #COL_ORANGE
+        sta VIC_SPRITE_COL7
+.enable_spr7:
         lda ZP_TMP
-        ora #%10000000                  ; Sprite 7 (Item Get)
+        ora #%10000000                  ; Sprite 7 (Item Get ou Boule de feu)
         sta ZP_TMP
 +
         lda ZP_TMP
         sta VIC_SPRITE_EN
         rts
+
+cave_update_fireball:
+        lda cave_fb_active
+        bne .move_fb
+        lda #136
+        sta cave_fb_x
+        lda #130
+        sta cave_fb_y
+        lda #2
+        ldx player_x+1
+        bne +
+        lda player_x
+        cmp #136
+        bcs +
+        lda #254                        ; -2
++       sta cave_fb_dx
+        lda #2
+        sta cave_fb_dy
+        lda #1
+        sta cave_fb_active
+        jmp sound_enemy_shoot
+.move_fb:
+        lda cave_fb_x
+        clc
+        adc cave_fb_dx
+        sta cave_fb_x
+        cmp #32
+        bcc .kill_fb
+        cmp #248
+        bcs .kill_fb
+        lda cave_fb_y
+        clc
+        adc cave_fb_dy
+        sta cave_fb_y
+        cmp #220
+        bcs .kill_fb
+        ; Collision avec Link
+        lda player_x+1
+        bne .fb_ret
+        lda player_x
+        sec
+        sbc cave_fb_x
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #10
+        bcs .fb_ret
+        lda player_y
+        sec
+        sbc cave_fb_y
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #10
+        bcs .fb_ret
+        lda #0
+        sta cave_fb_active
+        lda #4
+        jmp hurt_link_dmg
+.kill_fb:
+        lda #0
+        sta cave_fb_active
+.fb_ret:
+        rts
+
+cave_npc_angry: !byte 0
+cave_fb_active: !byte 0
+cave_fb_x:      !byte 0
+cave_fb_y:      !byte 0
+cave_fb_dx:     !byte 0
+cave_fb_dy:     !byte 0
+fairy_orb_dx:   !byte 0, 14, 20, 14, 0, <(-14), <(-20), <(-14)
+fairy_orb_dy:   !byte <(-16), <(-11), 0, 11, 16, 11, 0, <(-11)
 
 setup_pnj_sprite:
         lda current_cave_type

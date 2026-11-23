@@ -460,7 +460,40 @@ dungeon_on_enter_room:
         lda #0
         sta dungeon_shutter_closed
 .done_enter:
+        ldx #8
+-       lda dark_room_lvl,x
+        cmp current_dungeon_level
+        bne +
+        lda dark_room_idx,x
+        cmp current_room_idx
+        beq .apply_dark
++       dex
+        bpl -
         rts
+.apply_dark:
+        lda #1
+        sta dung_room_dark
+        lda #COL_BLACK
+        ldx #0
+-       sta COLOR_RAM + 160,x
+        sta COLOR_RAM + 416,x
+        sta COLOR_RAM + 672,x
+        inx
+        bne -
+        ldx #71
+-       sta COLOR_RAM + 928,x
+        dex
+        bpl -
+        rts
+
+dark_room_lvl:  !byte 1, 2, 3, 4, 5, 6, 7, 8, 9
+dark_room_idx:  !byte $53, $3E, $4B, $2D, $55, $43, $34, $48, $25
+
+dungeon_light_room:
+        lda #0
+        sta dung_room_dark
+        jsr load_room
+        jmp sound_secret_chime
 
 ; ---------------------------------------------------------------------------
 ; dungeon_count_alive_enemies : compte les ennemis vivants (hors traps et bubbles)
@@ -2009,110 +2042,11 @@ dungeon_apply_room_state_internal:
 ; ---------------------------------------------------------------------------
 ; Routines d'ouverture de portes bidirectionnelles (Nord, Sud, Ouest, Est)
 ; ---------------------------------------------------------------------------
-dungeon_open_north_door:
-        ldy #9
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #10
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        ldx current_room_idx
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_N_OPEN
-        sta dungeon_room_state,x
-        txa
-        sec
-        sbc #16
-        tax
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_S_OPEN
-        sta dungeon_room_state,x
-        rts
-
-dungeon_open_south_door:
-        ldy #189
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #190
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        ldx current_room_idx
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_S_OPEN
-        sta dungeon_room_state,x
-        txa
-        clc
-        adc #16
-        tax
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_N_OPEN
-        sta dungeon_room_state,x
-        rts
-
-dungeon_open_west_door:
-        ldy #80
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #100
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        ldx current_room_idx
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_W_OPEN
-        sta dungeon_room_state,x
-        dex
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_E_OPEN
-        sta dungeon_room_state,x
-        rts
-
-dungeon_open_east_door:
-        ldy #99
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        ldy #119
-        lda #TILE_DUNG_DOOR_OPEN
-        sta (ZP_MAP),y
-        sta room_buf,y
-        jsr redraw_single_tile
-        jsr sound_secret_chime
-        ldx current_room_idx
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_E_OPEN
-        sta dungeon_room_state,x
-        inx
-        lda dungeon_room_state,x
-        ora #DUNG_DOOR_W_OPEN
-        sta dungeon_room_state,x
-        rts
-
-; ---------------------------------------------------------------------------
-; dungeon_check_key_door : ouvre les portes verrouillées si Link a une clé
-; ---------------------------------------------------------------------------
 dungeon_check_key_door:
         lda hud_keys
-        bne .has_key
-        lda player_has_magic_key
+        ora player_has_magic_key
         bne .has_key
         rts
-
 .has_key:
         ; 1. Porte Nord (y <= 98, x ~ 145..215)
         lda player_y
@@ -2130,10 +2064,9 @@ dungeon_check_key_door:
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_south
         jsr .consume_key
-        jmp dungeon_open_north_door
-
+        jsr load_ovl_items
+        jmp $a045                       ; ovl_open_north_door
 .chk_south:
-        ; 2. Porte Sud (y >= 195, x ~ 145..215)
         lda player_y
         cmp #195
         bcc .chk_west
@@ -2149,10 +2082,9 @@ dungeon_check_key_door:
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_west
         jsr .consume_key
-        jmp dungeon_open_south_door
-
+        jsr load_ovl_items
+        jmp $a048                       ; ovl_open_south_door
 .chk_west:
-        ; 3. Porte Ouest (x <= 48, y ~ 125..180)
         lda player_x+1
         bne .chk_east
         lda player_x
@@ -2168,10 +2100,9 @@ dungeon_check_key_door:
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .chk_east
         jsr .consume_key
-        jmp dungeon_open_west_door
-
+        jsr load_ovl_items
+        jmp $a04b                       ; ovl_open_west_door
 .chk_east:
-        ; 4. Porte Est (x >= 280, y ~ 125..180)
         lda player_x+1
         beq .done_doors
         lda player_x
@@ -2187,11 +2118,10 @@ dungeon_check_key_door:
         cmp #TILE_DUNG_DOOR_LOCKED
         bne .done_doors
         jsr .consume_key
-        jmp dungeon_open_east_door
-
+        jsr load_ovl_items
+        jmp $a04e                       ; ovl_open_east_door
 .done_doors:
         rts
-
 .consume_key:
         lda player_has_magic_key
         bne +

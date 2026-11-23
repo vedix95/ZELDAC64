@@ -123,6 +123,8 @@ loot_drop_y:          !byte 0
 loot_drop_timer:      !word 0
 heart_dung_mask:      !byte 0
 heart_ow_mask:        !byte 0
+candle_used_room:     !byte 0
+dung_room_dark:       !byte 0
 
 player_init:
         lda #PLAYER_COLOR

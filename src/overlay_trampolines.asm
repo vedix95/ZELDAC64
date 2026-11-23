@@ -117,7 +117,7 @@ debug_render_screen:
 ; ---------------------------------------------------------------------------
 ; Trampolines Overlay Objets & Événements Spéciaux (Banque 29)
 ; ---------------------------------------------------------------------------
-OVL_ITEMS_PAGES = 18                    ; 18 pages = 4608 octets (ovl_items.dat)
+OVL_ITEMS_PAGES = 20                    ; 20 pages = 5120 octets (ovl_items.dat)
 
 load_ovl_items:
         lda #CART_BANK_OVL_ITEMS

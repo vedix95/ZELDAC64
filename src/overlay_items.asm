@@ -40,6 +40,10 @@
         jmp ovl_update_loot             ; $A03C
         jmp ovl_dungeon_collect_drop    ; $A03F
         jmp ovl_dungeon_bomb_explode    ; $A042
+        jmp ovl_open_north_door         ; $A045
+        jmp ovl_open_south_door         ; $A048
+        jmp ovl_open_west_door          ; $A04B
+        jmp ovl_open_east_door          ; $A04E
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -2027,7 +2031,7 @@ ovl_dungeon_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .chk_bomb_south
-        jmp dungeon_open_north_door
+        jmp ovl_open_north_door
 
 .chk_bomb_south:
         ; 2. Mur Sud : y > 200, x ~ 150..210
@@ -2045,7 +2049,7 @@ ovl_dungeon_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .chk_bomb_west
-        jmp dungeon_open_south_door
+        jmp ovl_open_south_door
 
 .chk_bomb_west:
         ; 3. Mur Ouest : x < 50, y ~ 120..180
@@ -2063,7 +2067,7 @@ ovl_dungeon_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .chk_bomb_east
-        jmp dungeon_open_west_door
+        jmp ovl_open_west_door
 
 .chk_bomb_east:
         ; 4. Mur Est : x > 270, y ~ 120..180
@@ -2081,10 +2085,189 @@ ovl_dungeon_bomb_explode:
         lda room_buf,y
         cmp #TILE_DUNG_DOOR_BOMB
         bne .done_bomb
-        jmp dungeon_open_east_door
+        jmp ovl_open_east_door
 
 .done_bomb:
         rts
+
+; ===========================================================================
+; 13d. PORTES VERROUILLÉES & OUVERTURES BIDIRECTIONNELLES (Banque 29)
+; ===========================================================================
+ovl_open_north_door:
+        ldy #9
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #10
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_N_OPEN
+        sta dungeon_room_state,x
+        txa
+        sec
+        sbc #16
+        tax
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_S_OPEN
+        sta dungeon_room_state,x
+        rts
+
+ovl_open_south_door:
+        ldy #189
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #190
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_S_OPEN
+        sta dungeon_room_state,x
+        txa
+        clc
+        adc #16
+        tax
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_N_OPEN
+        sta dungeon_room_state,x
+        rts
+
+ovl_open_west_door:
+        ldy #80
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #100
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        dex
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        rts
+
+ovl_open_east_door:
+        ldy #99
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        ldy #119
+        lda #TILE_DUNG_DOOR_OPEN
+        sta (ZP_MAP),y
+        sta room_buf,y
+        jsr redraw_single_tile
+        jsr sound_secret_chime
+        ldx current_room_idx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_E_OPEN
+        sta dungeon_room_state,x
+        inx
+        lda dungeon_room_state,x
+        ora #DUNG_DOOR_W_OPEN
+        sta dungeon_room_state,x
+        rts
+
+ovl_dungeon_check_key_door:
+        lda player_y
+        cmp #98
+        bcs .chk_south
+        lda player_x+1
+        bne .chk_south
+        lda player_x
+        cmp #145
+        bcc .chk_south
+        cmp #215
+        bcs .chk_south
+        ldy #9
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
+        bne .chk_south
+        jsr .consume_key
+        jmp ovl_open_north_door
+
+.chk_south:
+        lda player_y
+        cmp #195
+        bcc .chk_west
+        lda player_x+1
+        bne .chk_west
+        lda player_x
+        cmp #145
+        bcc .chk_west
+        cmp #215
+        bcs .chk_west
+        ldy #189
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
+        bne .chk_west
+        jsr .consume_key
+        jmp ovl_open_south_door
+
+.chk_west:
+        lda player_x+1
+        bne .chk_east
+        lda player_x
+        cmp #48
+        bcs .chk_east
+        lda player_y
+        cmp #125
+        bcc .chk_east
+        cmp #180
+        bcs .chk_east
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
+        bne .chk_east
+        jsr .consume_key
+        jmp ovl_open_west_door
+
+.chk_east:
+        lda player_x+1
+        beq .done_doors
+        lda player_x
+        cmp #<280
+        bcc .done_doors
+        lda player_y
+        cmp #125
+        bcc .done_doors
+        cmp #180
+        bcs .done_doors
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_LOCKED
+        bne .done_doors
+        jsr .consume_key
+        jmp ovl_open_east_door
+
+.done_doors:
+        rts
+
+.consume_key:
+        lda player_has_magic_key
+        bne +
+        dec hud_keys
+        jsr hud_render
++       jmp sound_door_unlock
 
 ; ===========================================================================
 ; 14. RIDEAU D'ENTRÉE / SORTIE DE DONJON (ovl_curtain_close)
