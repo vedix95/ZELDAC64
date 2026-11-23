@@ -66,16 +66,12 @@ room_mask_2x2:
 room_mask_2x2_inv:
         !byte %00111111, %11001111, %11110011, %11111100
 
-; Noms des objets slot B (4 caractères chacun, 8 objets)
-b_item_names:
-        !text "BOOM"
-        !text "BOMB"
-        !text "BOW "
-        !text "CAND"
-        !text "FLUT"
-        !text "FOOD"
-        !text "POTI"
-        !text "WAND"
+; Icônes et couleurs des objets slot B (8 objets : 0..7)
+b_item_chars:
+        !byte 101, 100, 102, 103, 252, 253, 254, 255
+b_item_cols:
+        !byte COL_ORANGE, COL_LIGHT_BLUE, COL_YELLOW, COL_LIGHT_BLUE
+        !byte COL_YELLOW, COL_LIGHT_RED, COL_LIGHT_BLUE, COL_CYAN
 
 ; ---------------------------------------------------------------------------
 ; hud_init : initialise le cadre complet du HUD
@@ -113,26 +109,53 @@ hud_init:
         !byte 9, 6
         !text "RUPEES"
         !byte 21, 3
-        !text "[A]"
+        !byte 240, 'A', 241
         !byte 26, 3
-        !text "[X]"
+        !byte 240, 'X', 241
         !byte 33, 6
         !text "-LIFE-"
         !byte 49, 4
         !text "KEYS"
+        !byte 61, 1
+        !byte 246
+        !byte 63, 1
+        !byte 247
+        !byte 66, 1
+        !byte 246
+        !byte 68, 1
+        !byte 247
         !byte 89, 5
         !text "BOMBS"
+        !byte 101, 3
+        !byte 242, 245, 243
+        !byte 106, 3
+        !byte 242, 245, 243
         !byte $ff
 .str_len:
         !byte 0
 
 .str_done:
-        ; Couleur jaune pour "-LIFE-"
+        ; Couleur jaune pour "-LIFE-" et bleu pour les cadres [A] et [X]
         lda #COL_YELLOW
         ldx #5
 -       sta COLOR_RAM+33,x
         dex
         bpl -
+        lda #COL_BLUE
+        ldx #2
+-       sta COLOR_RAM+21,x
+        sta COLOR_RAM+26,x
+        sta COLOR_RAM+101,x
+        sta COLOR_RAM+106,x
+        dex
+        bpl -
+        sta COLOR_RAM+61
+        sta COLOR_RAM+63
+        sta COLOR_RAM+66
+        sta COLOR_RAM+68
+        lda #COL_WHITE
+        sta COLOR_RAM+22
+        sta COLOR_RAM+27
 
         ; Épée dans le slot X : dynamique selon player_has_sword
         jsr hud_update_sword
@@ -538,21 +561,12 @@ minimap_buf:
         sta COLOR_RAM+80+17
         sta COLOR_RAM+80+18
 
-        ; 3. Slot B (Objet secondaire équipé) : ligne 1, colonne 21..24
-        lda hud_selected_b
-        asl
-        asl                             ; index * 4
-        tax
-        ldy #0
-.put_b_name:
-        lda b_item_names,x
-        sta SCREEN_RAM+40+21,y
-        lda #COL_YELLOW
-        sta COLOR_RAM+40+21,y
-        inx
-        iny
-        cpy #4
-        bne .put_b_name
+        ; 3. Slot A (Objet secondaire équipé) : ligne 1, col 22 (dans le cadre 21..23)
+        ldx hud_selected_b
+        lda b_item_chars,x
+        sta SCREEN_RAM+40+22
+        lda b_item_cols,x
+        sta COLOR_RAM+40+22
 
         ; 4. Barre de vie (Cœurs) : 2 rangées de 8 (cols 32..39 sur Ligne 1 et Ligne 2)
         ldx #0
@@ -698,17 +712,10 @@ hud_add_max_heart:
 +       jmp hud_heal_full
 
 hud_update_sword:
-        txa
-        pha
         lda player_has_sword
         bne .show_sword
         lda #32                         ; espace
-        ldx #4
--       sta SCREEN_RAM+40+26,x
-        dex
-        bpl -
-        pla
-        tax
+        sta SCREEN_RAM+40+27
         rts
 .show_sword:
         cmp #1
@@ -723,17 +730,8 @@ hud_update_sword:
 .sw_c_white:
         lda #COL_WHITE                  ; Épée Blanche
 .sw_col_ok:
-        sta .sw_col_tmp
-        ldx #4
--       lda .sword_txt,x
-        sta SCREEN_RAM+40+26,x
-        lda .sw_col_tmp
-        sta COLOR_RAM+40+26,x
-        dex
-        bpl -
-        pla
-        tax
+        sta COLOR_RAM+40+27
+        lda #226                        ; Icône Épée
+        sta SCREEN_RAM+40+27
         rts
-.sw_col_tmp: !byte 0
-.sword_txt:  !text "SWORD"
 
