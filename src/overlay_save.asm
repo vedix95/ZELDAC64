@@ -57,6 +57,7 @@ SL_OW_SECRETS     = 31          ; 7 octets (31..37)
         jmp ovl_save_apply_slot         ; $A003 : Restaure le slot actif dans zelda.prg
         jmp ovl_save_current_slot       ; $A006 : Sauvegarde le slot actif en Flash
         jmp ovl_save_inc_death          ; $A009 : Incrémente le compteur de morts + sauve
+        jmp ovl_quit_to_intro           ; $A00C : Redémarre intro.prg (Banques 1..3)
 
 ; ===========================================================================
 ; 1. PILOTE FLASH AM29F040 (Secteur 7 : Banques 56..63 LoROM = 64 Ko)
@@ -621,6 +622,75 @@ ovl_save_inc_death:
         inc save_buf + SL_DEATHS_HI,x
 +       jmp save_flash_commit
 
+; $A00C : Redémarre l'écran titre / intro.prg depuis les banques 1..3
+ovl_quit_to_intro:
+        sei
+        lda #0
+        sta VIC_IRQ_ENABLE
+        asl VIC_IRQ_FLAG
+        sta VIC_SPRITE_EN
+        sta SID_VOLUME
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_VOLUME
++
+        ldx #0
+-       lda .quit_to_intro_code,x
+        sta $0340,x
+        inx
+        cpx #(.quit_to_intro_end - .quit_to_intro_code)
+        bne -
+        jmp $0340
+
+.quit_to_intro_code:
+!pseudopc $0340 {
+        lda #$86
+        sta CART_CTRL
+        lda #$37
+        sta CPU_PORT
+        lda #1
+        sta $02
+        lda #$08
+        sta $03
+.q_bank:
+        lda $02
+        sta CART_REG
+        lda #0
+        sta $fb
+        sta $fd
+        lda #$80
+        sta $fc
+        lda $03
+        sta $fe
+        ldx #32
+        ldy #0
+-       lda ($fb),y
+        sta ($fd),y
+        iny
+        bne -
+        inc $fc
+        inc $fe
+        dex
+        bne -
+        lda $03
+        clc
+        adc #$20
+        sta $03
+        inc $02
+        lda $02
+        cmp #4
+        bcc .q_bank
+        lda #$36
+        sta CPU_PORT
+        lda #CART_MODE_OFF
+        sta CART_CTRL
+        lda #0
+        sta $df00
+        sta $df01
+        jmp $080d
+}
+.quit_to_intro_end:
+
 ; ===========================================================================
 ; 3. RELAIS MUSIQUE FILE SELECT (vraie partition Zelda de intro.prg via $02F0)
 ; ===========================================================================
@@ -695,8 +765,7 @@ fs_read_nav:
         sta ZP_TMP
 +       lda #$ff
         sta $dc00
-        lda #$00
-        sta $dc02                       ; Remet Port A entrée propre
+        sta $dc02                       ; Remet Port A en sortie ($FF) pour clavier jeu/debug
 
         ; Debounce : front montant uniquement
         lda ZP_TMP

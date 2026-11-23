@@ -36,6 +36,7 @@
         jmp ovl_spawn_loot              ; $A030
         jmp ovl_curtain_close           ; $A033
         jmp ovl_enter_dungeon           ; $A036
+        jmp ovl_gameover_continue       ; $A039
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -985,19 +986,75 @@ ovl_gameover_open:
         sta ZP_TMP
         jsr ovl_print_line
 
-        ; Invite Continue (ligne 16, col 8)
-        lda #<txt_go_cont
+        lda #0
+        sta go_cursor
+        jsr go_draw_menu
+        jmp save_inc_death
+
+go_cursor:      !byte 0
+
+go_draw_menu:
+        ; Option 0 : SAVE + CONTINUE (ligne 15, col 11)
+        lda #<txt_go_opt0
         sta ZP_SRC
-        lda #>txt_go_cont
+        lda #>txt_go_opt0
         sta ZP_SRC+1
-        lda #<(SCREEN_RAM + 40 * 16 + 8)
+        lda #<(SCREEN_RAM + 40 * 15 + 11)
         sta ZP_DST
-        lda #>(SCREEN_RAM + 40 * 16 + 8)
+        lda #>(SCREEN_RAM + 40 * 15 + 11)
         sta ZP_DST+1
         lda #COL_YELLOW
         sta ZP_TMP
         jsr ovl_print_line
-        jmp save_inc_death
+
+        ; Option 1 : SAVE + QUIT (ligne 17, col 11)
+        lda #<txt_go_opt1
+        sta ZP_SRC
+        lda #>txt_go_opt1
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 17 + 11)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 17 + 11)
+        sta ZP_DST+1
+        lda #COL_WHITE
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        ; Option 2 : RETOUR (ligne 19, col 11)
+        lda #<txt_go_opt2
+        sta ZP_SRC
+        lda #>txt_go_opt2
+        sta ZP_SRC+1
+        lda #<(SCREEN_RAM + 40 * 19 + 11)
+        sta ZP_DST
+        lda #>(SCREEN_RAM + 40 * 19 + 11)
+        sta ZP_DST+1
+        lda #COL_CYAN
+        sta ZP_TMP
+        jsr ovl_print_line
+
+        ; Curseur '*' à col 9 sur la ligne sélectionnée
+        lda #' '
+        sta SCREEN_RAM + 40 * 15 + 9
+        sta SCREEN_RAM + 40 * 17 + 9
+        sta SCREEN_RAM + 40 * 19 + 9
+        lda #'*'
+        ldx go_cursor
+        beq .cur0
+        cpx #1
+        beq .cur1
+        sta SCREEN_RAM + 40 * 19 + 9
+        lda #COL_RED
+        sta COLOR_RAM + 40 * 19 + 9
+        rts
+.cur0:  sta SCREEN_RAM + 40 * 15 + 9
+        lda #COL_RED
+        sta COLOR_RAM + 40 * 15 + 9
+        rts
+.cur1:  sta SCREEN_RAM + 40 * 17 + 9
+        lda #COL_RED
+        sta COLOR_RAM + 40 * 17 + 9
+        rts
 
 ovl_gameover_update:
         lda #0
@@ -1008,15 +1065,66 @@ ovl_gameover_update:
         rts
 
 .go_wait_btn:
+        lda joy_pressed
+        and #JOY_UP
+        beq +
+        lda go_cursor
+        beq +
+        dec go_cursor
+        jsr go_draw_menu
++       lda joy_pressed
+        and #JOY_DOWN
+        beq +
+        lda go_cursor
+        cmp #2
+        bcs +
+        inc go_cursor
+        jsr go_draw_menu
++
         lda btn_a_pressed
         ora btn_x_pressed
         ora btn_b_pressed
-        bne .go_continue
-        lda joy
-        and #JOY_FIRE
-        bne .go_continue
+        bne .go_exec_choice
         rts
 
+.go_exec_choice:
+        lda go_cursor
+        bne +
+        jmp gameover_save_and_continue
++       cmp #1
+        bne +
+        jmp gameover_save_and_quit
++
+        ; RETOUR : si vivant (hud_cur_hearts > 0), reprend sur place ; sinon respawn
+        lda hud_cur_hearts
+        beq ovl_gameover_continue
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        bne .ret_ow
+        lda VIC_CTRL2
+        ora #%00010000
+        sta VIC_CTRL2
+        jsr clear_screen
+        jsr load_room
+        jsr hud_init
+        jsr sound_play_dungeon_music
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+.ret_ow:
+        lda VIC_CTRL2
+        ora #%00010000
+        sta VIC_CTRL2
+        jsr clear_screen
+        jsr load_room
+        jsr hud_init
+        lda #MUSIC_OVERWORLD
+        jsr music_play
+        lda #STATE_PLAYING
+        sta game_state
+        rts
+
+ovl_gameover_continue:
 .go_continue:
         ; Restaure 3 cœurs (ou hud_max_hearts si inférieur)
         lda #3
@@ -1085,7 +1193,9 @@ ovl_gameover_update:
 
 txt_go_title:   !text "GAME OVER", 0
 txt_go_sub:     !text "LINK HAS FALLEN IN BATTLE.", 0
-txt_go_cont:    !text "PRESS [A] OR [FIRE] TO CONTINUE", 0
+txt_go_opt0:    !text "SAVE + CONTINUE", 0
+txt_go_opt1:    !text "SAVE + QUIT", 0
+txt_go_opt2:    !text "RETOUR", 0
 
 ; ===========================================================================
 ; 11. SAUVETAGE PRINCESSE ZELDA & ÉCRAN DE FIN (Fix M2 — STATE_ENDING = 9)

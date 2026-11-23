@@ -141,6 +141,7 @@ open_gameover:
         jmp $a018                       ; ovl_gameover_open
 
 gameover_update:
+        jsr load_ovl_items
         jmp $a01b                       ; ovl_gameover_update
 
 open_ending:
@@ -207,6 +208,12 @@ main_handle_hotkeys:
 +       lda game_state
         cmp #STATE_PLAYING
         bne .hk_done
+        lda key_g_pressed
+        beq .chk_k4
+        jsr open_gameover
+        sec
+        rts
+.chk_k4:
         lda key_4_pressed
         beq .chk_k3
         jsr save_current_slot
@@ -229,3 +236,15 @@ main_handle_hotkeys:
 .hk_done:
         clc
         rts
+
+; ---------------------------------------------------------------------------
+; Trampolines Game Over : SAVE + CONTINUE / SAVE + QUIT vers l'intro
+; ---------------------------------------------------------------------------
+gameover_save_and_continue:
+        jsr save_current_slot
+        jsr load_ovl_items
+        jmp $a039                       ; ovl_gameover_continue
+
+gameover_save_and_quit:
+        jsr save_current_slot
+        jmp $a00c                       ; ovl_quit_to_intro (Banque 32 déjà chargée !)

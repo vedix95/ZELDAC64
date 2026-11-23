@@ -40,6 +40,9 @@ key_3_pressed:      !byte 0
 key_4:              !byte 0                 ; Touche '4'
 key_4_prev:         !byte 0
 key_4_pressed:      !byte 0
+key_g:              !byte 0                 ; Touche 'G' (Game Over / Menu Quitter)
+key_g_prev:         !byte 0
+key_g_pressed:      !byte 0
 
 ; Variables de lecture matricielle anti-ghosting
 col_idle:           !byte 0                 ; état des colonnes au repos (Port A = $FF)
@@ -55,6 +58,12 @@ btn_c_pressed       = btn_x_pressed
 key_space_pressed   = btn_x_pressed
 
 read_input:
+        ; Garantit la direction CIA1 standard (Port A sortie $FF, Port B entrée $00)
+        lda #$ff
+        sta $dc02
+        lda #$00
+        sta $dc03
+
         ; Sauvegarde les états précédents pour calculer les fronts montants
         lda joy
         sta joy_prev
@@ -74,6 +83,8 @@ read_input:
         sta key_3_prev
         lda key_4
         sta key_4_prev
+        lda key_g
+        sta key_g_prev
 
         ; -------------------------------------------------------------------
         ; 1. LECTURE DU JOYSTICK PORT 2 & BOUTON A (FIRE 1 = ARME SECONDAIRE)
@@ -297,6 +308,19 @@ read_input:
         eor #$ff
         and key_4
         sta key_4_pressed
+
+        ; Touche 'G' (Ligne 3, Col 2 -> col_row3 bit 2 = 0)
+        lda #0
+        sta key_g
+        lda col_row3
+        and #%00000100
+        bne +
+        lda #1
+        sta key_g
++       lda key_g_prev
+        eor #$ff
+        and key_g
+        sta key_g_pressed
 
         ; -------------------------------------------------------------------
         ; Vider le tampon clavier KERNAL ($C6 = 0) pour empêcher l'accumulation
