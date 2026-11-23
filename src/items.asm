@@ -407,15 +407,12 @@ update_boomerang:
         jsr follow_player_x
 
 .bm_check:
-        ; Collision tuile solide
-        lda item_x
-        sta col_x
-        lda item_x+1
-        sta col_x+1
+        ; Authentique NES : le boomerang survole l'eau et les blocs (demi-tour en bordure ou fin de portée)
         lda item_y
-        sta col_y
-        jsr check_point_solid
-        bcs .bm_turn                    ; obstacle : fait demi-tour immédiat
+        cmp #PLAYER_Y_MIN
+        bcc .bm_turn
+        cmp #PLAYER_Y_MAX
+        bcs .bm_turn
 
         ; Décompte de portée aller
         dec item_timer
@@ -655,17 +652,8 @@ update_bow:
         lda item_x
         cmp #<(PLAYER_X_MAX + 1)
         bcs .arr_destroy
-
 .arr_chk_sol:
-        ; Collision tuile solide
-        lda item_x
-        sta col_x
-        lda item_x+1
-        sta col_x+1
-        lda item_y
-        sta col_y
-        jsr check_point_solid
-        bcs .arr_destroy
+        ; Authentique NES : les flèches survolent l'eau et les blocs jusqu'au bord de l'écran
         rts
 
 .arr_destroy:
@@ -839,7 +827,13 @@ wand_spawn_book_flame:
         bcc .w_despawn
         rts
 .w_despawn:
-        lda #ITEM_NONE
+        lda item_active
+        cmp #ITEM_WAND
+        bne +
+        lda player_has_book
+        beq +
+        jmp wand_spawn_book_flame
++       lda #ITEM_NONE
         sta item_active
         rts
 

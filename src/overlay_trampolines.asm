@@ -19,33 +19,7 @@ debug_hook_arg2:        !byte 0         ; Argument 2 du hook
 current_cave_type:      !byte 0         ; Type de la caverne en cours de visite
 
 ; Persistance des 128 salles de cavernes (allouée en basse RAM résidente sous $2000 dans main.asm)
-
-; Table de mapping des 128 salles Overworld vers leur type de caverne (1ère Quête NES)
-room_cave_types:
-        ; Rangée 0 (0..15 : A-1 .. P-1)
-        !byte 0, CAVE_TYPE_DOOR_REPAIR, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_DOOR_REPAIR, CAVE_TYPE_POTION_SHOP, 0, CAVE_TYPE_WARP, CAVE_TYPE_DOOR_REPAIR
-        !byte 0, CAVE_TYPE_HINT_1, CAVE_TYPE_SWORD_WHITE, 0, CAVE_TYPE_SHOP_A, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HEART_GIFT, CAVE_TYPE_MOBLIN
-        ; Rangée 1 (16..31 : A-2 .. P-2)
-        !byte CAVE_TYPE_GAMBLE, CAVE_TYPE_HINT_1, CAVE_TYPE_SHOP_B, CAVE_TYPE_MOBLIN, CAVE_TYPE_DOOR_REPAIR, CAVE_TYPE_SHOP_A, CAVE_TYPE_GAMBLE, 0
-        !byte CAVE_TYPE_POTION_SHOP, CAVE_TYPE_HINT_2, CAVE_TYPE_HINT_3, 0, CAVE_TYPE_HINT_2, CAVE_TYPE_WARP, CAVE_TYPE_DOOR_REPAIR, CAVE_TYPE_SHOP_SECRET
-        ; Rangée 2 (32..47 : A-3 .. P-3)
-        !byte CAVE_TYPE_WARP, CAVE_TYPE_SWORD_MAGIC, 0, CAVE_TYPE_WARP, 0, CAVE_TYPE_SHOP_B, CAVE_TYPE_SHOP_B, CAVE_TYPE_POTION_SHOP
-        !byte CAVE_TYPE_MOBLIN, CAVE_TYPE_POTION_SHOP, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_HEART_GIFT, CAVE_TYPE_MOBLIN, 0, CAVE_TYPE_HEART_GIFT
-        ; Rangée 3 (48..63 : A-4 .. P-4)
-        !byte 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_SHOP_B, CAVE_TYPE_POTION_SHOP, CAVE_TYPE_SHOP_SECRET, 0, 0, 0
-        !byte 0, CAVE_TYPE_FAIRY, CAVE_TYPE_WARP, 0, 0, CAVE_TYPE_MOBLIN, 0, 0
-        ; Rangée 4 (64..79 : A-5 .. P-5)
-        !byte 0, 0, 0, CAVE_TYPE_FAIRY, CAVE_TYPE_SHOP_B, 0, CAVE_TYPE_SHOP_B, CAVE_TYPE_WARP
-        !byte CAVE_TYPE_MOBLIN, CAVE_TYPE_WARP, CAVE_TYPE_SHOP_B, CAVE_TYPE_POTION_SHOP, 0, CAVE_TYPE_SHOP_B, CAVE_TYPE_HEART_CHOICE, 0
-        ; Rangée 5 (80..95 : A-6 .. P-6)
-        !byte 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_MOBLIN, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_HEART_CHOICE, 0
-        !byte CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_HEART_CHOICE, 0, 0, CAVE_TYPE_SHOP_A, CAVE_TYPE_HEART_GIFT
-        ; Rangée 6 (96..111 : A-7 .. P-7)
-        !byte CAVE_TYPE_GAMBLE, 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_DOOR_REPAIR, CAVE_TYPE_SHOP_SECRET, 0, CAVE_TYPE_SHOP_A, CAVE_TYPE_MOBLIN
-        !byte CAVE_TYPE_DOOR_REPAIR, 0, CAVE_TYPE_DOOR_REPAIR, CAVE_TYPE_HEART_GIFT, 0, 0, CAVE_TYPE_HEART_CHOICE, CAVE_TYPE_SHOP_B
-        ; Rangée 7 (112..127 : A-8 .. P-8)
-        !byte CAVE_TYPE_GAMBLE, CAVE_TYPE_MOBLIN, CAVE_TYPE_MOBLIN, 0, 0, CAVE_TYPE_MOBLIN, CAVE_TYPE_GAMBLE, CAVE_TYPE_SWORD_WOOD
-        !byte CAVE_TYPE_POTION_SHOP, CAVE_TYPE_WARP, 0, CAVE_TYPE_WARP, CAVE_TYPE_GAMBLE, CAVE_TYPE_DOOR_REPAIR, 0, 0
+; Table room_cave_types (128 octets) déportée dans src/cave.asm (Banque 28) pour libérer la RAM résidente.
 
 ; ---------------------------------------------------------------------------
 ; Trampolines Overlay Inventaire (Banque 27)
@@ -77,7 +51,7 @@ inv_display_current_page:
 ; ---------------------------------------------------------------------------
 cave_enter:
         lda #CART_BANK_OVL_CAVE
-        ldx #18                         ; 18 pages = 4608 octets (ovl_cave.dat ~4 Ko)
+        ldx #19                         ; 19 pages = 4864 octets (ovl_cave.dat)
         jsr cart_load_overlay
         jmp $a000                      ; cave_enter
 
@@ -117,7 +91,7 @@ debug_render_screen:
 ; ---------------------------------------------------------------------------
 ; Trampolines Overlay Objets & Événements Spéciaux (Banque 29)
 ; ---------------------------------------------------------------------------
-OVL_ITEMS_PAGES = 20                    ; 20 pages = 5120 octets (ovl_items.dat)
+OVL_ITEMS_PAGES = 26                    ; 26 pages = 6656 octets (ovl_items.dat)
 
 load_ovl_items:
         lda #CART_BANK_OVL_ITEMS

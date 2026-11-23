@@ -38,13 +38,15 @@
         jmp ovl_enter_dungeon           ; $A036
         jmp ovl_gameover_continue       ; $A039
         jmp ovl_update_loot             ; $A03C
-        jmp ovl_dock_heart_celebrate    ; $A03F
         jmp ovl_dungeon_collect_drop    ; $A03F
         jmp ovl_dungeon_bomb_explode    ; $A042
         jmp ovl_open_north_door         ; $A045
         jmp ovl_open_south_door         ; $A048
         jmp ovl_open_west_door          ; $A04B
         jmp ovl_open_east_door          ; $A04E
+        jmp ovl_dock_heart_celebrate    ; $A051
+        jmp ovl_dung_stair_warp         ; $A054
+        jmp ovl_dung_npc_special        ; $A057
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -861,12 +863,8 @@ ovl_use_food_exec:
         inx
         cpx #MAX_ENEMIES
         bcc .bait_loop
-        ; Ne consomme la viande que si au moins un monstre a été attiré !
-        lda ZP_TMP
-        beq +
-        lda #0
-        sta player_has_food
-+       jsr sound_food
+        ; La viande reste réutilisable hors Goriya Affamé (authentique NES)
+        jsr sound_food
         rts
 
 ; ===========================================================================
@@ -905,6 +903,99 @@ ovl_d9_gate_blocked:
         rts
 
 txt_d9_gate:    !text "NEED ALL 8 TRIFORCE PIECES! "
+
+ovl_dung_stair_warp:
+        ; Table : niveau, salle_src, salle_dst (passages souterrains D6..D9)
+        ldx #0
+.dsw_lp:
+        lda dung_warp_tbl,x
+        bmi .dsw_ret
+        cmp current_dungeon_level
+        bne .dsw_next
+        lda dung_warp_tbl+1,x
+        cmp current_room_idx
+        beq .dsw_go
+.dsw_next:
+        inx
+        inx
+        inx
+        bne .dsw_lp
+.dsw_ret:
+        rts
+.dsw_go:
+        lda dung_warp_tbl+2,x
+        sta current_room_idx
+        pha
+        and #$0f
+        sta current_room_x
+        pla
+        lsr
+        lsr
+        lsr
+        lsr
+        sta current_room_y
+        lda #160
+        sta player_x
+        lda #0
+        sta player_x+1
+        lda #140
+        sta player_y
+        jsr sound_secret_chime
+        jsr load_room
+        jsr hud_render
+        jsr enemies_room_init
+        jmp dungeon_on_enter_room
+
+dung_warp_tbl:
+        !byte 6, $69, $28
+        !byte 6, $28, $69
+        !byte 7, $1a, $29
+        !byte 7, $29, $1a
+        !byte 8, $3f, $4c
+        !byte 8, $4c, $3f
+        !byte 8, $7c, $3f
+        !byte 9, $55, $63
+        !byte 9, $63, $55
+        !byte $ff
+
+ovl_dung_npc_special:
+        ; Améliorations capacité Bombes NES (D5 $15 : 8->12, D8 $5e : 12->16 pour 100 rubis)
+        lda current_dungeon_level
+        cmp #5
+        bne .dns_d8
+        lda current_room_idx
+        cmp #$15
+        bne .dns_done
+        lda player_max_bombs
+        cmp #12
+        bcs .dns_done
+        lda #12
+        bne .dns_buy_bomb
+.dns_d8:
+        cmp #8
+        bne .dns_done
+        lda current_room_idx
+        cmp #$5e
+        bne .dns_done
+        lda player_max_bombs
+        cmp #16
+        bcs .dns_done
+        lda #16
+.dns_buy_bomb:
+        ldy hud_rupees
+        cpy #100
+        bcc .dns_done
+        sta player_max_bombs
+        sta hud_bombs
+        tya
+        sec
+        sbc #100
+        sta hud_rupees
+        jsr hud_render
+        jsr sound_item_fanfare
+.dns_done:
+        ldx current_room_idx
+        rts
 
 ovl_dock_heart_celebrate:
         lda #SPR_COMMON_ITEM_GET
@@ -1628,9 +1719,8 @@ ovl_ending_update:
         rts
 
 .end_finish:
-        ; Soin complet et retour triomphal en Hyrule
-        lda hud_max_hearts
-        sta hud_cur_hearts
+        ; Soin complet (quarts de cœurs) et retour triomphal en Hyrule
+        jsr hud_heal_full
         lda #$ff
         sta player_triforce_pieces
         jmp ovl_exit_dungeon
@@ -1759,8 +1849,9 @@ ovl_update_loot:
         lda loot_drop_timer
         bne +
         lda loot_drop_timer+1
-        beq .loot_expire
-        dec loot_drop_timer+1
+        bne ++
+        jmp .loot_expire
+++      dec loot_drop_timer+1
 +       dec loot_drop_timer
         lda loot_drop_type
         cmp #LOOT_FAIRY
@@ -1776,7 +1867,7 @@ ovl_update_loot:
         sbc loot_drop_x+1
         beq .chk_lx_pos
         cmp #$ff
-        bne .loot_ret
+        bne .chk_boom_loot
         tya
         eor #$ff
         clc
@@ -1786,7 +1877,7 @@ ovl_update_loot:
         tya
 .chk_lx_dist:
         cmp #12
-        bcs .loot_ret
+        bcs .chk_boom_loot
         lda player_y
         sec
         sbc loot_drop_y
@@ -1794,6 +1885,30 @@ ovl_update_loot:
         eor #$ff
         adc #1
 +       cmp #12
+        bcc ovl_collect_loot
+.chk_boom_loot:
+        ; Authentique NES : le Boomerang ramasse aussi les drops au sol !
+        lda item_active
+        cmp #1                          ; ITEM_BOOMERANG
+        bne .loot_ret
+        lda item_x+1
+        cmp loot_drop_x+1
+        bne .loot_ret
+        lda item_x
+        sec
+        sbc loot_drop_x
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #16
+        bcs .loot_ret
+        lda item_y
+        sec
+        sbc loot_drop_y
+        bcs +
+        eor #$ff
+        adc #1
++       cmp #16
         bcs .loot_ret
 
 ovl_collect_loot:
@@ -1845,9 +1960,9 @@ ovl_loot_clock:
         lda hud_bombs
         clc
         adc #4
-        cmp #17
+        cmp player_max_bombs
         bcc +
-        lda #16
+        lda player_max_bombs
 +       sta hud_bombs
         jsr hud_render
         jmp sound_rupee

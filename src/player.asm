@@ -64,6 +64,7 @@ player_has_compass:     !byte 0          ; 1 = boussole du donjon actif
 player_has_dungeon_map:  !byte 0          ; 1 = plan du donjon actif
 player_has_book:         !byte 0          ; 1 = livre magique (flammes de la baguette)
 player_has_letter:       !byte 0          ; 1 = lettre de l'Ermite (débloque Potion Shop)
+player_max_bombs:        !byte 8          ; Capacité bombes NES : 8 -> 12 (D5) -> 16 (D8)
 
 ; Triforce de la Sagesse (8 fragments numérotés 1 à 8)
 player_triforce_pieces: !byte %00000000 ; masque 8 bits
@@ -724,7 +725,7 @@ player_update:
         jsr hud_add_max_heart
         jsr sound_item_fanfare
         jsr load_ovl_items
-        jmp $a03f                       ; ovl_dock_heart_celebrate
+        jmp $a051                       ; ovl_dock_heart_celebrate
 
 .chk_ow_push:
         ; --- Poussée unifiée Rochers (Bracelet) & Tombes (identique aux donjons) ---
@@ -818,12 +819,8 @@ check_room_entrance:
         rts
 
 .chk_cave:
-        ; 2. Entrée dans une des grottes authentiques (boutiques, sage, etc.)
-        ldx current_room_idx
-        lda room_cave_types,x
-        beq .chk_ent_done
-        sta current_cave_type
-        jsr cave_enter
+        ; 2. Entrée dans une des grottes authentiques (vérifiée dans Banque 28)
+        jmp cave_enter
 .chk_ent_done:
         rts
 

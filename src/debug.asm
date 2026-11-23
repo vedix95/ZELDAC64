@@ -875,6 +875,7 @@ debug_cheat_full_gear:
         sta player_has_dungeon_map
         lda #16
         sta hud_max_hearts
+        sta player_max_bombs
         lda #64
         sta hud_cur_hearts
         lda #$ff

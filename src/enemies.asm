@@ -1,8 +1,5 @@
 !zone enemies
 
-en_base_hp:
-        !byte 0, 1, 2, 2, 3, 1, 1, 2, 4, 2, 3, 9, 2, 4, 6, 1, 1, 2, 1, 1, 2, 3, 5, 4, 8, 5, 10, 2, 9, 10, 6, 4, 255, 255, 2, 4, 6, 8, 8, 8, 8, 2, 4, 10, 16
-
 ; ---------------------------------------------------------------------------
 ; enemies.asm : Système complet d'ennemis Zelda (Octorok et Moblin)
 ;
@@ -929,6 +926,22 @@ update_single_enemy:
 ; IA 3 : AI_FLY (Keese, Peahat, Ghini, Bubble)
 ; ===========================================================================
 .exec_ai_fly:
+        ; Peahat : alterne vol (invulnérable, anim=1) et atterrissage (vulnérable, anim=0)
+        lda en_type,x
+        cmp #TYPE_PEAHAT
+        bne .fly_std
+        dec en_timer,x
+        lda en_timer,x
+        and #$10
+        bne .peahat_fly
+        lda #0
+        sta en_anim,x
+        rts
+.peahat_fly:
+        lda #1
+        sta en_anim,x
+        bne .fly_step
+.fly_std:
         ; Vol au-dessus du décor (seuls les bords d'écran sont vérifiés)
         dec en_timer,x
         bne .fly_step
@@ -957,6 +970,9 @@ update_single_enemy:
         jsr commit_step
 
 .fly_anim:
+        lda en_type,x
+        cmp #TYPE_PEAHAT
+        beq +
         ; Battement d'ailes rapide (toutes les 4 frames)
         inc en_anim_tick,x
         lda en_anim_tick,x
@@ -1435,6 +1451,14 @@ spawn_enemy_magic_proj:
         adc #1
 ++      cmp #18
         bcs +
+        sec
+        lda item_y
+        sbc en_y,x
+        bcs ++
+        eor #$ff
+        adc #1
+++      cmp #18
+        bcs +
         ; Mange la bombe !
         lda #ITEM_NONE
         sta item_active
@@ -1488,6 +1512,8 @@ spawn_enemy_magic_proj:
         lda en_anim,x
         eor #1
         sta en_anim,x
+        beq +
+        jsr spawn_boss_fireball
 +       jsr .exec_ai_roam
         ldx en_idx
         lda en_y,x
@@ -2860,8 +2886,10 @@ test_sword_single:
         rts
 .sw_not_shield:
 
-        ; 2. Dodongo / Gohma : insensibles à l'épée ordinaire
+        ; 2. Dodongo / Gohma / Digdogger : insensibles à l'épée ordinaire
         cpy #TYPE_DODONGO
+        beq .sw_boss_block
+        cpy #TYPE_DIGDOGGER
         beq .sw_boss_block
         cpy #TYPE_GOHMA_RED
         beq .sw_boss_block
@@ -2877,11 +2905,15 @@ test_sword_single:
         cpy #TYPE_TRAP
         beq .sw_cant_harm
 
-        ; 4. Peahat : invulnérable en vol (anim 1)
+        ; 4. Peahat en vol (anim 1) & Wizzrobe Rouge invisible (anim 0) : invulnérables
         cpy #TYPE_PEAHAT
         bne +
         lda en_anim,x
         bne .sw_cant_harm
++       cpy #TYPE_WIZZROBE_RED
+        bne +
+        lda en_anim,x
+        beq .sw_cant_harm
 +
         ; 5. Zora : invulnérable sous l'eau (anim_tick 0)
         cpy #TYPE_ZORA
@@ -3112,14 +3144,35 @@ test_item_single:
 .beam_hit:
         lda #ITEM_NONE
         sta item_active
-        ldx player_has_sword
+        ldx en_idx
+        ldy en_type,x
+        lda en_ai_type,y
+        cmp #AI_SHIELD
+        bne +
+        lda en_dir,x
+        eor #1
+        cmp item_dir
+        bne +
+        jmp .item_deflect
++       ldx player_has_sword
         lda beam_dmg_tbl-1,x
         bne .magic_fire_dmg
 beam_dmg_tbl:
         !byte 1, 2, 4
 
 .wand_hit:
-        ; Onde de Baguette Magique : 2 dégâts (avec Livre : laisse une flamme !)
+        ; Onde de Baguette Magique : 2 dégâts (Wizzrobes immunisés ; avec Livre : laisse une flamme !)
+        ldx en_idx
+        lda en_type,x
+        cmp #TYPE_WIZZROBE_RED
+        beq .wand_deflect
+        cmp #TYPE_WIZZROBE_BLUE
+        bne .wand_dmg_ok
+.wand_deflect:
+        lda #ITEM_NONE
+        sta item_active
+        jmp .item_deflect
+.wand_dmg_ok:
         lda player_has_book
         beq +
         jsr wand_spawn_book_flame
@@ -3176,7 +3229,12 @@ mf_immune_tbl:
         lda en_ai_type,y
         cmp #AI_SHIELD
         beq .item_deflect
-        ; Dégâts flèche : 2 (bois) ou 4 (argent)
+        ; Pols Voice : éliminé en 1 seule flèche (authentique NES)
+        cpy #TYPE_POLS_VOICE
+        bne +
+        lda #20
+        bne .apply_item_dmg
++       ; Dégâts flèche : 2 (bois) ou 4 (argent)
         lda #2
         ldy player_has_arrows
         cpy #2
@@ -3342,7 +3400,10 @@ check_link_body_hits:
         rts
 
 test_body_single:
-        stx en_idx
+        lda clock_freeze_active
+        beq +
+        rts
++       stx en_idx
         lda en_state,x
         cmp #EN_STATE_WALK
         beq +
@@ -4149,7 +4210,15 @@ dod_bb_tbl: !byte SPR_DUNG_DODONGO_BLOATED_B, SPR_DUNG_DODONGO_BLOATED_R_F
         rts
 
 .drw_ganon:
-        lda en_anim,x
+        ; Authentique NES : Ganon est invisible en combat (visible seulement quand touché/étourdi)
+        lda en_state,x
+        cmp #EN_STATE_WALK
+        bne +
+        lda VIC_SPRITE_EN
+        and #%10000111
+        sta VIC_SPRITE_EN
+        rts
++       lda en_anim,x
         lsr
         lda #SPR_DUNG_GANON_TL_0
         bcc +

@@ -18,8 +18,8 @@ Une recréation fidèle, intégrale et fluide à **50,00 FPS constants (PAL)** d
 
 * 🏰 **L'intégralité d'Hyrule sur C64 (Fidélité 1:1 NES)** :
   * **128 salles d'Overworld** reproduites tuile par tuile depuis `zelda.nes` avec la **Forêt Enchantée / Perdue authentique (`B-7`)**, les **Collines Perdues (`L-2`)**, les **7 rochers poussables au Bracelet de Force** et **2 tombes poussables** (glissement 1 case avec effort + tremblement identique aux donjons), les 5 secrets Armos, 12 arbres brûlables, grottes d'ermites, fontaines des fées et boutiques.
-  * **Les 9 Donjons complets** (Niveaux 1 à 9, 189 salles actives) avec leurs labyrinthes, portes à clés, blocs secrets poussables, celliers souterrains, **Goriya Affamé en D7 (`"GRUMBLE, GRUMBLE..."`)**, porte scellée des 8 fragments de Triforce en D9, affrontement final contre **Ganon** et **sauvetage de la Princesse Zelda** (`STATE_ENDING`), ainsi qu'un cycle complet **Game Over / Continue**.
-  * **Tous les Boss originaux** : Aquamentus, Dodongo (orange authentique), Manhandla, Gleeok (D4 & D8), Digdogger, Gohma et Ganon.
+  * **Les 9 Donjons complets** (Niveaux 1 à 9, 189 salles actives) avec leurs labyrinthes, portes à clés, **blocs secrets poussables D1–D9**, **passages souterrains salle-à-salle (D6–D9)**, celliers d'objets, **extensions de capacité de Bombes (`8 → 12 → 16` en D5/D8)**, **Goriya Affamé en D7 (`"GRUMBLE, GRUMBLE..."`)**, porte scellée des 8 fragments de Triforce en D9, affrontement final contre **Ganon (invisible en combat comme sur NES)** et **sauvetage de la Princesse Zelda** (`STATE_ENDING`), ainsi qu'un cycle complet **Game Over / Continue**.
+  * **Tous les Boss originaux** : Aquamentus, Dodongo (orange authentique, détection bombe X+Y), Manhandla, Gleeok (D4 & D8), Digdogger (immunisé à l'épée avant la Flûte), Gohma (tir de boules de feu), Patra et Ganon.
 * 📜 **Introduction & Prologue Cinématique 1:1 NES** :
   * **Écran Titre & Cascade Animée** : Palette de l'aube, lettres ZELDA cramoisies bordées d'or, étoile scintillante Sprite 0 et vagues descendantes Sprites 1..4.
   * **Récit d'Hyrule en Scrolling Matériel 50 Hz** : Défilement vertical au pixel près via `$D011` dans son cadre de pierre centré (`RSEL=0`).
@@ -28,12 +28,13 @@ Une recréation fidèle, intégrale et fluide à **50,00 FPS constants (PAL)** d
   * Déballage du moteur en 0,2 seconde au démarrage, zéro latence disquette.
   * **Sauvegarde native sur Flash `Am29F040` (Secteur 7, Banques 56..63)** avec menu **File Select 1:1 NES** (`- SELECT -`, `REGISTER YOUR NAME`, `ELIMINATION MODE`, `RESET ALL SAVES`), sprites de Link animés selon la tunique, stats `SWD`/`SHD`/`D`/`T` et cœurs `♥` rouges.
   * **Cache d'overlay résident (`loaded_overlay_bank`)** et streaming page par page sécurisé (`CLI` + garde `irq_top`) : **19 656 cycles/trame PAL exacts (50,00 FPS)** même avec 6 à 8 ennemis simultanés, explosions 2×2 et poussées continues.
-* 🗡️ **Système de Combat, Tuniques, Drops & Arsenal Complet des 8 Objets** :
-  * Épée (Bois / Blanche / Magique + **jeté d'épée laser à vie pleine**), **Bombes à explosion 2×2 (48×42 px, rayon 32 px)**, Boomerang, Arc/Flèches (Bois & Argent pour Ganon), Bougie (Bleue 1/salle & Rouge illimitée, éclaire les **salles sombres**), Flûte magique (téléportation + lac D7 + Digdogger), Viande/Appât, Potion et Baguette Magique (vague + **flamme du Livre Magique**).
-  * **Tuniques & Dégâts calibrés en quarts de cœur** (Verte `1x`, Anneau Bleu `÷2`, Anneau Rouge `÷4` alterné), **drops physiques au sol** (Rubis `+1`/`+5`, Bombes `+4`, Cœurs, **Fées autonomes**, Horloge) à taux équilibrés NES.
-  * Échelle de franchissement autonome (Sprite 2, zéro mutation de `room_buf`) et radeau de traversée fluviale.
+* 🗡️ **Système de Combat, Boucliers Dynamiques, Tuniques, Drops & Arsenal Complet des 8 Objets** :
+  * **Évolution visuelle dynamique du Bouclier de Link (Banque 33)** : Petit Bouclier net à croix centrale dès le départ, qui se transforme instantanément en **Grand Bouclier Magique** à l'achat en boutique (et régresse s'il est avalé par un Like Like).
+  * Épée (Bois / Blanche / Magique + **jet d'épée laser à vie pleine**), **Bombes à explosion 2×2 (48×42 px, rayon 32 px)**, Boomerang (ramasse les drops au sol et survole l'eau), Arc/Flèches (Bois & Argent, 1-shot Pols Voice), Bougie (Bleue 1/salle & Rouge illimitée, éclaire les **salles sombres**), Flûte magique, Viande/Appât réutilisable, **Lettre de l'Ermite** (débloque les Potion Shops) et Baguette Magique (vague + **flamme du Livre Magique**).
+  * **Règles d'immunités NES & Tuniques calibrées en quarts de cœur** (Verte `1x`, Anneau Bleu `÷2`, Anneau Rouge `÷4` alterné, bouclier Darknut vs épée/beam, Wizzrobes immunisés à la baguette, Peahat vulnérable à l'atterrissage, Horloge rendant invulnérable au contact), **drops physiques au sol** (Rubis `+1`/`+5`, Bombes `+4` plafonnées à `8/12/16`, Cœurs, **Fées autonomes**, Horloge).
+  * Échelle de franchissement autonome (Sprite 2, zéro mutation de `room_buf`), célébration du Conteneur de Cœur du quai (`P-6`) et radeau de traversée fluviale.
 * 👑 **HUD Authentique & Inventaire 4 Pages Haute Résolution** :
-  * HUD complet : compteurs **Rubis 3 chiffres (`000..255`)**, Clés, Bombes, **cadres bleus `[A]` et `[X]` avec icônes d'objets et d'épée**, et jusqu'à 16 cœurs divisés en **quarts de cœur (`1/4..4/4`)** (plafond strict et persistance Flash).
+  * HUD complet : compteurs **Rubis 3 chiffres (`000..255`)**, Clés, Bombes, **cadres bleus `[A]` et `[X]` dynamiques** (masquage automatique si objet non possédé et couleurs d'amélioration Boomerang Magique / Bougie Rouge / Potion Rouge), et jusqu'à 16 cœurs divisés en **quarts de cœur (`1/4..4/4`)** (plafond strict et persistance Flash).
   * **Page 0** : Grille d'objets 4×2 (masquage strict des objets non possédés) + 6 reliques passives protégées.
   * **Page 1** : **Grande Pyramide de la Triforce** (8 fragments biseautés en triangle doré plein 96×42 px).
   * **Page 2 & Page 3** : Statut de quête et **Carte topologique d'Hyrule 16×8** + plan dynamique des donjons avec boussole.
@@ -53,13 +54,17 @@ Une recréation fidèle, intégrale et fluide à **50,00 FPS constants (PAL)** d
 
 ### Exploration, Secrets Overworld & Combat
 
-| Départ d'Hyrule (`H-8`) | Forêt Enchantée (`B-7`) | Rocher Poussé (`J-8`, glissement 1 case) |
+| Départ d'Hyrule (`H-8`, Petit Bouclier) | Jet d'Épée Laser (Vie Pleine) | Bouclier Magique & Tunique Rouge (16 Cœurs) |
 | :---: | :---: | :---: |
-| ![Overworld H-8](docs/images/shot_overworld.png) | ![Forêt Enchantée B-7](docs/images/shot_lost_woods.png) | ![Rocher Poussé J-8](docs/images/shot_rock_push.png) |
+| ![Overworld H-8](docs/images/shot_overworld.png) | ![Jet d'Épée](docs/images/shot_sword_beam.png) | ![Bouclier Magique](docs/images/shot_magic_shield.png) |
 
-| Explosion Bombe 2×2 (48×42 px) | Cimetière (`B-3`, Tombe Épée Magique) | Grotte de l'Épée (`H-8`) |
+| Forêt Enchantée (`B-7`) | Rocher Poussé (`J-8`, glissement 1 case) | Explosion Bombe 2×2 (48×42 px) |
 | :---: | :---: | :---: |
-| ![Explosion Bombe](docs/images/shot_bomb_blast.png) | ![Cimetière B-3](docs/images/shot_graveyard.png) | ![Vieil Homme](docs/images/shot_cave_inside.png) |
+| ![Forêt Enchantée B-7](docs/images/shot_lost_woods.png) | ![Rocher Poussé J-8](docs/images/shot_rock_push.png) | ![Explosion Bombe](docs/images/shot_bomb_blast.png) |
+
+| Cimetière (`B-3`, Tombe Épée Magique) | Grotte de l'Épée (`H-8`) | Écran Game Over / Continue |
+| :---: | :---: | :---: |
+| ![Cimetière B-3](docs/images/shot_graveyard.png) | ![Vieil Homme](docs/images/shot_cave_inside.png) | ![Game Over](docs/images/shot_gameover.png) |
 
 ### Donjons, Énigmes & Fin du Jeu
 

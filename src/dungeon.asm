@@ -344,6 +344,9 @@ dungeon_on_enter_room:
         rts
 
 .chk_ganon_intro:
+        ; 0a-bis. PNJ spéciaux D4/D5/D7/D8 (Bomb Upgrade 8->12->16, Life or Money) via Banque 29
+        jsr load_ovl_items
+        jsr $a057                       ; ovl_dung_npc_special
         ; 0b. Salle de Ganon (Donjon 9, salle $42) : fanfare d'apparition si Ganon vivant
         lda current_dungeon_level
         cmp #9
@@ -1535,7 +1538,9 @@ dungeon_update:
 .next_cellar_room:
         dex
         bpl .chk_cellar_room
-        rts
+        ; Escalier souterrain salle-à-salle (Donjons 6..9) via Banque 29
+        jsr load_ovl_items
+        jmp $a054                       ; ovl_dung_stair_warp
 .do_enter_cellar:
         jsr enter_cellar
 .no_cellar_stairs:
@@ -1565,9 +1570,16 @@ push_pdy:               !byte 0
 
 ; Table : niveau, salle, index du bloc, sens autorisés (bit = 1<<DIR : bas, haut, gauche, droite), effet
 push_tbl:
-        !byte 1, $22, 88, %0011, PUSH_FX_STAIRS ; bloc gauche du losange (Donjon 1) : vers le haut ou le bas
-        !byte 4, $32, 88, %0011, PUSH_FX_STAIRS ; bloc gauche Like-Likes (Donjon 4 Échelle) : vers le haut ou le bas
-        !byte 1, $42, 89, %0100, PUSH_FX_HERMIT ; bloc du passage de l'ermite (Donjon 1) : vers la gauche
+        !byte 1, $22, 88, %0011, PUSH_FX_STAIRS ; D1 : escalier Arc
+        !byte 1, $42, 89, %0100, PUSH_FX_HERMIT ; D1 : passage Ermite
+        !byte 2, $4b, 88, %0011, PUSH_FX_STAIRS ; D2 : bloc secret
+        !byte 3, $5a, 88, %0011, PUSH_FX_STAIRS ; D3 : bloc secret
+        !byte 4, $32, 88, %0011, PUSH_FX_STAIRS ; D4 : escalier Échelle
+        !byte 5, $25, 88, %0011, PUSH_FX_STAIRS ; D5 : bloc secret
+        !byte 6, $49, 88, %0011, PUSH_FX_STAIRS ; D6 : bloc secret
+        !byte 7, $3a, 88, %0011, PUSH_FX_STAIRS ; D7 : bloc secret
+        !byte 8, $4f, 88, %0011, PUSH_FX_STAIRS ; D8 : bloc secret
+        !byte 9, $53, 88, %0011, PUSH_FX_STAIRS ; D9 : bloc secret
         !byte $ff
 
 ; Déplacement de l'index de tuile selon le sens (bas +20, haut -20, gauche -1, droite +1)
@@ -1728,12 +1740,7 @@ dungeon_do_push_block:
         bne +
         ora #DUNG_BLOCK_DOWN
 +       sta dungeon_room_state,x
-        
-        cpx #$22
-        beq +
-        cpx #$32
-        bne .dpb_no_stairs
-+       ldy #90
+        ldy #90
         lda #TILE_DUNG_STAIRS
         sta (ZP_MAP),y
         sta room_buf,y

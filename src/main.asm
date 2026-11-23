@@ -97,6 +97,11 @@ game_init:
         sta current_room_y
 }
 }
+        ldx #127
+        lda #0
+-       sta cave_room_cleared,x
+        dex
+        bpl -
         jsr init_video
         jsr clear_screen
         jsr dungeon_init
@@ -279,12 +284,14 @@ target_room_buf      = $ce00           ; 200 octets en zone haute dynamique ($ce
 visited_rooms:
 visited_ow_rooms:    !fill 128, 0
 visited_uw_rooms:    !fill 128, 0
-cave_room_cleared:   !fill 128, 0
+cave_room_cleared    = $cf40           ; 128 octets en zone haute ($cf40..$cfbf)
 
 ; Tables de fréquences audio et fanfares ponctuelles sous $2000
 !source "src/music_data_low.inc"
 
 ; Tables de statistiques des ennemis Zelda (logées sous $2000 pour alléger la haute RAM)
+en_base_hp:
+        !byte 0, 1, 2, 2, 3, 1, 1, 2, 4, 2, 3, 9, 2, 4, 6, 1, 1, 2, 1, 1, 2, 3, 5, 4, 8, 5, 10, 2, 9, 10, 6, 4, 255, 255, 2, 4, 6, 8, 8, 8, 8, 2, 4, 10, 16
 en_base_damage:
         !byte 0, 2, 2, 2, 4, 2, 2, 2, 4, 2, 4, 4, 2, 4, 8, 2, 2, 4, 2, 2, 2, 2, 4, 4, 8, 4, 8, 2, 4, 4, 4, 4, 0, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 8
 
@@ -292,7 +299,7 @@ en_base_color:
         !byte COL_BLACK, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_BROWN, COL_CYAN, COL_GREEN, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_GREEN, COL_GREEN, COL_ORANGE, COL_WHITE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_RED, COL_BLUE, COL_ORANGE, COL_ORANGE, COL_LIGHT_RED, COL_LGREY, COL_BLUE, COL_PURPLE, COL_CYAN, COL_RED, COL_BLUE, COL_GREEN, COL_ORANGE, COL_RED, COL_GREEN, COL_ORANGE, COL_RED, COL_BLUE, COL_ORANGE, COL_PURPLE
 
 en_ai_type:
-        !byte AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_HOP, AI_HOP, AI_BURROW, AI_BURROW, AI_FLY, AI_STATUE, AI_FLY, AI_WATER, AI_ROAM, AI_ROAM, AI_FLY, AI_FLY, AI_SLIME, AI_SLIME, AI_RUSH, AI_ROAM, AI_ROAM, AI_ROAM, AI_SHIELD, AI_SHIELD, AI_TELEPORT, AI_TELEPORT, AI_ROAM, AI_ROAM, AI_HOP, AI_ROAM, AI_FLY, AI_FLY, AI_RUSH, AI_ROAM, AI_ROAM, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_FLY, AI_BOSS
+        !byte AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_ROAM, AI_HOP, AI_HOP, AI_BURROW, AI_BURROW, AI_FLY, AI_STATUE, AI_FLY, AI_WATER, AI_ROAM, AI_ROAM, AI_FLY, AI_FLY, AI_SLIME, AI_SLIME, AI_RUSH, AI_ROAM, AI_ROAM, AI_ROAM, AI_SHIELD, AI_SHIELD, AI_TELEPORT, AI_TELEPORT, AI_ROAM, AI_ROAM, AI_HOP, AI_ROAM, AI_FLY, AI_FLY, AI_RUSH, AI_ROAM, AI_ROAM, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS, AI_BOSS
 
 en_proj_type_tbl:
         !byte PROJ_NONE, PROJ_ROCK, PROJ_ROCK, PROJ_SPEAR, PROJ_SPEAR, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_BOOMERANG, PROJ_BOOMERANG, PROJ_NONE, PROJ_NONE, PROJ_MAGIC, PROJ_MAGIC, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_NONE, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_NONE, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL, PROJ_FIREBALL

@@ -487,6 +487,12 @@ ovl_save_apply_slot:
         sta hud_rupees
         lda EF_RAM_SLOT_DATA + SL_BOMBS
         sta hud_bombs
+        lda #8
+        ldx hud_bombs
+        cpx #9
+        bcc +
+        lda #16
++       sta player_max_bombs
         lda EF_RAM_SLOT_DATA + SL_KEYS
         sta hud_keys
         lda EF_RAM_SLOT_DATA + SL_SWORD
