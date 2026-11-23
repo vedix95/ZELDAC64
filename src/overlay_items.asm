@@ -959,7 +959,10 @@ ovl_gameover_open:
         lda #STATE_GAMEOVER
         sta game_state
         jsr music_stop
-        jsr ovl_clear_screen_black
+        lda hud_cur_hearts
+        bne +
+        jsr go_play_death_anim
++       jsr ovl_clear_screen_black
         lda #35
         sta ovl_modal_timer
 
@@ -992,6 +995,7 @@ ovl_gameover_open:
         lda #0
         sta go_cursor
         jsr go_draw_menu
+        jsr go_music_init
         jmp save_inc_death
 
 go_cursor:      !byte 0
@@ -1062,6 +1066,7 @@ go_draw_menu:
 ovl_gameover_update:
         lda #0
         sta VIC_SPRITE_EN
+        jsr go_music_update
         lda ovl_modal_timer
         beq .go_wait_btn
         dec ovl_modal_timer
@@ -1094,7 +1099,18 @@ ovl_gameover_update:
 
 .go_exec_choice:
         jsr sound_inv_select
-        lda go_cursor
+        ; Coupe V1/V2 avant de quitter le menu Game Over
+        lda #%01000000
+        sta SID1_V1_CTRL
+        lda #%00010000
+        sta SID1_V2_CTRL
+        ldy dual_sid_enabled
+        beq +
+        lda #%01000000
+        sta SID2_V1_CTRL
+        lda #%00010000
+        sta SID2_V2_CTRL
++       lda go_cursor
         bne +
         jmp gameover_save_and_continue
 +       cmp #1
@@ -1204,6 +1220,239 @@ txt_go_sub:     !text "LINK HAS FALLEN IN BATTLE.", 0
 txt_go_opt0:    !text "SAVE + CONTINUE", 0
 txt_go_opt1:    !text "SAVE + QUIT", 0
 txt_go_opt2:    !text "RETOUR", 0
+
+; ---------------------------------------------------------------------------
+; Animation et jingle de mort de Link + musique du menu Game Over (Banque 29)
+; ---------------------------------------------------------------------------
+go_play_death_anim:
+        lda #%00000001
+        sta VIC_SPRITE_EN
+        sta VIC_SPRITE_MC
+        lda #15
+        sta SID1_VOLUME
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_VOLUME
++       lda #$08
+        sta SID1_V1_PW_HI
+        lda #$05
+        sta SID1_V1_AD
+        lda #$40
+        sta SID1_V1_SR
+        ldy dual_sid_enabled
+        beq +
+        lda #$08
+        sta SID2_V1_PW_HI
+        lda #$05
+        sta SID2_V1_AD
+        lda #$40
+        sta SID2_V1_SR
++       lda #0
+        sta go_anim_step
+.death_spin_loop:
+        ldx go_anim_step
+        cpx #12
+        bcs .death_puff
+        ; Note descendante de mort sur V1
+        lda go_death_freq_lo,x
+        sta SID1_V1_FREQ_LO
+        lda go_death_freq_hi,x
+        sta SID1_V1_FREQ_HI
+        lda #%01000000
+        sta SID1_V1_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%01000001
+        sta SID1_V1_CTRL
+        ldy dual_sid_enabled
+        beq +
+        lda go_death_freq_lo,x
+        sta SID2_V1_FREQ_LO
+        lda go_death_freq_hi,x
+        sta SID2_V1_FREQ_HI
+        lda #%01000000
+        sta SID2_V1_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%01000001
+        sta SID2_V1_CTRL
++
+        ; Rotation Link (Bas -> Gauche -> Haut -> Droite) + flash couleur
+        txa
+        and #3
+        tay
+        lda go_spin_ptrs,y
+        sta SPRITE_PTR0
+        lda go_spin_cols,y
+        sta VIC_SPRITE_COL0
+        ldx #4
+-       jsr wait_frame
+        dex
+        bne -
+        inc go_anim_step
+        bne .death_spin_loop
+
+.death_puff:
+        lda #%01000000
+        sta SID1_V1_CTRL
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_V1_CTRL
++       lda #<(sprite_link_proj_explosion / 64)
+        sta SPRITE_PTR0
+        ldx #16
+.puff_loop:
+        txa
+        and #2
+        beq +
+        lda #COL_WHITE
+        bne ++
++       lda #COL_ORANGE
+++      sta VIC_SPRITE_COL0
+        jsr wait_frame
+        dex
+        bne .puff_loop
+        lda #0
+        sta VIC_SPRITE_EN
+        ldx #10
+-       jsr wait_frame
+        dex
+        bne -
+        rts
+
+go_music_init:
+        lda #0
+        sta go_mus_idx
+        lda #1
+        sta go_mus_tmr
+        lda #15
+        sta SID1_VOLUME
+        lda #$06
+        sta SID1_V1_PW_HI
+        lda #$18
+        sta SID1_V1_AD
+        lda #$40
+        sta SID1_V1_SR
+        lda #$08
+        sta SID1_V2_AD
+        lda #$60
+        sta SID1_V2_SR
+        ldy dual_sid_enabled
+        beq +
+        sta SID2_V2_SR
+        lda #$08
+        sta SID2_V2_AD
+        lda #$40
+        sta SID2_V1_SR
+        lda #$18
+        sta SID2_V1_AD
+        lda #$06
+        sta SID2_V1_PW_HI
+        lda #15
+        sta SID2_VOLUME
++       rts
+
+go_music_update:
+        dec go_mus_tmr
+        beq +
+        rts
++       lda #10
+        sta go_mus_tmr
+        ldx go_mus_idx
+        cpx #16
+        bcc +
+        ldx #0
+        stx go_mus_idx
++       lda go_bgm_v1_lo,x
+        sta SID1_V1_FREQ_LO
+        lda go_bgm_v1_hi,x
+        sta SID1_V1_FREQ_HI
+        lda go_bgm_v2_lo,x
+        sta SID1_V2_FREQ_LO
+        lda go_bgm_v2_hi,x
+        sta SID1_V2_FREQ_HI
+        lda #%01000000
+        sta SID1_V1_CTRL
+        lda #%00010000
+        sta SID1_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%01000001
+        sta SID1_V1_CTRL
+        lda #%00010001
+        sta SID1_V2_CTRL
+
+        ldy dual_sid_enabled
+        beq +
+        lda go_bgm_v1_lo,x
+        sta SID2_V1_FREQ_LO
+        lda go_bgm_v1_hi,x
+        sta SID2_V1_FREQ_HI
+        lda go_bgm_v2_lo,x
+        sta SID2_V2_FREQ_LO
+        lda go_bgm_v2_hi,x
+        sta SID2_V2_FREQ_HI
+        lda #%01000000
+        sta SID2_V1_CTRL
+        lda #%00010000
+        sta SID2_V2_CTRL
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%01000001
+        sta SID2_V1_CTRL
+        lda #%00010001
+        sta SID2_V2_CTRL
++       inc go_mus_idx
+        rts
+
+go_anim_step:   !byte 0
+go_mus_idx:     !byte 0
+go_mus_tmr:     !byte 1
+go_spin_ptrs:
+        !byte <(sprite_link_down_0 / 64), <(sprite_link_left_0 / 64)
+        !byte <(sprite_link_up_0 / 64), <(sprite_link_right_0 / 64)
+go_spin_cols:
+        !byte COL_RED, COL_WHITE, COL_GREEN, COL_YELLOW
+go_death_freq_lo:
+        !byte $94, $41, $f6, $b2, $74, $3c, $08, $d8, $ab, $82, $5b, $37
+go_death_freq_hi:
+        !byte $2a, $28, $25, $23, $21, $1f, $1e, $1c, $1a, $19, $17, $16
+go_bgm_v1_lo:
+        !byte $3c, $08, $3c, $82, $b2, $08, $b2, $82
+        !byte $f6, $08, $f6, $82, $3c, $d8, $ab, $82
+go_bgm_v1_hi:
+        !byte $1f, $1e, $1f, $19, $23, $1e, $23, $19
+        !byte $25, $1e, $25, $19, $1f, $1c, $1a, $19
+go_bgm_v2_lo:
+        !byte $1e, $1e, $1e, $1e, $59, $59, $59, $59
+        !byte $7b, $7b, $7b, $7b, $1e, $1e, $1e, $1e
+go_bgm_v2_hi:
+        !byte $0f, $0f, $0f, $0f, $11, $11, $11, $11
+        !byte $12, $12, $12, $12, $0f, $0f, $0f, $0f
 
 ; ===========================================================================
 ; 11. SAUVETAGE PRINCESSE ZELDA & ÉCRAN DE FIN (Fix M2 — STATE_ENDING = 9)
