@@ -1186,6 +1186,7 @@ ovl_file_select_run:
         lda fs_cursor
         beq +
         dec fs_cursor
+        jsr save_sfx_blip
         jsr fs_draw_select_screen
 +       pla
         pha
@@ -1195,6 +1196,7 @@ ovl_file_select_run:
         cmp #5
         bcs +
         inc fs_cursor
+        jsr save_sfx_blip
         jsr fs_draw_select_screen
 +       pla
         and #$10                        ; FIRE / ENTER
@@ -1231,6 +1233,7 @@ ovl_file_select_run:
         rts
 
 .do_reset_all_saves:
+        jsr save_sfx_confirm
         jsr install_flash_stubs
         jsr RAM_ERASE_SEC7
         jsr save_flash_scan
@@ -1385,6 +1388,7 @@ ovl_file_select_run:
         tax
         pla
         sta save_buf + SL_NAME,x
+        jsr save_sfx_confirm
         inc fs_reg_pos
         lda fs_reg_pos
         cmp #8
@@ -1395,6 +1399,7 @@ ovl_file_select_run:
         jmp .fs_loop
 
 .finish_register:
+        jsr save_sfx_confirm
         jsr save_flash_commit
         lda #FS_MODE_SELECT
         sta fs_mode
@@ -1402,6 +1407,54 @@ ovl_file_select_run:
         sta fs_cursor
         jsr fs_draw_select_screen
         jmp .fs_loop
+
+save_sfx_blip:
+        lda #$48
+        !byte $2c
+save_sfx_confirm:
+        lda #$68
+        sta $d40f                       ; SID1_V3_FREQ_HI
+        lda #$00
+        sta $d40e                       ; SID1_V3_FREQ_LO
+        lda #$02
+        sta $d413                       ; SID1_V3_AD
+        lda #$00
+        sta $d414                       ; SID1_V3_SR
+        lda #%00010000
+        sta $d412                       ; SID1_V3_CTRL (Gate OFF, Triangle)
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%00010001
+        sta $d412
+        ldy EF_RAM_DUAL_SID
+        beq +
+        lda $d40f
+        sta $d42f                       ; SID2_V3_FREQ_HI
+        lda #$00
+        sta $d42e
+        lda #$02
+        sta $d433
+        lda #$00
+        sta $d434
+        lda #%00010000
+        sta $d432
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        lda #%00010001
+        sta $d432
++       rts
 
 ; Tables et chaînes (en ACME, !scr convertit a..z -> 1..26 = lettres A..Z à l'écran C64)
 txt_title_select:   !scr "- select -" : !byte 0

@@ -767,13 +767,33 @@ music_update:
 
         ; 2. Gestion du compte à rebours d'effet sonore
         lda sfx_timer
-        beq .check_pending_chime
+        beq .check_low_hp_beep
         dec sfx_timer
-        bne .check_pending_chime
+        bne .modulate_sfx
         ; Fin de l'effet sonore : restaure intégralement la voix de musique
         jsr restore_music_voice
         lda #0
         sta sfx_voice
+        beq .check_pending_chime
+.modulate_sfx:
+        jsr sfx_update_mod
+        jmp .check_pending_chime
+
+.check_low_hp_beep:
+        lda game_state
+        cmp #STATE_PLAYING
+        bne .check_pending_chime
+        lda hud_cur_hearts
+        beq .check_pending_chime
+        cmp #5
+        bcs .check_pending_chime
+        dec low_hp_beep_timer
+        bne .check_pending_chime
+        lda #24
+        sta low_hp_beep_timer
+        lda secret_chime_active
+        bne .check_pending_chime
+        jsr sound_low_hp
 
 .check_pending_chime:
         lda secret_chime_pending
@@ -1383,8 +1403,14 @@ SFX_FLUTE         = 15
 SFX_INV_FLIP      = 16
 SFX_INV_SELECT    = 17
 SFX_BOSS_ROAR     = 18
+SFX_LOW_HP        = 19
+SFX_DOOR_UNLOCK   = 20
+SFX_SWORD_BEAM    = 21
 
 sfx_saved_x:      !byte 0
+sfx_active_id:    !byte 0
+sfx_curr_freq_hi: !byte 0
+low_hp_beep_timer:!byte 24
 
 sound_sword:
         stx sfx_saved_x
@@ -1464,6 +1490,18 @@ sound_boss_roar:
         stx sfx_saved_x
         ldx #SFX_BOSS_ROAR
         jmp play_sfx_v3
+sound_low_hp:
+        stx sfx_saved_x
+        ldx #SFX_LOW_HP
+        jmp play_sfx_v3
+sound_door_unlock:
+        stx sfx_saved_x
+        ldx #SFX_DOOR_UNLOCK
+        jmp play_sfx_v3
+sound_sword_beam:
+        stx sfx_saved_x
+        ldx #SFX_SWORD_BEAM
+        jmp play_sfx_v3
 
 sound_item_fanfare:
         lda #0
@@ -1508,18 +1546,23 @@ play_sfx_v3:
 .play_now:
         lda #3
         sta sfx_voice
+        stx sfx_active_id
         lda sfx_timer_tbl,x
         sta sfx_timer
 
         lda sfx_freq_lo_tbl,x
         sta SID1_V3_FREQ_LO
         lda sfx_freq_hi_tbl,x
+        sta sfx_curr_freq_hi
         sta SID1_V3_FREQ_HI
+        lda #$08
+        sta SID1_V3_PW_HI
         lda sfx_ad_tbl,x
         sta SID1_V3_AD
         lda sfx_sr_tbl,x
         sta SID1_V3_SR
-        lda #0
+        lda sfx_ctrl_tbl,x
+        and #%11111110                  ; Gate OFF en conservant la forme d'onde
         sta SID1_V3_CTRL
         nop
         nop
@@ -1539,11 +1582,14 @@ play_sfx_v3:
         sta SID2_V3_FREQ_LO
         lda sfx_freq_hi_tbl,x
         sta SID2_V3_FREQ_HI
+        lda #$08
+        sta SID2_V3_PW_HI
         lda sfx_ad_tbl,x
         sta SID2_V3_AD
         lda sfx_sr_tbl,x
         sta SID2_V3_SR
-        lda #0
+        lda sfx_ctrl_tbl,x
+        and #%11111110                  ; Gate OFF en conservant la forme d'onde
         sta SID2_V3_CTRL
         nop
         nop
@@ -1560,20 +1606,45 @@ play_sfx_v3:
         ldx sfx_saved_x
         rts
 
+sfx_update_mod:
+        lda sfx_active_id
+        cmp #SFX_LINK_HURT
+        bne +
+        lda #3
+        bne .do_sweep_down
++       cmp #SFX_SWORD_BEAM
+        bne .mod_done
+        lda #5
+.do_sweep_down:
+        sta ZP_TMP
+        lda sfx_curr_freq_hi
+        sec
+        sbc ZP_TMP
+        cmp #8
+        bcs +
+        lda #8
++       sta sfx_curr_freq_hi
+        sta SID1_V3_FREQ_HI
+        ldy dual_sid_enabled
+        beq .mod_done
+        sta SID2_V3_FREQ_HI
+.mod_done:
+        rts
+
 sfx_timer_tbl:
-        !byte 6, 5, 6, 10, 4, 8, 5, 4, 14, 6, 8, 6, 8, 8, 20, 25, 3, 4, 26
+        !byte 6, 5, 6, 10, 4, 8, 5, 4, 14, 6, 8, 6, 8, 14, 20, 25, 3, 4, 26, 4, 8, 10
 sfx_freq_lo_tbl:
-        !byte $00, $20, $80, $00, $00, $a0, $80, $00, $00, $40, $00, $00, $80, $00, $80, $80, $00, $00, $60
+        !byte $00, $20, $80, $00, $00, $a0, $80, $00, $00, $40, $00, $00, $80, $00, $80, $80, $00, $00, $60, $00, $00, $00
 sfx_freq_hi_tbl:
-        !byte $48, $25, $30, $18, $70, $65, $48, $28, $12, $1c, $50, $18, $24, $14, $50, $48, $28, $30, $04
+        !byte $48, $25, $30, $18, $70, $65, $48, $28, $12, $1c, $50, $18, $24, $38, $50, $48, $28, $30, $04, $58, $40, $64
 sfx_ad_tbl:
-        !byte $09, $06, $04, $0c, $02, $05, $02, $04, $00, $08, $02, $04, $04, $08, $09, $09, $02, $04, $39
+        !byte $09, $06, $04, $0c, $02, $05, $02, $04, $00, $08, $02, $04, $04, $09, $09, $09, $02, $04, $39, $02, $04, $05
 sfx_sr_tbl:
-        !byte $00, $00, $00, $00, $00, $00, $00, $00, $0a, $00, $00, $00, $00, $00, $40, $40, $00, $00, $64
+        !byte $00, $00, $00, $00, $00, $00, $00, $00, $0a, $00, $00, $00, $00, $80, $40, $40, $00, $00, $64, $00, $00, $40
 sfx_ctrl_tbl:
         !byte %10000001, %00100001, %10000001, %10000001, %00010001, %00010001, %10000001, %00010001
-        !byte %10000001, %10000001, %00100001, %10000001, %00010001, %10000001, %00010001, %00010001
-        !byte %00010001, %00010001, %10000001
+        !byte %10000001, %10000001, %00100001, %10000001, %00010001, %00100001, %00010001, %00010001
+        !byte %00010001, %00010001, %10000001, %00010001, %01000001, %01000001
 
 ; ---------------------------------------------------------------------------
 ; sound_secret_chime / sound_secret : Déclenche le carillon triomphal

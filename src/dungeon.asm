@@ -2187,7 +2187,7 @@ dungeon_check_key_door:
         bne +
         dec hud_keys
         jsr hud_render
-+       rts
++       jmp sound_door_unlock
 
 ; ---------------------------------------------------------------------------
 ; dungeon_on_bomb_explode : vérifie si l'explosion d'une bombe ouvre un mur
@@ -2197,80 +2197,8 @@ dungeon_on_bomb_explode:
         cmp #WORLD_DUNGEON
         beq +
         rts
-+
-        ; 1. Mur Nord : y < 100, x ~ 150..210
-        lda item_y
-        cmp #100
-        bcs .chk_bomb_south
-        lda item_x+1
-        bne .chk_bomb_south
-        lda item_x
-        cmp #150
-        bcc .chk_bomb_south
-        cmp #210
-        bcs .chk_bomb_south
-        ldy #9
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_BOMB
-        bne .chk_bomb_south
-        jmp dungeon_open_north_door
-
-.chk_bomb_south:
-        ; 2. Mur Sud : y > 200, x ~ 150..210
-        lda item_y
-        cmp #200
-        bcc .chk_bomb_west
-        lda item_x+1
-        bne .chk_bomb_west
-        lda item_x
-        cmp #150
-        bcc .chk_bomb_west
-        cmp #210
-        bcs .chk_bomb_west
-        ldy #189
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_BOMB
-        bne .chk_bomb_west
-        jmp dungeon_open_south_door
-
-.chk_bomb_west:
-        ; 3. Mur Ouest : x < 50, y ~ 120..180
-        lda item_x+1
-        bne .chk_bomb_east
-        lda item_x
-        cmp #50
-        bcs .chk_bomb_east
-        lda item_y
-        cmp #120
-        bcc .chk_bomb_east
-        cmp #180
-        bcs .chk_bomb_east
-        ldy #80
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_BOMB
-        bne .chk_bomb_east
-        jmp dungeon_open_west_door
-
-.chk_bomb_east:
-        ; 4. Mur Est : x > 270, y ~ 120..180
-        lda item_x+1
-        beq .done_bomb
-        lda item_x
-        cmp #<270
-        bcc .done_bomb
-        lda item_y
-        cmp #120
-        bcc .done_bomb
-        cmp #180
-        bcs .done_bomb
-        ldy #99
-        lda room_buf,y
-        cmp #TILE_DUNG_DOOR_BOMB
-        bne .done_bomb
-        jmp dungeon_open_east_door
-
-.done_bomb:
-        rts
++       jsr load_ovl_items
+        jmp $a042                       ; ovl_dungeon_bomb_explode
 
 ; ===========================================================================
 ; PASSAGE SOUS-TERRAIN VU DE CÔTÉ (STATE_CELLAR)

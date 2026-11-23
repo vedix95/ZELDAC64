@@ -178,6 +178,15 @@ player_update:
         bne .check_item_a
         lda #ATTACK_FRAMES
         sta player_attacking
+        lda item_active
+        bne .sw_no_beam
+        lda hud_max_hearts
+        asl
+        asl
+        cmp hud_cur_hearts
+        bne .sw_no_beam
+        jmp spawn_sword_beam
+.sw_no_beam:
         jsr sound_sword
         rts
 

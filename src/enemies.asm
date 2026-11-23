@@ -3100,7 +3100,18 @@ test_item_single:
         beq .candle_hit
         cmp #ITEM_WAND
         beq .wand_hit
+        cmp #ITEM_SWORD_BEAM
+        beq .beam_hit
         rts
+
+.beam_hit:
+        lda #ITEM_NONE
+        sta item_active
+        ldx player_has_sword
+        lda beam_dmg_tbl-1,x
+        bne .magic_fire_dmg
+beam_dmg_tbl:
+        !byte 1, 2, 4
 
 .wand_hit:
         ; Onde de Baguette Magique : 2 dégâts (détruit l'onde à l'impact)

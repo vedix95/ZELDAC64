@@ -15,6 +15,11 @@ ITEM_BOMB       = 2
 ITEM_BOW        = 3
 ITEM_CANDLE     = 4
 ITEM_WAND       = 5
+ITEM_SWORD_BEAM = 6
+
+beam_ptrs:
+        !byte <(sprite_link_sword_down/64), <(sprite_link_sword_up/64)
+        !byte <(sprite_link_sword_left/64), <(sprite_link_sword_right/64)
 
 item_active:    !byte ITEM_NONE         ; type d'arme active (0 = aucune)
 item_x:         !word 0                 ; position X en pixels sprite (16 bits)
@@ -184,7 +189,17 @@ spawn_bomb:
         sta item_timer
 
         jsr set_spawn_coords
-        rts
+        jmp sound_inv_flip
+
+spawn_sword_beam:
+        lda #ITEM_SWORD_BEAM
+        sta item_active
+        lda player_dir
+        sta item_dir
+        lda #50
+        sta item_timer
+        jsr set_spawn_coords
+        jmp sound_sword_beam
 
 ; ---------------------------------------------------------------------------
 ; 3. ARC & FLÈCHE : tir rapide dans la direction de Link
@@ -1108,7 +1123,7 @@ items_draw:
         bne ++
 +       lda #COL_YELLOW
 ++      sta VIC_SPRITE_COL2
-        bne .enable_spr2
+        jmp .enable_spr2
 
 .bmb_stage_turbulent:
         ; --- PHASE 2 : Pleine explosion tourbillonnante ---
@@ -1130,7 +1145,7 @@ items_draw:
         lda VIC_SPRITE_Y2
         adc bomb_jitter_y,x
         sta VIC_SPRITE_Y2
-        bne .enable_spr2
+        jmp .enable_spr2
 
 .drw_bow:
         cmp #ITEM_BOW
@@ -1170,10 +1185,23 @@ items_draw:
         jmp .enable_spr2
 
 .drw_wand:
+        cmp #ITEM_WAND
+        bne .drw_beam
         ; --- BAGUETTE MAGIQUE : ONDE BLEUE ---
         lda #SPR_COMMON_MAGIC
         sta SPRITE_PTR2
         lda #COL_CYAN
+        sta VIC_SPRITE_COL2
+        jmp .enable_spr2
+
+.drw_beam:
+        ldx item_dir
+        lda beam_ptrs,x
+        sta SPRITE_PTR2
+        lda item_anim
+        and #3
+        tax
+        lda exp_colors,x
         sta VIC_SPRITE_COL2
 
 .enable_spr2:

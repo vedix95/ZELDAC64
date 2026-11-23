@@ -39,6 +39,7 @@
         jmp ovl_gameover_continue       ; $A039
         jmp ovl_update_loot             ; $A03C
         jmp ovl_dungeon_collect_drop    ; $A03F
+        jmp ovl_dungeon_bomb_explode    ; $A042
 
 ; ===========================================================================
 ; 1. FLÛTE MAGIQUE (Whistle)
@@ -1073,6 +1074,7 @@ ovl_gameover_update:
         lda go_cursor
         beq +
         dec go_cursor
+        jsr sound_inv_flip
         jsr go_draw_menu
 +       lda joy_pressed
         and #JOY_DOWN
@@ -1081,6 +1083,7 @@ ovl_gameover_update:
         cmp #2
         bcs +
         inc go_cursor
+        jsr sound_inv_flip
         jsr go_draw_menu
 +
         lda btn_a_pressed
@@ -1090,6 +1093,7 @@ ovl_gameover_update:
         rts
 
 .go_exec_choice:
+        jsr sound_inv_select
         lda go_cursor
         bne +
         jmp gameover_save_and_continue
@@ -1663,6 +1667,84 @@ ovl_dungeon_collect_drop:
 +
         lda #0
         sta dungeon_drop_active
+        rts
+
+; ===========================================================================
+; 13c. EXPLOSION BOMBE EN DONJON (ovl_dungeon_bomb_explode — Banque 29)
+; ===========================================================================
+ovl_dungeon_bomb_explode:
+        ; 1. Mur Nord : y < 100, x ~ 150..210
+        lda item_y
+        cmp #100
+        bcs .chk_bomb_south
+        lda item_x+1
+        bne .chk_bomb_south
+        lda item_x
+        cmp #150
+        bcc .chk_bomb_south
+        cmp #210
+        bcs .chk_bomb_south
+        ldy #9
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .chk_bomb_south
+        jmp dungeon_open_north_door
+
+.chk_bomb_south:
+        ; 2. Mur Sud : y > 200, x ~ 150..210
+        lda item_y
+        cmp #200
+        bcc .chk_bomb_west
+        lda item_x+1
+        bne .chk_bomb_west
+        lda item_x
+        cmp #150
+        bcc .chk_bomb_west
+        cmp #210
+        bcs .chk_bomb_west
+        ldy #189
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .chk_bomb_west
+        jmp dungeon_open_south_door
+
+.chk_bomb_west:
+        ; 3. Mur Ouest : x < 50, y ~ 120..180
+        lda item_x+1
+        bne .chk_bomb_east
+        lda item_x
+        cmp #50
+        bcs .chk_bomb_east
+        lda item_y
+        cmp #120
+        bcc .chk_bomb_east
+        cmp #180
+        bcs .chk_bomb_east
+        ldy #80
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .chk_bomb_east
+        jmp dungeon_open_west_door
+
+.chk_bomb_east:
+        ; 4. Mur Est : x > 270, y ~ 120..180
+        lda item_x+1
+        beq .done_bomb
+        lda item_x
+        cmp #<270
+        bcc .done_bomb
+        lda item_y
+        cmp #120
+        bcc .done_bomb
+        cmp #180
+        bcs .done_bomb
+        ldy #99
+        lda room_buf,y
+        cmp #TILE_DUNG_DOOR_BOMB
+        bne .done_bomb
+        jmp dungeon_open_east_door
+
+.done_bomb:
         rts
 
 ; ===========================================================================
