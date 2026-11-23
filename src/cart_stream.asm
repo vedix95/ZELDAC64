@@ -39,10 +39,7 @@ cart_ensure_ow_chunk_a:
         lda cached_ow_chunk
         clc
         adc #CART_BANK_OW0
-        sta CART_REG
         jsr cart_copy_to_c000
-        lda #CART_DISABLE
-        sta CART_REG
 
 .ow_chunk_loaded:
         ; Restaure le jeu de caractères Overworld ($2000, $2540, $2640) uniquement hors Overworld
@@ -172,10 +169,7 @@ cart_load_dungeon:
         lda current_dungeon_level
         clc
         adc #CART_BANK_DUNG_BASE
-        sta CART_REG
         jsr cart_copy_to_c000
-        lda #CART_DISABLE
-        sta CART_REG
 
         ; Permute le jeu de caractères pour le Donjon ($2000 et $2540)
         jsr copy_map_charset

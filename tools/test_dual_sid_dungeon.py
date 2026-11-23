@@ -86,6 +86,7 @@ def run_test():
     cursor_addr = i_labels.get('menu_cursor_idx', 0x09D5)
     sid_menu_addr = i_labels.get('sid_setup_menu_loop', 0x573a)
     intro_update_addr = i_labels.get('intro_update', 0x299b)
+    launch_game_addr = i_labels['launch_zelda_game']
 
     print("=================================================================")
     print("   TEST AUTOMATISÉ : DUAL SID STÉRÉO ($D420) & ÉPÉE EN DONJON   ")
@@ -109,15 +110,14 @@ def run_test():
         f.write(f"> {cursor_addr:04x} 01\n") # Sélection Option 2
         f.write("> 0816 01\n")               # Valider menu
 
-        # 2. Passer l'intro
+        # 2. Passer l'intro directement vers launch_zelda_game (sans bloquer sur File Select)
         f.write(f"bk {intro_update_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
-        f.write("> 0816 01\n")
 
         # 3. Arrivée dans main_loop
         f.write(f"bk {main_addr:04x}\n")
-        f.write("g\n")
+        f.write(f"g {launch_game_addr:04x}\n")
 
         # 4. Warp vers Donjon 1 (arg=1, arg2=$77)
         f.write(f"> {arg_addr:04x} 01\n")

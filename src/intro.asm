@@ -534,7 +534,7 @@ intro_update:
         ora btn_b_pressed
         ora joy_pressed
         beq .no_start
-        jmp launch_zelda_game
+        jmp open_file_select
 
 .no_start:
         inc intro_timer

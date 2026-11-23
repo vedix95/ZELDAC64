@@ -997,7 +997,7 @@ ovl_gameover_open:
         lda #COL_YELLOW
         sta ZP_TMP
         jsr ovl_print_line
-        rts
+        jmp save_inc_death
 
 ovl_gameover_update:
         lda #0

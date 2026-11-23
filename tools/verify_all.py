@@ -70,8 +70,8 @@ class Runner:
 def check_memory(r: Runner):
     print("\n=== PILIER 1 : MÉMOIRE & CARTOUCHE ===", flush=True)
     crt_path = os.path.join(BASE_DIR, "build", "zelda.crt")
-    r.chk("MEM_CRT", os.path.exists(crt_path) and os.path.getsize(crt_path) == 525376,
-          f"build/zelda.crt size={os.path.getsize(crt_path) if os.path.exists(crt_path) else 0}")
+    r.chk("MEM_CRT", os.path.exists(crt_path) and os.path.getsize(crt_path) == 1050688,
+          f"build/zelda.crt size={os.path.getsize(crt_path) if os.path.exists(crt_path) else 0} (EasyFlash 1Mo)")
 
     vs = load_vs(os.path.join(BASE_DIR, "build", "zelda.vs"))
     spr_end = vs["sprite_link_proj_explosion"] + 64
@@ -94,7 +94,7 @@ def check_memory(r: Runner):
     # Overlays Banques 27..30 <= 8192 octets
     ovl_ok = True
     ovl_sizes = []
-    for ovl in ("ovl_inv.dat", "ovl_cave.dat", "ovl_items.dat", "ovl_debug.dat"):
+    for ovl in ("ovl_inv.dat", "ovl_cave.dat", "ovl_items.dat", "ovl_debug.dat", "ovl_save.dat"):
         p = os.path.join(BASE_DIR, "build", ovl)
         sz = os.path.getsize(p) if os.path.exists(p) else -1
         ovl_sizes.append(f"{ovl}={sz}B")
@@ -313,9 +313,12 @@ def check_full_vice(r: Runner):
             cmd(f"> {a:04x} " + " ".join(f"{v & 0xff:02x}" for v in vals))
 
         def rb(a):
-            out = cmd(f"m {a:04x} {a:04x}")
-            m = re.search(r">\s*C:[0-9a-fA-F]+\s+([0-9a-fA-F]{2})", out)
-            return int(m.group(1), 16)
+            for _ in range(3):
+                out = cmd(f"m {a:04x} {a:04x}")
+                m = re.search(r">\s*C:[0-9a-fA-F]+\s+([0-9a-fA-F]{2})", out)
+                if m:
+                    return int(m.group(1), 16)
+            raise RuntimeError(f"Lecture mémoire ${a:04x} échouée: {out!r}")
 
         def step(n=1):
             for _ in range(n):

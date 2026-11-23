@@ -1,19 +1,22 @@
 ; ===========================================================================
-; cart_boot.asm : Chargeur de démarrage pour Cartouche Magic Desk (Type 19)
-; 8 Ko ROM mappés à $8000..$9FFF au reset KERNAL
+; cart_boot.asm : Chargeur de démarrage pour Cartouche EasyFlash (Type 32)
+; 8 Ko LoROM mappés à $8000..$9FFF après le saut depuis le stub Ultimax HiROM
 ; ===========================================================================
 !cpu 6510
 * = $8000
 
 CART_REG          = $de00
-CART_DISABLE      = $80
+CART_CTRL         = $de02
+CART_MODE_8K      = $86
+CART_MODE_OFF     = $04
 CART_PRESENT_ADDR = $0810
 START_ADDR        = $080d
 
-; En-tête standard cartouche Commodore 64
+; En-tête standard cartouche Commodore 64 ($8000..$8008)
         !word cart_reset                ; $8000 : Vecteur Cold Start
         !word cart_reset                ; $8002 : Vecteur Warm Start
         !byte $c3, $c2, $cd, $38, $30  ; $8004..$8008 : "CBM80"
+        jmp cart_reset                  ; $8009 : Point d'entrée fixe depuis stub Ultimax ($FF80)
 
 cart_reset:
         sei
@@ -32,6 +35,8 @@ cart_reset:
         sta $d418
         sta $d020
         sta $d021
+        sta $df00                       ; Reset EasyFlash RAM slot index & loaded flag
+        sta $df01
 
         ; Copie le déballeur de cartouche en RAM basse ($0340..$03bf, tampon cassette)
         ldx #0
@@ -101,9 +106,9 @@ cart_unpacker:
         lda #1
         sta CART_PRESENT_ADDR           ; $0810
 
-        ; 4. Désactive la ROM de cartouche pour libérer $8000..$9FFF en RAM normale
-        lda #CART_DISABLE
-        sta CART_REG
+        ; 4. Désactive la ROM de cartouche EasyFlash ($DE02 = $04) pour libérer $8000..$9FFF en RAM
+        lda #CART_MODE_OFF
+        sta CART_CTRL
 
         ; 5. Démarre l'intro Zelda à son point d'entrée SYS 2061
         jmp START_ADDR                  ; $080D

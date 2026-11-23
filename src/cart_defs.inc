@@ -1,10 +1,17 @@
 ; ===========================================================================
-; cart_defs.inc : Définitions et constantes du système Cartouche Magic Desk
-; Cartouche 512 Ko (Type 19) - 64 banques de 8 Ko ($8000..$9FFF)
+; cart_defs.inc : Définitions et constantes du système Cartouche EasyFlash
+; Cartouche 1 Mo (Type 32) - 64 banques x 16 Ko (LoROM $8000 + HiROM $A000)
+;   - Banques 00..31 (LoROM) : Code et données ROM non inscriptibles
+;   - Banques 56..63 (LoROM) : Secteur Flash 7 (64 Ko) dédié aux sauvegardes
 ; ===========================================================================
 
-CART_REG                = $de00         ; Registre matériel de sélection de banque
-CART_DISABLE            = $80           ; Bit 7 = 1 -> Désactive la ROM cartouche (RAM normale)
+CART_REG                = $de00         ; Registre matériel de sélection de banque (0..63)
+CART_CTRL               = $de02         ; Registre de contrôle EasyFlash (Mode + LED)
+CART_MODE_8K            = $86           ; LED ON | MEM_CTRL | EXROM=0 ($8000..$9FFF actif)
+CART_MODE_16K           = $87           ; LED ON | MEM_CTRL | EXROM=0 | GAME=0
+CART_MODE_OFF           = $04           ; MEM_CTRL | EXROM=1 | GAME=1 (Cartouche déconnectée)
+CART_DISABLE            = CART_MODE_OFF ; Alias de compatibilité
+CART_BANK_SAVE_START    = 56            ; Secteur Flash 7 (banques 56..63 = 64 Ko sauvegardes)
 
 ; Tampons de réception en RAM C64
 SPRITE_BUF_ADDR         = $2800         ; Tampon des sprites dynamiques ($2800..$3FFF = 6 Ko)
@@ -33,4 +40,6 @@ CART_BANK_OVL_CAVE      = 28            ; Overlay Cavernes & Échoppes ($A000)
 CART_BANK_OVL_ITEMS     = 29            ; Overlay Logiques d'Objets Spéciaux ($A000)
 CART_BANK_OVL_DEBUG     = 30            ; Overlay Menu Debug ($A000)
 CART_BANK_AUDIO         = 31            ; Musiques et sons étendus
-; Banques 32..63 : Libres pour Quest 2 et extensions
+CART_BANK_OVL_SAVE      = 32            ; Overlay Sauvegarde EasyFlash & File Select ($A000)
+; Banques 33..55 : Libres (ROM non inscriptible)
+; Banques 56..63 : Secteur Flash 7 (64 Ko sauvegardes persistantes)

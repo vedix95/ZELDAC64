@@ -523,6 +523,61 @@ intro_main_loop:
         jmp intro_main_loop
 
 ; ---------------------------------------------------------------------------
+; open_file_select : Charge Banque 32 (ovl_save.dat) à $A000 et lance File Select
+; ---------------------------------------------------------------------------
+open_file_select:
+        jsr intro_music_stop
+        lda #0
+        sta SID_VOLUME
+        sta VIC_SPRITE_EN
+        lda selected_dual_sid
+        sta $df02
+        ldx #0
+-       lda .fs_loader,x
+        sta $0340,x
+        inx
+        cpx #(.fs_loader_end - .fs_loader)
+        bne -
+        jsr $0340
+        jsr $a000                       ; ovl_file_select_run
+        jmp launch_zelda_game
+
+.fs_loader:
+!pseudopc $0340 {
+        sei
+        lda #$86
+        sta $de02
+        lda #32                         ; CART_BANK_OVL_SAVE = 32
+        sta $de00
+        lda #$37
+        sta $01
+        lda #0
+        sta $fb
+        sta $fd
+        lda #$80
+        sta $fc
+        lda #$a0
+        sta $fe
+        ldx #16                         ; 16 pages = 4096 octets
+        ldy #0
+-       lda ($fb),y
+        sta ($fd),y
+        iny
+        bne -
+        inc $fc
+        inc $fe
+        dex
+        bne -
+        lda #$36
+        sta $01
+        lda #$04
+        sta $de02
+        cli
+        rts
+}
+.fs_loader_end:
+
+; ---------------------------------------------------------------------------
 ; launch_zelda_game : Déballe instantanément le moteur résident zelda.prg
 ; depuis les banques cartouche 4..9 vers la RAM ($0800..$C7FF) et lance le jeu.
 ; ---------------------------------------------------------------------------
@@ -563,6 +618,8 @@ launch_zelda_game:
         sta CPU_PORT
 
         ; 2. Boucle de déballage des banques 4..9 de zelda.prg en RAM ($0800..$C7FF)
+        lda #$86                        ; EasyFlash mode 8K LoROM ($8000..$9FFF) + LED
+        sta $de02
         lda #4                          ; Banque cartouche de départ (4..9)
         sta $02
         lda #$08                        ; Page haute destination en RAM
@@ -619,9 +676,9 @@ launch_zelda_game:
 .unp_cfg_sid2_idx = * - 1
         sta $0812
 
-        ; 5. Désactive la ROM cartouche ($80 = bit 7 actif désactive /ROML)
-        lda #$80
-        sta $de00
+        ; 5. Désactive la ROM cartouche EasyFlash ($DE02 = $04)
+        lda #$04
+        sta $de02
 
         ; 6. Saute au point d'entrée de zelda.prg (SYS 2061 = $080D)
         jmp $080d

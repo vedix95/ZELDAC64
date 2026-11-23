@@ -58,6 +58,7 @@ def run_test():
 
     sid_menu_addr = i_labels.get('sid_setup_menu_loop', 0x573a)
     intro_update_addr = i_labels.get('intro_update', 0x299b)
+    launch_game_addr = i_labels['launch_zelda_game']
 
     print("=================================================================")
     print("   TEST AUTOMATISÉ : SÉRIALISATION AUDIO & FILE D'ATTENTE SID   ")
@@ -82,11 +83,10 @@ def run_test():
         f.write(f"bk {intro_update_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
-        f.write("> 0816 01\n")
 
         # Activer le breakpoint permanent sur main_loop
         f.write(f"bk {main_addr:04x}\n")
-        f.write("g\n")
+        f.write(f"g {launch_game_addr:04x}\n")
 
         # Laisser la musique démarrer proprement (5 frames)
         for _ in range(5):

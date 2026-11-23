@@ -59,6 +59,7 @@ def main():
 
     sid_menu_addr = i_labels.get('sid_setup_menu_loop', 0x573a)
     intro_update_addr = i_labels.get('intro_update', 0x299b)
+    launch_game_addr = i_labels['launch_zelda_game']
 
     print("=================================================================")
     print("   TEST AUTOMATISÉ : THÈME AUTHENTIQUE DU DONJON 9 (FINAL)       ")
@@ -89,11 +90,10 @@ def main():
         f.write(f"bk {intro_update_addr:04x}\n")
         f.write("g\n")
         f.write("del\n")
-        f.write("> 0816 01\n")
 
         # Breakpoint sur main_loop
         f.write(f"bk {main_addr:04x}\n")
-        f.write("g\n")
+        f.write(f"g {launch_game_addr:04x}\n")
 
         # 1. Warp en Donjon 9 (Niveau 9, Salle d'entrée)
         # hook_warp_dung : arg = 9 (Niveau 9), arg2 = $76 (Salle d'entrée Donjon 9)

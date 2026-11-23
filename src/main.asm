@@ -125,6 +125,14 @@ game_init:
         lda #STATE_PLAYING
         sta game_state
 
+        ; Applique la sauvegarde sélectionnée depuis le File Select ($DF01 == 1)
+        lda $df01
+        cmp #1
+        bne +
+        jsr load_ovl_save
+        jsr $a003                       ; ovl_save_apply_slot
++
+
 !if START_IN_INVENTORY == 1 {
         jsr open_inventory
 }
@@ -187,48 +195,9 @@ main_loop:
         jmp .in_ending
 +
 
-        ; Touche D : ouvre l'écran de debug depuis le jeu normal
-        lda key_d_pressed
-        beq +
-        jsr open_debug
+        jsr main_handle_hotkeys
+        bcc +
         jmp main_loop
-+
-        ; Touche 2 : Bascule vers le Donjon (recharge map_uw)
-        lda key_2_pressed
-        beq +
-        lda current_world_type
-        cmp #WORLD_DUNGEON
-        beq +
-        jsr enter_dungeon
-        jmp main_loop
-+
-        ; Touche 1 : Bascule vers l'Overworld (recharge map_ow)
-        lda key_1_pressed
-        beq +
-        lda current_world_type
-        cmp #WORLD_OVERWORLD
-        beq +
-        jsr exit_dungeon
-        jmp main_loop
-+
-        ; Touche 3 : Bascule Dual SID (Mono 1 SID / Stéréo 2 SIDs $D420)
-        lda game_state
-        cmp #STATE_PLAYING
-        bne +
-        lda key_3_pressed
-        beq +
-        lda #0
-        sta key_3_pressed
-        lda dual_sid_enabled
-        eor #1
-        sta dual_sid_enabled
-        beq .disable_sid2
-        lda #15
-        jsr sound_set_sid2_volume
-        jmp +
-.disable_sid2:
-        lda #0
-        jsr sound_set_sid2_volume
 +
 
         ; --- ÉTAT DE JEU NORMAL ---
@@ -375,6 +344,8 @@ cart_stream_copy_from:
 
 .csc_page_loop:
         sei
+        lda #CART_MODE_8K
+        sta CART_CTRL           ; Active EasyFlash 8K LoROM ($8000..$9FFF)
         lda current_cart_bank
         sta CART_REG            ; Sélectionne la banque cartouche à $DE00
         lda #$37
@@ -390,8 +361,8 @@ cart_stream_copy_from:
 
         lda #$36
         sta CPU_PORT            ; Rétablit le mode RAM de jeu sous BASIC
-        lda #CART_DISABLE
-        sta CART_REG            ; Déconnecte la cartouche
+        lda #CART_MODE_OFF
+        sta CART_CTRL           ; Déconnecte la cartouche EasyFlash
         cli                     ; Laisse passer les interruptions raster et audio
         nop
         nop
@@ -418,6 +389,8 @@ cart_copy_to_c000:
 
 .c0_page_loop:
         sei
+        lda #CART_MODE_8K
+        sta CART_CTRL           ; Active EasyFlash 8K LoROM ($8000..$9FFF)
         lda current_cart_bank
         sta CART_REG            ; Active la banque cartouche
         lda #$37
@@ -433,8 +406,8 @@ cart_copy_to_c000:
 
         lda #$36
         sta CPU_PORT            ; Rétablit le mode RAM de jeu sous BASIC
-        lda #CART_DISABLE
-        sta CART_REG            ; Déconnecte la cartouche
+        lda #CART_MODE_OFF
+        sta CART_CTRL           ; Déconnecte la cartouche EasyFlash
         cli                     ; Laisse passer les interruptions raster et audio
         nop
         nop

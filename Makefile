@@ -101,18 +101,21 @@ $(BLD_DIR)/ovl_items.dat: $(SRC_DIR)/overlay_items.asm $(BLD_DIR)/resident_symbo
 $(BLD_DIR)/ovl_debug.dat: $(SRC_DIR)/overlay_debug.asm $(SRC_DIR)/debug.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
 	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_debug.vs -o $@ $<
 
-# Image cartouche Magic Desk CRT (512 Ko) avec 64 banques mémoires et streaming instantané
-$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(SPR_BINS) $(OVL_DATS) $(PRG_INT) tools/cartgen.py src/cart_boot.asm
+$(BLD_DIR)/ovl_save.dat: $(SRC_DIR)/overlay_save.asm $(BLD_DIR)/resident_symbols.inc | $(BLD_DIR)
+	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_save.vs -o $@ $<
+
+# Image cartouche EasyFlash CRT (1 Mo) avec secteur Flash de sauvegarde
+$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(SPR_BINS) $(OVL_DATS) $(BLD_DIR)/ovl_save.dat $(PRG_INT) tools/cartgen.py src/cart_boot.asm
 	$(PYTHON) tools/cartgen.py
 
 crt: $(CRT)
 
-# Lance le jeu directement depuis la cartouche (0 délai de chargement, streaming instantané)
+# Lance le jeu directement depuis la cartouche EasyFlash avec sauvegarde activée
 run: $(CRT)
-	$(VICE) -cartcrt $(CRT)
+	$(VICE) -easyflashcrtwrite -cartcrt $(CRT)
 
 run-game: $(CRT)
-	$(VICE) -cartcrt $(CRT)
+	$(VICE) -easyflashcrtwrite -cartcrt $(CRT)
 
 run-crt: $(CRT)
 	$(VICE) -cartcrt $(CRT)

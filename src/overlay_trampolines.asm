@@ -165,3 +165,67 @@ dungeon_setup_d7_goriya:
 exit_dungeon:
         jsr load_ovl_items
         jmp $a02d                       ; ovl_exit_dungeon
+
+OVL_SAVE_PAGES = 16                     ; 16 pages = 4096 octets (ovl_save.dat)
+
+load_ovl_save:
+        lda #CART_BANK_OVL_SAVE
+        ldx #OVL_SAVE_PAGES
+        jmp cart_load_overlay
+
+save_current_slot:
+        jsr load_ovl_save
+        jmp $a006                       ; ovl_save_current_slot
+
+save_inc_death:
+        jsr load_ovl_save
+        jmp $a009                       ; ovl_save_inc_death
+
+; Raccourcis clavier déportés hors basse RAM (< $2000) : Carry=1 => reboucler main_loop
+main_handle_hotkeys:
+        lda key_d_pressed
+        beq +
+        jsr open_debug
+        sec
+        rts
++       lda key_2_pressed
+        beq +
+        lda current_world_type
+        cmp #WORLD_DUNGEON
+        beq +
+        jsr enter_dungeon
+        sec
+        rts
++       lda key_1_pressed
+        beq +
+        lda current_world_type
+        cmp #WORLD_OVERWORLD
+        beq +
+        jsr exit_dungeon
+        sec
+        rts
++       lda game_state
+        cmp #STATE_PLAYING
+        bne .hk_done
+        lda key_4_pressed
+        beq .chk_k3
+        jsr save_current_slot
+        jsr sound_secret_chime
+.chk_k3:
+        lda key_3_pressed
+        beq .hk_done
+        lda #0
+        sta key_3_pressed
+        lda dual_sid_enabled
+        eor #1
+        sta dual_sid_enabled
+        beq .disable_sid2
+        lda #15
+        jsr sound_set_sid2_volume
+        jmp .hk_done
+.disable_sid2:
+        lda #0
+        jsr sound_set_sid2_volume
+.hk_done:
+        clc
+        rts

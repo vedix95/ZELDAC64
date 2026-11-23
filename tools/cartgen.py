@@ -178,24 +178,68 @@ def main():
         print(f"  [!] Banque {len(banks):02d} : cart_audio.bin non trouvé, initialisé vide")
     banks.append(b_audio)
 
-    # Remplir jusqu'à TOTAL_BANKS (64 banques = 512 Ko)
-    while len(banks) < TOTAL_BANKS:
-        banks.append(bytearray(BANK_SIZE))
+    # Banque 32 : Overlay Sauvegarde EasyFlash & Menu File Select (CART_BANK_OVL_SAVE)
+    save_path = os.path.join(BLD_DIR, "ovl_save.dat")
+    b_save = bytearray(BANK_SIZE)
+    if os.path.exists(save_path):
+        with open(save_path, "rb") as f:
+            s_data = f.read()
+        b_save[:len(s_data)] = s_data[:BANK_SIZE]
+        print(f"  [+] Banque {len(banks):02d} : Overlay Sauvegarde EasyFlash & File Select ({len(s_data)} octets)")
+    else:
+        print(f"  [!] Banque {len(banks):02d} : ovl_save.dat non trouvé, initialisé vide")
+    banks.append(b_save)
 
-    # Concaténer toutes les banques
+    # Remplir jusqu'à TOTAL_BANKS (64 banques)
+    while len(banks) < TOTAL_BANKS:
+        if len(banks) >= 56:
+            # Secteur Flash 7 (banques 56..63) vierge ($FF) pour sauvegardes persistantes
+            banks.append(bytearray([0xFF] * BANK_SIZE))
+        else:
+            banks.append(bytearray(BANK_SIZE))
+
+    # Construction de l'image EasyFlash (64 x 16 Ko : LoROM 8K + HiROM 8K par banque)
+    hi_banks = [bytearray([0xFF] * BANK_SIZE) if i >= 56 else bytearray(BANK_SIZE) for i in range(TOTAL_BANKS)]
+
+    # Banque 0 HiROM ($E000..$FFFF en mode Ultimax au Reset C64) :
+    # $FF80 : copie 13 octets ($FF98..) vers RAM $0200 puis JMP $0200 (car écrire $DE02 coupe Ultimax)
+    hi0 = hi_banks[0]
+    ultimax_copy = bytes([
+        0x78,                   # SEI
+        0xA2, 0x00,             # LDX #$00
+        0xBD, 0x98, 0xFF,       # LDA $FF98,X
+        0x9D, 0x00, 0x02,       # STA $0200,X
+        0xE8,                   # INX
+        0xE0, 0x0D,             # CPX #$0D
+        0xD0, 0xF5,             # BNE -
+        0x4C, 0x00, 0x02,       # JMP $0200
+    ])
+    ultimax_tramp = bytes([
+        0xA9, 0x86,             # LDA #$86 (8K LoROM $8000..$9FFF + LED)
+        0x8D, 0x02, 0xDE,       # STA $DE02
+        0xA9, 0x00,             # LDA #$00 (Banque 0)
+        0x8D, 0x00, 0xDE,       # STA $DE00
+        0x4C, 0x09, 0x80,       # JMP $8009 (cart_reset)
+    ])
+    hi0[0x1F80 : 0x1F80 + len(ultimax_copy)] = ultimax_copy
+    hi0[0x1F98 : 0x1F98 + len(ultimax_tramp)] = ultimax_tramp
+    hi0[0x1FFA:0x2000] = bytes([0x80, 0xFF, 0x80, 0xFF, 0x80, 0xFF])
+
     raw_bin_path = os.path.join(BLD_DIR, "zelda_banks.bin")
     with open(raw_bin_path, "wb") as f:
-        for b in banks:
-            f.write(b)
+        for lo_b, hi_b in zip(banks, hi_banks):
+            f.write(lo_b)
+            f.write(hi_b)
 
     total_bytes = os.path.getsize(raw_bin_path)
-    print(f"[*] Fichier binaire brut généré : {raw_bin_path} ({total_bytes} octets, {len(banks)} banques)")
+    print(f"[*] Fichier binaire brut EasyFlash généré : {raw_bin_path} ({total_bytes} octets, {len(banks)} banques x 16 Ko)")
 
-    # Conversion en CRT Magic Desk via cartconv
+    # Conversion en CRT EasyFlash (Type 32) via cartconv
     crt_path = os.path.join(BLD_DIR, "zelda.crt")
     cmd_cartconv = [
         "cartconv",
-        "-t", "md",
+        "-t", "easy",
+        "-b",
         "-i", raw_bin_path,
         "-o", crt_path,
         "-n", "THE LEGEND OF ZELDA"
