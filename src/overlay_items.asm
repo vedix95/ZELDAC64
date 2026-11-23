@@ -1368,10 +1368,10 @@ go_music_update:
         dec go_mus_tmr
         beq +
         rts
-+       lda #10
++       lda #12
         sta go_mus_tmr
         ldx go_mus_idx
-        cpx #16
+        cpx #32
         bcc +
         ldx #0
         stx go_mus_idx
@@ -1438,21 +1438,29 @@ go_spin_ptrs:
 go_spin_cols:
         !byte COL_RED, COL_WHITE, COL_GREEN, COL_YELLOW
 go_death_freq_lo:
-        !byte $94, $41, $f6, $b2, $74, $3c, $08, $d8, $ab, $82, $5b, $37
+        !byte $c5, $c5, $4b, $f1, $c5, $c5, $4b, $f1, $c5, $c5, $4b, $f1
 go_death_freq_hi:
-        !byte $2a, $28, $25, $23, $21, $1f, $1e, $1c, $1a, $19, $17, $16
+        !byte $2b, $22, $1d, $18, $2b, $22, $1d, $18, $2b, $22, $1d, $18
 go_bgm_v1_lo:
-        !byte $3c, $08, $3c, $82, $b2, $08, $b2, $82
-        !byte $f6, $08, $f6, $82, $3c, $d8, $ab, $82
+        !byte $ac, $04, $c5, $c5, $56, $04, $45, $a2
+        !byte $21, $c5, $c5, $21, $ac, $c5, $c1, $c5
+        !byte $21, $c5, $ee, $21, $b6, $c5, $c1, $ee
+        !byte $c5, $04, $c5, $c5, $c1, $4b, $a2, $c1
 go_bgm_v1_hi:
-        !byte $1f, $1e, $1f, $19, $23, $1e, $23, $19
-        !byte $25, $1e, $25, $19, $1f, $1c, $1a, $19
+        !byte $33, $1a, $22, $2b, $29, $1a, $41, $20
+        !byte $3a, $22, $2b, $3a, $33, $22, $26, $2b
+        !byte $3a, $22, $2d, $3a, $36, $22, $26, $2d
+        !byte $2b, $1a, $22, $2b, $26, $1d, $20, $26
 go_bgm_v2_lo:
-        !byte $1e, $1e, $1e, $1e, $59, $59, $59, $59
-        !byte $7b, $7b, $7b, $7b, $1e, $1e, $1e, $1e
+        !byte $84, $4f, $36, $b1, $02, $84, $02, $36
+        !byte $02, $84, $02, $b1, $02, $84, $02, $b1
+        !byte $b1, $c4, $f1, $97, $62, $b1, $62, $97
+        !byte $62, $b1, $62, $f1, $62, $84, $02, $36
 go_bgm_v2_hi:
-        !byte $0f, $0f, $0f, $0f, $11, $11, $11, $11
-        !byte $12, $12, $12, $12, $0f, $0f, $0f, $0f
+        !byte $06, $07, $08, $08, $0d, $06, $0d, $08
+        !byte $0d, $06, $0d, $08, $0d, $06, $0d, $08
+        !byte $08, $09, $0a, $0b, $11, $08, $11, $0b
+        !byte $11, $08, $11, $0a, $11, $06, $0d, $08
 
 ; ===========================================================================
 ; 11. SAUVETAGE PRINCESSE ZELDA & ÉCRAN DE FIN (Fix M2 — STATE_ENDING = 9)
