@@ -799,3 +799,24 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
 - **Validation** : poussées + persistance (sortie/retour de salle) vérifiées sous VICE pour J-8, D-3, B-3 (tombe), J-5, D-4 ; capture [shot_rock_push.png](docs/images/shot_rock_push.png) renouvelée.
 - **Réserve** : la page de référence zeldadungeon.net est protégée par un défi Cloudflare (non contourné) ; seul le cas « 4 rochers → escalier au centre » demandé a été implémenté. Les autres secrets au Bracelet restent à ajuster sur des captures de référence.
 
+---
+
+### Anomalie 35 : Audit global Overworld — Mur bombable bloqué en F-1 (`$05`) et point de téléportation Warp N-2 (`$1D`) sur le rocher glissé
+- **Symptôme** :
+  1. Lors de l'audit systématique des 128 salles de l'Overworld (`assets/world.txt`), la salle **`F-1` (`$05`)** contenait un mur bombable résiduel `B` en `(6,4)` dont la case inférieure `(6,5)` était un mur plein `#` (et dont `room_cave_types[5] == 0` en 1ère Quête NES).
+  2. Dans `src/cave.asm` (`warp_dest_x`/`warp_dest_y`), le point d'atterrissage du Warp vers **`N-2` (`$1D`, idx 29)** était fixé à `(100, 158+16=174)` soit `(4,5)`, qui est exactement la case où glisse le rocher poussé vers la gauche depuis `(5,5)`.
+- **Correction** :
+  - `assets/world.txt` : suppression du `B` bloqué en `F-1` (`(6,4)` → `#`), cohérent avec la 1ère Quête NES (`room_cave_types[5] = 0`).
+  - `src/cave.asm` : déplacement de `warp_dest_x`/`y` pour `N-2` (`29`) de `(100, 158)` vers `(116, 174)` (atterrissage en `(6,7)` / `(5,6)` sur l'herbe libre devant l'escalier).
+- **Validation** :
+  - Audit complet des 128 salles Overworld : **0 désalignement de bordure** (hors `P-1` mur-illusion `W` et 2 embarcadères Radeau `P-3`/`F-5`), **128/128 salles atteignables**, **0 grotte/mur bombable bloqué**, 12/12 arbres brûlables et 4/4 Armos vérifiés, 8/8 cibles Flûte et 4/4 cibles Warp sur herbe libre, + `tools/test_map_topology_reachability.py` 100 % PASS.
+
+
+
+---
+
+## Équilibrage Clés / Portes Verrouillées des Donjons
+* **Fichiers** : [src/dungeon.asm](file:///home/vedix/Documents/C64/zelda/src/dungeon.asm), [tools/build_dungeons.py](file:///home/vedix/Documents/C64/zelda/tools/build_dungeons.py), `src/dung6..8.asm`
+* **Symptôme** : D6, D7 (et D4) comptaient plus de portes verrouillées que de clés disponibles : zones/boss inaccessibles.
+* **Correction** : les passages de liaison `BRIDGE_DOORS` de D6/D7/D8 (remplaçant les téléporteurs NES) sont ouverts (code 0) au lieu de verrouillés ; clé ajoutée en D4 (`$61`) et D7 (`$69`). Labels inutilisés `.ret_raft`/`.ret_none` supprimés (marge `$A000`).
+* **Règle** : pour chaque donjon, nombre de clés au sol/drops ≥ nombre de portes verrouillées.

@@ -1266,8 +1266,8 @@ cave_buy_slot_x:
 warp_dest_rx:   !byte 3, 9, 13, 9
 warp_dest_ry:   !byte 2, 4,  1, 7
 warp_dest_idx:  !byte 35, 73, 29, 121
-warp_dest_x:    !byte 116, 132, 100, 196
-warp_dest_y:    !byte 174, 142, 158, 174
+warp_dest_x:    !byte 116, 132, 116, 196
+warp_dest_y:    !byte 174, 142, 174, 174
 
 .chk_gamble_slot:
         cmp #CAVE_TYPE_GAMBLE
