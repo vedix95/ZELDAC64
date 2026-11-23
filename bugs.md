@@ -820,3 +820,11 @@ Ce document consigne l'ensemble des anomalies identifiées, leurs causes racines
 * **Symptôme** : D6, D7 (et D4) comptaient plus de portes verrouillées que de clés disponibles : zones/boss inaccessibles.
 * **Correction** : les passages de liaison `BRIDGE_DOORS` de D6/D7/D8 (remplaçant les téléporteurs NES) sont ouverts (code 0) au lieu de verrouillés ; clé ajoutée en D4 (`$61`) et D7 (`$69`). Labels inutilisés `.ret_raft`/`.ret_none` supprimés (marge `$A000`).
 * **Règle** : pour chaque donjon, nombre de clés au sol/drops ≥ nombre de portes verrouillées.
+
+---
+
+### Milestone v0.26 : Sauvegarde EasyFlash, Quarts de Cœur, Tuniques, Drops, Audio NES & HUD Encadré
+- **Sauvegarde EasyFlash 1 Mo (`ID 32`, `Am29F040`) & File Select** ([src/overlay_save.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_save.asm)) : 3 slots nommés en Flash (`SL_SHIELD`, `SL_ARROWS`, `SL_FOOD`, `SL_HEARTS_DUNG`, `SL_HEARTS_OW` inclus), sprites de Link animés selon la tunique, cœurs `♥` (`$53`), stats `SWD`/`SHD`/`D`/`T` et menu Game Over (`G`).
+- **Quarts de cœur & Plafond 16 cœurs** ([src/hud.asm](file:///home/vedix/Documents/C64/zelda/src/hud.asm)) : glyphes `1/4..4/4`, `hud_add_max_heart` plafonné à 16, masques de non-réapparition `heart_dung_mask`/`heart_ow_mask` synchronisés avec Debug Full Stuff.
+- **Tuniques & Drops physiques au sol** ([src/enemies.asm](file:///home/vedix/Documents/C64/zelda/src/enemies.asm), [src/overlay_items.asm](file:///home/vedix/Documents/C64/zelda/src/overlay_items.asm)) : `en_base_damage` en quarts de cœur, réduction `÷2` / `÷4` (alternance `0`/`1`), sprites proportionnés NES (Rubis, Fée mobile autonome, Horloge, Bombe, Cœur) sur Sprite 2 à taux équilibrés (64 paliers).
+- **Audio & Jeté d'épée** ([src/sound.asm](file:///home/vedix/Documents/C64/zelda/src/sound.asm), [src/items.asm](file:///home/vedix/Documents/C64/zelda/src/items.asm)) : refonte de `SFX_LINK_HURT` (Sawtooth + sweep), bip vie basse, porte verrouillée, pose de bombe, `ITEM_SWORD_BEAM` à vie pleine, animation/jingle de mort de Link + thème Game Over NES (`$92F7`), Livre Magique (flamme de Baguette), Bougie Bleue 1/salle, salles sombres en donjon, riposte du vieillard et Fontaine des Fées animée, et cadres bleus `[A]`/`[X]` avec icônes dans le HUD.

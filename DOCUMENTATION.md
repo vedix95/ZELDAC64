@@ -34,22 +34,23 @@ The Commodore 64 features 64 KB of RAM, but shares its address space with ROMs (
 
 ## 2. Cartridge Architecture & Memory Streaming Engine
 
-To accommodate the full 128-room overworld, 9 dungeons, complete monster bestiary and overlay subscreens within the 64 KB RAM ceiling, the project uses a 512 KB (64 banks of 8 KB) Magic Desk Cartridge streaming architecture.
+To accommodate the full 128-room overworld, 9 dungeons, complete monster bestiary, overlay subscreens, and native Flash save slots within the 64 KB RAM ceiling, the project uses a **1 MB (64 banks × 16 KB) EasyFlash Cartridge (`ID 32`)** streaming architecture.
 
-### 2.1 Cartridge Layout (`zelda.crt` - Magic Desk 512 KB)
+### 2.1 Cartridge Layout (`zelda.crt` - EasyFlash 1 MB)
 
 The cartridge banks are organized as follows:
-- **Bank 00**: Cartridge bootloader (`cart_boot.asm`, CBM80 hardware reset vector), unrolls the cinematic intro.
+- **Bank 00**: Cartridge bootloader (`cart_boot.asm`, EasyFlash Ultimax/16K boot vector), unrolls the cinematic intro.
 - **Banks 01..03**: Cinematic intro PRG (`$0800`–`$6800`) with animated waterfall, scroller, Triforce, item gallery, monster showcase and SID music.
-- **Banks 04..09**: Resident Zelda game engine (`$0800`–`$C800`), unpacked into RAM in 0.2s when pressing Start/Fire.
-- **Banks 10..13**: Dedicated Sprite Banks (Overworld, Dungeons, Bosses, NPCs & Objects), streamed directly into `$2800`–`$3FFF`.
+- **Banks 04..09**: Resident Zelda game engine (`$0800`–`$C800`), unpacked into RAM in 0.2s when launching from File Select.
+- **Banks 10..13**: Dedicated Sprite Banks (Overworld, Dungeons, Bosses, NPCs & Objects + Ground Loot Drops), streamed directly into `$2800`–`$3FFF`.
 - **Banks 14..17**: 4 regional Overworld chunks (`OW0` to `OW3`), streamed on-demand directly into `$C000`.
 - **Banks 18..26**: 9 complete Underworld Dungeons (`DUNG1` to `DUNG9`), streamed on-demand directly into `$C000`.
-- **Banks 27..30**: High-level game overlays loaded on-demand to `$A000` with **`loaded_overlay_bank` cache** (zero-cycle bypass if already resident; invalidated to `$FF` during page streaming to guard `irq_top`):
+- **Banks 27..30, 32**: High-level game overlays loaded on-demand to `$A000` with **`loaded_overlay_bank` cache** (zero-cycle bypass if already resident; invalidated to `$FF` during page streaming to guard `irq_top`):
   - **Bank 27**: Inventory Subscreen (4 pages, unowned-item masking) & Full 16×8 Hyrule World Map (`ovl_inv.dat`, 5,701 bytes).
-  - **Bank 28**: Secret Caves, Shops, Warp Zones & Merchant Dialogues (`ovl_cave.dat`, 4,090 bytes).
-  - **Bank 29**: Special Item & Gameplay Logics (`ovl_items.dat`, 2,518 bytes): Whistle, Candle secrets, Bomb secrets, unified Overworld Rock/Grave push (`ow_push_tbl`), Raft launch, Cellar entry/exit (`D9 $23`), D1 `$41` Hermit, D7 `$49` Hungry Goriya & Food bait, D9 8/8 Triforce gate, Game Over/Continue (`STATE_GAMEOVER`), Princess Zelda Victory Ending (`STATE_ENDING`), and `exit_dungeon`.
-  - **Bank 30**: Diagnostic & 3-Page Debug Menu (`ovl_debug.dat`, 2,892 bytes).
+  - **Bank 28**: Secret Caves, Shops, Warp Zones, Animated Fairy Fountain & Old Man Fireball Retaliation (`ovl_cave.dat`, 4,391 bytes).
+  - **Bank 29**: Special Item & Gameplay Logics (`ovl_items.dat`, 4,925 bytes, 20 pages): Whistle, Candle secrets, Bomb secrets, unified Overworld Rock/Grave push (`ow_push_tbl`), Raft launch, Cellar entry/exit (`D9 $23`), D1 `$41` Hermit, D7 `$49` Hungry Goriya & Food bait, D9 8/8 Triforce gate, Ground Loot spawn/collect/fairy-wander, Bidirectional Dungeon Key/Bomb Doors, Link Death Spin & Game Over (`STATE_GAMEOVER` with `$92F7` NES theme), Princess Zelda Victory Ending (`STATE_ENDING`), and `exit_dungeon`.
+  - **Bank 30**: Diagnostic & 3-Page Debug Menu (`ovl_debug.dat`, 2,943 bytes).
+  - **Bank 32**: Native **Am29F040 EasyFlash Save Driver & NES File Select** (`ovl_save.dat`, 3,840 bytes, Sector 7 Banks 56..63).
 - **Bank 31**: Extended Audio Streaming Bank (`CART_BANK_AUDIO`, `cart_audio.bin`), streaming Death Mountain / Dungeon 9 extended 124-step authentic theme directly into `bgm_track_buffer`.
 - **Banks 32..63**: Free expansion headroom (256 KB available).
 

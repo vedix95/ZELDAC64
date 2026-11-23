@@ -24,20 +24,22 @@ Une recréation fidèle, intégrale et fluide à **50,00 FPS constants (PAL)** d
   * **Écran Titre & Cascade Animée** : Palette de l'aube, lettres ZELDA cramoisies bordées d'or, étoile scintillante Sprite 0 et vagues descendantes Sprites 1..4.
   * **Récit d'Hyrule en Scrolling Matériel 50 Hz** : Défilement vertical au pixel près via `$D011` dans son cadre de pierre centré (`RSEL=0`).
   * **Défilé des 35 Trésors & Bestiaire Multimonstres** : Présentation sur 2 colonnes et moteur à 6 slots simultanés animés.
-* ⚡ **Cartouche Magic Desk 512 Ko & 50,00 FPS Verrouillés** :
+* ⚡ **Cartouche EasyFlash 1 Mo (`zelda.crt` ID 32) & Sauvegarde Flash Native** :
   * Déballage du moteur en 0,2 seconde au démarrage, zéro latence disquette.
+  * **Sauvegarde native sur Flash `Am29F040` (Secteur 7, Banques 56..63)** avec menu **File Select 1:1 NES** (`- SELECT -`, `REGISTER YOUR NAME`, `ELIMINATION MODE`, `RESET ALL SAVES`), sprites de Link animés selon la tunique, stats `SWD`/`SHD`/`D`/`T` et cœurs `♥` rouges.
   * **Cache d'overlay résident (`loaded_overlay_bank`)** et streaming page par page sécurisé (`CLI` + garde `irq_top`) : **19 656 cycles/trame PAL exacts (50,00 FPS)** même avec 6 à 8 ennemis simultanés, explosions 2×2 et poussées continues.
-* 🗡️ **Système de Combat & Arsenal Complet des 8 Objets** :
-  * Épée (Bois / Blanche / Magique + rayon laser à pleine vie), **Bombes à explosion 2×2 (48×42 px, rayon 32 px)**, Boomerang, Arc/Flèches, Bougie (flamme + dégâts + arbres secrets), Flûte magique (téléportation + lac D7 + Digdogger), Viande/Appât, Potion et Baguette Magique (vague + flamme du Livre).
+* 🗡️ **Système de Combat, Tuniques, Drops & Arsenal Complet des 8 Objets** :
+  * Épée (Bois / Blanche / Magique + **jeté d'épée laser à vie pleine**), **Bombes à explosion 2×2 (48×42 px, rayon 32 px)**, Boomerang, Arc/Flèches (Bois & Argent pour Ganon), Bougie (Bleue 1/salle & Rouge illimitée, éclaire les **salles sombres**), Flûte magique (téléportation + lac D7 + Digdogger), Viande/Appât, Potion et Baguette Magique (vague + **flamme du Livre Magique**).
+  * **Tuniques & Dégâts calibrés en quarts de cœur** (Verte `1x`, Anneau Bleu `÷2`, Anneau Rouge `÷4` alterné), **drops physiques au sol** (Rubis `+1`/`+5`, Bombes `+4`, Cœurs, **Fées autonomes**, Horloge) à taux équilibrés NES.
   * Échelle de franchissement autonome (Sprite 2, zéro mutation de `room_buf`) et radeau de traversée fluviale.
 * 👑 **HUD Authentique & Inventaire 4 Pages Haute Résolution** :
-  * HUD complet : compteurs **Rubis 3 chiffres (`000..255`)**, Clés, Bombes, armes `[A]` / `[X] SWORD` (teinte selon le rang d'épée) et jusqu'à 16 cœurs de vie.
+  * HUD complet : compteurs **Rubis 3 chiffres (`000..255`)**, Clés, Bombes, **cadres bleus `[A]` et `[X]` avec icônes d'objets et d'épée**, et jusqu'à 16 cœurs divisés en **quarts de cœur (`1/4..4/4`)** (plafond strict et persistance Flash).
   * **Page 0** : Grille d'objets 4×2 (masquage strict des objets non possédés) + 6 reliques passives protégées.
   * **Page 1** : **Grande Pyramide de la Triforce** (8 fragments biseautés en triangle doré plein 96×42 px).
   * **Page 2 & Page 3** : Statut de quête et **Carte topologique d'Hyrule 16×8** + plan dynamique des donjons avec boussole.
 * 🎶 **Moteur Audio SID & Dual SID Stéréo (`$D420` / `$D500` / `$DF00`)** :
   * Synthèse analogique 3 voix **MOS SID 6581/8580** + chorus stéréo Dual SID commutable en jeu (touche `3`).
-  * Thème authentique étendu du **Donjon 9 (Death Mountain, 124 pas)** streamé depuis la Banque 31 et file d'attente sonore anti-conflits entre SFX, carillons secrets et BGM.
+  * Thème authentique étendu du **Donjon 9 (Death Mountain, 124 pas)** streamé depuis la Banque 31, **animation & jingle de mort de Link**, thème **Game Over NES (`$92F7`)**, alerte vie basse, refonte de `SFX_LINK_HURT` et file d'attente sonore anti-conflits.
 
 ---
 
@@ -45,9 +47,9 @@ Une recréation fidèle, intégrale et fluide à **50,00 FPS constants (PAL)** d
 
 ### Introduction & Cinématiques 1:1 NES
 
-| Écran Titre & Cascade | Récit d'Hyrule (Cadre Pierre) | Défilé des 35 Trésors | Bestiaire Multimonstres |
+| Écran Titre & Cascade | Récit d'Hyrule (Cadre Pierre) | Défilé des 35 Trésors | File Select & Sauvegarde Flash |
 | :---: | :---: | :---: | :---: |
-| ![Écran Titre](docs/images/shot_intro.png) | ![Récit](docs/images/shot_intro_story.png) | ![Trésors](docs/images/shot_intro_treasures.png) | ![Monstres](docs/images/shot_intro_monsters.png) |
+| ![Écran Titre](docs/images/shot_intro.png) | ![Récit](docs/images/shot_intro_story.png) | ![Trésors](docs/images/shot_intro_treasures.png) | ![File Select](docs/images/shot_file_select.png) |
 
 ### Exploration, Secrets Overworld & Combat
 
@@ -143,7 +145,8 @@ Le jeu se pilote au **Joystick Port 2** et/ou au clavier sous VICE ([`src/input.
 | **Touche `B`** (Bouton B) | Ouvrir / Fermer l'inventaire 4 pages |
 | **Touche `3`** | Basculer en temps réel entre **Mono SID (`$D400`)** et **Dual SID Stéréo (`$D420`)** |
 | **Touche `D`** | Ouvrir le menu de téléportation, cheats et diagnostic (Debug 3 pages) |
-| **Bouton Feu / `Espace`** (Intro) | Passer le menu SID ou l'introduction cinématique |
+| **Touche `G`** | Ouvrir le menu Game Over / Sauvegarde (`SAVE + CONTINUE`, `SAVE + QUIT`, `RETOUR`) |
+| **Bouton Feu / `Espace`** (Intro) | Passer le menu SID ou accéder au File Select / lancer la partie |
 
 ---
 
