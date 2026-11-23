@@ -1402,19 +1402,19 @@ ovl_exit_dungeon:
 ; ===========================================================================
 ovl_spawn_loot:
         jsr get_rand
-        and #$0f
-        beq .drop_fairy                 ; 1/16 (~6.25%) : Fée (soin complet)
+        and #$3f
+        beq .drop_fairy                 ; 1/64 (~1.6%)  : Fée (soin complet)
         cmp #1
-        beq .drop_clock                 ; 1/16 (~6.25%) : Horloge (gèle ennemis)
-        cmp #2
-        beq .drop_rupee5                ; 1/16 (~6.25%) : Rubis bleu (+5)
-        cmp #4
-        bcc .drop_bomb                  ; 2/16 (12.5%)  : Bombes (+4)
+        beq .drop_clock                 ; 1/64 (~1.6%)  : Horloge (gèle ennemis)
+        cmp #5
+        bcc .drop_rupee5                ; 3/64 (~4.7%)  : Rubis bleu (+5)
         cmp #8
-        bcc .drop_heart                 ; 4/16 (25%)    : Cœur (+1 cœur)
-        cmp #13
-        bcc .drop_rupee1                ; 5/16 (31.25%) : Rubis jaune (+1)
-        rts                             ; 3/16 (18.75%) : rien
+        bcc .drop_bomb                  ; 3/64 (~4.7%)  : Bombes (+4)
+        cmp #19
+        bcc .drop_heart                 ; 11/64 (~17.2%): Cœur (+1 cœur)
+        cmp #32
+        bcc .drop_rupee1                ; 13/64 (~20.3%): Rubis jaune (+1)
+        rts                             ; 32/64 (50%)   : rien
 
 .drop_fairy:
         lda #LOOT_FAIRY
@@ -1459,6 +1459,12 @@ ovl_update_loot:
         beq .loot_expire
         dec loot_drop_timer+1
 +       dec loot_drop_timer
+        lda loot_drop_type
+        cmp #LOOT_FAIRY
+        bne .chk_loot_pickup
+        jsr .ovl_update_fairy
+
+.chk_loot_pickup:
         lda player_x
         sec
         sbc loot_drop_x
@@ -1546,6 +1552,75 @@ ovl_loot_clock:
 .loot_heart:
         jsr hud_heal_one_heart
         jmp sound_rupee
+
+.ovl_update_fairy:
+        lda loot_drop_timer
+        and #$0f
+        bne .move_fairy
+        jsr get_rand
+        and #3
+        tax
+        lda .fairy_vel_tbl,x
+        sta loot_fairy_dx
+        jsr get_rand
+        and #3
+        tax
+        lda .fairy_vel_tbl,x
+        sta loot_fairy_dy
+.move_fairy:
+        lda loot_fairy_dx
+        beq .fairy_move_y
+        bmi .fairy_left
+        clc
+        lda loot_drop_x
+        adc #1
+        sta loot_drop_x
+        bcc +
+        inc loot_drop_x+1
++       lda loot_drop_x+1
+        beq .fairy_move_y
+        lda loot_drop_x
+        cmp #<312
+        bcc .fairy_move_y
+        lda #255
+        sta loot_fairy_dx
+        bne .fairy_move_y
+.fairy_left:
+        lda loot_drop_x
+        bne +
+        dec loot_drop_x+1
++       dec loot_drop_x
+        lda loot_drop_x+1
+        bne .fairy_move_y
+        lda loot_drop_x
+        cmp #32
+        bcs .fairy_move_y
+        lda #1
+        sta loot_fairy_dx
+.fairy_move_y:
+        lda loot_fairy_dy
+        beq .fairy_done
+        bmi .fairy_up
+        inc loot_drop_y
+        lda loot_drop_y
+        cmp #214
+        bcc .fairy_done
+        lda #255
+        sta loot_fairy_dy
+        rts
+.fairy_up:
+        dec loot_drop_y
+        lda loot_drop_y
+        cmp #92
+        bcs .fairy_done
+        lda #1
+        sta loot_fairy_dy
+.fairy_done:
+        rts
+
+loot_fairy_dx:  !byte 1
+loot_fairy_dy:  !byte 255
+.fairy_vel_tbl: !byte 1, 255, 1, 0
 
 ; ===========================================================================
 ; 13b. RAMASSAGE D'OBJET DE DONJON (ovl_dungeon_collect_drop — Banque 29)

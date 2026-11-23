@@ -42,7 +42,7 @@ def main():
     mon_file = os.path.join(ART_DIR, "tunic_drops.mon")
     dumps = {k: os.path.join(ART_DIR, f"d_{k}.bin") for k in [
         "green", "blue", "red0", "red1", "moblin_red",
-        "drop_spr", "drop_rupee5", "drop_bomb", "drop_heart", "drop_clock"
+        "drop_spr", "drop_rupee5", "drop_bomb", "drop_heart", "drop_clock", "fairy_pos"
     ]}
     ss_drop = os.path.join(ART_DIR, "01_loot_drop_rupee.png")
 
@@ -194,6 +194,18 @@ def main():
         f.write("g\n")
         f.write(f's "{dumps["drop_clock"]}" 0 {clk:04x} {clk:04x}\n')
 
+        # --- TEST 2f : Déplacement autonome de la Fée (LOOT_FAIRY = 5) ---
+        f.write(f"> {px:04x} 50 00\n")
+        f.write(f"> {py:04x} 8c\n")
+        f.write(f"> {lactive:04x} 01\n")
+        f.write(f"> {ltype:04x} 05\n")
+        f.write(f"> {lx:04x} c8 00\n")
+        f.write(f"> {ly:04x} 8c\n")
+        f.write(f"> {ltmr:04x} 90 01\n")
+        for _ in range(6):
+            f.write("g\n")
+        f.write(f's "{dumps["fairy_pos"]}" 0 {lx:04x} {ly:04x}\n')
+
         f.write("quit\n")
 
     cmd = [
@@ -244,7 +256,12 @@ def main():
     assert heart == 36, f"Heart +4 pickup fail: heart={heart}"
     assert clock == 1, f"Clock freeze pickup fail: clock={clock}"
 
-    print("[PASS] test_tunic_and_drops_vice: Tunics (Green/Blue/Red) + Ground Drops (Rupee5/Bomb/Heart/Clock) verified in VICE!")
+    fp = read_dump(dumps["fairy_pos"])
+    fx = fp[0] | (fp[1] << 8)
+    fy = fp[2]
+    assert (fx, fy) != (200, 140), f"Fairy did not move autonomously: pos=({fx}, {fy})"
+
+    print("[PASS] test_tunic_and_drops_vice: Tunics (Green/Blue/Red) + Ground Drops (Rupee5/Bomb/Heart/Clock) + Fairy Wander verified in VICE!")
 
 
 if __name__ == "__main__":
