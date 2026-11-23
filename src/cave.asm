@@ -351,6 +351,10 @@ cave_setup_room_items:
 
 +       cmp #CAVE_TYPE_POTION_SHOP
         bne +
+        lda player_has_letter
+        bne .potion_shop_ok
+        rts
+.potion_shop_ok:
         ; Potion Shop : Potion Bleue (40), Potion Rouge (68)
         lda ZP_TMP
         and #1
@@ -442,6 +446,13 @@ cave_setup_room_items:
 +       cmp #CAVE_TYPE_WARP
         bne +
         jmp .do_warp
++       cmp #CAVE_TYPE_HINT_3
+        bne +
+        lda player_has_letter
+        bne +
+        lda #1
+        sta player_has_letter
+        jsr sound_item_fanfare
 +       rts
 
 .do_warp:

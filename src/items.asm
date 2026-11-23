@@ -201,7 +201,7 @@ spawn_sword_beam:
         sta item_active
         lda player_dir
         sta item_dir
-        lda #50
+        lda #85
         sta item_timer
         jsr set_spawn_coords
         jmp sound_sword_beam
@@ -758,7 +758,7 @@ update_candle:
 ; ---------------------------------------------------------------------------
 update_wand:
         dec item_timer
-        bne +
+        bne .w_move
         lda item_active
         cmp #ITEM_WAND
         bne .wand_end
@@ -772,14 +772,15 @@ wand_spawn_book_flame:
         lda #50
         sta item_timer
         lda dung_room_dark
-        beq +
+        beq .w_no_light
         jsr dungeon_light_room
-+       rts
+.w_no_light:
+        rts
 .wand_end:
         lda #ITEM_NONE
         sta item_active
         rts
-+
+.w_move:
         lda item_dir
         cmp #DIR_UP
         beq .w_up
@@ -824,6 +825,18 @@ wand_spawn_book_flame:
         bcc .w_despawn
         cmp #PLAYER_Y_MAX
         bcs .w_despawn
+        lda item_x+1
+        beq .w_chk_l
+        cmp #1
+        bne .w_despawn
+        lda item_x
+        cmp #<(PLAYER_X_MAX + 1)
+        bcs .w_despawn
+        rts
+.w_chk_l:
+        lda item_x
+        cmp #PLAYER_X_MIN
+        bcc .w_despawn
         rts
 .w_despawn:
         lda #ITEM_NONE

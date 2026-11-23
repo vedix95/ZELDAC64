@@ -515,6 +515,8 @@ ovl_save_apply_slot:
         sta player_has_candle
         lda EF_RAM_SLOT_DATA + SL_POTION
         sta player_has_potion
+        lda EF_RAM_SLOT_DATA + SL_LETTER
+        sta player_has_letter
         lda EF_RAM_SLOT_DATA + SL_SHIELD
         bne +
         lda #1                          ; Bouclier de base minimum = 1
@@ -610,6 +612,8 @@ ovl_save_current_slot:
         sta save_buf + SL_CANDLE,x
         lda player_has_potion
         sta save_buf + SL_POTION,x
+        lda player_has_letter
+        sta save_buf + SL_LETTER,x
         lda player_has_shield
         sta save_buf + SL_SHIELD,x
         lda player_has_arrows

@@ -63,6 +63,7 @@ player_has_wand:       !byte 0          ; 1 = baguette magique
 player_has_compass:     !byte 0          ; 1 = boussole du donjon actif
 player_has_dungeon_map:  !byte 0          ; 1 = plan du donjon actif
 player_has_book:         !byte 0          ; 1 = livre magique (flammes de la baguette)
+player_has_letter:       !byte 0          ; 1 = lettre de l'Ermite (débloque Potion Shop)
 
 ; Triforce de la Sagesse (8 fragments numérotés 1 à 8)
 player_triforce_pieces: !byte %00000000 ; masque 8 bits
@@ -700,7 +701,8 @@ player_update:
         sta heart_ow_mask
         jsr hud_add_max_heart
         jsr sound_item_fanfare
-        rts
+        jsr load_ovl_items
+        jmp $a03f                       ; ovl_dock_heart_celebrate
 
 .chk_ow_push:
         ; --- Poussée unifiée Rochers (Bracelet) & Tombes (identique aux donjons) ---

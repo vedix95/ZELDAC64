@@ -869,6 +869,7 @@ debug_cheat_full_gear:
         sta player_has_food             ; Nourriture / Appât
         sta player_has_wand
         sta player_has_book
+        sta player_has_letter
         sta player_has_compass
         sta player_has_dungeon_map
         lda #16

@@ -38,6 +38,7 @@
         jmp ovl_enter_dungeon           ; $A036
         jmp ovl_gameover_continue       ; $A039
         jmp ovl_update_loot             ; $A03C
+        jmp ovl_dock_heart_celebrate    ; $A03F
         jmp ovl_dungeon_collect_drop    ; $A03F
         jmp ovl_dungeon_bomb_explode    ; $A042
         jmp ovl_open_north_door         ; $A045
@@ -905,6 +906,42 @@ ovl_d9_gate_blocked:
 
 txt_d9_gate:    !text "NEED ALL 8 TRIFORCE PIECES! "
 
+ovl_dock_heart_celebrate:
+        lda #SPR_COMMON_ITEM_GET
+        sta SPRITE_PTR0
+        lda player_x
+        sta VIC_SPRITE_X2
+        lda VIC_SPRITE_MSB
+        and #%11111011
+        ldx player_x+1
+        beq +
+        ora #%00000100
++       sta VIC_SPRITE_MSB
+        lda player_y
+        sec
+        sbc #16
+        sta VIC_SPRITE_Y2
+        lda #<(sprite_link_item_heart / 64)
+        sta SPRITE_PTR2
+        lda #COL_RED
+        sta VIC_SPRITE_COL2
+        lda VIC_SPRITE_MC
+        ora #%00000100
+        sta VIC_SPRITE_MC
+        lda VIC_SPRITE_EN
+        ora #%00000100
+        sta VIC_SPRITE_EN
+        ldx #60
+-       stx ZP_TMP
+        jsr wait_frame
+        ldx ZP_TMP
+        dex
+        bne -
+        lda VIC_SPRITE_EN
+        and #%11111011
+        sta VIC_SPRITE_EN
+        rts
+
 ; ===========================================================================
 ; 10. ÉCRAN GAME OVER & CONTINUE (Fix C2 — STATE_GAMEOVER = 8)
 ; ===========================================================================
@@ -1070,6 +1107,11 @@ go_draw_menu:
 ovl_gameover_update:
         lda #0
         sta VIC_SPRITE_EN
+        ldx #19
+        lda #32
+-       sta SCREEN_RAM,x
+        dex
+        bpl -
         jsr go_music_update
         lda ovl_modal_timer
         beq .go_wait_btn

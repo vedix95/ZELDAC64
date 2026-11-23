@@ -1,5 +1,8 @@
 !zone enemies
 
+en_base_hp:
+        !byte 0, 1, 2, 2, 3, 1, 1, 2, 4, 2, 3, 9, 2, 4, 6, 1, 1, 2, 1, 1, 2, 3, 5, 4, 8, 5, 10, 2, 9, 10, 6, 4, 255, 255, 2, 4, 6, 8, 8, 8, 8, 2, 4, 10, 16
+
 ; ---------------------------------------------------------------------------
 ; enemies.asm : Système complet d'ennemis Zelda (Octorok et Moblin)
 ;
@@ -3129,24 +3132,22 @@ beam_dmg_tbl:
         ; Flamme de Bougie : 1 dégât
         lda #1
 .magic_fire_dmg:
+        pha
         ldx en_idx
-        ldy en_type,x
-        cpy #TYPE_BUBBLE
+        lda en_type,x
+        ldx #6
+-       cmp mf_immune_tbl,x
         beq .mf_ret
-        cpy #TYPE_TRAP
-        beq .mf_ret
-        cpy #TYPE_GANON
-        beq .mf_ret
-        cpy #TYPE_GOHMA_RED
-        beq .mf_ret
-        cpy #TYPE_GOHMA_BLUE
-        beq .mf_ret
-        cpy #TYPE_DODONGO
-        beq .mf_ret
-        cpy #TYPE_DIGDOGGER
-        beq .mf_ret
+        dex
+        bpl -
+        pla
+        ldx en_idx
         jmp .apply_item_dmg
+mf_immune_tbl:
+        !byte TYPE_BUBBLE, TYPE_TRAP, TYPE_GANON, TYPE_GOHMA_RED
+        !byte TYPE_GOHMA_BLUE, TYPE_DODONGO, TYPE_DIGDOGGER
 .mf_ret:
+        pla
         rts
 
 .arrow_hit:

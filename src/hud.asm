@@ -72,6 +72,11 @@ b_item_chars:
 b_item_cols:
         !byte COL_ORANGE, COL_LIGHT_BLUE, COL_YELLOW, COL_LIGHT_BLUE
         !byte COL_YELLOW, COL_LIGHT_RED, COL_LIGHT_BLUE, COL_CYAN
+b_item_var_ofs:
+        !byte 0, 0, 1, 3, 6, 4, 5, 7
+b_item_upg_cols:
+        !byte COL_LIGHT_BLUE, COL_LIGHT_BLUE, COL_YELLOW, COL_RED
+        !byte COL_YELLOW, COL_LIGHT_RED, COL_RED, COL_CYAN
 
 ; ---------------------------------------------------------------------------
 ; hud_init : initialise le cadre complet du HUD
@@ -516,8 +521,7 @@ minimap_clear_room_2x2:
 .clr_ret:
         rts
 
-minimap_buf:
-        !fill 64, 0
+minimap_buf = $cf00
 
 .counters:
 
@@ -530,23 +534,19 @@ minimap_buf:
         sta SCREEN_RAM+17               ; centaines
         stx SCREEN_RAM+18               ; dizaines
         sty SCREEN_RAM+19               ; unités
+        ldx #3
         lda #COL_YELLOW
-        sta COLOR_RAM+16
-        sta COLOR_RAM+17
-        sta COLOR_RAM+18
-        sta COLOR_RAM+19
+-       sta COLOR_RAM+16,x
+        dex
+        bpl -
 
-        ; Clefs : icône clef + compteur
+        ; Clefs : icône clef + compteur (COL_WHITE déjà posé par hud_init)
         lda #HUD_CHAR_KEY
         sta SCREEN_RAM+40+16
         lda hud_keys
         jsr print_2digits
         sta SCREEN_RAM+40+17
         stx SCREEN_RAM+40+18
-        lda #COL_WHITE
-        sta COLOR_RAM+40+16
-        sta COLOR_RAM+40+17
-        sta COLOR_RAM+40+18
 
         ; Bombes : icône bombe + compteur
         lda #HUD_CHAR_BOMB
@@ -557,16 +557,31 @@ minimap_buf:
         stx SCREEN_RAM+80+18
         lda #COL_CYAN
         sta COLOR_RAM+80+16
-        lda #COL_WHITE
-        sta COLOR_RAM+80+17
-        sta COLOR_RAM+80+18
 
         ; 3. Slot A (Objet secondaire équipé) : ligne 1, col 22 (dans le cadre 21..23)
         ldx hud_selected_b
+        cpx #1
+        bne +
+        lda hud_bombs
+        beq .slot_a_empty
+        bne .slot_a_draw
++       ldy b_item_var_ofs,x
+        lda player_has_boomerang,y
+        bne .slot_a_draw
+.slot_a_empty:
+        lda #32
+        sta SCREEN_RAM+40+22
+        bne .slot_a_done
+.slot_a_draw:
+        tay
         lda b_item_chars,x
         sta SCREEN_RAM+40+22
         lda b_item_cols,x
-        sta COLOR_RAM+40+22
+        cpy #2
+        bne +
+        lda b_item_upg_cols,x
++       sta COLOR_RAM+40+22
+.slot_a_done:
 
         ; 4. Barre de vie (Cœurs) : 2 rangées de 8 (cols 32..39 sur Ligne 1 et Ligne 2)
         ldx #0
