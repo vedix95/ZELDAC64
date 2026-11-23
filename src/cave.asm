@@ -488,9 +488,7 @@ cave_setup_room_items:
 
 .do_fairy:
         ; Fontaine des Fées : soigne Link immédiatement à l'entrée !
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_full
         jsr sound_item_fanfare
         rts
 
@@ -1486,11 +1484,7 @@ cave_grant_item:
         rts
 +       cmp #ITEM_ID_HEART
         bne +
-        lda hud_cur_hearts
-        cmp hud_max_hearts
-        bcs .no_heal
-        inc hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_one_heart
 .no_heal:
         lda #(sprite_link_item_heart / 64)
         sta cave_held_item_ptr
@@ -1500,9 +1494,7 @@ cave_grant_item:
 +       cmp #ITEM_ID_HEART_CONTAINER
         bne +
         inc hud_max_hearts
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_full
         lda #(sprite_link_item_heart / 64)
         sta cave_held_item_ptr
         lda #COL_RED

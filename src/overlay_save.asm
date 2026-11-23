@@ -475,6 +475,8 @@ ovl_save_apply_slot:
         bcs +
         lda #3
 +       sta hud_max_hearts
+        asl
+        asl
         sta hud_cur_hearts
         lda EF_RAM_SLOT_DATA + SL_RUPEES
         sta hud_rupees

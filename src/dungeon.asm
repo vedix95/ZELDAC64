@@ -1873,6 +1873,7 @@ dungeon_collect_drop:
         cmp #DROP_KEY
         bne +
         inc hud_keys
+.done_minor_drop:
         jsr hud_render
         jsr sound_rupee
         lda #0
@@ -1882,31 +1883,20 @@ dungeon_collect_drop:
 +       cmp #DROP_HEART_CONTAINER
         bne +
         inc hud_max_hearts
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
-        jsr sound_item_fanfare
+        jsr hud_heal_full
         jmp .start_dungeon_pickup
 
 +       cmp #DROP_COMPASS
         bne +
         lda #1
         sta player_has_compass
-        jsr hud_render
-        jsr sound_rupee
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .done_minor_drop
 
 +       cmp #DROP_MAP
         bne +
         lda #1
         sta player_has_dungeon_map
-        jsr hud_render
-        jsr sound_rupee
-        lda #0
-        sta dungeon_drop_active
-        rts
+        jmp .done_minor_drop
 
 +       cmp #DROP_BOOMERANG
         bne +
@@ -1919,43 +1909,34 @@ dungeon_collect_drop:
         lda #1                          ; Boomerang de Bois (jaune)
 .store_boom:
         sta player_has_boomerang
-        jsr hud_render
-        jsr sound_item_fanfare
-        jmp .start_dungeon_pickup
+        jmp .start_dungeon_pickup_hud
 
 +       cmp #DROP_RAFT
         bne +
         lda #1
         sta player_has_raft
-        jsr hud_render
-        jsr sound_item_fanfare
-        jmp .start_dungeon_pickup
+        jmp .start_dungeon_pickup_hud
 
 +       cmp #DROP_LADDER
         bne +
         lda #1
         sta player_has_stepladder
-        jsr hud_render
-        jsr sound_item_fanfare
-        jmp .start_dungeon_pickup
+        jmp .start_dungeon_pickup_hud
 
 +       cmp #DROP_WHISTLE
         bne +
         lda #1
         sta player_has_whistle
-        jsr hud_render
-        jsr sound_item_fanfare
-        jmp .start_dungeon_pickup
+        jmp .start_dungeon_pickup_hud
 
 +       cmp #DROP_BOOK
         bne +
         lda #1
         sta player_has_book
+.start_dungeon_pickup_hud:
         jsr hud_render
-        jsr sound_item_fanfare
-        jmp .start_dungeon_pickup
-
 .start_dungeon_pickup:
+        jsr sound_item_fanfare
         lda player_x
         sta dungeon_drop_x
         lda player_y
@@ -1990,9 +1971,7 @@ dungeon_collect_drop:
 ++      ora player_triforce_pieces
         sta player_triforce_pieces
 
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_full
 
         lda #1
         sta triforce_fanfare_timer

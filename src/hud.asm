@@ -13,8 +13,11 @@ HUD_ROW_MAP     = 0
 HUD_ROW_B_A     = 0
 HUD_ROW_LIFE    = 0
 
-HUD_HEART_FULL  = 96                    ; code caractère coeur plein ♥
-HUD_HEART_EMPTY = 97                    ; code caractère coeur vide ♡
+HUD_HEART_FULL  = 96                    ; code caractère coeur plein 4/4
+HUD_HEART_EMPTY = 97                    ; code caractère coeur vide 0/4
+HUD_HEART_1_4   = 249                   ; code caractère coeur 1/4
+HUD_HEART_2_4   = 250                   ; code caractère coeur 2/4
+HUD_HEART_3_4   = 251                   ; code caractère coeur 3/4
 HUD_CHAR_RUPEE  = 98                    ; code caractère rubis ◆
 HUD_CHAR_KEY    = 99                    ; code caractère clef
 HUD_CHAR_BOMB   = 100                   ; code caractère bombe
@@ -33,8 +36,10 @@ HUD_MAP_CHAR_7  = 114                   ; minimap Ligne 2, Col 5 ($2390)
 hud_rupees:       !byte 15              ; rubis initiaux
 hud_keys:         !byte 1               ; clefs initiales
 hud_bombs:        !byte 4               ; bombes initiales
-hud_max_hearts:   !byte 3               ; 3 cœurs max
-hud_cur_hearts:   !byte 3               ; 3 cœurs actuels
+hud_max_hearts:   !byte 3               ; 3 cœurs max (3..16)
+hud_cur_hearts:   !byte 12              ; vie actuelle en quarts de cœur (0..hud_max_hearts*4)
+hud_heart_chars:
+        !byte HUD_HEART_EMPTY, HUD_HEART_1_4, HUD_HEART_2_4, HUD_HEART_3_4, HUD_HEART_FULL
 hud_selected_b:   !byte 1               ; 0: Boomerang, 1: Bombe, 2: Arc, 3: Bougie
 
 ; Salles visitées (allouées en basse RAM résidente sous $2000 dans main.asm)
@@ -561,14 +566,22 @@ minimap_buf:
         cpx #8
         bne -
 
+        lda hud_cur_hearts
+        sta ZP_TMP                      ; ZP_TMP = quarts de cœur restants à afficher
         ldx #0
 .heart_loop:
-        cpx hud_cur_hearts
-        bcs .empty_heart
+        lda ZP_TMP
+        cmp #4
+        bcc .partial_heart
+        sbc #4
+        sta ZP_TMP
         lda #HUD_HEART_FULL
         jmp .draw_heart
-.empty_heart:
-        lda #HUD_HEART_EMPTY
+.partial_heart:
+        tay
+        lda #0
+        sta ZP_TMP
+        lda hud_heart_chars,y
 .draw_heart:
         cpx #8
         bcs .heart_row2
@@ -594,6 +607,28 @@ minimap_buf:
         bne .heart_loop
         jsr hud_update_sword
         rts
+
+; Helpers vie en quarts de cœur (utilisables depuis tout le jeu/overlays)
+hud_heal_full:
+        lda hud_max_hearts
+        asl
+        asl
+        sta hud_cur_hearts
+        jmp hud_render
+
+hud_heal_one_heart:
+        lda hud_max_hearts
+        asl
+        asl
+        sta ZP_TMP
+        lda hud_cur_hearts
+        clc
+        adc #4
+        cmp ZP_TMP
+        bcc +
+        lda ZP_TMP
++       sta hud_cur_hearts
+        jmp hud_render
 
 ; Convertit A (0..255) en 3 caractères ASCII : A=centaines, X=dizaines, Y=unités
 print_3digits:

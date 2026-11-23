@@ -628,12 +628,13 @@ player_update:
         cmp #236
         bcs .chk_dock_heart
         ; Link est dans le bassin de la Fée : soin complet de sa vie !
-        lda hud_cur_hearts
-        cmp hud_max_hearts
-        bcs .chk_dock_heart
         lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        asl
+        asl
+        cmp hud_cur_hearts
+        beq .chk_dock_heart
+        bcc .chk_dock_heart
+        jsr hud_heal_full
         jsr sound_item_fanfare
         rts
 
@@ -664,9 +665,7 @@ player_update:
         ora cave_room_cleared,x
         sta cave_room_cleared,x
         inc hud_max_hearts
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_full
         jsr sound_item_fanfare
         rts
 

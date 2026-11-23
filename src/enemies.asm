@@ -3440,39 +3440,48 @@ test_body_single:
         jsr sound_enemy_hit
         rts
 +
-        jsr hurt_link
+        ldy en_type,x
+        lda en_base_damage,y
+        bne +
+        lda #1
++       jsr hurt_link_dmg
 .bd_miss:
         rts
 
 ; ---------------------------------------------------------------------------
-; hurt_link : inflige des dégâts à Link, recul et bruitage
+; hurt_link : inflige 2 quarts (1/2 cœur) par défaut (projectiles)
+; hurt_link_dmg : inflige A quarts de cœur à Link avec protection des anneaux
 ; ---------------------------------------------------------------------------
 hurt_link:
+        lda #2
+hurt_link_dmg:
+        sta ZP_TMP
         lda player_hurt_timer
         beq +
         rts                             ; encore invincible
 +       lda #32                         ; ~0.6s d'invulnérabilité
         sta player_hurt_timer
 
-        ; Protection Anneaux : Bleu (1) = 1/2 dégâts (and #1), Rouge (2) = 1/4 dégâts (and #3) (M4)
+        ; Protection Anneaux : Bleu (1) = /2, Rouge (2) = /4 (min 1 quart)
         lda player_has_blue_ring
         beq .take_damage
-        inc player_blue_ring_hits
+        lsr ZP_TMP
         cmp #2
-        bcs .red_ring_chk
-        lda player_blue_ring_hits
-        and #1
-        bne .skip_heart_loss
-        beq .take_damage
-.red_ring_chk:
-        lda player_blue_ring_hits
-        and #3
-        bne .skip_heart_loss
+        bcc +
+        lsr ZP_TMP
++       lda ZP_TMP
+        bne .take_damage
+        lda #1
+        sta ZP_TMP
 
 .take_damage:
         lda hud_cur_hearts
         beq .dead_link
-        dec hud_cur_hearts
+        sec
+        sbc ZP_TMP
+        bcs +
+        lda #0
++       sta hud_cur_hearts
         jsr hud_render
         lda hud_cur_hearts
         beq .dead_link

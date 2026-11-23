@@ -287,10 +287,11 @@ ovl_debug_update:
         cmp #4
         bcc .p1_ref
         dec hud_max_hearts
-        lda hud_cur_hearts
-        cmp hud_max_hearts
-        bcc .p1_ref
         lda hud_max_hearts
+        asl
+        asl
+        cmp hud_cur_hearts
+        bcs .p1_ref
         sta hud_cur_hearts
         jmp .p1_ref
 +
@@ -303,7 +304,10 @@ ovl_debug_update:
         cmp #16
         bcs .p1_ref
         inc hud_max_hearts
-        inc hud_cur_hearts
+        lda hud_cur_hearts
+        clc
+        adc #4
+        sta hud_cur_hearts
         jmp .p1_ref
 
 .p1_ref:
@@ -841,9 +845,7 @@ dbg_p2_str2: !text "ROOM: OW/DUNG  ", 0
 dbg_p2_str3: !text "RAM: ZONE < C000 OK", 0
 
 debug_cheat_heal:
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_full
         jsr sound_item_fanfare
         rts
 
@@ -871,6 +873,7 @@ debug_cheat_full_gear:
         sta player_has_dungeon_map
         lda #16
         sta hud_max_hearts
+        lda #64
         sta hud_cur_hearts
         lda #8
         sta hud_keys

@@ -105,9 +105,7 @@ use_potion:
         lda player_has_potion
         bne +
         rts
-+       lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
++       jsr hud_heal_full
         jsr sound_potion
         dec player_has_potion
         rts

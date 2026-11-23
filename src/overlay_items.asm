@@ -1126,11 +1126,13 @@ ovl_gameover_update:
 
 ovl_gameover_continue:
 .go_continue:
-        ; Restaure 3 cœurs (ou hud_max_hearts si inférieur)
-        lda #3
-        cmp hud_max_hearts
-        bcc +
+        ; Restaure 3 cœurs (12 quarts) ou hud_max_hearts*4 si inférieur
         lda hud_max_hearts
+        asl
+        asl
+        cmp #12
+        bcc +
+        lda #12
 +       sta hud_cur_hearts
         lda #0
         sta player_hurt_timer
@@ -1405,9 +1407,7 @@ ovl_spawn_loot:
         rts                             ; 4/16 (25%)    : rien
 
 ovl_loot_fairy:
-        lda hud_max_hearts
-        sta hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_full
         jmp sound_item_fanfare
 
 ovl_loot_clock:
@@ -1424,13 +1424,8 @@ ovl_loot_clock:
 +       jmp sound_rupee
 
 .loot_heart:
-        lda hud_cur_hearts
-        cmp hud_max_hearts
-        bcs +
-        inc hud_cur_hearts
-        jsr hud_render
+        jsr hud_heal_one_heart
         jmp sound_rupee
-+       rts
 
 ; ===========================================================================
 ; 14. RIDEAU D'ENTRÉE / SORTIE DE DONJON (ovl_curtain_close)
