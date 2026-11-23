@@ -653,17 +653,51 @@ fs_tmp:           !byte 0
 fs_cnt:           !byte 0
 fs_color:         !byte 0
 
-; Clavier matriciel simplifié (via $DC00/$DC01) & Joystick Port 2 ($DC00)
+; Lecture Joystick Port 2 ($DC00) + Port 1 ($DC01) + Clavier (SPACE/RETURN/CRSR)
 fs_read_nav:
-        ; Retourne A = masque bits pressés (0=Up, 1=Down, 2=Left, 3=Right, 4=Fire/Enter)
-        lda #$ff
-        sta $dc02                       ; Port A sortie
+        ; 1. Lecture Joysticks Port 1 & Port 2 en haute impédance ($DC02=$00, $DC03=$00)
         lda #$00
-        sta $dc03                       ; Port B entrée
-        lda $dc00                       ; Joystick Port 2 (bits actifs à 0)
+        sta $dc02
+        sta $dc03
+        lda $dc00
+        and $dc01
         eor #$ff
         and #$1f
         sta ZP_TMP
+
+        ; 2. Lecture touches clavier (SPACE/RETURN/CRSR) avec Port A sortie
+        lda #$ff
+        sta $dc02
+        lda #$00
+        sta $dc03
+        lda #$7f                        ; Ligne 7 : SPACE (bit 4)
+        sta $dc00
+        lda $dc01
+        and #$10
+        bne +
+        lda ZP_TMP
+        ora #$10
+        sta ZP_TMP
++       lda #$fe                        ; Ligne 0 : RETURN (bit 1), CRSR DOWN (bit 7)
+        sta $dc00
+        lda $dc01
+        pha
+        and #$02
+        bne +
+        lda ZP_TMP
+        ora #$10
+        sta ZP_TMP
++       pla
+        and #$80
+        bne +
+        lda ZP_TMP
+        ora #$02
+        sta ZP_TMP
++       lda #$ff
+        sta $dc00
+        lda #$00
+        sta $dc02                       ; Remet Port A entrée propre
+
         ; Debounce : front montant uniquement
         lda ZP_TMP
         eor fs_joy_prev
@@ -900,6 +934,27 @@ fs_draw_select_screen:
         sta (ZP_DST),y
         lda #COL_RED
         sta (ZP_COL),y
++
+        ldx #23
+        ldy #8
+        jsr fs_set_pos
+        lda #<txt_opt_reset
+        sta ZP_SRC
+        lda #>txt_opt_reset
+        sta ZP_SRC+1
+        lda #COL_ORANGE
+        jsr fs_print_at
+        lda fs_cursor
+        cmp #5
+        bne +
+        ldx #23
+        ldy #6
+        jsr fs_set_pos
+        ldy #0
+        lda #'*'
+        sta (ZP_DST),y
+        lda #COL_RED
+        sta (ZP_COL),y
 +       rts
 
 ; Dessine l'écran REGISTER YOUR NAME
@@ -964,7 +1019,10 @@ fs_draw_register_screen:
 
         ldx fs_tmp
         lda fs_alphabet,x
-        ldy #0
+        cpx fs_grid_idx
+        bne +
+        ora #$80                        ; Vidéo inversée sur le caractère sélectionné !
++       ldy #0
         sta (ZP_DST),y
         lda #COL_WHITE
         cpx fs_grid_idx
@@ -977,8 +1035,35 @@ fs_draw_register_screen:
         cmp #44
         bne .grid_loop
 
-        ldx #21
-        ldy #7
+        ; Bouton explicite [ END ] (index 44) à la ligne 19, col 16
+        ldx #19
+        ldy #16
+        jsr fs_set_pos
+        lda #<txt_btn_end
+        sta ZP_SRC
+        lda #>txt_btn_end
+        sta ZP_SRC+1
+        lda #COL_CYAN
+        ldx fs_grid_idx
+        cpx #44
+        bne +
+        lda #COL_YELLOW
++       jsr fs_print_at
+        lda fs_grid_idx
+        cmp #44
+        bne +
+        ldx #19
+        ldy #14
+        jsr fs_set_pos
+        ldy #0
+        lda #'>'
+        sta (ZP_DST),y
+        lda #COL_YELLOW
+        sta (ZP_COL),y
++
+
+        ldx #22
+        ldy #5
         jsr fs_set_pos
         lda #<txt_reg_hint
         sta ZP_SRC
@@ -1001,7 +1086,12 @@ ovl_file_select_run:
         jsr fs_draw_select_screen
 
 .fs_loop:
-        ; Synchro 1 frame PAL
+        ; Synchro stricte 1 frame PAL (50,00 Hz) : attendre sortie >=248 puis entrée >=248
+-       lda VIC_CTRL1
+        bmi -
+-       lda VIC_RASTER
+        cmp #248
+        bcs -
 -       lda VIC_CTRL1
         bmi -
 -       lda VIC_RASTER
@@ -1031,7 +1121,7 @@ ovl_file_select_run:
         and #$02                        ; DOWN
         beq +
         lda fs_cursor
-        cmp #4
+        cmp #5
         bcs +
         inc fs_cursor
         jsr fs_draw_select_screen
@@ -1044,6 +1134,8 @@ ovl_file_select_run:
         beq .enter_reg_mode
         cmp #4
         beq .toggle_elim_mode
+        cmp #5
+        beq .do_reset_all_saves
 
         ; Action sur un slot 0..2
         ldx fs_mode
@@ -1066,6 +1158,17 @@ ovl_file_select_run:
         sta SID_VOLUME
         sta SID2_VOLUME
         rts
+
+.do_reset_all_saves:
+        jsr install_flash_stubs
+        jsr RAM_ERASE_SEC7
+        jsr save_flash_scan
+        lda #FS_MODE_SELECT
+        sta fs_mode
+        lda #0
+        sta fs_cursor
+        jsr fs_draw_select_screen
+        jmp .fs_loop
 
 .do_eliminate_slot:
         lda fs_cursor
@@ -1144,6 +1247,8 @@ ovl_file_select_run:
         beq +
         lda fs_grid_idx
         beq +
+        cmp #44
+        beq +
         dec fs_grid_idx
         jsr fs_draw_register_screen
 +       pla
@@ -1160,6 +1265,13 @@ ovl_file_select_run:
         and #$01                        ; UP
         beq +
         lda fs_grid_idx
+        cmp #44
+        bne .up_grid
+        lda #38                         ; Depuis END -> milieu rangée 3
+        sta fs_grid_idx
+        jsr fs_draw_register_screen
+        jmp +
+.up_grid:
         cmp #11
         bcc +
         sec
@@ -1171,20 +1283,27 @@ ovl_file_select_run:
         and #$02                        ; DOWN
         beq +
         lda fs_grid_idx
-        cmp #33
+        cmp #44
         bcs +
+        cmp #33
+        bcc .down_grid
+        lda #44                         ; Depuis rangée 3 -> bouton END
+        sta fs_grid_idx
+        jsr fs_draw_register_screen
+        jmp +
+.down_grid:
         clc
         adc #11
         sta fs_grid_idx
         jsr fs_draw_register_screen
 +       pla
-        and #$10                        ; FIRE -> choisit lettre ou '*' (END)
+        and #$10                        ; FIRE -> choisit lettre ou END (index 44)
         bne +
         jmp .fs_loop
 +       ldx fs_grid_idx
-        lda fs_alphabet,x
-        cmp #'*'                        ; '*' = END / Valider
+        cpx #44
         beq .finish_register
+        lda fs_alphabet,x
 
         pha
         lda fs_reg_slot
@@ -1221,10 +1340,12 @@ txt_empty:          !scr "- empty -" : !byte 0
 txt_default_name:   !scr "link    "
 txt_opt_register:   !scr "register your name" : !byte 0
 txt_opt_eliminate:  !scr "elimination mode" : !byte 0
-txt_reg_hint:       !scr "fire: letter   *: save & exit" : !byte 0
+txt_opt_reset:      !scr "reset all saves" : !byte 0
+txt_btn_end:        !scr "[ end ]" : !byte 0
+txt_reg_hint:       !scr "fire: pick letter / select end" : !byte 0
 
 fs_alphabet:
-        !scr "abcdefghijklmnopqrstuvwxyz0123456789-.,!'& *"
+        !scr "abcdefghijklmnopqrstuvwxyz0123456789-.,!'&  "
 
 row_scr_lo:
         !for r, 0, 24 {
