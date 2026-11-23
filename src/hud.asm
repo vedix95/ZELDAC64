@@ -687,6 +687,16 @@ print_2digits:
 ; ---------------------------------------------------------------------------
 ; hud_update_sword : affiche "SWORD" (5 car, cols 26..30) coloré par niveau (V2)
 ; ---------------------------------------------------------------------------
+ow_heart_rooms:
+        !byte 95, 43, 78, 81, 86, 91, 110
+
+hud_add_max_heart:
+        lda hud_max_hearts
+        cmp #16
+        bcs +
+        inc hud_max_hearts
++       jmp hud_heal_full
+
 hud_update_sword:
         txa
         pha

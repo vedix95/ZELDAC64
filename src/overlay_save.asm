@@ -49,6 +49,11 @@ SL_LETTER         = 28
 SL_TRIFORCE       = 29
 SL_SEL_B          = 30
 SL_OW_SECRETS     = 31          ; 7 octets (31..37)
+SL_HEARTS_DUNG    = 38          ; bitmask 8 conteneurs de donjons (D1..D8)
+SL_HEARTS_OW      = 39          ; bitmask conteneurs Overworld (ow_heart_rooms)
+SL_SHIELD         = 40          ; player_has_shield (1..2)
+SL_ARROWS         = 41          ; player_has_arrows (1..2)
+SL_FOOD           = 42          ; player_has_food (0..1)
 
 * = OVERLAY_RAM_ADDR ; $A000
 
@@ -510,6 +515,14 @@ ovl_save_apply_slot:
         sta player_has_candle
         lda EF_RAM_SLOT_DATA + SL_POTION
         sta player_has_potion
+        lda EF_RAM_SLOT_DATA + SL_SHIELD
+        bne +
+        lda #1                          ; Bouclier de base minimum = 1
++       sta player_has_shield
+        lda EF_RAM_SLOT_DATA + SL_ARROWS
+        sta player_has_arrows
+        lda EF_RAM_SLOT_DATA + SL_FOOD
+        sta player_has_food
         lda EF_RAM_SLOT_DATA + SL_TRIFORCE
         sta player_triforce_pieces
         lda EF_RAM_SLOT_DATA + SL_SEL_B
@@ -519,6 +532,20 @@ ovl_save_apply_slot:
 -       lda EF_RAM_SLOT_DATA + SL_OW_SECRETS,x
         sta overworld_secrets_opened,x
         dex
+        bpl -
+        lda EF_RAM_SLOT_DATA + SL_HEARTS_DUNG
+        sta heart_dung_mask
+        lda EF_RAM_SLOT_DATA + SL_HEARTS_OW
+        sta heart_ow_mask
+        ldx #6
+-       lda bit_powers,x
+        and heart_ow_mask
+        beq +
+        ldy ow_heart_rooms,x
+        lda cave_room_cleared,y
+        ora #$07
+        sta cave_room_cleared,y
++       dex
         bpl -
         jmp hud_render
 
@@ -583,6 +610,12 @@ ovl_save_current_slot:
         sta save_buf + SL_CANDLE,x
         lda player_has_potion
         sta save_buf + SL_POTION,x
+        lda player_has_shield
+        sta save_buf + SL_SHIELD,x
+        lda player_has_arrows
+        sta save_buf + SL_ARROWS,x
+        lda player_has_food
+        sta save_buf + SL_FOOD,x
         lda player_triforce_pieces
         sta save_buf + SL_TRIFORCE,x
         lda hud_selected_b
@@ -600,6 +633,11 @@ ovl_save_current_slot:
         inx
         cpx #7
         bne -
+        lda heart_dung_mask
+        sta save_buf,y
+        iny
+        lda heart_ow_mask
+        sta save_buf,y
 
         jsr save_flash_commit
         lda EF_RAM_SLOT_IDX

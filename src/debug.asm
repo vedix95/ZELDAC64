@@ -875,6 +875,17 @@ debug_cheat_full_gear:
         sta hud_max_hearts
         lda #64
         sta hud_cur_hearts
+        lda #$ff
+        sta heart_dung_mask
+        lda #$7f
+        sta heart_ow_mask
+        ldx #6
+-       ldy ow_heart_rooms,x
+        lda cave_room_cleared,y
+        ora #$07
+        sta cave_room_cleared,y
+        dex
+        bpl -
         lda #8
         sta hud_keys
         sta hud_bombs

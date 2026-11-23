@@ -121,12 +121,8 @@ loot_drop_type:       !byte 0
 loot_drop_x:          !word 0
 loot_drop_y:          !byte 0
 loot_drop_timer:      !word 0
-
-loot_spr_tbl:
-        !byte SPR_COMMON_HEART, SPR_DROP_RUPEE, SPR_DROP_RUPEE
-        !byte <(sprite_link_item_bomb / 64), SPR_DROP_FAIRY, SPR_DROP_CLOCK
-loot_col_tbl:
-        !byte COL_RED, COL_YELLOW, COL_BLUE, COL_BLUE, COL_LIGHT_RED, COL_YELLOW
+heart_dung_mask:      !byte 0
+heart_ow_mask:        !byte 0
 
 player_init:
         lda #PLAYER_COLOR
@@ -687,6 +683,9 @@ player_update:
         cmp #180
         bcs .chk_ow_push
         ; Vérifie si le cœur de la salle 95 a déjà été pris
+        lda heart_ow_mask
+        and #1
+        bne .chk_ow_push
         ldx #95
         lda cave_room_cleared,x
         and #1
@@ -694,8 +693,10 @@ player_update:
         lda #1
         ora cave_room_cleared,x
         sta cave_room_cleared,x
-        inc hud_max_hearts
-        jsr hud_heal_full
+        lda heart_ow_mask
+        ora #1
+        sta heart_ow_mask
+        jsr hud_add_max_heart
         jsr sound_item_fanfare
         rts
 

@@ -1838,7 +1838,17 @@ dungeon_spawn_room_drop:
         jsr dungeon_get_room_drop_type
         cmp #DROP_NONE
         beq .no_drop
-
+        cmp #DROP_HEART_CONTAINER
+        bne +
+        ldx current_dungeon_level
+        beq .no_drop
+        cpx #9
+        bcs .no_drop
+        lda bit_powers-1,x
+        and heart_dung_mask
+        bne .no_drop
+        lda #DROP_HEART_CONTAINER
++
         sta dungeon_drop_type
         lda #1
         sta dungeon_drop_active

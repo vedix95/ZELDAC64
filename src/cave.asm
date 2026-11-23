@@ -1493,8 +1493,19 @@ cave_grant_item:
         rts
 +       cmp #ITEM_ID_HEART_CONTAINER
         bne +
-        inc hud_max_hearts
-        jsr hud_heal_full
+        jsr hud_add_max_heart
+        ldx #6
+-       lda ow_heart_rooms,x
+        cmp current_room_idx
+        beq .mark_ow_hc
+        dex
+        bpl -
+        bmi .hc_done_mark
+.mark_ow_hc:
+        lda bit_powers,x
+        ora heart_ow_mask
+        sta heart_ow_mask
+.hc_done_mark:
         lda #(sprite_link_item_heart / 64)
         sta cave_held_item_ptr
         lda #COL_RED

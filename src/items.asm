@@ -20,6 +20,11 @@ ITEM_SWORD_BEAM = 6
 beam_ptrs:
         !byte <(sprite_link_sword_down/64), <(sprite_link_sword_up/64)
         !byte <(sprite_link_sword_left/64), <(sprite_link_sword_right/64)
+loot_spr_tbl:
+        !byte SPR_COMMON_HEART, SPR_DROP_RUPEE, SPR_DROP_RUPEE
+        !byte <(sprite_link_item_bomb / 64), SPR_DROP_FAIRY, SPR_DROP_CLOCK
+loot_col_tbl:
+        !byte COL_RED, COL_YELLOW, COL_BLUE, COL_BLUE, COL_LIGHT_RED, COL_YELLOW
 
 item_active:    !byte ITEM_NONE         ; type d'arme active (0 = aucune)
 item_x:         !word 0                 ; position X en pixels sprite (16 bits)
@@ -868,17 +873,13 @@ items_draw:
         cmp #DROP_KEY
         bne +
         lda #< (sprite_link_item_key / 64)
-        sta SPRITE_PTR2
-        lda #COL_YELLOW
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        ldx #COL_YELLOW
+        jmp .set_spr2_ax
 +       cmp #DROP_HEART_CONTAINER
         bne +
         lda #< (sprite_link_item_heart / 64)
-        sta SPRITE_PTR2
-        lda #COL_RED
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        ldx #COL_RED
+        jmp .set_spr2_ax
 +       cmp #DROP_TRIFORCE
         bne +
         lda #< (sprite_link_item_triforce / 64)
@@ -925,32 +926,26 @@ items_draw:
 +       cmp #DROP_RAFT
         bne +
         lda #< (sprite_link_item_raft / 64)
-        sta SPRITE_PTR2
-        lda #COL_BROWN
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        ldx #COL_BROWN
+        bne .set_spr2_ax
 +       cmp #DROP_LADDER
         bne +
         lda #< (sprite_link_item_stepladder / 64)
-        sta SPRITE_PTR2
-        lda #COL_BROWN
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        ldx #COL_BROWN
+        bne .set_spr2_ax
 +       cmp #DROP_WHISTLE
         bne +
         lda #< (sprite_link_item_whistle / 64)
-        sta SPRITE_PTR2
-        lda #COL_YELLOW
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        ldx #COL_YELLOW
+        bne .set_spr2_ax
 +       cmp #DROP_BOOK
-        bne +
+        bne .no_drop_to_draw
         lda #< (sprite_link_item_wand / 64)
+        ldx #COL_LIGHT_BLUE
+.set_spr2_ax:
         sta SPRITE_PTR2
-        lda #COL_LIGHT_BLUE
-        sta VIC_SPRITE_COL2
+        stx VIC_SPRITE_COL2
         jmp .enable_spr2
-+
 .no_drop_to_draw:
         ; Vérifie si l'échelle autonome est déployée sur l'eau
         lda ladder_tile_idx
@@ -972,10 +967,8 @@ items_draw:
 +       sta VIC_SPRITE_MSB
 
         lda #< (sprite_link_item_stepladder / 64)
-        sta SPRITE_PTR2
-        lda #COL_BROWN
-        sta VIC_SPRITE_COL2
-        jmp .enable_spr2
+        ldx #COL_BROWN
+        jmp .set_spr2_ax
 
 .no_ladder_to_draw:
         lda loot_drop_active

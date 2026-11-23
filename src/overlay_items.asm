@@ -1644,8 +1644,15 @@ ovl_dungeon_collect_drop:
 
 +       cmp #DROP_HEART_CONTAINER
         bne +
-        inc hud_max_hearts
-        jsr hud_heal_full
+        ldx current_dungeon_level
+        beq .hc_skip_mask
+        cpx #9
+        bcs .hc_skip_mask
+        lda bit_powers-1,x
+        ora heart_dung_mask
+        sta heart_dung_mask
+.hc_skip_mask:
+        jsr hud_add_max_heart
         jmp .start_dungeon_pickup
 
 +       cmp #DROP_COMPASS
