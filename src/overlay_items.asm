@@ -218,18 +218,18 @@ ow_push_tile_type:      !byte 0
 ow_push_reveal_off:     !byte 0   ; décalage de l'escalier par rapport au rocher (0 = sous le rocher, 1 = au centre à droite)
 
 ; Table : salle, index_tuile, type_tuile, sens_autorisés (%RLUD = bits 3..0), besoin_bracelet, décalage_escalier
-; Rochers : poussée vers la GAUCHE uniquement (%0100) ; Tombes : vers le HAUT (%0010)
-; D-3 et J-8 (4 rochers en losange) : l'escalier apparaît AU CENTRE du losange (+1 à droite du rocher poussé)
+; D-3 et J-8 (4 rochers en losange) : poussée Haut/Bas/Gauche (%0111), l'escalier apparaît AU CENTRE du losange (+1 à droite)
+; Autres rochers : 4 directions (%1111) ; Tombes : vers le Haut (%0010)
 ow_push_tbl:
-        !byte   9, 106, TILE_ROCK , %0100, 1, 0   ; J-1 ($09) (6,5)  -> Hint 1
-        !byte  17, 110, TILE_ROCK , %0100, 1, 0   ; B-2 ($11) (10,5) -> Hint 1
-        !byte  29, 105, TILE_ROCK , %0100, 1, 0   ; N-2 ($1D) (5,5)  -> Warp
+        !byte   9, 106, TILE_ROCK , %1111, 1, 0   ; J-1 ($09) (6,5)  -> Hint 1
+        !byte  17, 110, TILE_ROCK , %1111, 1, 0   ; B-2 ($11) (10,5) -> Hint 1
+        !byte  29, 105, TILE_ROCK , %1111, 1, 0   ; N-2 ($1D) (5,5)  -> Warp
         !byte  32, 108, TILE_GRAVE, %0010, 0, 0   ; A-3 ($20) (8,5)  -> Warp (Tombe, Haut)
         !byte  33, 111, TILE_GRAVE, %0010, 0, 0   ; B-3 ($21) (11,5) -> Épée Magique (Tombe, Haut)
-        !byte  35, 105, TILE_ROCK , %0100, 1, 1   ; D-3 ($23) (5,5)  -> Warp (escalier au centre 6,5)
-        !byte  51,  89, TILE_ROCK , %0100, 1, 0   ; D-4 ($33) (9,4)  -> Potion Shop
-        !byte  73, 105, TILE_ROCK , %0100, 1, 0   ; J-5 ($49) (5,5)  -> Warp
-        !byte 121, 110, TILE_ROCK , %0100, 1, 1   ; J-8 ($79) (10,5) -> Warp (escalier au centre 11,5)
+        !byte  35, 105, TILE_ROCK , %0111, 1, 1   ; D-3 ($23) (5,5)  -> Warp (escalier au centre 6,5)
+        !byte  51,  89, TILE_ROCK , %1111, 1, 0   ; D-4 ($33) (9,4)  -> Potion Shop
+        !byte  73, 105, TILE_ROCK , %1111, 1, 0   ; J-5 ($49) (5,5)  -> Warp
+        !byte 121, 110, TILE_ROCK , %0111, 1, 1   ; J-8 ($79) (10,5) -> Warp (escalier au centre 11,5)
         !byte $ff
 
 ovl_item_bracelet_exec:
