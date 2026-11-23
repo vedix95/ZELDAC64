@@ -167,12 +167,17 @@ ovl_item_candle_exec:
         lda current_world_type
         bne .candle_done
 
-        ; Tester si la flamme touche un arbre secret
+        ; Tester si la flamme touche un arbre secret (centre du sprite +8,+8)
+        clc
         lda item_x
+        adc #8
         sta col_x
         lda item_x+1
+        adc #0
         sta col_x+1
+        clc
         lda item_y
+        adc #8
         sta col_y
         jsr get_tile_at_point           ; A = tile_id, Y = offset dans room_buf
         cmp #TILE_TREE
