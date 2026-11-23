@@ -3442,6 +3442,7 @@ test_body_single:
         bcc +
         lda #1                          ; rétrograde au petit bouclier
         sta player_has_shield
+        jsr player_sync_shield_sprites
 +
         ; Bubble maudit l'épée
         cpy #TYPE_BUBBLE

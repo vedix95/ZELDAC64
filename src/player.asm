@@ -150,6 +150,28 @@ player_init:
         sta ladder_tile_idx
         rts
 
+player_sync_shield_sprites:
+        tya
+        pha
+        lda #<$8000
+        sta ZP_SRC
+        lda #>$8000
+        ldx player_has_shield
+        cpx #2
+        bcc +
+        lda #>$8300
++       sta ZP_SRC+1
+        lda #<sprite_link_down_0
+        sta ZP_DST
+        lda #>sprite_link_down_0
+        sta ZP_DST+1
+        ldx #3                          ; 3 pages = 768 octets (12 sprites corps Link)
+        lda #CART_BANK_LINK_SHIELD
+        jsr cart_stream_copy_from
+        pla
+        tay
+        rts
+
 player_update:
         lda triforce_fanfare_timer
         ora dungeon_pickup_timer

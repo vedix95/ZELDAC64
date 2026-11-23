@@ -41,5 +41,6 @@ CART_BANK_OVL_ITEMS     = 29            ; Overlay Logiques d'Objets Spéciaux ($
 CART_BANK_OVL_DEBUG     = 30            ; Overlay Menu Debug ($A000)
 CART_BANK_AUDIO         = 31            ; Musiques et sons étendus
 CART_BANK_OVL_SAVE      = 32            ; Overlay Sauvegarde EasyFlash & File Select ($A000)
-; Banques 33..55 : Libres (ROM non inscriptible)
+CART_BANK_LINK_SHIELD   = 33            ; Sprites Link Petit Bouclier ($8000) & Bouclier Magique ($8300)
+; Banques 34..55 : Libres (ROM non inscriptible)
 ; Banques 56..63 : Secteur Flash 7 (64 Ko sauvegardes persistantes)

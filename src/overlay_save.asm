@@ -521,6 +521,7 @@ ovl_save_apply_slot:
         bne +
         lda #1                          ; Bouclier de base minimum = 1
 +       sta player_has_shield
+        jsr player_sync_shield_sprites
         lda EF_RAM_SLOT_DATA + SL_ARROWS
         sta player_has_arrows
         lda EF_RAM_SLOT_DATA + SL_FOOD

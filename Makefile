@@ -105,7 +105,10 @@ $(BLD_DIR)/ovl_save.dat: $(SRC_DIR)/overlay_save.asm $(BLD_DIR)/resident_symbols
 	$(ACME) -f plain --vicelabels $(BLD_DIR)/ovl_save.vs -o $@ $<
 
 # Image cartouche EasyFlash CRT (1 Mo) avec secteur Flash de sauvegarde
-$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(SPR_BINS) $(OVL_DATS) $(BLD_DIR)/ovl_save.dat $(PRG_INT) tools/cartgen.py src/cart_boot.asm
+$(BLD_DIR)/cart_link_shield.bin: assets/link.txt assets/link_magic_shield.txt tools/build_link_shield_bank.py tools/sprgen.py | $(BLD_DIR)
+	python3 tools/build_link_shield_bank.py
+
+$(CRT): $(PRG) $(OW_DATS) $(DUNG_DATS) $(SPR_BINS) $(OVL_DATS) $(BLD_DIR)/ovl_save.dat $(BLD_DIR)/cart_link_shield.bin $(PRG_INT) tools/cartgen.py src/cart_boot.asm
 	$(PYTHON) tools/cartgen.py
 
 crt: $(CRT)

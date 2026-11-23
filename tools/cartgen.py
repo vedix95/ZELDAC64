@@ -190,6 +190,18 @@ def main():
         print(f"  [!] Banque {len(banks):02d} : ovl_save.dat non trouvé, initialisé vide")
     banks.append(b_save)
 
+    # Banque 33 : Sprites Link Petit Bouclier / Bouclier Magique (CART_BANK_LINK_SHIELD)
+    shield_path = os.path.join(BLD_DIR, "cart_link_shield.bin")
+    b_shield = bytearray(BANK_SIZE)
+    if os.path.exists(shield_path):
+        with open(shield_path, "rb") as f:
+            sh_data = f.read()
+        b_shield[:len(sh_data)] = sh_data[:BANK_SIZE]
+        print(f"  [+] Banque {len(banks):02d} : Sprites Link Petit/Grand Bouclier ({len(sh_data)} octets)")
+    else:
+        print(f"  [!] Banque {len(banks):02d} : cart_link_shield.bin non trouvé, initialisé vide")
+    banks.append(b_shield)
+
     # Remplir jusqu'à TOTAL_BANKS (64 banques)
     while len(banks) < TOTAL_BANKS:
         if len(banks) >= 56:

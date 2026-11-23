@@ -351,6 +351,7 @@ ovl_debug_update:
         lda player_has_shield
         eor #3
         sta player_has_shield
+        jsr player_sync_shield_sprites
         jmp .p1_ref
 +
         lda dbg_col2
@@ -894,6 +895,7 @@ debug_cheat_full_gear:
         sta hud_rupees
         lda #$ff
         sta player_triforce_pieces
+        jsr player_sync_shield_sprites
         jsr hud_render
         jsr sound_secret
         rts

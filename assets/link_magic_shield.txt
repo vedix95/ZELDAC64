@@ -1,0 +1,172 @@
+# ===========================================================================
+# LINK : VARIANTES BOUCLIER MAGIQUE (player_has_shield == 2)
+# 12 sprites (768 octets) streamés dynamiquement depuis Banque 33 vers $0840.
+# Bouclier Magique plus grand (4x7) avec bordure claire (s) et croix épaisse (b).
+# ===========================================================================
+
+[down_0] pad 1 2
+...gggg...
+...gggg...
+..sbbbbs..
+..sbbbbs..
+..sbssbs..
+..sbbbbs..
+..bssssb..
+..bsbbsb..
+..sgssssss
+..sgggsbbs
+..bgbbsbbs
+..ggggbbbb
+..ggbbsbbs
+...bggsbbs
+...bbbssss
+...bb.....
+
+[down_1] pad 1 2
+...gggg...
+...gggg...
+..sbbbbs..
+..sbbbbs..
+..sbssbs..
+..sbbbbs..
+..bssssb..
+..bsbbsb..
+ssssssgs..
+sbbsgggg..
+sbbsbbgb..
+bbbbbbbg..
+sbbsbbgg..
+sbbsggb...
+ssssbb....
+.....bb...
+
+[up_0] pad 1 2
+...gggg...
+...gggg...
+..sggggs..
+..sggggs..
+..bggggb..
+..sbggbs..
+..sbbbbs..
+..bbbbbb..
+.ssbggbb..
+.sbsggbb..
+.bbbggbb..
+.sbsbbbs..
+.sssgggg..
+..bbbggb..
+...bbbbb..
+...b......
+
+[up_1] pad 1 2
+...gggg...
+...gggg...
+..sggggs..
+..sggggs..
+..bggggb..
+..sbggbs..
+..sbbbbs..
+..bbbbbb..
+..bbggbss.
+..bbggbsbs
+..bbggbbbb
+..sbbbbsbs
+..gggggsss
+...bggbbb.
+...bbbbb..
+......b...
+
+[left_0] pad 1 2
+..........
+....ggg...
+...bbggg..
+..bbbbsgg.
+...bbbsgg.
+...ssbsgg.
+..sbsbbb..
+..bsssbb..
+ssssgg....
+sbbsbb....
+sbbsbb....
+bbbbbbg...
+sbbsbbg...
+sbbsbggb..
+ssssggbb..
+...bb..bb.
+
+[left_1] pad 1 2
+..........
+....gg....
+..bbbgg...
+..bbbgsg..
+..bbbbsg..
+..ssbssg..
+.ssbbsbgg.
+..sssbb.g.
+ssssgg....
+sbbsbg....
+sbbsbg....
+bbbbbg....
+sbbsbgg...
+sbbsgggb..
+ssssggbb..
+.bbb...bb.
+
+[right_0] mirror left_0
+[right_1] mirror left_1
+
+[attack_down] pad 1 2
+...gggg...
+...gggg...
+..sbbbbs..
+..sbbbbs..
+..sbssbs..
+..sbbbbs..
+..bssssb..
+..bsbbsb..
+..sgssssss
+..sgggsbbs
+..bgbbsbbs
+..ggggbbbb
+..ggbbsbbs
+...bggsbbs
+...bbbssss
+...bb.....
+
+[attack_up] pad 1 2
+...gggg...
+...gggg...
+..sggggs..
+..sggggs..
+..bggggb..
+..sbggbs..
+..sbbbbs..
+..bbbbbb..
+.ssbggbb..
+.sbsggbb..
+.bbbggbb..
+.sbsbbbs..
+.sssgggg..
+..bbbggb..
+...bbbbb..
+...b......
+
+[attack_left] pad 1 2
+...gggbb..
+...gggbb..
+..ggbbgbb.
+.sgbbbbsb.
+.ssbssbsb.
+..sbbbbbb.
+..ssbbsbs.
+ssssggb...
+sbbsgs....
+sbbsgb....
+bbbbbb....
+sbbsbg....
+sbbsbbb...
+ssssgbb...
+.bbss.....
+..........
+
+[attack_right] mirror attack_left

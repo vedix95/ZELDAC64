@@ -1448,6 +1448,7 @@ cave_grant_item:
         bne +
         lda #2
         sta player_has_shield
+        jsr player_sync_shield_sprites
         lda #(sprite_link_item_shield / 64)
         sta cave_held_item_ptr
         lda #COL_BLUE
