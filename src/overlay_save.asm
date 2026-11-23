@@ -838,6 +838,22 @@ fs_draw_select_screen:
         sta VIC_BORDER
         lda #0
         sta VIC_SPRITE_EN
+        sta VIC_SPRITE_EXP_X
+        sta VIC_SPRITE_EXP_Y
+        sta VIC_SPRITE_MSB
+        lda #%00000111
+        sta VIC_SPRITE_MC
+        lda #COL_LIGHT_RED
+        sta VIC_SPRITE_MC1
+        lda #COL_BROWN
+        sta VIC_SPRITE_MC2
+
+        ; Copie Link (marche vers le bas, 2 frames) en RAM vidéo Bank 0 ($0340/$0380 -> blocs 13/14)
+        ldx #127
+-       lda fs_link_sprites,x
+        sta $0340,x
+        dex
+        bpl -
 
         ; Titre : "- SELECT -" ou "- ELIMINATE -"
         ldx #2
@@ -904,7 +920,9 @@ fs_draw_select_screen:
         ; Nom ou "- EMPTY -"
         ldx ZP_TMP
         lda save_buf + SL_ACTIVE,x
-        beq .slot_empty
+        bne +
+        jmp .slot_empty
++
 
         ldy #5
         lda #0
@@ -924,24 +942,95 @@ fs_draw_select_screen:
         cmp #8
         bne -
 
-        ; Cœurs max (petits cœurs '+' en rouge)
+        ; Cœurs max (caractère cœur $53 en rouge, à droite de Link)
         ldx ZP_TMP
         lda save_buf + SL_MAX_HEARTS,x
         cmp #17
         bcc +
         lda #16
 +       sta fs_cnt
-        ldy #15
+        ldy #17
 -       lda fs_cnt
         beq +
-        lda #'#'
+        lda #$53                        ; Code écran C64 ♥ (cœur plein)
         sta (ZP_DST),y
         lda #COL_RED
         sta (ZP_COL),y
         iny
         dec fs_cnt
         jmp -
-+       jmp .next_slot_draw
++
+        ; Sprite Link qui marche vers le bas à côté des cœurs (X=180, Y=92+slot*32)
+        ldy fs_tmp
+        tya
+        asl
+        tax
+        lda #180
+        sta VIC_SPRITE_X0,x
+        lda fs_tmp
+        asl
+        asl
+        asl
+        asl
+        asl
+        clc
+        adc #92
+        sta VIC_SPRITE_Y0,x
+        lda #13                         ; bloc $0340 (Link marche bas frame 0)
+        sta SPRITE_PTR0,y
+        ldx ZP_TMP
+        lda save_buf + SL_RING,x
+        beq .col_green
+        cmp #1
+        beq .col_blue_ring
+        lda #COL_RED
+        bne .set_link_col
+.col_blue_ring:
+        lda #COL_WHITE
+        bne .set_link_col
+.col_green:
+        lda #COL_GREEN
+.set_link_col:
+        sta VIC_SPRITE_COL0,y
+        lda VIC_SPRITE_EN
+        ora fs_bit_mask,y
+        sta VIC_SPRITE_EN
+
+        ; Affiche l'épée / anneau sur la ligne sous le nom (row + 1)
+        lda save_buf + SL_SWORD,x
+        beq .next_slot_draw
+        pha
+        lda fs_tmp
+        asl
+        asl
+        clc
+        adc #7
+        tax
+        ldy #11
+        jsr fs_set_pos
+        pla
+        cmp #1
+        beq .sw_wood_c
+        cmp #2
+        beq .sw_white_c
+        lda #COL_CYAN
+        bne .draw_sw_tag
+.sw_wood_c:
+        lda #COL_ORANGE
+        bne .draw_sw_tag
+.sw_white_c:
+        lda #COL_WHITE
+.draw_sw_tag:
+        sta fs_cnt
+        ldy #0
+-       lda txt_swd_tag,y
+        beq .next_slot_draw
+        sta (ZP_DST),y
+        lda fs_cnt
+        sta (ZP_COL),y
+        iny
+        bne -
+        jmp .next_slot_draw
 
 .slot_empty:
         ldy #5
@@ -1170,7 +1259,23 @@ ovl_file_select_run:
         bcc -
 
         jsr fs_music_update
-        jsr fs_read_nav
+        ; Anime Link qui marche vers le bas sur les slots actifs (toutes les 12 frames)
+        lda fs_mode
+        cmp #FS_MODE_REGISTER
+        beq +
+        inc fs_anim_tick
+        lda fs_anim_tick
+        and #16
+        lsr
+        lsr
+        lsr
+        lsr
+        clc
+        adc #13
+        sta SPRITE_PTR0
+        sta SPRITE_PTR1
+        sta SPRITE_PTR2
++       jsr fs_read_nav
         beq .fs_loop
 
         ldx fs_mode
@@ -1470,6 +1575,58 @@ txt_reg_hint:       !scr "fire: pick letter / select end" : !byte 0
 
 fs_alphabet:
         !scr "abcdefghijklmnopqrstuvwxyz0123456789-.,!'&  "
+
+txt_swd_tag:    !scr "swd" : !byte 0
+fs_bit_mask:    !byte 1, 2, 4
+fs_anim_tick:   !byte 0
+
+fs_link_sprites:
+        ; Frame 0 : sprite_link_down_0
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %10101010, %00000000
+        !byte %00000000, %10101010, %00000000
+        !byte %00000001, %11111111, %01000000
+        !byte %00000001, %11111111, %01000000
+        !byte %00000001, %11010111, %01000000
+        !byte %00000001, %11111111, %01000000
+        !byte %00000011, %01010101, %11000000
+        !byte %00000011, %01111101, %11000000
+        !byte %00000001, %10010110, %11110000
+        !byte %00000001, %10101010, %11110000
+        !byte %00000011, %10111101, %01110000
+        !byte %00000010, %11111111, %01010000
+        !byte %00000010, %10111110, %01000000
+        !byte %00000000, %11101010, %00000000
+        !byte %00000000, %11111111, %00000000
+        !byte %00000000, %11110000, %00000000
+        !byte %00000011, %11111111, %11000000
+        !byte %00000000, %11111111, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte 0
+        ; Frame 1 : sprite_link_down_1
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte %00000000, %10101010, %00000000
+        !byte %00000000, %10101010, %00000000
+        !byte %00000001, %11111111, %01000000
+        !byte %00000001, %11111111, %01000000
+        !byte %00000001, %11010111, %01000000
+        !byte %00000001, %11111111, %01000000
+        !byte %00000011, %01010101, %11000000
+        !byte %00000011, %01111101, %11000000
+        !byte %00001111, %10010110, %01000000
+        !byte %00001111, %10101010, %01000000
+        !byte %00001101, %01111110, %11000000
+        !byte %00000101, %11111111, %10000000
+        !byte %00000001, %10111110, %10000000
+        !byte %00000000, %10101011, %00000000
+        !byte %00000000, %11111111, %00000000
+        !byte %00000000, %00001111, %00000000
+        !byte %00000011, %11111111, %11000000
+        !byte %00000000, %11111111, %00000000
+        !byte %00000000, %00000000, %00000000
+        !byte 0
 
 row_scr_lo:
         !for r, 0, 24 {
